@@ -1,0 +1,119 @@
+{
+  "app": {
+    "name": "DentalSuite"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "patients": "المرضى",
+    "appointments": "المواعيد",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "welcome": "مرحبًا بك في نظام DentalSuite",
+    "stats": {
+      "total_patients": "إجمالي المرضى",
+      "today_appointments": "مواعيد اليوم",
+      "monthly_revenue": "إيرادات الشهر"
+    },
+    "loadError": "تعذّر تحميل بيانات لوحة التحكم"
+  },
+  "common": {
+    "language": "اللغة",
+    "theme": "المظهر",
+    "light": "فاتح",
+    "dark": "داكن",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "auth": {
+    "title": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "new": "مستخدم جديد",
+    "search": "بحث بالاسم أو البريد الإلكتروني",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "roles": {
+      "admin": "مدير",
+      "dentist": "طبيب أسنان",
+      "receptionist": "موظف استقبال"
+    },
+    "password": "كلمة المرور",
+    "newPassword": "كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "actions": "إجراءات",
+    "createTitle": "مستخدم جديد",
+    "editTitle": "تعديل المستخدم",
+    "saved": "تم حفظ المستخدم بنجاح",
+    "saveError": "تعذّر حفظ المستخدم",
+    "deleted": "تم حذف المستخدم بنجاح",
+    "deleteError": "تعذّر حذف المستخدم",
+    "deleteHeader": "حذف المستخدم",
+    "confirmDelete": "هل أنت متأكد من حذف {name}؟"
+  },
+  "patients": {
+    "title": "المرضى",
+    "new": "مريض جديد",
+    "search": "بحث بالاسم أو الهاتف أو الرقم الوطني",
+    "code": "الرقم",
+    "name": "الاسم",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "dateOfBirth": "تاريخ الميلاد",
+    "gender": "الجنس",
+    "genders": {
+      "male": "ذكر",
+      "female": "أنثى"
+    },
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "address": "العنوان",
+    "nationalId": "الرقم الوطني",
+    "emergencyContactName": "اسم جهة الاتصال في الطوارئ",
+    "emergencyContactPhone": "هاتف جهة الاتصال في الطوارئ",
+    "bloodType": "فصيلة الدم",
+    "allergies": "الحساسية",
+    "medicalHistory": "التاريخ المرضي",
+    "insuranceProvider": "شركة التأمين",
+    "insuranceNumber": "رقم التأمين",
+    "notes": "ملاحظات",
+    "actions": "إجراءات",
+    "createTitle": "مريض جديد",
+    "editTitle": "تعديل المريض",
+    "saved": "تم حفظ المريض بنجاح",
+    "saveError": "تعذّر حفظ المريض",
+    "deleted": "تم حذف المريض بنجاح",
+    "deleteError": "تعذّر حذف المريض",
+    "deleteHeader": "حذف المريض",
+    "confirmDelete": "هل أنت متأكد من حذف {name}؟",
+    "sections": {
+      "demographics": "البيانات الشخصية",
+      "contact": "معلومات الاتصال",
+      "medical": "المعلومات الطبية",
+      "insurance": "التأمين",
+      "history": "السجل"
+    },
+    "history": {
+      "action": "الإجراء",
+      "by": "بواسطة",
+      "when": "التاريخ",
+      "system": "النظام",
+      "actions": {
+        "created": "إنشاء",
+        "updated": "تعديل",
+        "deleted": "حذف"
+      }
+    }
+  }
+}

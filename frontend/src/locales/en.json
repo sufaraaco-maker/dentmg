@@ -1,0 +1,119 @@
+{
+  "app": {
+    "name": "DentalSuite"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "patients": "Patients",
+    "appointments": "Appointments",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to DentalSuite",
+    "stats": {
+      "total_patients": "Total Patients",
+      "today_appointments": "Today's Appointments",
+      "monthly_revenue": "Monthly Revenue"
+    },
+    "loadError": "Failed to load dashboard data"
+  },
+  "common": {
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "auth": {
+    "title": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In",
+    "invalidCredentials": "Invalid email or password"
+  },
+  "users": {
+    "title": "Users",
+    "new": "New User",
+    "search": "Search by name or email",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "roles": {
+      "admin": "Admin",
+      "dentist": "Dentist",
+      "receptionist": "Receptionist"
+    },
+    "password": "Password",
+    "newPassword": "New Password (leave blank to keep current)",
+    "confirmPassword": "Confirm Password",
+    "actions": "Actions",
+    "createTitle": "New User",
+    "editTitle": "Edit User",
+    "saved": "User saved successfully",
+    "saveError": "Failed to save user",
+    "deleted": "User deleted successfully",
+    "deleteError": "Failed to delete user",
+    "deleteHeader": "Delete User",
+    "confirmDelete": "Are you sure you want to delete {name}?"
+  },
+  "patients": {
+    "title": "Patients",
+    "new": "New Patient",
+    "search": "Search by name, phone, or national ID",
+    "code": "Code",
+    "name": "Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "genders": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "nationalId": "National ID",
+    "emergencyContactName": "Emergency Contact Name",
+    "emergencyContactPhone": "Emergency Contact Phone",
+    "bloodType": "Blood Type",
+    "allergies": "Allergies",
+    "medicalHistory": "Medical History",
+    "insuranceProvider": "Insurance Provider",
+    "insuranceNumber": "Insurance Number",
+    "notes": "Notes",
+    "actions": "Actions",
+    "createTitle": "New Patient",
+    "editTitle": "Edit Patient",
+    "saved": "Patient saved successfully",
+    "saveError": "Failed to save patient",
+    "deleted": "Patient deleted successfully",
+    "deleteError": "Failed to delete patient",
+    "deleteHeader": "Delete Patient",
+    "confirmDelete": "Are you sure you want to delete {name}?",
+    "sections": {
+      "demographics": "Demographics",
+      "contact": "Contact",
+      "medical": "Medical Information",
+      "insurance": "Insurance",
+      "history": "History"
+    },
+    "history": {
+      "action": "Action",
+      "by": "By",
+      "when": "When",
+      "system": "System",
+      "actions": {
+        "created": "Created",
+        "updated": "Updated",
+        "deleted": "Deleted"
+      }
+    }
+  }
+}

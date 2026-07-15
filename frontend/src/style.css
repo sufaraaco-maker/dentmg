@@ -1,0 +1,31 @@
+@layer tailwind-base, primevue, tailwind-utilities;
+
+@import 'tailwindcss/theme.css' layer(tailwind-base);
+@import 'tailwindcss/utilities.css' layer(tailwind-utilities);
+@import 'primeicons/primeicons.css';
+@import 'tailwindcss-primeui';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+[dir='rtl'] {
+  font-family:
+    'Cairo',
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+}

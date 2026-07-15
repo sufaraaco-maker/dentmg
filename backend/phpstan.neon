@@ -1,0 +1,21 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    # Laravel 11+ moved from `protected $casts` to a `casts(): array` method; Larastan's cast-aware
+    # property typing only reads the array literal from that method when this is enabled. Without
+    # it, every cast attribute (enums, dates) is seen as its raw DB type, which produces a flood of
+    # false "always false" comparisons wherever an enum cast is compared to an enum case.
+    parseModelCastsMethod: true
+
+    # Level 5: catches real bugs (wrong argument types, undefined methods/properties, unreachable
+    # code, always-true/false conditions) without the noise of stricter levels (7-9), which mostly
+    # flag missing generic type hints across the whole codebase. Retrofitting a codebase with no
+    # prior static analysis at max strictness produces a wall of low-value findings; level 5 is
+    # Larastan's own recommended starting point. Raise incrementally as the codebase matures.
+    level: 5
+
+    tmpDir: storage/phpstan

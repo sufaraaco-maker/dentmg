@@ -1,0 +1,119 @@
+{
+  "app": {
+    "name": "DentalSuite"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "users": "Kullanıcılar",
+    "patients": "Hastalar",
+    "appointments": "Randevular",
+    "settings": "Ayarlar",
+    "logout": "Çıkış Yap"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "DentalSuite'e hoş geldiniz",
+    "stats": {
+      "total_patients": "Toplam Hasta",
+      "today_appointments": "Bugünkü Randevular",
+      "monthly_revenue": "Aylık Gelir"
+    },
+    "loadError": "Panel verileri yüklenemedi"
+  },
+  "common": {
+    "language": "Dil",
+    "theme": "Tema",
+    "light": "Açık",
+    "dark": "Koyu",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "edit": "Düzenle",
+    "delete": "Sil"
+  },
+  "auth": {
+    "title": "Giriş Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "submit": "Giriş Yap",
+    "invalidCredentials": "E-posta veya şifre hatalı"
+  },
+  "users": {
+    "title": "Kullanıcılar",
+    "new": "Yeni Kullanıcı",
+    "search": "Ada veya e-postaya göre ara",
+    "name": "Ad",
+    "email": "E-posta",
+    "role": "Rol",
+    "roles": {
+      "admin": "Yönetici",
+      "dentist": "Diş Hekimi",
+      "receptionist": "Resepsiyonist"
+    },
+    "password": "Şifre",
+    "newPassword": "Yeni Şifre (değiştirmemek için boş bırakın)",
+    "confirmPassword": "Şifreyi Onayla",
+    "actions": "İşlemler",
+    "createTitle": "Yeni Kullanıcı",
+    "editTitle": "Kullanıcıyı Düzenle",
+    "saved": "Kullanıcı başarıyla kaydedildi",
+    "saveError": "Kullanıcı kaydedilemedi",
+    "deleted": "Kullanıcı başarıyla silindi",
+    "deleteError": "Kullanıcı silinemedi",
+    "deleteHeader": "Kullanıcıyı Sil",
+    "confirmDelete": "{name} kullanıcısını silmek istediğinizden emin misiniz?"
+  },
+  "patients": {
+    "title": "Hastalar",
+    "new": "Yeni Hasta",
+    "search": "Ada, telefona veya kimlik numarasına göre ara",
+    "code": "Kod",
+    "name": "Ad Soyad",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "dateOfBirth": "Doğum Tarihi",
+    "gender": "Cinsiyet",
+    "genders": {
+      "male": "Erkek",
+      "female": "Kadın"
+    },
+    "phone": "Telefon",
+    "email": "E-posta",
+    "address": "Adres",
+    "nationalId": "Kimlik Numarası",
+    "emergencyContactName": "Acil Durum Kişisi Adı",
+    "emergencyContactPhone": "Acil Durum Kişisi Telefonu",
+    "bloodType": "Kan Grubu",
+    "allergies": "Alerjiler",
+    "medicalHistory": "Tıbbi Geçmiş",
+    "insuranceProvider": "Sigorta Şirketi",
+    "insuranceNumber": "Sigorta Numarası",
+    "notes": "Notlar",
+    "actions": "İşlemler",
+    "createTitle": "Yeni Hasta",
+    "editTitle": "Hastayı Düzenle",
+    "saved": "Hasta başarıyla kaydedildi",
+    "saveError": "Hasta kaydedilemedi",
+    "deleted": "Hasta başarıyla silindi",
+    "deleteError": "Hasta silinemedi",
+    "deleteHeader": "Hastayı Sil",
+    "confirmDelete": "{name} adlı hastayı silmek istediğinizden emin misiniz?",
+    "sections": {
+      "demographics": "Demografi",
+      "contact": "İletişim",
+      "medical": "Tıbbi Bilgiler",
+      "insurance": "Sigorta",
+      "history": "Geçmiş"
+    },
+    "history": {
+      "action": "İşlem",
+      "by": "Kim",
+      "when": "Ne Zaman",
+      "system": "Sistem",
+      "actions": {
+        "created": "Oluşturuldu",
+        "updated": "Güncellendi",
+        "deleted": "Silindi"
+      }
+    }
+  }
+}
