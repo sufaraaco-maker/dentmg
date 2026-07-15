@@ -26,7 +26,20 @@ Applied globally by the assistant during the Authentication module to keep respo
 `AppointmentResource` responses from `store`/`confirm`/`check-in`/`start`/`complete`/`cancel`/`no-show`/`update` don't eager-load `patient`/`dentist`/`appointment_type` (only `index`/`show` do), so the frontend's `appointments.store.ts` issues a follow-up `GET /api/appointments/{id}` after every mutation to re-hydrate those nested fields before updating its cache — see `docs/modules/appointments-ui-design.md` §11 "Post-Mutation Rehydration."
 **Revisit**: if these controller actions eager-load the same three relations before returning their `AppointmentResource` (mirroring what `index`/`show` already do), the frontend's extra round-trip can be deleted entirely. Small, low-risk backend change; not blocking initial implementation.
 
+## Open (new from system validation checkpoint, 2026-07-16)
+
+### Frontend has no linting configuration
+Confirmed during this checkpoint: `frontend/package.json` has no `lint` script and no ESLint/Prettier config files exist anywhere in `frontend/`. Type-safety is covered by `vue-tsc` (part of `npm run build`), but there's no automated enforcement of code-style/best-practice rules (unused imports beyond what `noUnusedLocals` catches, Vue-specific lint rules, accessibility lint rules, etc.).
+**Revisit**: add ESLint (`eslint-plugin-vue`, `@vue/eslint-config-typescript`) + Prettier, matching the rigor already applied to the backend (Pint). Reasonable to introduce alongside the Appointments module's new Vitest toolchain (`docs/modules/appointments-ui-design.md`, "New Dependencies") rather than as a separate effort, since both are "add missing frontend tooling" work. Not blocking — `vue-tsc` and manual review have been sufficient so far.
+
 ## Resolved
+
+### Appointment types had no default-data seeder (resolved 2026-07-16)
+`docs/modules/appointments-design-draft.md` §4 stated appointment types should be seeded with a sensible default set on install; verified during the 2026-07-16 checkpoint that `GET /api/appointment-types` returned `[]` on a fresh install — no seeder existed. Fixed by adding `backend/database/seeders/AppointmentTypeSeeder.php` (Consultation/Cleaning/Filling/Root Canal/Crown/Extraction, each with a duration and color, `firstOrCreate`-based so it's safe to re-run), wired into `DatabaseSeeder`. Verified live against the real Postgres container after `migrate:fresh --seed`: `GET /api/appointment-types` now returns all 6 types. See `docs/demo-guide.md` §5 for the exact seeded values.
+
+### Root `.gitignore` was incomplete prior to the first commit (resolved 2026-07-16)
+The repository had no git history until the 2026-07-16 checkpoint. The root `.gitignore` present at that point only excluded OS/editor cruft (`.DS_Store`, `.idea`, etc.) — it did not exclude `backend/vendor/`, `frontend/node_modules/`, `.env` files, or Laravel's runtime `storage/`/`bootstrap/cache/` artifacts at the root level. In practice this was harmless because `backend/.gitignore` and `frontend/.gitignore` (Laravel's and Vite's own scaffolded ignore files) already excluded those paths independently — but the root file was still incomplete on its own terms. Fixed by expanding the root `.gitignore` with explicit backend/frontend dependency, build-output, and secret-file exclusions before staging the first commit, as a belt-and-suspenders measure.
+**Status**: resolved as part of that checkpoint's git initialization (commit `9a74ffb`).
 
 ### Audit logs (resolved 2026-07-14)
 Implemented as generic infrastructure (`Auditable` trait + `AuditObserver` + `AuditLog` model) as part of the Patients module, since Patients was the first module to touch sensitive PII. See [docs/modules/patients.md](docs/modules/patients.md).

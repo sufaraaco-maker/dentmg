@@ -29,6 +29,7 @@ backend/bootstrap/cache/*.php
 backend/public/hot
 backend/public/storage
 backend/public/build/
+backend/storage/phpstan/
 
 # Frontend (Vue/Vite)
 frontend/node_modules/

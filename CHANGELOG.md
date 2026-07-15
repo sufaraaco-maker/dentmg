@@ -4,6 +4,12 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Demo Environment (system validation checkpoint)
+- `backend/database/seeders/AppointmentTypeSeeder.php` — 6 named default types (Consultation, Cleaning, Filling, Root Canal, Crown, Extraction) with realistic durations/colors, `firstOrCreate`-based so it's safe to re-run. Closes the gap where `GET /api/appointment-types` returned `[]` on a fresh install.
+- `DatabaseSeeder` now seeds three clearly-named demo accounts (`admin@example.com`, `dentist@example.com`, `receptionist@example.com`, password `password`) plus 8 demo patients, replacing the single generic `test@example.com` admin account.
+- `docs/demo-guide.md` — how to start the stack, login credentials, available screens, a recommended walkthrough, and the exact sample data seeded.
+- Repository git history initialized (previously uncommitted since project inception); root `.gitignore` hardened for backend/frontend dependency and secret exclusions.
+
 ### Added — Appointments (API Layer)
 - `AppointmentController`: `GET/POST /api/appointments`, `GET/PUT/DELETE /api/appointments/{id}`, plus six dedicated transition endpoints (`confirm`, `check-in`, `start`, `complete`, `cancel`, `no-show`) — no generic `/status` endpoint, matching the originally-approved design. `PUT /api/appointments/{id}` handles both plain edits and in-place reschedules; there's no separate reschedule endpoint. `GET /api/available-slots` is a top-level route.
 - `AppointmentTypeController` (admin-only CRUD, any-role reads), `DentistWorkingHourController` (admin-only self-service), `DentistTimeOffController` (admin-any + dentist-own self-service) under `GET/POST/DELETE /api/dentists/{user}/working-hours` and `/time-off`.
