@@ -4,6 +4,23 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (List View, Phase 2 Step 3)
+- **`AppointmentListTable.vue`**: client-paginated (`:rows="20"`, no server round-trip — `GET
+  /api/appointments` has no server-side pagination to hook into, per the backend design) DataTable, sortable
+  by Date & Time, columns for Patient/Dentist/Type (color swatch)/Duration/Status
+  (`AppointmentStatusChip`). Renders whatever range/filters the parent already fetched — fetches nothing
+  itself, matching the documented `appointments`/`loading` props + `row-click` emit contract.
+- **List toggle**: `CalendarToolbar.vue`'s view switcher gained a fourth "List" option alongside Day/Week/
+  Month. `AppointmentsView.vue` now toggles between `AppointmentCalendar` and `AppointmentListTable` on the
+  same shared `calendar.ts` filter/range state, so switching views never loses context.
+- Added a view-agnostic range-fetch watcher in `AppointmentsView.vue`: the Board's own range-change signal
+  (FullCalendar's `datesSet`) only fires while `AppointmentCalendar` is mounted, so prev/next/today
+  navigation while the List view is active would otherwise never fetch the new range. `appointments.ts`'s
+  `fetchRange` already no-ops on an already-cached range, so this and the Board's own trigger never cause a
+  duplicate request.
+- Verified manually against the real dev stack (Docker/Postgres) in Arabic/English × light/dark, including
+  the List↔Board toggle and prev/next navigation while List is active — no bugs found this pass.
+
 ### Added — Appointments (Calendar Board, Phase 2 Step 2)
 - **Design doc revised** (`docs/modules/appointments-ui-design.md`) against the current codebase before any
   component was built: corrected several stale assumptions (test tooling already installed, route guards now

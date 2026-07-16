@@ -5,8 +5,11 @@ import Button from 'primevue/button'
 import SelectButton from 'primevue/selectbutton'
 import type { CalendarViewMode } from '@/types/appointment'
 
-/** Day/Week/Month only for now — List gets its own toggle in the next implementation step. */
-export type BoardViewMode = Extract<CalendarViewMode, 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth'>
+/** Day/Week/Month/List — Dentists (resource) view is deferred, see docs/decisions.md 2026-07-16. */
+export type BoardViewMode = Extract<
+  CalendarViewMode,
+  'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'list'
+>
 
 defineProps<{
   viewMode: BoardViewMode
@@ -25,6 +28,7 @@ const viewOptions = computed(() => [
   { label: t('appointments.calendar.day'), value: 'timeGridDay' as BoardViewMode },
   { label: t('appointments.calendar.week'), value: 'timeGridWeek' as BoardViewMode },
   { label: t('appointments.calendar.month'), value: 'dayGridMonth' as BoardViewMode },
+  { label: t('appointments.calendar.list'), value: 'list' as BoardViewMode },
 ])
 </script>
 

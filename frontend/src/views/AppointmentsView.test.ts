@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AppointmentsView from './AppointmentsView.vue'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar.vue'
+import AppointmentListTable from '@/components/appointments/AppointmentListTable.vue'
 import {
   appointmentsApi,
   providersApi,
@@ -122,5 +123,66 @@ describe('AppointmentsView board', () => {
     expect(appointmentsApi.list).toHaveBeenCalledWith(
       expect.objectContaining({ date_from: '2026-08-01', date_to: '2026-08-31' }),
     )
+  })
+})
+
+describe('AppointmentsView List toggle', () => {
+  it('switches from the Board to the List view and back without losing the toolbar', async () => {
+    const { wrapper } = await mountView()
+
+    expect(wrapper.findComponent(AppointmentCalendar).exists()).toBe(true)
+    expect(wrapper.findComponent(AppointmentListTable).exists()).toBe(false)
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'List')
+      ?.trigger('click')
+
+    expect(wrapper.findComponent(AppointmentCalendar).exists()).toBe(false)
+    expect(wrapper.findComponent(AppointmentListTable).exists()).toBe(true)
+  })
+
+  it('passes the same filtered appointments to the List table as the Board', async () => {
+    const { wrapper } = await mountView()
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'List')
+      ?.trigger('click')
+
+    const table = wrapper.findComponent(AppointmentListTable)
+    expect(table.props('appointments')).toHaveLength(1)
+    expect(table.props('appointments')[0]).toMatchObject({ id: 'appt-1' })
+  })
+
+  it('navigates to the appointment detail route when a List row is clicked', async () => {
+    const { wrapper, router } = await mountView()
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'List')
+      ?.trigger('click')
+    await wrapper.findComponent(AppointmentListTable).vm.$emit('row-click', 'appt-1')
+    await flushPromises()
+
+    expect(router.currentRoute.value.name).toBe('appointment-detail')
+    expect(router.currentRoute.value.params.id).toBe('appt-1')
+  })
+
+  it('still refetches the range on prev/next navigation while the List view is active', async () => {
+    const { wrapper } = await mountView()
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'List')
+      ?.trigger('click')
+    vi.mocked(appointmentsApi.list).mockClear()
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.attributes('aria-label') === 'Next period')
+      ?.trigger('click')
+    await flushPromises()
+
+    expect(appointmentsApi.list).toHaveBeenCalled()
   })
 })

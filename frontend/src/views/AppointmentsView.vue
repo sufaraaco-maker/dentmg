@@ -7,6 +7,7 @@ import Card from 'primevue/card'
 import CalendarToolbar from '@/components/appointments/CalendarToolbar.vue'
 import CalendarFilters from '@/components/appointments/CalendarFilters.vue'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar.vue'
+import AppointmentListTable from '@/components/appointments/AppointmentListTable.vue'
 import type { BoardViewMode } from '@/components/appointments/CalendarToolbar.vue'
 import type { AppointmentCalendarEvent } from '@/components/appointments/AppointmentCalendar.vue'
 import { useCalendarStore, type CalendarFilters as CalendarFiltersState } from '@/stores/calendar'
@@ -30,13 +31,16 @@ const providers = useProvidersStore()
 const workingHours = useWorkingHoursStore()
 const timeOff = useTimeOffStore()
 
-const boardViewMode = computed<BoardViewMode>({
-  get: () =>
-    calendar.viewMode === 'timeGridDay' || calendar.viewMode === 'dayGridMonth'
-      ? calendar.viewMode
-      : 'timeGridWeek',
+/** Day/Week/Month/List — falls back to Week for the not-yet-built Dentists (resource) view. */
+const viewMode = computed<BoardViewMode>({
+  get: () => (calendar.viewMode === 'resourceTimeGridDay' ? 'timeGridWeek' : calendar.viewMode),
   set: (mode) => calendar.setViewMode(mode),
 })
+
+/** List isn't a FullCalendar view (§2.1) — narrowed separately for `AppointmentCalendar`'s `view` prop. */
+const calendarView = computed<'timeGridDay' | 'timeGridWeek' | 'dayGridMonth'>(() =>
+  viewMode.value === 'list' ? 'timeGridWeek' : viewMode.value,
+)
 
 /** Only meaningful (per §2.4/§2.5) when the Dentist filter narrows to exactly one dentist. */
 const singleSelectedDentistId = computed(() =>
@@ -54,6 +58,18 @@ watch(
   { immediate: true },
 )
 
+/**
+ * View-agnostic range fetch: `AppointmentCalendar`'s own `range-change` emit (its `datesSet`
+ * callback, §onRangeChange below) only fires while it's mounted, so prev/next/today navigation
+ * while the List view is showing would otherwise never fetch the new range. `fetchRange` already
+ * no-ops when the range is already cached, so this and the Board's own range-change trigger never
+ * cause a duplicate request for the same range.
+ */
+watch(
+  () => calendar.currentRange,
+  (range) => appointments.fetchRange(range.start, range.end),
+)
+
 const rangeLabel = computed(() => {
   const formatterOptions: Intl.DateTimeFormatOptions =
     calendar.viewMode === 'dayGridMonth'
@@ -64,7 +80,7 @@ const rangeLabel = computed(() => {
 
   const formatter = new Intl.DateTimeFormat(locale.value, formatterOptions)
 
-  if (calendar.viewMode === 'timeGridWeek') {
+  if (calendar.viewMode === 'timeGridWeek' || calendar.viewMode === 'list') {
     const { start, end } = calendar.currentRange
     return `${formatter.format(start)} – ${formatter.format(end)}, ${end.getFullYear()}`
   }
@@ -198,13 +214,20 @@ onMounted(() => {
       <template #content>
         <div class="flex flex-col gap-4">
           <CalendarToolbar
-            v-model:view-mode="boardViewMode"
+            v-model:view-mode="viewMode"
             :range-label="rangeLabel"
             @navigate="onNavigate"
             @new-appointment="showCreationComingSoon"
           />
+          <AppointmentListTable
+            v-if="viewMode === 'list'"
+            :appointments="appointments.filteredAppointments"
+            :loading="appointments.loading"
+            @row-click="onEventClick"
+          />
           <AppointmentCalendar
-            :view="boardViewMode"
+            v-else
+            :view="calendarView"
             :current-date="calendar.currentDate"
             :events="events"
             :background-events="backgroundEvents"

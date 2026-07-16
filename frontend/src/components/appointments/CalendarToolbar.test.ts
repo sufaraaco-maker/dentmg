@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import CalendarToolbar from './CalendarToolbar.vue'
 
 describe('CalendarToolbar', () => {
-  it('renders the range label and the three view options', () => {
+  it('renders the range label and the four view options', () => {
     const wrapper = mount(CalendarToolbar, {
       props: { viewMode: 'timeGridWeek', rangeLabel: 'Jul 12 – Jul 18, 2026' },
     })
@@ -11,6 +11,20 @@ describe('CalendarToolbar', () => {
     expect(wrapper.text()).toContain('Day')
     expect(wrapper.text()).toContain('Week')
     expect(wrapper.text()).toContain('Month')
+    expect(wrapper.text()).toContain('List')
+  })
+
+  it('emits update:viewMode when the List option is selected', async () => {
+    const wrapper = mount(CalendarToolbar, {
+      props: { viewMode: 'timeGridWeek', rangeLabel: 'Jul 12 – Jul 18, 2026' },
+    })
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'List')
+      ?.trigger('click')
+
+    expect(wrapper.emitted('update:viewMode')).toEqual([['list']])
   })
 
   it('emits navigate("prev"/"next"/"today") from the nav buttons', async () => {
