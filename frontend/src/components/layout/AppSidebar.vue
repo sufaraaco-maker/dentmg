@@ -39,7 +39,7 @@ function onNavigate() {
     :class="[
       variant === 'desktop' &&
         'sticky top-0 h-screen shrink-0 border-e border-surface-200 transition-[width] duration-200 dark:border-surface-700',
-      variant === 'desktop' && (collapsed ? 'w-[72px]' : 'w-64'),
+      variant === 'desktop' && (collapsed ? 'w-[72px]' : 'w-72'),
     ]"
   >
     <div v-if="variant === 'desktop'" class="flex items-center justify-between gap-2 px-3 py-4">

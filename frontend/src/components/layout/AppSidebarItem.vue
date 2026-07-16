@@ -38,13 +38,13 @@ watch(
 )
 
 const rowClasses = computed(() => [
-  'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+  'flex w-full items-center gap-3 rounded-lg border-s-[3px] px-3 py-2 text-sm transition-colors',
   props.collapsed && 'justify-center px-0',
   props.item.comingSoon
-    ? 'cursor-not-allowed text-surface-400 dark:text-surface-600'
+    ? 'border-transparent text-surface-400 cursor-not-allowed dark:text-surface-600'
     : isActive.value
-      ? 'bg-primary-50 font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300'
-      : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-0',
+      ? 'border-primary bg-primary-50 font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300'
+      : 'border-transparent text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-0',
 ])
 
 function onParentClick() {

@@ -42,11 +42,18 @@ Services/                Business logic
 lib/          axios instance, shared API helpers
 stores/       Pinia stores
 router/       route table + auth guard
-layouts/      shared page chrome
+layouts/      shared page chrome (DefaultLayout.vue — sidebar + header shell)
+components/   layout/ (AppSidebar, AppHeader, AppSidebarItem) + per-feature components
 views/        route-level pages
 types/        shared TS types
 locales/      ar/en/tr translation files
 ```
+
+Design tokens (typography, color, spacing, radius, elevation) are centralized in `frontend/src/style.css`
+(Tailwind v4 `@theme`) and the PrimeVue preset in `frontend/src/main.ts` (`definePreset(Aura, ...)`) — see
+[design-system.md](design-system.md) for the full reference. Views/components consume tokens via Tailwind
+utilities and PrimeVue's semantic classes (`surface-*`, component defaults); they never hardcode a color, font,
+radius, or shadow value directly.
 
 ## Backend/Frontend Contract
 

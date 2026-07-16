@@ -45,13 +45,21 @@ onMounted(async () => {
     <Message v-if="error" severity="error">{{ t('dashboard.loadError') }}</Message>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <Card v-for="stat in statCards" :key="stat.key">
+      <Card
+        v-for="stat in statCards"
+        :key="stat.key"
+        class="transition-shadow duration-200 hover:shadow-md"
+      >
         <template #content>
           <div class="flex items-center gap-3">
-            <i :class="[stat.icon, 'text-2xl text-primary']" />
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-400/10"
+            >
+              <i :class="[stat.icon, 'text-xl text-primary']" />
+            </span>
             <div>
               <Skeleton v-if="loading" width="4rem" height="1.5rem" />
-              <p v-else class="text-xl font-semibold text-surface-900 dark:text-surface-0">
+              <p v-else class="tabular-nums text-xl font-semibold text-surface-900 dark:text-surface-0">
                 {{ summary?.[stat.key] ?? 0 }}
               </p>
               <p class="text-sm text-surface-500">{{ t(`dashboard.stats.${stat.key}`) }}</p>

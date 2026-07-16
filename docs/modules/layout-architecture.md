@@ -200,3 +200,13 @@ Not applicable (no forms/inputs beyond the existing locale `Select`, which is un
 Both open questions from the design phase were resolved by explicit user approval before implementation —
 see "Implementation Notes" above for the final calls (search omitted; route-guard fix implemented in this
 pass).
+
+---
+
+## Addendum (2026-07-16): Typography & Visual Polish pass
+
+This shell's visual language (§7 "reuse existing tokens exactly") is now formalized as a proper design
+system — typography (Inter/IBM Plex Sans Arabic), border-radius/shadow tokens, and a sidebar/header/card
+polish pass. See [design-system.md](../design-system.md) for the full reference; this is the point at which
+the design system is considered **frozen** for use by all future modules (starting with Appointments Phase
+2 — Calendar UI).

@@ -4,6 +4,36 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Design System / Typography & Visual Polish
+- Formalized the application shell's visual language into a documented design system
+  (`docs/design-system.md`) — the shell is now considered **frozen** for all future modules.
+- **Typography**: Inter (Latin) + IBM Plex Sans Arabic (Arabic, the app's default locale), loaded via Google
+  Fonts (`index.html`), swapped by the existing `[dir]`-driven locale mechanism — no new JS. Replaces the
+  previous generic system-font stack (`'Segoe UI'`/unsourced `'Cairo'` reference that had no actual font
+  file behind it). `index.html`'s initial `lang`/`dir` now matches the default `ar` locale (no
+  flash-of-wrong-direction before Vue mounts); `<title>` fixed from the Vite scaffold default `"frontend"`
+  to `"DentalSuite"`.
+- **Design tokens**: border-radius nudged via a PrimeVue Aura preset extension (`main.ts`'s
+  `definePreset(Aura, ...)`: `md` 6px→8px, `xl` 12px→16px), `tabular-nums` utility for numeric/tabular data.
+- **Visual polish**: sidebar active-item accent bar (`AppSidebarItem.vue`), dashboard stat cards upgraded
+  from bare icons to tinted circular icon badges with a hover-lift shadow, sticky header gains `shadow-sm`,
+  sidebar widened 256px→288px (`w-64`→`w-72`) to stop "Treatment Plans" truncating to "Treatment …".
+- **Base CSS reset fix**: `style.css` imported Tailwind's `theme.css`/`utilities.css` but never
+  `preflight.css`, so raw (non-PrimeVue) elements had no `box-sizing: border-box` and native `<button>`
+  chrome (`border: 2px outset`) showed through on hand-rolled buttons like the sidebar's parent-toggle row.
+  Fixed with a minimal, explicitly-scoped reset inside the `tailwind-base` cascade layer (not a full
+  preflight import, so PrimeVue's and Tailwind utilities' own styling still wins where intended).
+- **Bug fix**: a stray focus ring could stick to the sidebar's "Appointments" toggle immediately after
+  login, because Vue's DOM patching reused the login submit `<button>`'s node across the Login→Dashboard
+  route swap, carrying the browser's focus with it. Fixed with an explicit `blur()` in `LoginView.vue`
+  after a successful login.
+- **Bug fix**: `NotFoundView.vue` (404) was missing dark-mode text-color classes and hardcoded English text
+  with no i18n, unlike the equivalent `ForbiddenView.vue` (403) it should mirror. Brought to parity; new
+  `errors.pageNotFound.*` i18n keys added to `en`/`ar`/`tr`.
+- Verified manually (headless-Chromium screenshots against the real `docker compose` stack) across
+  Arabic/English × light/dark × desktop/tablet/mobile. `npm run build`, `vue-tsc`, `eslint`, and `vitest`
+  (88/88) all pass.
+
 ### Added — Application Shell / Layout Architecture
 - Replaced the informal top-nav `DefaultLayout.vue` with a permanent sidebar+header SaaS shell
   (`docs/modules/layout-architecture.md`, design approved 2026-07-16). New components under

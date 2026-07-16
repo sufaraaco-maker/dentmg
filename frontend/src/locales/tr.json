@@ -49,6 +49,12 @@
       "heading": "Erişim Reddedildi",
       "message": "Bu sayfaya erişim izniniz yok.",
       "backToDashboard": "Panele Dön"
+    },
+    "pageNotFound": {
+      "code": "404",
+      "heading": "Sayfa Bulunamadı",
+      "message": "Aradığınız sayfa mevcut değil veya taşınmış.",
+      "backToDashboard": "Panele Dön"
     }
   },
   "auth": {

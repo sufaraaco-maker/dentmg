@@ -7,6 +7,39 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * This project imports Tailwind's `theme.css` + `utilities.css` only (not the full `preflight.css`
+ * reset), so it can coexist with PrimeVue's own component base styles without a second reset fighting
+ * it. That means raw native elements never got Tailwind's usual reset — this scoped `tailwind-base`
+ * layer restores just the two pieces that matter: border-box sizing (Tailwind's width/padding utilities
+ * assume it) and neutralizing the browser's default `<button>` chrome (2px outset border/background),
+ * which was otherwise visible through on hand-rolled buttons like the sidebar nav rows.
+ */
+@layer tailwind-base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  button {
+    appearance: none;
+    border: 0;
+    background-color: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+}
+
+@theme {
+  --font-sans:
+    'Inter', system-ui, -apple-system, sans-serif;
+  --font-arabic:
+    'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+}
+
 html,
 body,
 #app {
@@ -15,17 +48,19 @@ body,
 
 body {
   margin: 0;
-  font-family:
-    'Segoe UI',
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-[dir='rtl'] {
-  font-family:
-    'Cairo',
-    'Segoe UI',
-    system-ui,
-    sans-serif;
+[dir='rtl'] body {
+  font-family: var(--font-arabic);
+  line-height: 1.7;
+}
+
+/* Tabular figures for numeric/tabular data (dates, amounts, phone numbers) so columns align. */
+.p-datatable-tbody td,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

@@ -51,6 +51,27 @@ Introducing ESLint + Prettier this step (see Resolved section below) surfaced pr
 `docs/modules/appointments-ui-design.md` §10.2 (written per explicit user instruction) names the file `providers.store.ts`. Implemented as `frontend/src/stores/providers.ts` instead, for consistency with every other store in the directory (`auth.ts`, `ui.ts`, `calendar.ts`, `appointments.ts`, `appointmentTypes.ts`, `workingHours.ts`, `timeOff.ts` — none use a `.store.ts` suffix). The store's actual intent (temporary, explicitly documented as not a permanent domain model, §10.2) is preserved via a doc-comment in the file itself.
 **Revisit**: not a real gap — purely a naming note so the design doc and implementation aren't read as silently contradicting each other. No action needed unless the project later adopts a `.store.ts` suffix convention project-wide.
 
+## Open (new from Design System / Visual Polish pass, 2026-07-16)
+
+### `style.css` still doesn't import Tailwind's full `preflight.css`
+This pass fixed the two gaps that actually surfaced visually (missing `box-sizing: border-box`, native
+`<button>` chrome) with a minimal, explicitly-scoped reset inside the `tailwind-base` cascade layer — not a
+full preflight import, to avoid it out-ranking PrimeVue's own component base styles. No other raw-HTML-element
+gaps (headings, lists, forms, tables) surfaced during manual review, but a full preflight audit wasn't
+performed. See `docs/design-system.md` §7.
+**Revisit**: only if a future raw (non-PrimeVue) element shows unexpected native browser styling.
+
+### Docker Desktop bind-mount + Vite dev server: edits sometimes require a container restart
+While verifying this pass's changes, the frontend dev server (`dentalsuite_frontend`, Windows host →
+Docker Desktop → Linux container bind mount) intermittently kept serving a stale compiled module for an
+edited `.vue`/`.ts` file — confirmed by comparing the file Vite's own transform endpoint returned (fresh) against
+what the running page actually rendered (stale), with a `docker compose restart node` reliably fixing it. Very
+likely a known class of Docker Desktop issue (inotify file-change events not propagating reliably across the
+Windows↔WSL2↔container boundary for bind mounts), not an application bug.
+**Revisit**: not urgent — a workaround (`docker compose restart node`) exists. Only worth investigating
+further (e.g. switching to polling-based file watching in `vite.config.ts`) if it starts noticeably slowing
+down day-to-day frontend development.
+
 ## Resolved
 
 ### Frontend had no linting/formatting configuration (resolved 2026-07-16)

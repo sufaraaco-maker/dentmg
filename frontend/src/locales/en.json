@@ -49,6 +49,12 @@
       "heading": "Access Denied",
       "message": "You don't have permission to access this page.",
       "backToDashboard": "Back to Dashboard"
+    },
+    "pageNotFound": {
+      "code": "404",
+      "heading": "Page Not Found",
+      "message": "The page you're looking for doesn't exist or has been moved.",
+      "backToDashboard": "Back to Dashboard"
     }
   },
   "auth": {

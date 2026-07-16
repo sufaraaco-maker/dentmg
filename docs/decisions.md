@@ -72,6 +72,14 @@ Requested by user before starting Appointments: UX review, DB scaling review, AP
 
 **Status**: Reviewed and implemented per explicit user request for a final pre-Appointments review.
 
+## 2026-07-16 — Design system: Google Fonts CDN over self-hosted `@fontsource` packages
+
+Presented both options (self-hosted npm packages, offline-safe, vs. Google Fonts `<link>`, simpler setup but
+an external network dependency on every page load). User explicitly chose the Google Fonts CDN link,
+trading offline-safety for setup simplicity.
+**Status**: Agreed with user. Revisit if DentalSuite ever needs a fully offline/on-prem deployment — swapping
+to self-hosted fonts at that point requires only a `<link>`→`@font-face` change, no other code changes.
+
 ## 2026-07-14 — Documentation restructured to project root
 
 Moved `backend/docs/modules/*.md` → `docs/modules/`, and added `docs/architecture.md`, `docs/database-design.md`, `docs/api-guidelines.md`, `docs/coding-standards.md`, `docs/roadmap.md`, `docs/deployment.md`, plus root `CHANGELOG.md` and `TECH_DEBT.md`. Root-level docs cover both `backend/` and `frontend/`, so they don't belong nested under `backend/`. No content was lost — module docs were moved, not rewritten.

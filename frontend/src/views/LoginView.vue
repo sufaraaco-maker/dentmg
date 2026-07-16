@@ -24,6 +24,9 @@ async function onSubmit() {
 
   try {
     await auth.login(email.value, password.value)
+    // Vue reuses the submit <button>'s DOM slot for the new shell's nav, which can leave
+    // the browser's focus (and its visible ring) stuck on an unrelated sidebar item.
+    ;(document.activeElement as HTMLElement | null)?.blur()
     router.push({ name: 'dashboard' })
   } catch {
     error.value = t('auth.invalidCredentials')
