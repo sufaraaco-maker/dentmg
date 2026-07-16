@@ -167,6 +167,25 @@
     "forbidden": "ليس لديك صلاحية للقيام بذلك",
     "unexpectedError": "حدث خطأ ما — يرجى المحاولة مرة أخرى",
     "notFound": "الموعد غير موجود",
-    "backToAppointments": "العودة إلى المواعيد"
+    "backToAppointments": "العودة إلى المواعيد",
+    "hasNotes": "يحتوي على ملاحظات",
+    "untitled": "موعد بدون عنوان",
+    "calendar": {
+      "day": "يوم",
+      "week": "أسبوع",
+      "month": "شهر",
+      "today": "اليوم",
+      "previous": "الفترة السابقة",
+      "next": "الفترة التالية",
+      "newAppointment": "موعد جديد",
+      "newAppointmentComingSoon": "إنشاء المواعيد سيتوفر في خطوة التنفيذ القادمة."
+    },
+    "filters": {
+      "dentist": "الطبيب",
+      "status": "الحالة",
+      "type": "نوع الموعد",
+      "clearFilters": "إزالة عوامل التصفية",
+      "noResults": "لا توجد مواعيد مطابقة لعوامل التصفية"
+    }
   }
 }

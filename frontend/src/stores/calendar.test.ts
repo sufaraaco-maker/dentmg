@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useCalendarStore } from './calendar'
+import { toLocalDateString } from '@/lib/date'
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -12,8 +13,10 @@ describe('useCalendarStore currentRange', () => {
     store.currentDate = new Date(2026, 6, 15, 14, 30) // Wed 2026-07-15, 14:30
     store.setViewMode('timeGridDay')
 
-    expect(store.currentRange.start.toISOString().slice(0, 10)).toBe('2026-07-15')
-    expect(store.currentRange.end.toISOString().slice(0, 10)).toBe('2026-07-15')
+    // Local-date comparison, not .toISOString() (UTC) — a positive-UTC-offset timezone would
+    // otherwise shift local midnight onto the previous UTC calendar day and fail spuriously.
+    expect(toLocalDateString(store.currentRange.start)).toBe('2026-07-15')
+    expect(toLocalDateString(store.currentRange.end)).toBe('2026-07-15')
     expect(store.currentRange.start.getHours()).toBe(0)
     expect(store.currentRange.end.getHours()).toBe(23)
   })

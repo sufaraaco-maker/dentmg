@@ -34,10 +34,8 @@
 }
 
 @theme {
-  --font-sans:
-    'Inter', system-ui, -apple-system, sans-serif;
-  --font-arabic:
-    'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
 }
 
 html,
@@ -63,4 +61,22 @@ body {
 .p-datatable-tbody td,
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * FullCalendar (Appointments Board, docs/modules/appointments-ui-design.md §2) ships its own CSS
+ * custom properties and doesn't know about this app's `.dark` class — without this, its header/
+ * day cells stay white in dark mode. Overriding FullCalendar's own variables (not inventing new
+ * ones) keeps this a small, targeted fix rather than fighting the library's internal styles.
+ */
+.dark .fc {
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--p-surface-800);
+  --fc-neutral-text-color: var(--p-surface-300);
+  --fc-border-color: var(--p-surface-700);
+  --fc-list-event-hover-bg-color: var(--p-surface-700);
+  --fc-highlight-color: rgb(16 185 129 / 15%);
+  --fc-today-bg-color: rgb(250 204 21 / 8%);
+  --fc-now-indicator-color: #f87171;
+  color: var(--p-surface-0);
 }

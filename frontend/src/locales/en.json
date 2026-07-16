@@ -167,6 +167,25 @@
     "forbidden": "You don't have permission to do that",
     "unexpectedError": "Something went wrong — please try again",
     "notFound": "Appointment not found",
-    "backToAppointments": "Back to Appointments"
+    "backToAppointments": "Back to Appointments",
+    "hasNotes": "Has notes",
+    "untitled": "Untitled appointment",
+    "calendar": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "today": "Today",
+      "previous": "Previous period",
+      "next": "Next period",
+      "newAppointment": "New Appointment",
+      "newAppointmentComingSoon": "Appointment creation is coming in the next implementation step."
+    },
+    "filters": {
+      "dentist": "Dentist",
+      "status": "Status",
+      "type": "Appointment Type",
+      "clearFilters": "Clear filters",
+      "noResults": "No appointments match your filters"
+    }
   }
 }

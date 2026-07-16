@@ -167,6 +167,25 @@
     "forbidden": "Bunu yapmaya yetkiniz yok",
     "unexpectedError": "Bir şeyler ters gitti — lütfen tekrar deneyin",
     "notFound": "Randevu bulunamadı",
-    "backToAppointments": "Randevulara Dön"
+    "backToAppointments": "Randevulara Dön",
+    "hasNotes": "Notları var",
+    "untitled": "Adsız randevu",
+    "calendar": {
+      "day": "Gün",
+      "week": "Hafta",
+      "month": "Ay",
+      "today": "Bugün",
+      "previous": "Önceki dönem",
+      "next": "Sonraki dönem",
+      "newAppointment": "Yeni Randevu",
+      "newAppointmentComingSoon": "Randevu oluşturma bir sonraki uygulama adımında sunulacak."
+    },
+    "filters": {
+      "dentist": "Diş Hekimi",
+      "status": "Durum",
+      "type": "Randevu Türü",
+      "clearFilters": "Filtreleri temizle",
+      "noResults": "Filtrelerinizle eşleşen randevu yok"
+    }
   }
 }

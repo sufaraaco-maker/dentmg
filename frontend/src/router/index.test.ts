@@ -58,6 +58,51 @@ describe('router authorization guard', () => {
     expect(router.currentRoute.value.name).toBe('patients')
   })
 
+  it('blocks a receptionist from the admin-only Appointment Types route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('receptionist')
+
+    await router.push({ name: 'appointment-types' })
+    expect(router.currentRoute.value.name).toBe('forbidden')
+  })
+
+  it('allows an admin to reach the Appointment Types route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('admin')
+
+    await router.push({ name: 'appointment-types' })
+    expect(router.currentRoute.value.name).toBe('appointment-types')
+  })
+
+  it('blocks a receptionist from the Dentist Schedule route (admin + dentist only)', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('receptionist')
+
+    await router.push({ name: 'dentist-schedule' })
+    expect(router.currentRoute.value.name).toBe('forbidden')
+  })
+
+  it('allows a dentist to reach their own Dentist Schedule route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('dentist')
+
+    await router.push({ name: 'dentist-schedule' })
+    expect(router.currentRoute.value.name).toBe('dentist-schedule')
+  })
+
+  it('allows an admin to reach the Dentist Schedule route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('admin')
+
+    await router.push({ name: 'dentist-schedule' })
+    expect(router.currentRoute.value.name).toBe('dentist-schedule')
+  })
+
   it('redirects an already-authenticated user away from the guest-only login page', async () => {
     const auth = useAuthStore()
     auth.initialized = true

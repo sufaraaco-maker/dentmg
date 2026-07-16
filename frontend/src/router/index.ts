@@ -56,11 +56,13 @@ export const router = createRouter({
           path: 'appointments/types',
           name: 'appointment-types',
           component: () => import('@/views/AppointmentTypesView.vue'),
+          meta: { roles: ['admin'] },
         },
         {
           path: 'appointments/schedule',
           name: 'dentist-schedule',
           component: () => import('@/views/DentistScheduleView.vue'),
+          meta: { roles: ['admin', 'dentist'] },
         },
         {
           path: 'appointments/:id',

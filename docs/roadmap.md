@@ -11,7 +11,7 @@ Modules are implemented one at a time, each fully complete (migration → model 
 | Users | Done |
 | Roles & Permissions | Done |
 | Patients | Done |
-| **Appointments** | **Up next** |
+| **Appointments** | **In Progress** — Backend API done (188/188 tests, see `modules/appointments-design-draft.md`); frontend data-layer infrastructure (types/stores/services/routes/i18n) and app shell done; UI screens (Calendar, Dialog, Detail, Working Hours, Types CRUD, Dashboard widgets) in progress per `modules/appointments-ui-design.md` §20 Implementation Sequence |
 | Dental Chart | Not started |
 | Treatment Plans | Not started |
 | Clinical Notes | Not started |

@@ -1,6 +1,7 @@
 import { config } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
 import Aura from '@primeuix/themes/aura'
 import en from '@/locales/en.json'
@@ -16,6 +17,7 @@ config.global.plugins = [
   ...config.global.plugins,
   i18n,
   [PrimeVue, { theme: { preset: Aura, options: { darkModeSelector: '.dark' } } }],
+  ToastService,
 ]
 config.global.directives = { ...config.global.directives, tooltip: Tooltip }
 

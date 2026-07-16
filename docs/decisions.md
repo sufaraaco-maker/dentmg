@@ -80,6 +80,27 @@ trading offline-safety for setup simplicity.
 **Status**: Agreed with user. Revisit if DentalSuite ever needs a fully offline/on-prem deployment — swapping
 to self-hosted fonts at that point requires only a `<link>`→`@font-face` change, no other code changes.
 
+## 2026-07-16 — FullCalendar: MIT packages only, Dentists resource view deferred
+
+While installing the Appointments Calendar Board's FullCalendar dependencies (per the frontend design doc's
+§15a/"New Dependencies" section), discovered by downloading and reading the actual package `LICENSE.md`
+files (not just trusting the npm registry's `license` field) that `@fullcalendar/resource` and
+`@fullcalendar/resource-timegrid` — needed only for the "Dentists" resource-column view — are **not** MIT.
+Both are FullCalendar Premium, tri-licensed as (a) a paid Commercial License, (b) Creative Commons
+BY-NC-ND (non-commercial use only, not viable for a commercial SaaS product), or (c) GPLv3 (copyleft,
+incompatible with a closed-source commercial codebase). The rest of the FullCalendar set actually used
+(`core`/`vue3`/`daygrid`/`timegrid`/`interaction`) is confirmed MIT.
+
+Presented three options to the user: (a) purchase a FullCalendar Premium commercial license and build the
+Dentists view as designed, (b) drop the Dentists resource-column view from V1 (Day/Week/Month/List plus the
+existing Dentist filter already cover "see everyone at once"), or (c) build a custom, non-premium
+side-by-side day view. User chose **(b)** — continue with the MIT set only, no Premium dependency, no custom
+workaround either. The Dentists view is deferred until a commercial-license purchase is separately evaluated
+and approved.
+
+**Status**: Agreed with user, confirmed as a permanent decision unless explicitly revisited. See
+`docs/modules/appointments-ui-design.md` §20 ("FullCalendar decision") and its closing summary item 8.
+
 ## 2026-07-14 — Documentation restructured to project root
 
 Moved `backend/docs/modules/*.md` → `docs/modules/`, and added `docs/architecture.md`, `docs/database-design.md`, `docs/api-guidelines.md`, `docs/coding-standards.md`, `docs/roadmap.md`, `docs/deployment.md`, plus root `CHANGELOG.md` and `TECH_DEBT.md`. Root-level docs cover both `backend/` and `frontend/`, so they don't belong nested under `backend/`. No content was lost — module docs were moved, not rewritten.

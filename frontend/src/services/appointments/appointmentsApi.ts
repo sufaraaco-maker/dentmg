@@ -12,8 +12,11 @@ import type {
 
 export const appointmentsApi = {
   async list(params: IndexAppointmentParams): Promise<Appointment[]> {
-    const { data } = await api.get<{ data: Appointment[] }>('/appointments', { params })
-    return data.data
+    // GET /api/appointments is deliberately not paginated (a calendar range is naturally bounded —
+    // see the backend design doc §16/§19), so the response is a bare array, not a {data, links,
+    // meta} envelope like the paginated list endpoints elsewhere in the app.
+    const { data } = await api.get<Appointment[]>('/appointments', { params })
+    return data
   },
 
   async get(id: string): Promise<Appointment> {

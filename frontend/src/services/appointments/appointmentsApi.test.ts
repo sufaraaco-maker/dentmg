@@ -45,9 +45,12 @@ beforeEach(() => {
 })
 
 describe('appointmentsApi.list', () => {
-  it('unwraps the {data} envelope and forwards params', async () => {
+  it('returns the bare array the endpoint sends (deliberately not paginated) and forwards params', async () => {
     const appointments = [makeAppointment()]
-    mockedApi.get.mockResolvedValueOnce({ data: { data: appointments } })
+    // GET /api/appointments is not paginated (backend design doc §16/§19) — a {data: [...]}
+    // envelope here was a real bug (found via manual browser verification against the real
+    // backend, not caught by this test until it was corrected to match the actual contract).
+    mockedApi.get.mockResolvedValueOnce({ data: appointments })
 
     const result = await appointmentsApi.list({ date_from: '2026-07-20', date_to: '2026-07-26' })
 

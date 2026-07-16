@@ -37,6 +37,20 @@ Applied globally by the assistant during the Authentication module to keep respo
 `GET /api/users` is paginated at a fixed 15/page with no `role` filter and the controller doesn't forward a `per_page` query param to `UserService::paginate()`. The Appointments frontend needs a full list of dentists for filters/dropdowns (Calendar filters, Appointment dialog, Working Hours/Time Off dentist selector), so `frontend/src/stores/providers.store.ts` works around this by paginating through every page of `GET /api/users` once per session and filtering `role === 'dentist'` client-side — acceptable at realistic clinic-staff scale (a handful of requests, once, cached indefinitely), but a real workaround, not the intended shape.
 **Revisit**: add a dedicated `GET /api/dentists` (or `/api/providers`, matching wherever the future Providers module lands — see `docs/modules/appointments-ui-design.md` §4 "Dentist/Provider Store") endpoint, or at minimum a `?role=` filter plus an uncapped `per_page` on the existing `GET /api/users` for this specific staff-directory use case. Low risk, small change — do it whenever backend capacity allows; not blocking.
 
+### Appointment audit-log route not yet exposed
+`Appointment` already uses the `Auditable` trait (`backend/app/Models/Appointment.php:6,19`), so every
+create/update/status-transition is already being recorded in `audit_logs`, exactly like `Patient` — the data
+exists. But no route/controller/policy exposes it: unlike Patients' `GET
+/api/patients/{patient}/audit-logs` (`routes/api.php:25`, `PatientController::auditLogs()`,
+`PatientPolicy::viewAuditLogs`), there is no `appointments/{appointment}/audit-logs` route,
+`AppointmentController` has no `auditLogs()` method, and `AppointmentPolicy` has no `viewAuditLogs` ability.
+Confirmed absent by reading the code directly, not just unconfirmed. The frontend's `AppointmentDetailView`
+renders a `FutureFeaturePlaceholder` in that slot instead of a real audit panel (see
+`docs/modules/appointments-ui-design.md` §4.2).
+**Revisit**: add `GET /api/appointments/{appointment}/audit-logs` + `AppointmentController::auditLogs()` +
+`AppointmentPolicy::viewAuditLogs` (admin only), mirroring the Patients pattern exactly. Small, low-risk —
+the write-side capture already works, only the read-side route is missing. Not blocking.
+
 ### Appointment mutation endpoints don't eager-load relations
 `AppointmentResource` responses from `store`/`confirm`/`check-in`/`start`/`complete`/`cancel`/`no-show`/`update` don't eager-load `patient`/`dentist`/`appointment_type` (only `index`/`show` do), so the frontend's `appointments.store.ts` issues a follow-up `GET /api/appointments/{id}` after every mutation to re-hydrate those nested fields before updating its cache — see `docs/modules/appointments-ui-design.md` §11 "Post-Mutation Rehydration."
 **Revisit**: if these controller actions eager-load the same three relations before returning their `AppointmentResource` (mirroring what `index`/`show` already do), the frontend's extra round-trip can be deleted entirely. Small, low-risk backend change; not blocking initial implementation.

@@ -1,13 +1,42 @@
 # Appointments Frontend Module — UI/UX Design Document
 
-Status: **Draft, pending approval.** No frontend code is written until this document is approved by the
-user, per the project's two-phase-per-module workflow. Once approved, this document drives Phase 2
-implementation step by step, and is superseded by `docs/modules/appointments.md` (the final module doc)
-only once implementation, tests, and QA are all complete.
+Status: **Revised 2026-07-16, superseding the earlier draft — pending approval.** No new frontend *screen/
+component* code is written until this revision is approved, per the project's two-phase-per-module
+workflow. Once approved, this document drives implementation of the remaining UI (Calendar rendering,
+Dialogs, Detail screen, Schedule/Types screens, Dashboard widgets — see the new §20 Implementation Sequence)
+and is superseded by `docs/modules/appointments.md` (the final module doc) only once implementation, tests,
+and QA are all complete.
 
 Grounded in the **already-approved and implemented backend** (`docs/modules/appointments-design-draft.md`,
 188/188 backend tests passing) — this document does not re-litigate backend decisions, it designs the Vue
 layer that consumes that API exactly as built.
+
+**What has already shipped since the original draft (verified directly against the current codebase, not
+assumed) — this revision's main job is to bring the document in line with it:**
+
+1. **Appointments frontend infrastructure** (`fbd1a4a feat(appointments): frontend infrastructure`,
+   `CHANGELOG.md`): `frontend/src/types/appointment.ts` (matches this doc's §12 field-for-field), six Pinia
+   stores (`appointments.ts`, `appointmentTypes.ts`, `workingHours.ts`, `timeOff.ts`, `calendar.ts`,
+   `providers.ts` — note the filename, corrected below), the `frontend/src/services/appointments/` API
+   Services layer (`appointmentsApi`, `appointmentTypesApi`, `workingHoursApi`, `timeOffApi`, `providersApi`,
+   `errors.ts`), `auth.ts`'s `isDentist`/`isReceptionist`/`canManageAppointments` getters, placeholder routes
+   and nav entry, `appointments.*` i18n keys, and the permanent Vitest/`@vue/test-utils`/ESLint/Prettier
+   toolchain — all already built, matching this doc's data-layer design (§9-§12) almost exactly. 64 tests
+   passing for this layer.
+2. **Application shell / route permissions** (`ea0a264 feat: implement SaaS application layout and route
+   permissions`): a real sidebar+header shell (`AppSidebar.vue`/`AppHeader.vue`/`config/navigation.ts`), a
+   working `meta.roles` + `router.beforeEach` route-guard mechanism with a `ForbiddenView.vue`, dark
+   mode/RTL wiring — this **replaces** several "doesn't exist yet" assumptions the original draft made (see
+   §1.2/§1.10 below, revised accordingly).
+3. **Design system / typography pass** (`220988f`): Inter/IBM Plex Sans Arabic fonts, a `DentalSuitePreset`
+   PrimeVue theme, class-based dark mode (`.dark` on `<html>`), Tailwind v4 CSS-first config (no
+   `tailwind.config.js`) — informs §14's contrast/dark-mode checklist below.
+
+**Still not built (the actual scope of this document going forward):** every real screen/component this doc
+designs in §2-§9 — `AppointmentsView`/`AppointmentDetailView`/`AppointmentTypesView`/`DentistScheduleView`
+are today bare "coming soon" placeholder cards, and `frontend/src/components/appointments/` doesn't exist
+yet. Nothing in §2-§9, §13-§19 below needed to change on that account — those sections were always designing
+work that hadn't started; only the "current state" framing sections needed correcting.
 
 **Decision already confirmed with the user before this document was written:** the Calendar Screen will use
 **`@fullcalendar/vue3`** (Option A from the backend design doc's §15a), not a custom-built board.
@@ -16,38 +45,42 @@ layer that consumes that API exactly as built.
 
 ## New Dependencies Introduced by This Module
 
-Per `coding-standards.md`'s "every third-party package addition must be called out, not silently added"
-rule and `PROJECT_CONTEXT.md`'s "never introduce unnecessary packages" instruction, every new package this
-design requires is listed here up front, with rationale, for explicit approval alongside the rest of this
-document.
+Per `coding-standards.md`'s third-party-package callout rule (stated for `composer.json` specifically, but
+applied here in the same spirit for `package.json`) and `PROJECT_CONTEXT.md`'s "never introduce unnecessary
+packages" instruction, every package this design still requires is listed here for explicit approval.
 
-| Package | Type | Why |
-|---|---|---|
-| `@fullcalendar/core` | runtime | FullCalendar engine, required by every other FullCalendar package |
-| `@fullcalendar/vue3` | runtime | Official Vue 3 wrapper component |
-| `@fullcalendar/daygrid` | runtime | Month view (`dayGridMonth`) |
-| `@fullcalendar/timegrid` | runtime | Day/Week views with an hourly time grid (`timeGridDay`/`timeGridWeek`) — needed for realistic appointment-duration visualization, which `dayGrid` alone can't show |
-| `@fullcalendar/interaction` | runtime | `dateClick`/`select`/`eventClick` — required for "click empty slot → open New Appointment" and "click appointment → open details" |
-| `@fullcalendar/resource` | runtime | Base resource plugin, required by `resource-timegrid` |
-| `@fullcalendar/resource-timegrid` | runtime | Powers the **Dentist Schedule View** (one column per dentist within a single day) — this is the MIT-licensed "vertical resource" plugin, distinct from `@fullcalendar/resource-timeline` (the horizontal Gantt-style plugin, which requires a commercial license and is **not** used here). **Verify the current license terms of this specific package at implementation time** before installing — FullCalendar's free/premium split has shifted between major versions in the past, and this document should not be treated as the final word on licensing. |
-| `vitest` | dev | Test runner — this repo currently has **zero** frontend test tooling (no vitest, no `@vue/test-utils`, confirmed by inspecting `package.json`), yet this task's mandatory rules require every component to be "tested." Vitest is the natural pairing for a Vite project (shares config, near-zero setup cost). |
-| `@vue/test-utils` | dev | Component mounting/testing utilities for Vue 3 |
-| `jsdom` | dev | DOM environment for Vitest component tests |
-| `@vitest/coverage-v8` | dev | Coverage reporting, so "tested" is verifiable, not just asserted |
+**Now installed already, not a new addition — corrected from the original draft:** `vitest` (`^3.0.5`),
+`@vue/test-utils` (`^2.4.6`), `jsdom` (`^25.0.1`), `@vitest/coverage-v8` (`^3.0.5`) all shipped as part of the
+Appointments frontend-infrastructure step above (`frontend/package.json` devDependencies), alongside ESLint
+and Prettier (not part of the original draft's ask, but added in the same step). One correction to how they
+were wired in: `frontend/vitest.config.ts` is a **separate** config file, not a `test` block merged into
+`vite.config.ts` as the original draft assumed — `frontend/vitest.config.ts`'s own header comment explains
+why (this project's `vite` resolves to a rolldown-based build whose `Plugin` types conflict with the
+non-rolldown `vite` that `vitest/config` bundles internally; `vue-tsc` would flag it as a type error if
+merged). Functionally equivalent (`environment: 'jsdom'`, `globals: false`, `setupFiles`, v8 coverage) — just
+two files instead of one.
 
-**This toolchain is permanent, not module-scoped.** Once added, Vitest/`@vue/test-utils`/`jsdom`/
-`@vitest/coverage-v8` become part of the project's standard frontend toolchain for every module going
-forward (Dental Chart, Treatment Plans, Billing, etc.), the same way Larastan/Pint are now standing backend
-tooling rather than a one-off addition for Patients. Concretely, this means:
-- A `test` block added to the existing `vite.config.ts` (`environment: 'jsdom'`, `globals: false` — explicit
-  imports of `describe`/`it`/`expect` from `vitest`, matching the codebase's existing preference for explicit
-  imports over global magic), plus a small `frontend/src/test/setup.ts` (mounts, i18n/Pinia test plugins).
-- New root-level `npm run test` and `npm run test:coverage` scripts in `frontend/package.json`, sitting
-  alongside the existing `dev`/`build`/`preview` scripts permanently.
-- A coverage threshold is **not** hard-gated in CI as part of this module (no CI pipeline exists yet in this
-  repo to gate) — coverage reporting exists so it's visible and verifiable, not to fail a build that doesn't
-  exist yet. Revisit once/if CI is introduced.
-- Every future module's design doc should reference this same toolchain rather than re-deciding it.
+**Installed 2026-07-16, confirmed MIT** — covers Day/Week/Month/List in full:
+
+| Package | Version | License (verified via `npm pack` + reading the tarball's `LICENSE.md` directly, not just the registry's `license` field) | Why |
+|---|---|---|---|
+| `@fullcalendar/core` | `6.1.21` | MIT | FullCalendar engine, required by every other FullCalendar package |
+| `@fullcalendar/vue3` | `6.1.21` | MIT | Official Vue 3 wrapper component |
+| `@fullcalendar/daygrid` | `6.1.21` | MIT | Month view (`dayGridMonth`) |
+| `@fullcalendar/timegrid` | `6.1.21` | MIT | Day/Week views with an hourly time grid (`timeGridDay`/`timeGridWeek`) — needed for realistic appointment-duration visualization, which `dayGrid` alone can't show |
+| `@fullcalendar/interaction` | `6.1.21` | MIT | `dateClick`/`select`/`eventClick` — required for "click empty slot → open New Appointment" and "click appointment → open details" |
+
+**Correction — the original draft's licensing claim was wrong, caught by this document's own "verify at
+implementation time" instruction:** `@fullcalendar/resource` and `@fullcalendar/resource-timegrid` are
+**not** MIT. Both ship a `LICENSE.md` stating they're part of "FullCalendar Premium," tri-licensed as (a) a
+**paid Commercial License**, (b) **Creative Commons BY-NC-ND** (non-commercial use only — not usable by a
+commercial SaaS product), or (c) **GPLv3** (strong copyleft — not compatible with a closed-source commercial
+codebase without releasing the conjoined work under GPLv3 too). None of the three is "use it for free in a
+commercial product," unlike the rest of the FullCalendar set above. This directly affects the **Dentist
+Schedule (resource) view** (§2.1's `resourceTimeGridDay`), which is the only feature in this design that
+needs these two packages — nothing else does. **Not installed; a decision on how to proceed is needed before
+this specific view is built** — see the open item added to §20/closing summary below. Day/Week/Month/List
+views are unaffected and already fully buildable with the confirmed-MIT set above.
 
 No other packages are introduced. Specifically **not** added: a validation library (the existing manual
 `reactive()` + server-422-driven-errors pattern from `PatientFormDialog.vue` is reused, not replaced — see
@@ -92,40 +125,57 @@ this out).
 **Type configuration flow (admin, rare):**
 1. `/appointments/types` → CRUD appointment types (name, duration, color, active).
 
-### 1.2 Navigation flow
+### 1.2 Navigation flow — **already shipped, differently from the original draft**
+
+The original draft proposed in-page tabs for Types/Schedule; the frontend-infrastructure step instead
+already wired them as **sidebar nav children** (`frontend/src/config/navigation.ts`), rendered one level deep
+by `AppSidebarItem.vue`. This is the real, current structure — not a proposal:
 
 ```
-DefaultLayout nav bar
- ├─ Dashboard  (existing, gains Appointments widgets)
- ├─ Patients   (existing, gains an "Appointments" tab on PatientDetailView)
- ├─ Appointments  ← NEW top-level nav item (i18n key `nav.appointments` already exists, unused until now)
- │   ├─ /appointments            Board / List (default landing)
- │   ├─ /appointments/:id        Appointment Details
- │   ├─ /appointments/types      Appointment Types (admin only — nav-hidden otherwise, still route-guarded)
- │   └─ /appointments/schedule   Working Hours + Time Off (admin; dentist sees own time-off only)
- └─ Users      (existing)
+AppSidebar (config/navigation.ts)
+ ├─ Dashboard    (routeName: 'dashboard')
+ ├─ Patients     (routeName: 'patients')
+ ├─ Appointments (routeName: 'appointments' — clicking the parent itself goes to the Board)
+ │   ├─ Calendar   → routeName: 'appointments'        (appointments.nav.board)
+ │   ├─ Types      → routeName: 'appointment-types'   (appointments.nav.types)
+ │   └─ Schedule   → routeName: 'dentist-schedule'    (appointments.nav.schedule)
+ ├─ Dental Chart / Treatment Plans / Billing / Reports  (comingSoon: true, disabled)
+ ├─ Users        (routeName: 'users', roles: ['admin'])
+ └─ Settings     (comingSoon: true, disabled)
 ```
 
-Sub-navigation within `/appointments` (types/schedule) is via a small in-page tab/link bar at the top of
-`AppointmentsView.vue`, not additional top-nav items — mirrors how `PatientDetailView` doesn't get its own
-top-nav entry either. Only `nav.appointments` is added to `DefaultLayout.vue`; it links to `/appointments`.
-Admin-only sub-pages are hidden from the in-page tab bar (not just from the route) for non-admins, exactly
-like the existing `canManage`/`canDelete` local-boolean pattern in `PatientsView`/`UsersView` — the route
-itself is still reachable by URL for any authenticated role, but the page component checks the role and
-renders a `403`-style "not authorized" empty state if accessed without permission, matching what already
-happens implicitly today (no route currently has role-based guards; this is the same convention, not a new
-one).
+`nav.appointments` and the three `appointments.nav.*` keys are already live i18n keys, already wired. No nav
+work remains for this module — the only thing this document adds here is deciding whether the *route*
+should also be role-gated (see the revised §1.3/§1.10 below), since today the sidebar visually hides nothing
+extra for Types/Schedule beyond the parent's normal visibility to every role.
 
-### 1.3 Screen hierarchy
+**Consequence for `PatientDetailView`'s new Appointments panel and Dashboard widgets**: unaffected by any of
+the above — they're existing pages gaining new content, not new nav entries, exactly as originally designed.
 
-| Route | Component | Access |
-|---|---|---|
-| `/appointments` | `AppointmentsView.vue` | all roles (Board read-only for dentists beyond own-appointment actions; write actions gated per §14) |
-| `/appointments/:id` | `AppointmentDetailView.vue` | all roles |
-| `/appointments/types` | `AppointmentTypesView.vue` | admin only |
-| `/appointments/schedule` | `DentistScheduleView.vue` | admin (any dentist); dentist (own time-off only) |
-| `/patients/:id` (existing) | `PatientDetailView.vue` gains an Appointments panel | all roles (read); write follows §14 |
-| `/` (Dashboard, existing) | `DashboardView.vue` gains Appointments widgets | all roles |
+### 1.3 Screen hierarchy — route guard revised (new capability didn't exist in the original draft)
+
+| Route (`name`) | Component | Access | Route-level guard |
+|---|---|---|---|
+| `appointments` → `/appointments` | `AppointmentsView.vue` | all roles (Board read-only for dentists beyond own-appointment actions; write actions gated per §14) | none needed — every role has a legitimate reason to open the Board |
+| `appointment-detail` → `/appointments/:id` | `AppointmentDetailView.vue` | all roles | none |
+| `appointment-types` → `/appointments/types` | `AppointmentTypesView.vue` | admin only | **recommend adding `meta: { roles: ['admin'] }`**, mirroring the `users` route's precedent (`router/index.ts:38`) |
+| `dentist-schedule` → `/appointments/schedule` | `DentistScheduleView.vue` | admin (any dentist); dentist (own time-off only) | **recommend adding `meta: { roles: ['admin', 'dentist'] }`** — a receptionist has no task on this screen per §14's permission matrix (working-hours edits are admin-only; time-off is admin-any/dentist-own) |
+| `/patients/:id` (existing) | `PatientDetailView.vue` gains an Appointments panel | all roles (read); write follows §14 | none (unchanged) |
+| `/` (Dashboard, existing) | `DashboardView.vue` gains Appointments widgets | all roles | none (unchanged) |
+
+**Why this changed from the original draft:** at the time the draft was written, no route in this codebase
+had role-based guarding at all, so the plan was necessarily page-level-only ("the page component checks the
+role and renders a `403`-style empty state"). Since then, the Application Shell step built a real, tested
+`meta.roles` + `router.beforeEach` + `ForbiddenView.vue` mechanism and already uses it for `users` (`meta: {
+roles: ['admin'] }`, `router/index.ts:38`). Today, `appointment-types`/`dentist-schedule` have **no**
+`meta.roles` set — they're reachable by any authenticated role by URL, with no guard at all yet (not even the
+page-level check the original draft assumed would exist by default). Adding the two `meta.roles` entries
+above is a two-line router change, consistent with the one precedent that already exists, and is recommended
+as part of this module's implementation rather than left as page-level-only UX gating. The page components
+still separately enforce the finer-grained rule that a `dentist` role user only ever sees **their own**
+working-hours/time-off inside `DentistScheduleView` (no dentist selector shown to them) — that part of the
+original design is unchanged, since `meta.roles` only gates "which roles reach this route at all," not
+"which dentist's data a given dentist-role user sees."
 
 ### 1.4 Component hierarchy (high level)
 
@@ -148,7 +198,7 @@ AppointmentDetailView
  ├─ AppointmentCard          (summary header)
  ├─ AppointmentActionsBar    (Confirm/CheckIn/Start/Complete/Cancel/NoShow)
  ├─ AppointmentTimeline      (status timestamps)
- ├─ AppointmentAuditHistory  (admin-only, mirrors PatientDetailView's audit panel)
+ ├─ FutureFeaturePlaceholder (Audit History slot — no backend route yet, see §4.2)
  └─ FutureFeaturePlaceholder × 4 (Treatment Plan / Invoices / Clinical Notes / Attachments)
 
 DentistScheduleView
@@ -205,7 +255,7 @@ state, only for the persisted domain data.
 ### 1.6 API integration strategy
 
 See §11 for the full endpoint-to-action map. Summary of the approach:
-- The Board/List/Dashboard all read from **one shared range-keyed cache** in `appointments.store.ts` —
+- The Board/List/Dashboard all read from **one shared range-keyed cache** in `appointments.ts` —
   fetching a date range merges into the cache rather than replacing it, so switching Day→Week→Month doesn't
   discard already-loaded data outside the new range unnecessarily (see §13 for cache-eviction policy).
 - Every mutation (create/update/reschedule/status-transition) is followed by a single `GET
@@ -257,13 +307,11 @@ See §11 for the full endpoint-to-action map. Summary of the approach:
 - If the Board's range fetch itself fails (not a mutation, the initial load), show an inline retry state in
   place of the calendar grid — a broken calendar with no data and no way to retry is a dead end.
 
-### 1.10 Permission handling
+### 1.10 Permission handling — **already implemented**, plus a new route-guard layer that didn't exist before
 
-No new frontend infrastructure invented (per the research: no route meta, no permission directive/composable
-exists anywhere in this codebase). This module **does** need more than the existing single `isAdmin`
-getter, though, because the role matrix here (admin / receptionist / dentist-own) is more nuanced than
-anything Patients/Users needed. Two small, additive getters/helpers are added to `auth.ts` (not a new
-abstraction layer — same flat style as `isAdmin`):
+**Already shipped, not still to-do:** `auth.ts` already has the three getters this section originally
+proposed adding, verbatim (`frontend/src/stores/auth.ts:12-15`), including a doc-comment on
+`canManageAppointments` explicitly citing this design doc's §1.10:
 
 ```ts
 const isDentist = computed(() => user.value?.role === 'dentist')
@@ -271,13 +319,25 @@ const isReceptionist = computed(() => user.value?.role === 'receptionist')
 const canManageAppointments = computed(() => isAdmin.value || isReceptionist.value)
 ```
 
-Ownership checks (`start`/`complete` open to the treating dentist for their own appointment) are plain
+Ownership checks (`start`/`complete` open to the treating dentist for their own appointment) remain plain
 inline comparisons at the point of use (`auth.user?.id === appointment.dentist_id`), exactly like the
-existing `canManage`/`canDelete` local-boolean convention — not centralized, matching precedent.
+existing `canManage`/`canDelete` local-boolean convention — not centralized, matching precedent. Nothing to
+build here.
 
-The frontend's role checks remain pure UX (hiding buttons a call would 403 on) — the API's Policies are the
-real enforcement boundary, exactly as `docs/api-guidelines.md` states. No new security surface is created by
-getting a frontend check wrong; worst case is a hidden button becomes visible and the API still rejects.
+**What genuinely changed since the original draft:** the claim "no route meta, no permission
+directive/composable exists anywhere in this codebase" is no longer true. `router/index.ts` now has a typed
+`RouteMeta.roles?: UserRole[]` plus a `router.beforeEach` guard that redirects to a new `ForbiddenView.vue`
+when the current user's role isn't in `to.meta.roles` — already used for `/users`. §1.3 above updates the
+route table to recommend using this same mechanism for `/appointments/types` and `/appointments/schedule`,
+instead of relying on page-level-only gating as the sole line of defense. The last paragraph below (frontend
+checks are UX only, API Policies are the real boundary) is unchanged and still the governing principle —
+adding `meta.roles` doesn't change that; it just means an unauthorized user gets redirected before the page
+even mounts, rather than seeing the page briefly render a "not authorized" state.
+
+The frontend's role checks remain pure UX (hiding buttons/routes a call would 403 on) — the API's Policies
+are the real enforcement boundary, exactly as `docs/api-guidelines.md` states. No new security surface is
+created by getting a frontend check wrong; worst case is a hidden button or reachable route becomes visible
+and the API still rejects.
 
 ### 1.11 Mobile behavior
 
@@ -311,7 +371,7 @@ Summarized here; full detail in §13.
 
 `AppointmentsView.vue` hosts a `CalendarToolbar` + `CalendarFilters` + a body that toggles between
 `AppointmentCalendar` (FullCalendar) and `AppointmentListTable` (DataTable), sharing the same
-`calendar.store.ts` filter state so switching views never loses context.
+`calendar.ts` filter state so switching views never loses context.
 
 ### 2.1 View modes (FullCalendar `initialView` mapping)
 
@@ -320,8 +380,15 @@ Summarized here; full detail in §13.
 | Day | `timeGridDay` | `@fullcalendar/timegrid` |
 | Week | `timeGridWeek` | `@fullcalendar/timegrid` |
 | Month | `dayGridMonth` | `@fullcalendar/daygrid` |
-| Dentists | `resourceTimeGridDay` | `@fullcalendar/resource-timegrid` — one column per dentist, single day, for the front desk to see the whole clinic's chairs at once |
+| Dentists | `resourceTimeGridDay` | **On hold** — `@fullcalendar/resource-timegrid` turned out to require a paid FullCalendar Premium commercial license (or GPLv3/non-commercial terms, neither viable here), not MIT as originally assumed (see the corrected "New Dependencies" section above). Not built until that's resolved. |
 | List | *(not a FullCalendar view)* `AppointmentListTable.vue`, a `DataTable` | — |
+
+**Interim behavior while the Dentists (resource) view is on hold**: the front desk gets the same
+"see everyone at once" capability today via the Board's Dentist multiselect filter (§2.7) left empty
+(shows all dentists' appointments together on Day/Week) — not a one-column-per-dentist layout, but not a
+capability gap either, since every appointment still shows which dentist it belongs to via
+`AppointmentEventContent`. The `resourceTimeGridDay` toggle itself is simply not offered in
+`CalendarToolbar.vue` until the licensing decision is made.
 
 ### 2.2 Time Grid
 
@@ -343,7 +410,7 @@ hour on each side) rather than hardcoded `08:00`–`18:00`, so a clinic with ear
 ### 2.4 Working Hours overlay
 
 FullCalendar's native `businessHours` option, built from the currently-filtered dentist's
-`dentist_working_hours` rows (`workingHours.store.ts`), converting `day_of_week`/`start_time`/`end_time`
+`dentist_working_hours` rows (`workingHours.ts`), converting `day_of_week`/`start_time`/`end_time`
 into FullCalendar's `{ daysOfWeek, startTime, endTime }` shape. Only rendered when exactly one dentist is
 selected in the filters (business hours differ per dentist — shading a union of multiple dentists' hours
 would be meaningless/misleading). In the Dentist Schedule (resource) view, each resource column gets its
@@ -352,7 +419,7 @@ natively — this is the one view where "all dentists" and "working hours shadin
 
 ### 2.5 Time Off overlay
 
-Rendered as FullCalendar **background events** (`display: 'background'`), fetched from `timeOff.store.ts`
+Rendered as FullCalendar **background events** (`display: 'background'`), fetched from `timeOff.ts`
 for whichever dentist(s) are in view, with a distinct fill (a subtle diagonal-stripe pattern via a CSS
 `background-image`, red-tinted) so it reads as "unavailable" without being confused with a booked
 appointment.
@@ -364,10 +431,10 @@ for it to make sense on).
 
 ### 2.7 Filters
 
-`CalendarFilters.vue`: Dentist (multiselect, `providers.store.ts` — see §10), Status (multiselect,
-`APPOINTMENT_STATUSES`), Appointment Type (multiselect, `appointmentTypes.store.ts`), Patient (the same
+`CalendarFilters.vue`: Dentist (multiselect, `providers.ts` — see §10), Status (multiselect,
+`APPOINTMENT_STATUSES`), Appointment Type (multiselect, `appointmentTypes.ts`), Patient (the same
 `PatientSearchSelect.vue` typeahead used in the dialog, single-select here). All filters live in
-`calendar.store.ts` and apply identically to both Board and List (the Board applies them client-side against
+`calendar.ts` and apply identically to both Board and List (the Board applies them client-side against
 the already-fetched range — see §13 — the List view's underlying data is the same cached range).
 
 ### 2.8 Search
@@ -448,7 +515,7 @@ future screen (e.g. a hypothetical staff-shift calendar) unchanged. All FullCale
 
 ### 2.13 Future support (designed for, not built)
 
-- **Multi-clinic**: `calendar.store.ts`'s filter shape reserves room for a future `branch_id` filter the same
+- **Multi-clinic**: `calendar.ts`'s filter shape reserves room for a future `branch_id` filter the same
   way the backend reserves a future `branch_id` column (§7 of the backend design) — no rework needed, just
   an additive filter + query param once branches exist.
 - **Multiple dentists**: already fully supported today (the Dentist multiselect filter, the resource view).
@@ -508,7 +575,7 @@ maintaining two separate patient-creation forms (violates "no duplicated code"),
 
 ### 3.4 Appointment Type
 
-`AppointmentTypeSelect.vue`: `Select` sourced from `appointmentTypes.store.ts` (cached after first fetch —
+`AppointmentTypeSelect.vue`: `Select` sourced from `appointmentTypes.ts` (cached after first fetch —
 this is small, rarely-changing clinic configuration data, not worth refetching per dialog open), showing a
 small color swatch + name per option (`is_active === false` types excluded from the list, since
 `StoreAppointmentRequest` requires `is_active`, but still resolvable/displayed if an *existing* appointment
@@ -516,7 +583,7 @@ references a since-deactivated type — see §3.1's edit-mode handling).
 
 ### 3.5 Dentist
 
-`DentistSelect.vue`: sourced from `providers.store.ts` (see §10/§11's gap note — paginated client-side from
+`DentistSelect.vue`: sourced from `providers.ts` (see §10/§11's gap note — paginated client-side from
 `GET /api/users`, cached for the session), rendered as name only (no avatars in V1 — Users module has no
 photo/avatar field to source one from).
 
@@ -524,7 +591,7 @@ photo/avatar field to source one from).
 
 `SlotPicker.vue`: appears once dentist + type/duration are chosen. Calls `GET /api/available-slots` with
 the current `dentist_id`/`date`/`duration_minutes`. Computes the *full* range of candidate slot times for
-that day from `workingHours.store.ts` (same 15-minute granularity as the backend's
+that day from `workingHours.ts` (same 15-minute granularity as the backend's
 `slot_interval_minutes` default) and cross-references against the endpoint's returned `slots` array —
 returned slots render as clickable chips, all other times in the working-hours range render disabled/muted
 ("outside hours or busy," not distinguished further — the backend doesn't tell us *why* a slot is
@@ -604,30 +671,37 @@ the chain visually terminates at that point with a distinct red/amber marker ins
 path — never shows a "Completed (pending)" ghost step for a cancelled appointment, which would be
 misleading.
 
-### 4.2 Audit History — verify-first, placeholder-fallback (revised per required change #9)
+### 4.2 Audit History — **resolved by direct verification, no longer conditional**
 
-**Do not build the full `AppointmentAuditHistory.vue` panel speculatively.** The generic `Auditable` trait/
-audit infrastructure is confirmed already applied to the `Appointment` model (per the backend design doc
-§18/§21.9's implementation notes), the same way it's applied to `Patient` — but the specific HTTP route
-exposing it for Appointments (presumably `GET /api/appointments/{id}/audit-logs`, mirroring
-`patients/{id}/audit-logs`) was **not** in the backend research's confirmed endpoint table. This document is
-otherwise strictly grounded in confirmed backend behavior, so this one item does not get the same treatment
-as everything else — implementation must resolve it first, not assume it.
+The original draft treated this as a "verify-first" open item because the backend research hadn't confirmed
+whether an audit-log route existed for Appointments. This revision checked directly against the current
+backend code, so the decision below is now definitive, not conditional:
 
-**Required implementation sequence for this component:**
-1. Before writing `AppointmentAuditHistory.vue`, check `backend/routes/api.php` (and, if needed, the
-   `AppointmentController`) directly for a route exposing `Appointment` audit-log entries.
-2. **If confirmed**: build `AppointmentAuditHistory.vue` exactly as originally designed — admin-only
-   (`v-if="auth.isAdmin"`, mirroring `PatientDetailView`'s exact existing gating), a `Card` with a small
-   `DataTable` (`size="small"`) of `action`/`by`/`when`/`changes`, fetched via a new `appointmentsApi.ts`
-   function (§11.1) calling that confirmed route.
-3. **If not confirmed / route doesn't exist**: render `FutureFeaturePlaceholder.vue` (§9) in its place —
-   still admin-gated, labeled clearly (e.g. "Audit history — coming soon" rather than silently hiding the
-   section, so admins know the capability is planned, not omitted by mistake) — and log a `TECH_DEBT.md`
-   entry ("Appointment audit-log route not yet exposed") at that point, rather than fabricating mock data or
-   guessing a route path that might not exist. This keeps the "no placeholders, no TODOs, no temporary
-   implementations" rule intact for *real* features while being honest that this specific one has an
-   unconfirmed backend dependency — the placeholder itself is the honest state, not a violation of that rule.
+- **`Appointment` does use the `Auditable` trait** (`backend/app/Models/Appointment.php:6,19` — `use
+  Auditable, HasFactory, HasUuids, SoftDeletes;`), so every create/update/status-transition is already being
+  recorded in `audit_logs`, exactly like `Patient`. The data exists.
+- **No route exposes it.** `backend/routes/api.php` has no `appointments/{appointment}/audit-logs` route (the
+  Patients equivalent is `GET /api/patients/{patient}/audit-logs`, `routes/api.php:25`, admin-only via
+  `PatientPolicy::viewAuditLogs`). `AppointmentController` has no `auditLogs()` method, and
+  `AppointmentPolicy` has no `viewAuditLogs` ability. Confirmed absent, not just unconfirmed.
+
+**Decision: build `FutureFeaturePlaceholder.vue` in this slot now — do not build `AppointmentAuditHistory.vue`
+in this phase.** The conditional "verify then maybe build" branch from the original draft collapses to its
+placeholder branch, definitively:
+
+- Still admin-gated (`v-if="auth.isAdmin"`, mirroring `PatientDetailView.vue:188`'s exact existing pattern —
+  note there's no separate `PatientAuditHistory.vue` component to literally copy either; `PatientDetailView`
+  inlines its audit `Card`+`DataTable` directly, so this would be a new extraction either way, not a copy of
+  an existing file).
+- Labeled clearly ("Audit history — coming soon"), not silently hidden, so admins know the capability is
+  planned, not omitted by mistake.
+- **A fresh `TECH_DEBT.md` entry is needed** (none exists yet for this — confirmed by reading the current
+  file) along these lines: *"Appointment audit-log route not yet exposed — the `Auditable` trait already
+  records every change on `Appointment`; only the `GET /api/appointments/{appointment}/audit-logs` route +
+  `AppointmentController::auditLogs()` + `AppointmentPolicy::viewAuditLogs` are missing, mirroring the
+  Patients pattern exactly. Small, low-risk backend addition — revisit when backend capacity allows; not
+  blocking."* This is a materially smaller lift than the original draft implied (no new audit *infrastructure*
+  needed, just the read-side route/controller/policy — the write-side capture is already happening today).
 
 ### 4.3 Appointment Information
 
@@ -746,7 +820,7 @@ selector, avoids a third route).
   them). Genuinely future work per the backend design doc §25 — not attempted here.
 - **Conflict visualization**: any appointment(s) that fall inside a proposed time-off range are shown as a
   warning list inside `TimeOffFormDialog` before submit (a client-side cross-reference against the
-  `appointments.store.ts` cache for that dentist/date-range — informational only, since the backend does
+  `appointments.ts` cache for that dentist/date-range — informational only, since the backend does
   **not** block creating time-off that overlaps existing appointments, nor does it cascade-cancel them; the
   human decides what to do about those appointments).
 
@@ -755,7 +829,7 @@ selector, avoids a third route).
 ## 7. Appointment Types
 
 `AppointmentTypesView.vue`, admin-only route. Follows the `UsersView.vue` inline-DataTable convention (no
-separate list-fetching store beyond the shared `appointmentTypes.store.ts` used elsewhere) rather than
+separate list-fetching store beyond the shared `appointmentTypes.ts` used elsewhere) rather than
 `PatientsView`'s server-paginated pattern, because the backend's `GET /api/appointment-types` is — like
 appointment types generally — a small, unpaginated lookup list (confirmed via the backend research), so
 client-side sorting/searching over the full (small) list is both correct and simpler than fake pagination
@@ -783,14 +857,14 @@ controls over a dataset that's realistically 5-20 rows for any clinic.
 - **Sorting**: client-side column sort (DataTable's built-in `sortable` columns) — name, duration, active
   status.
 - **Search**: client-side filter-as-you-type over the already-loaded list (no server round-trip needed for
-  a small unpaginated dataset) — a plain `computed()` filter over `appointmentTypes.store.ts`'s cached list,
+  a small unpaginated dataset) — a plain `computed()` filter over `appointmentTypes.ts`'s cached list,
   not a new API call pattern.
 
 ---
 
 ## 8. Dashboard Widgets
 
-Added to the existing `DashboardView.vue` as new sections, reusing `appointments.store.ts` (today's range is
+Added to the existing `DashboardView.vue` as new sections, reusing `appointments.ts` (today's range is
 just another range fetch, cached and shared with the Board if the user later opens `/appointments`).
 
 - **`TodayScheduleWidget.vue`** — today's appointments in a compact list (time, patient, dentist, status
@@ -832,24 +906,24 @@ state, not exposed.
 | `AppointmentDialog.vue` | Create/Edit dialog — Patient / Appointment / Notes tabs | `visible`, `appointment?: Appointment`, `prefill?: AppointmentPrefill` | `update:visible`, `saved` (Appointment) | — | `PatientSearchSelect`, `DentistSelect`, `AppointmentTypeSelect`, `DurationInput`, `SlotPicker`, `ConflictAlert`, `PatientFormDialog` (reused, §3.3) |
 | `PatientSearchSelect.vue` | Typeahead patient search + inline "Create New Patient" | `modelValue: string \| null` (patient id), `disabled?` | `update:modelValue`, `patient-selected` (Patient) | — | `PatientSummaryCard`, `PatientFormDialog`, `GET /patients?search=` |
 | `PatientSummaryCard.vue` | Small reusable patient summary (name/code/phone/age) | `patient: AppointmentPatientSummary \| Patient` | — | — | — |
-| `DentistSelect.vue` | Dentist dropdown | `modelValue: string \| null`, `disabled?` | `update:modelValue` | — | `providers.store.ts` (§10) |
-| `AppointmentTypeSelect.vue` | Appointment type dropdown with color swatch, duration auto-fill signal | `modelValue: string \| null` | `update:modelValue`, `type-selected` (AppointmentType, so the dialog can conditionally prefill duration per §3.1) | — | `appointmentTypes.store.ts` |
+| `DentistSelect.vue` | Dentist dropdown | `modelValue: string \| null`, `disabled?` | `update:modelValue` | — | `providers.ts` (§10) |
+| `AppointmentTypeSelect.vue` | Appointment type dropdown with color swatch, duration auto-fill signal | `modelValue: string \| null` | `update:modelValue`, `type-selected` (AppointmentType, so the dialog can conditionally prefill duration per §3.1) | — | `appointmentTypes.ts` |
 | `DurationInput.vue` | Bounded (5–480 min) numeric stepper | `modelValue: number` | `update:modelValue` | — | PrimeVue `InputNumber` |
-| `SlotPicker.vue` | Available-slot chip grid | `dentistId`, `date`, `durationMinutes` | `slot-selected` (Date) | — | `GET /available-slots` (direct call, §11 documented exception), `workingHours.store.ts` |
+| `SlotPicker.vue` | Available-slot chip grid | `dentistId`, `date`, `durationMinutes` | `slot-selected` (Date) | — | `GET /available-slots` (direct call, §11 documented exception), `workingHours.ts` |
 | `ConflictAlert.vue` | Renders 409/422 conflict responses, hard-block vs. soft-warning-with-override | `error: AppointmentConflictError \| null` | `override` (emits the `override_field` name to set) | — | — |
 | `AppointmentTimeline.vue` | Vertical status-timestamp stepper | `appointment: Appointment` | — | — | — |
-| `AppointmentAuditHistory.vue` | Admin-only audit trail panel — **conditional on endpoint confirmation, see §4.2** | `appointmentId: string` | — | — | Falls back to `FutureFeaturePlaceholder` if the endpoint is unconfirmed/unavailable at implementation time |
+| ~~`AppointmentAuditHistory.vue`~~ | **Not built in this phase** (§4.2 — no backend route exists, confirmed); `FutureFeaturePlaceholder.vue` renders in its slot instead | — | — | — | — |
 | `AppointmentActionsBar.vue` | Container for the six status-transition buttons, state-machine + role aware | `appointment: Appointment` | `action-completed` (Appointment) | — | `StatusActionButton` |
 | `StatusActionButton.vue` | Single action button, optional reason-dialog variant (Cancel/No-Show) | `action: AppointmentActionKind`, `appointment: Appointment`, `requiresReason?` | `confirmed` (reason?: string) | — | PrimeVue `ConfirmPopup`/`Dialog` |
-| `WorkingHoursEditor.vue` | Weekly working-hours grid editor | `dentistId: string` | `saved` | — | `WorkingHoursDayRow`, `workingHours.store.ts` |
+| `WorkingHoursEditor.vue` | Weekly working-hours grid editor | `dentistId: string` | `saved` | — | `WorkingHoursDayRow`, `workingHours.ts` |
 | `WorkingHoursDayRow.vue` | One day's shift rows, add/remove/copy | `dayOfWeek: number`, `shifts: DentistWorkingHour[]` | `update:shifts`, `copy-to` (targetDays: number[]) | — | — |
-| `TimeOffCalendar.vue` | Chronological time-off list for a dentist | `dentistId: string` | `add-clicked` | — | `timeOff.store.ts` |
-| `TimeOffFormDialog.vue` | Create time-off entry, with appointment-conflict warning list | `visible`, `dentistId: string` | `update:visible`, `saved` | — | `appointments.store.ts` (read-only, for the conflict warning list) |
+| `TimeOffCalendar.vue` | Chronological time-off list for a dentist | `dentistId: string` | `add-clicked` | — | `timeOff.ts` |
+| `TimeOffFormDialog.vue` | Create time-off entry, with appointment-conflict warning list | `visible`, `dentistId: string` | `update:visible`, `saved` | — | `appointments.ts` (read-only, for the conflict warning list) |
 | `AppointmentTypeFormDialog.vue` | Create/Edit an appointment type | `visible`, `appointmentType?: AppointmentType` | `update:visible`, `saved` | — | `DurationInput`, PrimeVue `ColorPicker` |
 | `PatientAppointmentsPanel.vue` | Patient Detail's "Appointments" tab | `patientId: string` | — | — | `AppointmentListTable`, `AppointmentDialog` |
-| `TodayScheduleWidget.vue` | Dashboard: today's appointments, waiting/late highlighting | `scope: 'own' \| 'all'` (§8) | — | — | `AppointmentCard`, `StatusActionButton`, `appointments.store.ts` |
-| `UpcomingAppointmentsWidget.vue` | Dashboard: next few days' appointments | `scope: 'own' \| 'all'` | — | — | `AppointmentCard`, `appointments.store.ts` |
-| `FutureFeaturePlaceholder.vue` | Generic "coming soon" card, reused across the Detail view's future-module slots and as `AppointmentAuditHistory`'s fallback | `icon: string`, `titleKey: string`, `moduleName?: string` | — | — | — |
+| `TodayScheduleWidget.vue` | Dashboard: today's appointments, waiting/late highlighting | `scope: 'own' \| 'all'` (§8) | — | — | `AppointmentCard`, `StatusActionButton`, `appointments.ts` |
+| `UpcomingAppointmentsWidget.vue` | Dashboard: next few days' appointments | `scope: 'own' \| 'all'` | — | — | `AppointmentCard`, `appointments.ts` |
+| `FutureFeaturePlaceholder.vue` | Generic "coming soon" card, reused across the Detail view's future-module slots and the Audit History slot (§4.2) | `icon: string`, `titleKey: string`, `moduleName?: string` | — | — | — |
 
 Reused as-is, **not duplicated**: `PatientFormDialog.vue` (inline patient creation, §3.3).
 
@@ -929,10 +1003,13 @@ Cached-data-vs-application-state) follows in §10.1, as required before implemen
 
 ### 10.2 The `providers.ts` store is deliberately temporary, not a permanent domain model
 
-Named `providers.store.ts`, not `dentists.store.ts`, and documented here explicitly per the required
-revision: this store exists **only** because `GET /api/users` has no role filter and no dedicated
-dentist-listing shape (§10.1's sibling stores all wrap a real, purpose-built endpoint; this one wraps a
-workaround). Concretely:
+**Already implemented exactly as designed** (`frontend/src/stores/providers.ts`), with one filename note:
+this section originally specified `providers.store.ts`; the actual file is `providers.ts`, for consistency
+with every other store in the directory (none use a `.store.ts` suffix — `auth.ts`, `calendar.ts`,
+`appointments.ts`, etc.). Tracked in `TECH_DEBT.md` as "not a real gap, just a naming note." Named
+`providers.ts`, not `dentists.ts`, because this store exists **only** because `GET /api/users` has no role
+filter and no dedicated dentist-listing shape (§10.1's sibling stores all wrap a real, purpose-built
+endpoint; this one wraps a workaround). Concretely:
 
 - **Responsibility**: provide a de-duplicated, cached list of clinic staff with `role === 'dentist'` for
   dropdowns/filters, by paginating through the generic `GET /api/users` endpoint client-side.
@@ -947,11 +1024,12 @@ workaround). Concretely:
   rarely-changing staff list).
 - **Cached data or application state?**: cached server data, but sourced from the *wrong* endpoint shape by
   necessity — this is the tell that it's a workaround, not a modeled domain store.
-- **Removal condition**: once `TECH_DEBT.md`'s "No dedicated dentists/providers listing endpoint" entry
-  (added as part of this design revision) is resolved with a real `GET /api/dentists` or `GET /api/providers`
-  endpoint, `providers.ts` should be rewritten to call it directly (dropping the client-side pagination/
-  filtering entirely) — a contained, single-file change, not a consumer-facing rewrite, since `DentistSelect`/
-  `CalendarFilters`/etc. only ever see the store's already-filtered `items` list, never its fetch mechanics.
+- **Removal condition**: once `TECH_DEBT.md`'s existing "No dedicated dentists/providers listing endpoint"
+  entry (already tracked, added 2026-07-16 alongside the infrastructure step) is resolved with a real `GET
+  /api/dentists` or `GET /api/providers` endpoint, `providers.ts` should be rewritten to call it directly
+  (dropping the client-side pagination/filtering entirely) — a contained, single-file change, not a
+  consumer-facing rewrite, since `DentistSelect`/`CalendarFilters`/etc. only ever see the store's
+  already-filtered `items` list, never its fetch mechanics.
 
 ---
 
@@ -1080,10 +1158,12 @@ a plain error surface) — it's meant to be deleted, not hardened.
   `providers.ts`/`providersApi.listAll()` work around this (§10.2). Tracked in `TECH_DEBT.md` under "No
   dedicated dentists/providers listing endpoint" — **not** implemented as a backend change in this
   frontend-only module without separate approval.
-- **Audit-log route for Appointments unconfirmed** — the generic `Auditable` infrastructure is confirmed
-  applied to `Appointment`, but the specific route path wasn't in the backend research's endpoint table.
-  Per the required revision, `AppointmentAuditHistory.vue` is **not built speculatively against an assumed
-  path** — see §4.2 for the conditional approach (verify-first, placeholder-fallback).
+- **Audit-log route for Appointments confirmed absent** — `Appointment` does use the `Auditable` trait
+  (`backend/app/Models/Appointment.php:6,19`), so the data is already being captured, but no route/controller
+  method/Policy ability exposes it (verified directly against `routes/api.php`, `AppointmentController`,
+  `AppointmentPolicy` — none exist). Per §4.2 (revised, no longer conditional), `AppointmentAuditHistory.vue`
+  is **not built** in this phase; `FutureFeaturePlaceholder.vue` renders in its slot, and a fresh
+  `TECH_DEBT.md` entry is added for the missing route.
 
 ---
 
@@ -1233,8 +1313,8 @@ each their own route chunk too (admin-only screens most sessions never visit).
 
 `PatientFormDialog.vue` (reused for inline patient creation, §3.3) is already lazily reachable only through
 `AppointmentDialog.vue`'s "Create New Patient" path — no eager top-level import of it in `AppointmentsView`.
-Similarly, `AppointmentAuditHistory.vue`/`FutureFeaturePlaceholder.vue` (§4.2) are only pulled in from
-`AppointmentDetailView.vue`, not from the Board/List bundle.
+Similarly, `FutureFeaturePlaceholder.vue` (§4.2, used for the Audit History slot and the four other
+future-module slots) is only pulled in from `AppointmentDetailView.vue`, not from the Board/List bundle.
 
 ### 13.4 Range cache + eviction (`appointments.ts`)
 
@@ -1435,12 +1515,14 @@ with the backend design doc's own "additive, not a redesign" framing for its def
 
 ---
 
-## 16. Testing Strategy (new capability for this codebase)
+## 16. Testing Strategy — **tooling already installed and proven out** (six stores/services already have tests)
 
-This repository currently has **zero** frontend test tooling (confirmed: no `vitest`, no `@vue/test-utils`,
-no config files, in the existing `package.json`/`frontend/`). This task's mandatory rules require every
-component to be "tested," so this design introduces the minimum viable test setup rather than skipping it —
-flagged as new dev-only tooling in the dependency table at the top of this document.
+Corrected from the original draft: the toolchain below is **already installed and wired in**
+(`frontend/vitest.config.ts`, `frontend/src/test/setup.ts`), not a still-to-add capability — see the "New
+Dependencies" section at the top of this document. It's already been exercised for real: every one of the
+six Pinia stores and five API-service files built in the infrastructure step has a passing `*.test.ts`
+alongside it (64 tests total per `CHANGELOG.md`). What follows is the plan for extending that same,
+already-proven approach to the components/screens this document still designs.
 
 - **Unit tests**: pure logic extracted where it's worth isolating — the slot-availability cross-reference
   computation in `SlotPicker.vue`, the status-transition visibility matrix in `AppointmentActionsBar.vue`,
@@ -1464,9 +1546,12 @@ flagged as new dev-only tooling in the dependency table at the top of this docum
   Patients' Final Review was verified per `docs/modules/patients.md`) remains the actual acceptance gate for
   "does this really work," with Vitest covering regression-safety and component-contract correctness rather
   than full user-journey verification.
-- Vitest wired into the existing `vite.config.ts` (shared config, `test` block added) and a new `npm run
-  test` script; `vue-tsc -b` (existing `build` script) remains the source of truth for type-correctness, not
-  duplicated by the test suite.
+- Vitest is wired via its own `frontend/vitest.config.ts`, deliberately **separate** from `vite.config.ts`
+  (not a shared `test` block as the original draft assumed) — this project's `vite` resolves to a
+  rolldown-based build whose `Plugin` types conflict with the non-rolldown `vite` that `vitest/config` bundles
+  internally; merging them makes `vue-tsc` report a type error. `npm run test`/`test:watch`/`test:coverage`
+  already exist as scripts. `vue-tsc -b` (existing `build` script) remains the source of truth for
+  type-correctness, not duplicated by the test suite.
 
 ---
 
@@ -1571,30 +1656,84 @@ boundary is a real seam a future change can land inside without rippling upward.
 
 ---
 
-## Summary of Open Items Carried Into Implementation (not blocking approval, but must be resolved before the relevant step)
+## 20. Implementation Sequence
 
-1. **§4.2** — verify whether an Appointments audit-log route exists before building `AppointmentAuditHistory.vue`;
-   render `FutureFeaturePlaceholder` instead if it doesn't, per the required verify-first/placeholder-fallback
-   approach (no longer "confirm before assuming" — the fallback path is now fully specified either way).
+This document's scattered references to "Step 9 (Polish)"/"Step 10 (QA)" (§2.10, §16) previously had no
+defined step list. Given what's already shipped (see the status block at the top), the remaining work
+breaks down as:
+
+| Step | Scope | Depends on | Status |
+|---|---|---|---|
+| 1 | Data-layer infrastructure (types, stores, services, routes, i18n, toolchain) | — | ✅ Completed (2026-07-16, prior session) |
+| 2 | Install `@fullcalendar/*` set; build `AppointmentCalendar.vue`/`CalendarToolbar`/`CalendarFilters`; wire the Board to real data | Step 1 | ✅ **Completed (2026-07-16).** Day/Week/Month (MIT only — `@fullcalendar/resource`/`resource-timegrid` deliberately **not** installed, see the FullCalendar decision below); List toggle is Step 3; Patient filter deferred to Step 4 (needs `PatientSearchSelect.vue`). Verified against the real dev stack (Docker/Postgres) in Arabic/English × light/dark — see CHANGELOG for the three real bugs this caught and fixed, all treated as production-quality fixes, not temporary patches. User-approved 2026-07-16. |
+| 3 | `AppointmentListTable.vue` + List toggle on `AppointmentsView.vue` | Step 1 | Not started — awaiting approval to begin |
+| 4 | `AppointmentDialog.vue` + its sub-components (`PatientSearchSelect`, `DentistSelect`, `AppointmentTypeSelect`, `DurationInput`, `SlotPicker`, `ConflictAlert`) — the Create/Edit flow end to end, including the inline `PatientFormDialog` reuse | Steps 2-3 | Not started |
+| 5 | `AppointmentDetailView.vue` + `AppointmentCard`/`AppointmentTimeline`/`AppointmentActionsBar`/`StatusActionButton` + the `FutureFeaturePlaceholder` slots (§4.2, §4.7) | Step 4 | Not started |
+| 6 | `DentistScheduleView.vue` (Working Hours + Time Off, §5-§6) — `meta.roles: ['admin', 'dentist']` route guard already applied 2026-07-16 (§1.3) | Step 1 | Not started (route guard portion already done) |
+| 7 | `AppointmentTypesView.vue` CRUD (§7) — `meta.roles: ['admin']` route guard already applied 2026-07-16 (§1.3) | Step 1 | Not started (route guard portion already done) |
+| 8 | Dashboard widgets (§8) + `PatientAppointmentsPanel.vue` on `PatientDetailView` | Steps 2-5 | Not started |
+| 9 | Polish: keyboard shortcuts (§2.10), accessibility checklist (§14) verified against real markup, reduced-motion, luminance-based text-color helper | Steps 2-8 | Not started |
+| 10 | QA: manual click-through per `CLAUDE.md`'s browser-testing rule, full Vitest suite, `vue-tsc -b`, ESLint/Prettier clean, then the Final Review Report (per the project's two-phase workflow) and `docs/modules/appointments.md`. **Must also confirm no demo/seed data leaks into any production deployment workflow** before this module is considered production-ready. | Step 9 | Not started |
+
+**FullCalendar decision (confirmed 2026-07-16, permanent unless explicitly revisited):** continue with the MIT package set only (`core`/`vue3`/`daygrid`/`timegrid`/`interaction`). Do not add `@fullcalendar/resource`/`resource-timegrid` or any other FullCalendar Premium package. The Dentists (resource-column) view stays deferred until a commercial-license purchase is separately evaluated and approved, or a custom non-premium alternative is explicitly chosen — see item 8 in the closing summary below and `docs/decisions.md`.
+
+Each step should still get its own sign-off checkpoint consistent with how the backend was built layer-by-layer (per `appointments-design-draft.md`'s Implementation Progress table) — this isn't mandating one giant PR.
+
+---
+
+## Summary of Open Items Carried Into Implementation
+
+1. **§4.2 — resolved and actioned.** No Appointments audit-log route exists (verified directly, not
+   assumed); `FutureFeaturePlaceholder` renders in that slot, and the `TECH_DEBT.md` entry ("Appointment
+   audit-log route not yet exposed") has been added.
 2. **§7** — Price and Default fields from the task brief have no backing database column; **not implemented**
    in this design, by requirement. If genuinely wanted, needs a separate, explicitly-approved backend change
    (out of this module's frontend-only scope).
-3. **§10.2 / §11.5** — the `providers.store.ts` workaround (paginating `GET /api/users` client-side) is a
-   real, accepted-for-now gap, now tracked in `TECH_DEBT.md` ("No dedicated dentists/providers listing
-   endpoint," added alongside this revision) — not blocking, revisit when backend capacity allows.
-4. **§11.4** — the post-mutation rehydration extra `GET` call is a documented, intentionally temporary
-   workaround, also now tracked in `TECH_DEBT.md` ("Appointment mutation endpoints don't eager-load
-   relations") — remove `upsertFromMutation()`'s extra call once the backend eager-loads those relations on
-   mutation responses.
-5. **New dependencies table** (top of document) — the `@fullcalendar/*` set (including verifying
-   `resource-timegrid`'s current license terms at install time) and the now-permanent Vitest toolchain both
-   need explicit approval alongside the rest of this design, per project convention. **Confirmed approved as
-   part of this revision round** for the Vitest toolchain and the FullCalendar package set overall; the one
-   remaining action item is the `resource-timegrid` license-terms spot-check at the moment of `npm install`,
-   not a decision left open here.
+3. **§10.2/§11.5 — the `providers.ts` workaround already exists and is already tracked.** Not a new item to
+   add: `TECH_DEBT.md`'s "No dedicated dentists/providers listing endpoint" entry already exists (added
+   2026-07-16), cross-referencing this doc. Not blocking; revisit when backend capacity allows.
+4. **§11.4 — the post-mutation rehydration workaround is already implemented and already tracked**, in both
+   `frontend/src/stores/appointments.ts` (the `fetchOne` call after every mutation) and `TECH_DEBT.md`
+   ("Appointment mutation endpoints don't eager-load relations"). Remove it once the backend eager-loads
+   those relations on mutation responses — no other frontend code needs to change when that happens.
+5. **New dependencies — installed 2026-07-16, license-verified by downloading and reading the actual
+   tarball, not just the registry field.** `@fullcalendar/{core,vue3,daygrid,timegrid,interaction}` are MIT,
+   installed, and cover Day/Week/Month/List in full. **New finding, needs your decision (see item 8 below)**:
+   `@fullcalendar/resource`/`resource-timegrid` — needed only for the Dentists (resource-column) view — turned
+   out to be FullCalendar Premium (paid Commercial / CC-BY-NC-ND non-commercial / GPLv3), not MIT as the
+   original draft assumed. Not installed.
+6. **§1.3/§1.10 — applied 2026-07-16.** The `meta.roles` route guard is now live for `/appointments/types`
+   (`['admin']`) and `/appointments/schedule` (`['admin', 'dentist']`), matching the precedent already set for
+   `/users`, with router tests covering all three role combinations for both routes.
+7. **Documentation sync — done 2026-07-16, before any component code was written**, per the required
+   ordering: `docs/architecture.md`'s Cross-Cutting Concerns table now correctly says audit logs are
+   implemented (and notes the Appointments-specific gap from item 1); its Backend/Frontend Contract section
+   now documents the 409/`code`/`overridable` error shape; its frontend directory tree now lists the
+   `services/` layer. `docs/roadmap.md` now reflects Appointments as "In Progress" with a status summary
+   instead of "Up next."
+8. **New, needs your decision — the Dentists (resource-column) calendar view's licensing.** Confirmed by
+   downloading and reading `@fullcalendar/resource`/`@fullcalendar/resource-timegrid`'s actual `LICENSE.md`:
+   both are FullCalendar Premium, tri-licensed as (a) a paid Commercial License, (b) CC-BY-NC-ND
+   (non-commercial only — not usable here), or (c) GPLv3 (copyleft — not compatible with a closed-source
+   commercial codebase). None of the three is "free to use in a commercial product." Options:
+   - **(a) Purchase a FullCalendar Premium commercial license** and build the Dentists view as originally
+     designed (§2.1, §2.13's "resources array is already resource-generic" framing).
+   - **(b) Drop the Dentists (resource-column) view from V1**, keep Day/Week/Month/List (already fully
+     buildable, MIT, no cost) — the "see everyone at once" need is still met via the Board's Dentist filter
+     left empty (§2.1's interim note above); revisit the resource view later if/when a commercial license is
+     purchased, additive, no rework of anything already built.
+   - **(c) Build a lightweight custom side-by-side day view** (N single-dentist columns via CSS grid/flex,
+     no drag-and-drop between columns) instead of the premium plugin — free, but real engineering effort on a
+     narrower version of what the premium plugin already solves.
+   **Decision confirmed by the user, 2026-07-16: (b).** The Dentists (resource-column) view is postponed
+   entirely for now — proceed with Day/Week/Month/List (MIT) + Dentist filtering only. No custom CSS-grid
+   replacement is built, and no FullCalendar Premium dependency is added. Keep `AppointmentCalendar.vue`'s
+   props/emits contract (§2.12) resource-generic as designed, so the Dentists view is a clean additive change
+   later (swap in the premium plugin, or build the custom version, per whichever real SaaS-customer need
+   justifies the cost) — not a rework of anything built now.
 
 ---
 
 This document is ready for your review. Please confirm, adjust, or reject before any implementation
-(Phase 2) begins — per the project's two-phase workflow, no code will be written until this design is
-approved.
+(Phase 2, remaining steps per §20) begins — per the project's two-phase workflow, no component/screen code
+will be written until this revision is approved.

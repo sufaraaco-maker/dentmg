@@ -4,6 +4,44 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (Calendar Board, Phase 2 Step 2)
+- **Design doc revised** (`docs/modules/appointments-ui-design.md`) against the current codebase before any
+  component was built: corrected several stale assumptions (test tooling already installed, route guards now
+  exist, nav already shipped as sidebar children not in-page tabs), resolved the Audit History open item
+  definitively (no backend route exists — `FutureFeaturePlaceholder` used instead, `Auditable` trait already
+  captures the data), and added a new §20 Implementation Sequence.
+- **Docs synced before implementation, per the two-phase workflow**: `docs/architecture.md` (audit-log
+  status corrected, `services/` layer documented, 409 error shape added), `docs/roadmap.md` (Appointments
+  status updated from "Up next"), `TECH_DEBT.md` (new entry for the missing Appointments audit-log route).
+- **Route guards applied**: `meta: { roles: ['admin'] }` on `/appointments/types`, `meta: { roles: ['admin',
+  'dentist'] }` on `/appointments/schedule`, matching the `/users` precedent — router tests added for both.
+- **`@fullcalendar/{core,vue3,daygrid,timegrid,interaction}` installed** (MIT, license-verified by reading
+  each package's actual tarball, not just the registry field) — covers Day/Week/Month/List in full.
+  `@fullcalendar/resource`/`resource-timegrid` (needed only for the Dentists resource-column view) turned
+  out to be FullCalendar Premium (paid/non-commercial/GPLv3), not MIT as the original draft assumed — **not
+  installed**; the Dentists view is deferred, decided with the user rather than assumed.
+- **New components** (`frontend/src/components/appointments/`): `AppointmentCalendar.vue` (presentational
+  FullCalendar wrapper, §2.12), `AppointmentEventContent.vue`, `AppointmentStatusChip.vue`,
+  `CalendarToolbar.vue` (Day/Week/Month — List deferred to the next step), `CalendarFilters.vue`
+  (Dentist/Status/Type — Patient filter deferred until `PatientSearchSelect.vue` exists). New
+  `frontend/src/lib/color.ts` (WCAG luminance-based contrast helper for clinic-picked event colors).
+  `AppointmentsView.vue`'s Board is now wired to real stores/data instead of the placeholder card.
+- **Three real bugs found and fixed via manual browser verification against the real dev stack** (not
+  caught by unit tests, which mock at the service boundary): `appointmentsApi.list()` assumed a `{data:
+  [...]}` paginated envelope, but `GET /api/appointments` deliberately returns a bare array — its own unit
+  test had mocked the wrong shape, masking the crash; FullCalendar's `eventSources: []` was silently
+  suppressing the separately-passed `events` array (merged into one array instead); `initialView`/
+  `initialDate` are FullCalendar "write-once" options — the toolbar's Day/Week/Month switch and prev/next/
+  today now call the imperative `changeView()`/`gotoDate()` API instead.
+- **RTL and dark-mode gaps closed**: FullCalendar's `direction` now follows the active locale (grid was
+  staying LTR while the rest of the page mirrored); FullCalendar's own CSS variables now respect `.dark`
+  (header/day cells were staying white).
+- Fixed a pre-existing timezone-fragile test in `calendar.test.ts` (`.toISOString()` date comparison broke
+  in positive-UTC-offset timezones) using the project's existing `toLocalDateString()` helper.
+- Verified manually (headless-Chromium screenshots against the real `docker compose` stack, with a real
+  appointment created via `AppointmentService::create()`) across Arabic/English × light/dark × Day/Week/
+  Month views. `npm run build`, `vue-tsc`, `eslint`, `prettier`, and `vitest` (114/114) all pass.
+
 ### Added — Design System / Typography & Visual Polish
 - Formalized the application shell's visual language into a documented design system
   (`docs/design-system.md`) — the shell is now considered **frozen** for all future modules.

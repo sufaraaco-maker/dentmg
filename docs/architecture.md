@@ -40,8 +40,12 @@ Services/                Business logic
 
 ```
 lib/          axios instance, shared API helpers
-stores/       Pinia stores
-router/       route table + auth guard
+stores/       Pinia stores (one per module as needed, e.g. auth, ui, appointments)
+services/     API Services layer, per module as needed (e.g. services/appointments/*Api.ts) —
+              typed request/response shaping + error normalization between a module's stores
+              and lib/api.ts; introduced by Appointments (see modules/appointments-ui-design.md
+              §11.1), not used by Patients/Users, which call lib/api.ts directly instead
+router/       route table + auth guard (meta.roles + router.beforeEach → ForbiddenView.vue)
 layouts/      shared page chrome (DefaultLayout.vue — sidebar + header shell)
 components/   layout/ (AppSidebar, AppHeader, AppSidebarItem) + per-feature components
 views/        route-level pages
@@ -61,6 +65,7 @@ radius, or shadow value directly.
 - `JsonResource::withoutWrapping()` is enabled globally — single-resource responses are unwrapped (`{ "id": ... }`, not `{ "data": { ... } }`). Paginated collections keep Laravel's standard `{data, links, meta}` envelope since that shape is structural, not stylistic.
 - Auth: Laravel Sanctum SPA (cookie/session), not API tokens — frontend and backend are first-party, same-site (different ports only) in dev.
 - Errors follow Laravel conventions: `422` + `errors: {field: [...]}`, `403` + `message`, `401` + `message: "Unauthenticated."`.
+- **Conflict responses** (introduced by Appointments — see [api-guidelines.md](api-guidelines.md)): `409` (or `422`, for non-conflict business-rule failures) + `{ message, code, overridable?, override_field? }`. `code` is the stable machine-readable identifier the frontend switches on (never parses `message`); `overridable`/`override_field` are present only when the conflict can be resubmitted with an explicit override flag (e.g. `patient_conflict`), absent for hard blocks (e.g. `dentist_conflict`).
 
 ## Cross-Cutting Concerns — Status
 
@@ -68,7 +73,7 @@ radius, or shadow value directly.
 |---|---|
 | UUID primary keys | Implemented (`HasUuids` on all models) |
 | Soft deletes | Implemented (`users`; standard for every future module unless a model has a specific reason not to) |
-| Audit logs | Not implemented — see [decisions.md](decisions.md) and [TECH_DEBT.md](../TECH_DEBT.md) |
+| Audit logs | Implemented (Patients module, 2026-07-14) — generic `Auditable` trait + `AuditObserver` + `AuditLog` model, opt-in per model, costs nothing extra for a future module to adopt. `Appointment` already uses the trait too, but no API route exposes Appointment audit logs yet (Patients' `GET /api/patients/{patient}/audit-logs` has no Appointments equivalent — see [TECH_DEBT.md](../TECH_DEBT.md)) |
 | Multi-branch | Not implemented — deferred until a real need appears (see [decisions.md](decisions.md)) |
 
 See [modules/](modules/) for per-module detail and [decisions.md](decisions.md) for the reasoning behind each choice above.
