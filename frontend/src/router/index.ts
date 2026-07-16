@@ -1,6 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import type { UserRole } from '@/types/user'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    guestOnly?: boolean
+    /** Roles allowed to access this route. Omitted = any authenticated role. Enforced here, not just hidden from nav. */
+    roles?: UserRole[]
+  }
+}
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -25,6 +35,7 @@ export const router = createRouter({
           path: 'users',
           name: 'users',
           component: () => import('@/views/UsersView.vue'),
+          meta: { roles: ['admin'] },
         },
         {
           path: 'patients',
@@ -56,6 +67,11 @@ export const router = createRouter({
           name: 'appointment-detail',
           component: () => import('@/views/AppointmentDetailView.vue'),
         },
+        {
+          path: 'forbidden',
+          name: 'forbidden',
+          component: () => import('@/views/ForbiddenView.vue'),
+        },
       ],
     },
     {
@@ -79,6 +95,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: 'dashboard' }
+  }
+
+  if (to.meta.roles && (!auth.user || !to.meta.roles.includes(auth.user.role))) {
+    return { name: 'forbidden' }
   }
 
   return true

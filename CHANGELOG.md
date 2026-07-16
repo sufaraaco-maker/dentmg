@@ -4,6 +4,35 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Application Shell / Layout Architecture
+- Replaced the informal top-nav `DefaultLayout.vue` with a permanent sidebar+header SaaS shell
+  (`docs/modules/layout-architecture.md`, design approved 2026-07-16). New components under
+  `frontend/src/components/layout/`: `AppSidebar.vue` (desktop-docked, collapsible icon rail, and — via a
+  `variant: 'desktop' | 'drawer'` prop — reused unmodified inside the mobile PrimeVue `Drawer`, so nav markup
+  and role-filtering logic are never duplicated), `AppHeader.vue` (hamburger on mobile, notifications
+  popover, locale/theme toggles moved from the old header, user menu with logout), `AppSidebarItem.vue`
+  (single nav row: active/disabled/coming-soon states, one level of expandable children).
+- `frontend/src/config/navigation.ts` — configuration-driven single source of truth for the sidebar. Each
+  entry declares `labelKey`/`icon`/optional `routeName`/optional `roles`/optional `comingSoon`. Unbuilt
+  modules (Dental Chart, Treatment Plans, Billing, Reports, Settings) render visible but disabled with a
+  "Soon" badge — no placeholder routes or fake pages. Adding a real module later is a two-line change.
+- `stores/ui.ts` gained `sidebarCollapsed` (persisted to `localStorage`, same pattern as theme/locale) and
+  `mobileSidebarOpen` + open/close actions for the mobile drawer.
+- **Route-level authorization**, closing a pre-existing gap where hiding a nav item was the only thing
+  stopping a non-admin from reaching `/users` by URL: `router/index.ts` adds a `RouteMeta.roles?: UserRole[]`
+  module augmentation, `users` now carries `meta: { roles: ['admin'] }`, and `router.beforeEach` redirects to
+  a new `forbidden` route when the authenticated user's role isn't allowed — centralized in the router, not
+  duplicated per-view.
+- `frontend/src/views/ForbiddenView.vue` (403) — new route `forbidden`.
+- Full RTL support (logical Tailwind utilities throughout; the mobile `Drawer`'s slide edge follows locale
+  direction) and dark-mode parity, verified in `ar`/`en` and both themes.
+- `nav.*`/`common.*`/`errors.forbidden.*` i18n keys added to `en`/`ar`/`tr` (parity-verified).
+- First round of **component-level tests** for the project (previously store/service-only): 24 new tests
+  across `AppSidebarItem`, `AppSidebar` (role-based visibility, coming-soon rendering, mobile drawer close),
+  `AppHeader` (hamburger opens the drawer), `stores/ui.ts`, and the router's role guard. `src/test/setup.ts`
+  now globally registers the PrimeVue plugin, the `Tooltip` directive, and a `matchMedia` polyfill (jsdom
+  doesn't implement it) — permanent test infra, not just for this module.
+
 ### Added — Appointments (Frontend Infrastructure, Phase 2 Step 1)
 - `frontend/src/types/appointment.ts` — `Appointment`/`AppointmentType`/`DentistWorkingHour`/`DentistTimeOff`/conflict-error/payload types, matching every backend Resource/Request shape field-for-field (no `any`).
 - New **API Services layer** (`frontend/src/services/appointments/`): `appointmentsApi`, `appointmentTypesApi`, `workingHoursApi`, `timeOffApi`, `providersApi`, plus `errors.ts` normalizing 409/422 `code` responses into a typed `AppointmentConflictError` (`docs/modules/appointments-ui-design.md` §11.1/§17) — the layer between the new Pinia stores and `lib/api.ts`.

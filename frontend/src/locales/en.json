@@ -7,8 +7,18 @@
     "users": "Users",
     "patients": "Patients",
     "appointments": "Appointments",
+    "dentalChart": "Dental Chart",
+    "treatmentPlans": "Treatment Plans",
+    "billing": "Billing",
+    "reports": "Reports",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "comingSoon": "Soon",
+    "toggleSidebar": "Toggle sidebar",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -28,7 +38,18 @@
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications yet",
+    "account": "Account"
+  },
+  "errors": {
+    "forbidden": {
+      "code": "403",
+      "heading": "Access Denied",
+      "message": "You don't have permission to access this page.",
+      "backToDashboard": "Back to Dashboard"
+    }
   },
   "auth": {
     "title": "Sign In",

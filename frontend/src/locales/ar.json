@@ -7,8 +7,18 @@
     "users": "المستخدمون",
     "patients": "المرضى",
     "appointments": "المواعيد",
+    "dentalChart": "مخطط الأسنان",
+    "treatmentPlans": "خطط العلاج",
+    "billing": "الفواتير",
+    "reports": "التقارير",
     "settings": "الإعدادات",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "comingSoon": "قريبًا",
+    "toggleSidebar": "تبديل الشريط الجانبي",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "collapse": "طي الشريط الجانبي",
+    "expand": "توسيع الشريط الجانبي"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -28,7 +38,18 @@
     "cancel": "إلغاء",
     "save": "حفظ",
     "edit": "تعديل",
-    "delete": "حذف"
+    "delete": "حذف",
+    "notifications": "الإشعارات",
+    "noNotifications": "لا توجد إشعارات بعد",
+    "account": "الحساب"
+  },
+  "errors": {
+    "forbidden": {
+      "code": "403",
+      "heading": "الوصول مرفوض",
+      "message": "ليس لديك صلاحية للوصول إلى هذه الصفحة.",
+      "backToDashboard": "العودة إلى لوحة التحكم"
+    }
   },
   "auth": {
     "title": "تسجيل الدخول",

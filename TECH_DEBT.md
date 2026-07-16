@@ -4,6 +4,21 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### Header notifications is inert UI (no notification backend)
+`AppHeader.vue`'s bell icon opens a popover that always reads "No notifications yet" — there is no
+notification system in the backend. Scaffolded deliberately as inert UI (per the layout architecture design,
+`docs/modules/layout-architecture.md`) rather than wired to fake data, so the header only needs a data source
+filled in later, not a redesign.
+**Revisit**: when a real notification system exists on the backend.
+
+### `AppSidebarItem.vue` supports only one level of nested children
+`config/navigation.ts`'s `NavItem.children` type technically allows arbitrary nesting, but the renderer
+(`AppSidebarItem.vue`) only renders one level (used today only by "Appointments" → Calendar/Types/Working
+Hours). Deliberately not built recursive since no current or near-term IA item needs a second level, and
+premature recursion would add complexity with no current benefit.
+**Revisit**: only if a future module's navigation genuinely needs two levels of nesting; extend
+`AppSidebarItem.vue` to render itself recursively at that point.
+
 ### `national_id` uniqueness survives soft delete
 A soft-deleted patient's `national_id` can't be reused by a newly-registered patient, because the DB-level unique constraint doesn't exclude soft-deleted rows. Simpler than scoping the constraint, and arguably safer for data integrity, but worth knowing.
 **Revisit**: only if re-registering a previously-deleted patient with the same national ID becomes a real workflow need.

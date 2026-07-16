@@ -7,8 +7,18 @@
     "users": "Kullanıcılar",
     "patients": "Hastalar",
     "appointments": "Randevular",
+    "dentalChart": "Diş Şeması",
+    "treatmentPlans": "Tedavi Planları",
+    "billing": "Faturalandırma",
+    "reports": "Raporlar",
     "settings": "Ayarlar",
-    "logout": "Çıkış Yap"
+    "logout": "Çıkış Yap",
+    "comingSoon": "Yakında",
+    "toggleSidebar": "Kenar çubuğunu aç/kapat",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "collapse": "Kenar çubuğunu daralt",
+    "expand": "Kenar çubuğunu genişlet"
   },
   "dashboard": {
     "title": "Panel",
@@ -28,7 +38,18 @@
     "cancel": "İptal",
     "save": "Kaydet",
     "edit": "Düzenle",
-    "delete": "Sil"
+    "delete": "Sil",
+    "notifications": "Bildirimler",
+    "noNotifications": "Henüz bildirim yok",
+    "account": "Hesap"
+  },
+  "errors": {
+    "forbidden": {
+      "code": "403",
+      "heading": "Erişim Reddedildi",
+      "message": "Bu sayfaya erişim izniniz yok.",
+      "backToDashboard": "Panele Dön"
+    }
   },
   "auth": {
     "title": "Giriş Yap",
