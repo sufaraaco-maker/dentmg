@@ -36,6 +36,26 @@ export const router = createRouter({
           name: 'patient-detail',
           component: () => import('@/views/PatientDetailView.vue'),
         },
+        {
+          path: 'appointments',
+          name: 'appointments',
+          component: () => import('@/views/AppointmentsView.vue'),
+        },
+        {
+          path: 'appointments/types',
+          name: 'appointment-types',
+          component: () => import('@/views/AppointmentTypesView.vue'),
+        },
+        {
+          path: 'appointments/schedule',
+          name: 'dentist-schedule',
+          component: () => import('@/views/DentistScheduleView.vue'),
+        },
+        {
+          path: 'appointments/:id',
+          name: 'appointment-detail',
+          component: () => import('@/views/AppointmentDetailView.vue'),
+        },
       ],
     },
     {

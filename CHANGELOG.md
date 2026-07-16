@@ -4,6 +4,16 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (Frontend Infrastructure, Phase 2 Step 1)
+- `frontend/src/types/appointment.ts` — `Appointment`/`AppointmentType`/`DentistWorkingHour`/`DentistTimeOff`/conflict-error/payload types, matching every backend Resource/Request shape field-for-field (no `any`).
+- New **API Services layer** (`frontend/src/services/appointments/`): `appointmentsApi`, `appointmentTypesApi`, `workingHoursApi`, `timeOffApi`, `providersApi`, plus `errors.ts` normalizing 409/422 `code` responses into a typed `AppointmentConflictError` (`docs/modules/appointments-ui-design.md` §11.1/§17) — the layer between the new Pinia stores and `lib/api.ts`.
+- Six new Pinia stores: `appointments` (range cache with interval merge/eviction, post-mutation rehydration), `appointmentTypes`, `workingHours`, `timeOff` (per-dentist caches), `calendar` (pure UI state — view mode/date/filters, drives `appointments.fetchRange`), `providers` (temporary dentist-list workaround, explicitly documented as such per §10.2).
+- `auth.ts` gained `isDentist`/`isReceptionist`/`canManageAppointments` getters.
+- Routes + minimal placeholder views wired for `/appointments`, `/appointments/:id`, `/appointments/types`, `/appointments/schedule`; `nav.appointments` link added to `DefaultLayout.vue` (the i18n key already existed, unused until now). Static routes ordered before the `:id` wildcard.
+- `appointments.*` i18n namespace added to `en`/`ar`/`tr` (parity-verified — 111 leaf keys each).
+- **New permanent frontend toolchain**: Vitest + `@vue/test-utils` + jsdom + `@vitest/coverage-v8` (`vitest.config.ts`, kept separate from `vite.config.ts` — merging them hit a type conflict between this project's rolldown-based `vite` and the (different) `vite` Vitest bundles internally); ESLint (flat config, `eslint-plugin-vue` + `@vue/eslint-config-typescript` + `@vue/eslint-config-prettier`) and Prettier, matching the existing code style exactly. `npm run test`/`test:coverage`/`lint`/`format` scripts added.
+- 64 new frontend tests (10 service/store files) covering the range-cache/eviction logic, post-mutation rehydration, conflict-error propagation, per-dentist caching, the provider pagination workaround, and the new auth getters.
+
 ### Added — Demo Environment (system validation checkpoint)
 - `backend/database/seeders/AppointmentTypeSeeder.php` — 6 named default types (Consultation, Cleaning, Filling, Root Canal, Crown, Extraction) with realistic durations/colors, `firstOrCreate`-based so it's safe to re-run. Closes the gap where `GET /api/appointment-types` returned `[]` on a fresh install.
 - `DatabaseSeeder` now seeds three clearly-named demo accounts (`admin@example.com`, `dentist@example.com`, `receptionist@example.com`, password `password`) plus 8 demo patients, replacing the single generic `test@example.com` admin account.

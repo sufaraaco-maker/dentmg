@@ -115,5 +115,31 @@
         "deleted": "Silindi"
       }
     }
+  },
+  "appointments": {
+    "title": "Randevular",
+    "comingSoon": "Bu ekran yakında kullanıma sunulacak.",
+    "nav": {
+      "board": "Takvim",
+      "types": "Randevu Türleri",
+      "schedule": "Çalışma Saatleri ve İzinler"
+    },
+    "status": {
+      "scheduled": "Planlandı",
+      "confirmed": "Onaylandı",
+      "checked_in": "Giriş Yapıldı",
+      "in_progress": "Devam Ediyor",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi",
+      "no_show": "Gelmedi"
+    },
+    "loadError": "Randevular yüklenemedi",
+    "saved": "Randevu başarıyla kaydedildi",
+    "saveError": "Randevu kaydedilemedi",
+    "deleteError": "Randevu silinemedi",
+    "forbidden": "Bunu yapmaya yetkiniz yok",
+    "unexpectedError": "Bir şeyler ters gitti — lütfen tekrar deneyin",
+    "notFound": "Randevu bulunamadı",
+    "backToAppointments": "Randevulara Dön"
   }
 }

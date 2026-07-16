@@ -48,6 +48,13 @@ async function onLogout() {
             {{ t('nav.patients') }}
           </RouterLink>
           <RouterLink
+            :to="{ name: 'appointments' }"
+            class="text-sm text-surface-600 hover:text-primary dark:text-surface-300"
+            active-class="!text-primary font-medium"
+          >
+            {{ t('nav.appointments') }}
+          </RouterLink>
+          <RouterLink
             :to="{ name: 'users' }"
             class="text-sm text-surface-600 hover:text-primary dark:text-surface-300"
             active-class="!text-primary font-medium"

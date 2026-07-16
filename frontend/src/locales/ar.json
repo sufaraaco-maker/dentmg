@@ -115,5 +115,31 @@
         "deleted": "حذف"
       }
     }
+  },
+  "appointments": {
+    "title": "المواعيد",
+    "comingSoon": "هذه الشاشة قيد الإنشاء، ستتوفر قريبًا.",
+    "nav": {
+      "board": "التقويم",
+      "types": "أنواع المواعيد",
+      "schedule": "ساعات العمل والإجازات"
+    },
+    "status": {
+      "scheduled": "مجدول",
+      "confirmed": "مؤكد",
+      "checked_in": "تم تسجيل الحضور",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "no_show": "لم يحضر"
+    },
+    "loadError": "تعذّر تحميل المواعيد",
+    "saved": "تم حفظ الموعد بنجاح",
+    "saveError": "تعذّر حفظ الموعد",
+    "deleteError": "تعذّر حذف الموعد",
+    "forbidden": "ليس لديك صلاحية للقيام بذلك",
+    "unexpectedError": "حدث خطأ ما — يرجى المحاولة مرة أخرى",
+    "notFound": "الموعد غير موجود",
+    "backToAppointments": "العودة إلى المواعيد"
   }
 }

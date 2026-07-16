@@ -115,5 +115,31 @@
         "deleted": "Deleted"
       }
     }
+  },
+  "appointments": {
+    "title": "Appointments",
+    "comingSoon": "This screen is coming soon.",
+    "nav": {
+      "board": "Calendar",
+      "types": "Appointment Types",
+      "schedule": "Working Hours & Time Off"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "confirmed": "Confirmed",
+      "checked_in": "Checked In",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "no_show": "No Show"
+    },
+    "loadError": "Failed to load appointments",
+    "saved": "Appointment saved successfully",
+    "saveError": "Failed to save appointment",
+    "deleteError": "Failed to delete appointment",
+    "forbidden": "You don't have permission to do that",
+    "unexpectedError": "Something went wrong — please try again",
+    "notFound": "Appointment not found",
+    "backToAppointments": "Back to Appointments"
   }
 }

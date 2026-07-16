@@ -1,0 +1,56 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { appointmentTypesApi } from '@/services/appointments'
+import type {
+  AppointmentType,
+  CreateAppointmentTypePayload,
+  UpdateAppointmentTypePayload,
+} from '@/types/appointment'
+
+/**
+ * Small, rarely-changing clinic configuration data (dropdown source + admin CRUD backing).
+ * Cached indefinitely after first load — see docs/modules/appointments-ui-design.md §10.1.
+ */
+export const useAppointmentTypesStore = defineStore('appointmentTypes', () => {
+  const items = ref<AppointmentType[]>([])
+  const loaded = ref(false)
+  const loading = ref(false)
+
+  async function fetchAll(force = false): Promise<void> {
+    if (loaded.value && !force) return
+
+    loading.value = true
+
+    try {
+      items.value = await appointmentTypesApi.list()
+      loaded.value = true
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function create(payload: CreateAppointmentTypePayload): Promise<AppointmentType> {
+    const created = await appointmentTypesApi.create(payload)
+    items.value = [...items.value, created]
+    return created
+  }
+
+  async function update(id: string, payload: UpdateAppointmentTypePayload): Promise<AppointmentType> {
+    const updated = await appointmentTypesApi.update(id, payload)
+    items.value = items.value.map((item) => (item.id === id ? updated : item))
+    return updated
+  }
+
+  async function remove(id: string): Promise<void> {
+    await appointmentTypesApi.remove(id)
+    items.value = items.value.filter((item) => item.id !== id)
+  }
+
+  function $reset() {
+    items.value = []
+    loaded.value = false
+    loading.value = false
+  }
+
+  return { items, loaded, loading, fetchAll, create, update, remove, $reset }
+})

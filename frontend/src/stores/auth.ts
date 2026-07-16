@@ -9,6 +9,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const isDentist = computed(() => user.value?.role === 'dentist')
+  const isReceptionist = computed(() => user.value?.role === 'receptionist')
+  /** Create/update/reschedule/cancel/check-in — see docs/modules/appointments-ui-design.md §1.10. */
+  const canManageAppointments = computed(() => isAdmin.value || isReceptionist.value)
 
   async function login(email: string, password: string) {
     await fetchCsrfCookie()
@@ -32,5 +36,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, initialized, isAuthenticated, isAdmin, login, logout, fetchUser }
+  return {
+    user,
+    initialized,
+    isAuthenticated,
+    isAdmin,
+    isDentist,
+    isReceptionist,
+    canManageAppointments,
+    login,
+    logout,
+    fetchUser,
+  }
 })
