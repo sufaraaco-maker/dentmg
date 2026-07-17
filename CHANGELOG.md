@@ -4,6 +4,20 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Changed — Design System (Arabic typography, self-hosted fonts)
+- **Arabic UI face changed from IBM Plex Sans Arabic to Alexandria** (`docs/design-system.md` §1) — a
+  modern, Kufi-rooted geometric typeface, per explicit product request for a more distinctive Arabic
+  identity. Noto Kufi Arabic was evaluated and rejected as the primary UI face (its own docs recommend it
+  mainly for larger text sizes; this app's dense data tables need small-size legibility a traditional Kufi
+  face trades away).
+- **Both Inter and Alexandria moved from Google Fonts CDN to self-hosted `.woff2` files**
+  (`frontend/src/assets/fonts/`) — 3 files total (~164 KB), each a variable-weight font covering 400–700 in
+  one file. Zero external font requests now (confirmed via network trace); `index.html`'s CDN
+  `<link>`/`preconnect` pair replaced with two local `rel="preload"` hints. No new npm package added (no
+  `@fontsource`) — plain committed static assets + `@font-face` in `style.css`.
+- Verified via Playwright against the real dev stack: no layout shift (card/sidebar positions
+  pixel-identical before/after), Arabic/English × light/dark all checked, zero regressions.
+
 ### Added — Appointments (Dentist Schedule View, Phase 2 Step 6)
 - **`DentistScheduleView.vue`** (design doc §5-§6): a `DentistSelect`-driven page (admin can pick any
   dentist; a dentist-role user only ever sees their own, no selector) with two tabs.

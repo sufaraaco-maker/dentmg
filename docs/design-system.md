@@ -11,21 +11,49 @@ hover/active states). No backend, database, or API changes; no component API cha
 
 ## 1. Typography
 
+Status: **Revised 2026-07-17** — Arabic face changed from IBM Plex Sans Arabic to **Alexandria**; both
+faces moved from Google Fonts CDN to **self-hosted** files. Latin/Turkish face (Inter) is unchanged, only
+its delivery method moved.
+
 | Script | Font | Source |
 |---|---|---|
-| Latin (`en`, `tr`) | **Inter** | Google Fonts, loaded via `<link>` in `index.html` (weights 400/500/600/700) |
-| Arabic (`ar`, default locale) | **IBM Plex Sans Arabic** | Google Fonts, same `<link>`, same weights |
+| Latin (`en`, `tr`) | **Inter** | Self-hosted variable-weight `.woff2`, `frontend/src/assets/fonts/` |
+| Arabic (`ar`, default locale) | **Alexandria** | Self-hosted variable-weight `.woff2`, same directory |
 
+- **Why Alexandria over IBM Plex Sans Arabic**: IBM Plex Sans Arabic is a solid humanist sans but a generic
+  choice with no product-specific identity. Alexandria is a geometric sans built as the Arabic companion to
+  Montserrat, rooted in Kufic letterform proportions but redrawn for interface use — it reads as a
+  deliberate, modern "Kufi-style" choice per the explicit product request, while staying legible at the
+  small/dense sizes this app's data tables need (patient lists, appointment grids). **Noto Kufi Arabic** was
+  considered and rejected as the *primary* UI face for the same reason: its own documentation recommends it
+  "mainly for texts in larger font sizes" — traditional Kufi geometry trades away some legibility at dense
+  table/form sizes, a real risk for a clinical admin app. A single typeface is used for both headings and
+  body text (no display/body split), consistent with how Inter is used for Latin.
+- **Why self-hosted over Google Fonts CDN (reversing the prior decision)**: explicit user request,
+  re-evaluated and adopted — eliminates the external CDN round-trip entirely (0 third-party requests now,
+  confirmed via network trace), improves offline/on-prem readiness without waiting for that to become a
+  hard requirement, and both fonts turned out to ship as **single variable-weight files** (Google serves an
+  identical URL for every requested static weight — the standard signal for a variable-font response), so
+  self-hosting costs only 3 files total (~164 KB combined): one Arabic-subset file for Alexandria
+  (`alexandria-arabic-var.woff2`, weights 400–700 via its `wght` axis) and two Latin-script subset files for
+  Inter (`inter-latin-var.woff2` + `inter-latin-ext-var.woff2`, the latter carrying the Turkish-specific
+  glyphs — İ/ı/Ş/ş/Ğ/ğ — outside plain Latin-1). No `@fontsource` npm package was added
+  (`PROJECT_CONTEXT.md`'s "never introduce unnecessary packages" instruction) — the `.woff2` files are
+  committed directly as static assets and referenced via `@font-face` in `style.css`.
 - Font swap is driven by the existing `[dir]`/`lang` mechanism (`src/locales/index.ts`'s `setLocale()`), not
-  new JS — `body` uses `--font-sans` (Inter) by default; `[dir='rtl'] body` switches to `--font-arabic`.
+  new JS — `body` uses `--font-sans` (Inter) by default; `[dir='rtl'] body` switches to `--font-arabic`
+  (`'Alexandria', 'Inter', system-ui, sans-serif` — Inter remains the fallback for any non-Arabic glyph
+  inside RTL text, e.g. Latin digits, exactly as IBM Plex Sans Arabic's stack worked before).
 - `index.html`'s initial `<html lang="ar" dir="rtl">` matches the app's default locale, so there's no
-  flash-of-wrong-direction/font before Vue mounts.
+  flash-of-wrong-direction/font before Vue mounts; two `rel="preload"` hints (Alexandria + Inter's Latin
+  subset — the two faces the default Arabic/RTL first paint needs) replace the old CDN
+  `<link rel="preconnect">`/stylesheet pair, keeping first paint at the same or better speed with zero
+  external DNS/TLS round-trips.
 - `line-height` is 1.5 for Latin, 1.7 for Arabic (Arabic script — diacritics, descenders — needs more
   vertical room at the same font-size to stay comfortably readable).
-- **Why Google Fonts CDN over self-hosted `@fontsource` packages**: explicit user choice, trading the
-  self-hosted offline-safety benefit for setup simplicity. If DentalSuite ever needs to run fully offline
-  (e.g. an on-prem clinic deployment with no internet), revisit self-hosting at that point — no other code
-  changes needed, just swap the `<link>` for local `@font-face` declarations.
+- **No layout shift**: verified via Playwright screenshot diff against the real dev stack — Dashboard stat
+  cards, sidebar nav, and the Appointment Types table sit at pixel-identical positions before/after the
+  swap; `font-display: swap` plus the preload hints mean no invisible-text flash either.
 - `.tabular-nums` utility class (and applied by default to `.p-datatable-tbody td`) turns on
   `font-variant-numeric: tabular-nums` — used anywhere numbers must align in a column (dates, currency,
   phone numbers, the dashboard stat cards).

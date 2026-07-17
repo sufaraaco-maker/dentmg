@@ -5,11 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DentalSuite</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Self-hosted (frontend/src/assets/fonts/, see docs/design-system.md §1) — no external font CDN
+      request. Preloading only the two faces the default locale (ar/RTL) needs for first paint;
+      inter-latin-ext-var (Turkish-only glyphs) isn't preloaded since it's never needed immediately.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/src/assets/fonts/alexandria-arabic-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/src/assets/fonts/inter-latin-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
   </head>
   <body>
