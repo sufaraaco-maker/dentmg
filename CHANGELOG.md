@@ -18,6 +18,29 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 - Verified via Playwright against the real dev stack: no layout shift (card/sidebar positions
   pixel-identical before/after), Arabic/English × light/dark all checked, zero regressions.
 
+### Added — Appointments (Appointment Types CRUD, Phase 2 Step 7)
+- **`AppointmentTypesView.vue`** rebuilt from its Step-1 stub into the real admin-only CRUD screen (design
+  doc §7): a `DataTable` over the already-cached, unpaginated `appointmentTypes.ts` list (client-side
+  search/sort/"Show inactive" filter, no server round-trip — same reasoning as `AppointmentTypeSelect`'s
+  dropdown source), with inline Edit/Delete actions mirroring `UsersView`'s convention.
+- **`AppointmentTypeFormDialog.vue`** (new) — Create/Edit dialog for name, duration (`DurationInput.vue`
+  reused), color, and active toggle. Color is a PrimeVue `ColorPicker` paired with a synced hex `InputText`
+  so an admin can also paste an exact brand hex code, validated client-side against the backend's
+  `^#[0-9A-Fa-f]{6}$` regex before submit. "Price" and "Default" are deliberately **not implemented** — no
+  backend column exists for either (confirmed in the design doc), so they're flagged as out-of-scope rather
+  than fabricated as frontend-only fields with nowhere real to persist them.
+- Full Vitest coverage for both new files (12/12 passing, 226/226 for the whole suite); `vue-tsc`, ESLint,
+  and Prettier all clean.
+
+### Fixed — real bug found via this step's mandatory real-browser verification
+- **Hex color codes bidi-reordered in the Arabic (RTL) table**: `#F97316` rendered as `F97316#` — the
+  leading `#` is a bidi-weak character, and inside an RTL row the browser's bidi algorithm reordered it to
+  the end of the numeral run. Not visible in English/LTR, only caught by verifying the actual Arabic
+  locale against the real dev stack. Fixed by isolating the hex text in its own `dir="ltr"` span in the
+  Color column, the same technique any non-Arabic technical token (codes, IDs) needs inside RTL layouts —
+  no other screen in this module currently renders a leading symbol like `#` next to digits, so this is the
+  first place the pattern was needed.
+
 ### Added — Appointments (Dentist Schedule View, Phase 2 Step 6)
 - **`DentistScheduleView.vue`** (design doc §5-§6): a `DentistSelect`-driven page (admin can pick any
   dentist; a dentist-role user only ever sees their own, no selector) with two tabs.

@@ -271,6 +271,33 @@
         "attachments": "المرفقات"
       }
     },
+    "types": {
+      "title": "أنواع المواعيد",
+      "new": "نوع جديد",
+      "search": "بحث عن الأنواع",
+      "showInactive": "إظهار غير النشط",
+      "name": "الاسم",
+      "duration": "المدة",
+      "durationMinutes": "{n} دقيقة",
+      "color": "اللون",
+      "status": "الحالة",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "actions": "إجراءات",
+      "empty": "لا توجد أنواع مواعيد",
+      "loadError": "تعذّر تحميل أنواع المواعيد",
+      "createTitle": "نوع موعد جديد",
+      "editTitle": "تعديل نوع الموعد",
+      "namePlaceholder": "مثال: تنظيف، فحص، علاج عصب",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "colorInvalid": "يجب أن يكون اللون رمز hex صالحًا، مثل #3B82F6",
+      "saved": "تم حفظ نوع الموعد بنجاح",
+      "saveError": "تعذّر حفظ نوع الموعد",
+      "deleted": "تم حذف نوع الموعد بنجاح",
+      "deleteError": "تعذّر حذف نوع الموعد",
+      "deleteConfirmMessage": "هل أنت متأكد من حذف \"{name}\"؟",
+      "deleteConfirmHeader": "حذف نوع الموعد"
+    },
     "schedule": {
       "title": "ساعات العمل والإجازات",
       "selectDentist": "الطبيب",

@@ -271,6 +271,33 @@
         "attachments": "Attachments"
       }
     },
+    "types": {
+      "title": "Appointment Types",
+      "new": "New Type",
+      "search": "Search types",
+      "showInactive": "Show inactive",
+      "name": "Name",
+      "duration": "Duration",
+      "durationMinutes": "{n} min",
+      "color": "Color",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "empty": "No appointment types found",
+      "loadError": "Failed to load appointment types",
+      "createTitle": "New Appointment Type",
+      "editTitle": "Edit Appointment Type",
+      "namePlaceholder": "e.g. Cleaning, Checkup, Root Canal",
+      "fieldRequired": "This field is required",
+      "colorInvalid": "Color must be a valid hex code, e.g. #3B82F6",
+      "saved": "Appointment type saved successfully",
+      "saveError": "Failed to save appointment type",
+      "deleted": "Appointment type deleted successfully",
+      "deleteError": "Failed to delete appointment type",
+      "deleteConfirmMessage": "Are you sure you want to delete \"{name}\"?",
+      "deleteConfirmHeader": "Delete Appointment Type"
+    },
     "schedule": {
       "title": "Working Hours & Time Off",
       "selectDentist": "Dentist",

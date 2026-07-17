@@ -23,6 +23,15 @@ premature recursion would add complexity with no current benefit.
 A soft-deleted patient's `national_id` can't be reused by a newly-registered patient, because the DB-level unique constraint doesn't exclude soft-deleted rows. Simpler than scoping the constraint, and arguably safer for data integrity, but worth knowing.
 **Revisit**: only if re-registering a previously-deleted patient with the same national ID becomes a real workflow need.
 
+### Appointment types have no `price` or `is_default` column
+The original task brief for the Appointment Types screen (Phase 2 Step 7) called for a "Price" field and a
+way to mark a type as default, but `appointment_types` has neither column — confirmed from the
+migration/model, not assumed. Not implemented as a frontend-only field with nowhere real to persist it; see
+`docs/modules/appointments-ui-design.md` §7 for the full reasoning.
+**Revisit**: pricing-per-type belongs in the Billing module's design where pricing concepts actually live
+(not bolted onto Appointments); "default type" is a small additive migration + a "set as default" action if
+ever requested, but is still a backend change outside this frontend-only step's scope.
+
 ### Multi-branch
 Documented in `PROJECT_CONTEXT.md`, not implemented. No table is branch-scoped.
 **Revisit**: when a real second-location requirement appears. Do not build speculatively.

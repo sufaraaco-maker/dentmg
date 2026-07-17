@@ -271,6 +271,33 @@
         "attachments": "Ekler"
       }
     },
+    "types": {
+      "title": "Randevu Türleri",
+      "new": "Yeni Tür",
+      "search": "Tür ara",
+      "showInactive": "Pasifleri göster",
+      "name": "Ad",
+      "duration": "Süre",
+      "durationMinutes": "{n} dk",
+      "color": "Renk",
+      "status": "Durum",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "actions": "İşlemler",
+      "empty": "Randevu türü bulunamadı",
+      "loadError": "Randevu türleri yüklenemedi",
+      "createTitle": "Yeni Randevu Türü",
+      "editTitle": "Randevu Türünü Düzenle",
+      "namePlaceholder": "örn. Temizlik, Kontrol, Kanal Tedavisi",
+      "fieldRequired": "Bu alan zorunludur",
+      "colorInvalid": "Renk geçerli bir hex kodu olmalı, örn. #3B82F6",
+      "saved": "Randevu türü başarıyla kaydedildi",
+      "saveError": "Randevu türü kaydedilemedi",
+      "deleted": "Randevu türü başarıyla silindi",
+      "deleteError": "Randevu türü silinemedi",
+      "deleteConfirmMessage": "\"{name}\" türünü silmek istediğinizden emin misiniz?",
+      "deleteConfirmHeader": "Randevu Türünü Sil"
+    },
     "schedule": {
       "title": "Çalışma Saatleri ve İzinler",
       "selectDentist": "Diş Hekimi",
