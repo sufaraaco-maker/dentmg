@@ -28,7 +28,21 @@
       "today_appointments": "مواعيد اليوم",
       "monthly_revenue": "إيرادات الشهر"
     },
-    "loadError": "تعذّر تحميل بيانات لوحة التحكم"
+    "loadError": "تعذّر تحميل بيانات لوحة التحكم",
+    "widgets": {
+      "newAppointment": "موعد جديد",
+      "today": {
+        "title": "جدول اليوم",
+        "myTitle": "جدولي اليوم",
+        "empty": "لا توجد مواعيد مجدولة اليوم.",
+        "waiting": "بالانتظار",
+        "late": "متأخر"
+      },
+      "upcoming": {
+        "title": "المواعيد القادمة",
+        "empty": "لا توجد مواعيد قادمة."
+      }
+    }
   },
   "common": {
     "language": "اللغة",
@@ -141,6 +155,11 @@
         "updated": "تعديل",
         "deleted": "حذف"
       }
+    },
+    "appointmentsPanel": {
+      "title": "المواعيد",
+      "new": "موعد جديد",
+      "empty": "لا توجد مواعيد لهذا المريض بعد."
     }
   },
   "appointments": {

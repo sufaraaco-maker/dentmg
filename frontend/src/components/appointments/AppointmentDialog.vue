@@ -111,6 +111,11 @@ watch(
       if (props.prefill?.dentist_id) form.dentist_id = props.prefill.dentist_id
       if (props.prefill?.start_at) form.start_at = parseServerDateTime(props.prefill.start_at)
       if (props.prefill?.patient_id) form.patient_id = props.prefill.patient_id
+      // Display-only: without this, PatientSearchSelect would show a "selected" state (the
+      // search box hidden behind `modelValue`) with no summary card at all, since it only knows
+      // the bare id — a blank-looking gap found while wiring PatientAppointmentsPanel (§9), the
+      // first real caller of `prefill.patient_id`.
+      if (props.prefill?.patient) selectedPatientSummary.value = props.prefill.patient
     }
   },
   // Also initializes correctly if a parent ever mounts this dialog already-visible (e.g. a

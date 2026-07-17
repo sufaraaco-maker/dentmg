@@ -4,6 +4,36 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (Dashboard widgets + Patient Appointments panel, Phase 2 Step 8)
+- **`TodayScheduleWidget.vue`** (new) — today's appointments on `DashboardView`, sorted by time.
+  `scope="all"` (admin/receptionist) adds "Waiting" (checked in, not yet started) and "Late"
+  (scheduled/confirmed, start time passed by >10 min, computed client-side against a
+  once-a-minute-refreshed clock) tags plus a one-click Check In on the single next
+  scheduled/confirmed appointment, reusing `StatusActionButton`. `scope="own"` (dentist) shows a
+  plainer "My Schedule Today" list filtered to their own appointments — no Waiting/Late framing or
+  Check-In action, since checking a patient in isn't a dentist-role permission either way.
+- **`UpcomingAppointmentsWidget.vue`** (new) — next 5 appointments over the following 6 days,
+  same `scope` prop, excluding cancelled/no-show (a cancelled appointment days out isn't "what's
+  coming").
+- **`PatientAppointmentsPanel.vue`** (new) — a new "Appointments" card section on
+  `PatientDetailView` (added as another stacked card, matching the page's existing
+  Demographics/Contact/.../History convention, not a new Tabs layout), reusing
+  `AppointmentListTable` + `AppointmentDialog` (prefilled with the patient). "New Appointment" is
+  gated behind `canManageAppointments` — a dentist gets a read-only list.
+- Both widgets and the panel read `appointments.ts`'s existing shared range-cache directly (no new
+  store/service code, no new API calls beyond what the Board already needed for the same range).
+- Full Vitest coverage for all three new components (17/17 new, 243/243 whole suite); `vue-tsc`,
+  ESLint, and Prettier all clean.
+
+### Fixed — real bug found via this step's mandatory real-browser verification
+- **`AppointmentDialog`'s `prefill.patient_id` had no way to show which patient was prefilled**:
+  `PatientSearchSelect` only renders a patient summary card from an explicit patient object, not a
+  bare id, so opening "New Appointment" from `PatientAppointmentsPanel` (the first real caller of
+  `prefill.patient_id`) showed a confusing, blank-looking Patient tab — the search box hidden
+  (since a patient *was* technically selected) but no name/summary shown either. Fixed by adding an
+  optional, display-only `patient` field to `AppointmentPrefill`; `PatientDetailView` already has
+  the full `Patient` record in memory, so this costs no extra fetch.
+
 ### Changed — Design System (Arabic typography, self-hosted fonts)
 - **Arabic UI face changed from IBM Plex Sans Arabic to Alexandria** (`docs/design-system.md` §1) — a
   modern, Kufi-rooted geometric typeface, per explicit product request for a more distinctive Arabic

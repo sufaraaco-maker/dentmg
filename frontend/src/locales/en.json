@@ -28,7 +28,21 @@
       "today_appointments": "Today's Appointments",
       "monthly_revenue": "Monthly Revenue"
     },
-    "loadError": "Failed to load dashboard data"
+    "loadError": "Failed to load dashboard data",
+    "widgets": {
+      "newAppointment": "New Appointment",
+      "today": {
+        "title": "Today's Schedule",
+        "myTitle": "My Schedule Today",
+        "empty": "No appointments scheduled today.",
+        "waiting": "Waiting",
+        "late": "Late"
+      },
+      "upcoming": {
+        "title": "Upcoming Appointments",
+        "empty": "No upcoming appointments."
+      }
+    }
   },
   "common": {
     "language": "Language",
@@ -141,6 +155,11 @@
         "updated": "Updated",
         "deleted": "Deleted"
       }
+    },
+    "appointmentsPanel": {
+      "title": "Appointments",
+      "new": "New Appointment",
+      "empty": "No appointments for this patient yet."
     }
   },
   "appointments": {

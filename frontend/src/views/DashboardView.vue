@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
 import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
+import Button from 'primevue/button'
+import TodayScheduleWidget from '@/components/appointments/TodayScheduleWidget.vue'
+import UpcomingAppointmentsWidget from '@/components/appointments/UpcomingAppointmentsWidget.vue'
+import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
 import { api } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
+const auth = useAuthStore()
+
+// A dentist's dashboard shows their own schedule read-mostly; front desk/admin get the
+// operational "all appointments" framing with Waiting/Late highlighting (design doc §8).
+const scope = computed(() => (auth.isDentist ? 'own' : 'all'))
+
+const newAppointmentDialogVisible = ref(false)
 
 interface DashboardSummary {
   total_patients: number
@@ -38,9 +50,16 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-      {{ t('dashboard.title') }}
-    </h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+        {{ t('dashboard.title') }}
+      </h1>
+      <Button
+        :label="t('dashboard.widgets.newAppointment')"
+        icon="pi pi-plus"
+        @click="newAppointmentDialogVisible = true"
+      />
+    </div>
 
     <Message v-if="error" severity="error">{{ t('dashboard.loadError') }}</Message>
 
@@ -68,5 +87,12 @@ onMounted(async () => {
         </template>
       </Card>
     </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <TodayScheduleWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
+      <UpcomingAppointmentsWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
+    </div>
+
+    <AppointmentDialog v-model:visible="newAppointmentDialogVisible" />
   </div>
 </template>

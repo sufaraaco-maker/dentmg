@@ -196,4 +196,7 @@ export interface AppointmentPrefill {
   dentist_id?: string
   start_at?: string
   patient_id?: string
+  /** Display-only summary for `patient_id` — lets the dialog show it without an extra fetch when
+   *  the caller already has the record (e.g. `PatientAppointmentsPanel` on `PatientDetailView`). */
+  patient?: AppointmentPatientSummary
 }

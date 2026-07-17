@@ -32,6 +32,19 @@ migration/model, not assumed. Not implemented as a frontend-only field with nowh
 (not bolted onto Appointments); "default type" is a small additive migration + a "set as default" action if
 ever requested, but is still a backend change outside this frontend-only step's scope.
 
+### `PatientAppointmentsPanel.vue` shows a bounded ±3/6-month window, not full history
+The Patient Detail "Appointments" panel (Phase 2 Step 8, design doc §9) fetches the shared,
+unfiltered `appointments.ts` range cache (the same technique `TimeOffFormDialog` already uses)
+and filters client-side to the patient — 3 months back to 6 months forward from today. A patient's
+appointment older than 3 months or booked further than 6 months out won't appear here. Deliberate:
+`GET /api/appointments` has no `patient_id`-scoped, unbounded query (it's a required-date-range,
+clinic-wide endpoint by design — see the backend design doc §16/§19), and an unfiltered fetch of a
+much wider range would pull every patient's appointments in that span just to show one patient's
+history.
+**Revisit**: if a genuine "full appointment history" need appears, add a dedicated
+`GET /api/patients/{patient}/appointments` backend endpoint (paginated, patient-scoped) rather than
+widening this frontend range fetch.
+
 ### Multi-branch
 Documented in `PROJECT_CONTEXT.md`, not implemented. No table is branch-scoped.
 **Revisit**: when a real second-location requirement appears. Do not build speculatively.

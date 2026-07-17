@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth'
 import { parseLocalDate, parseServerDateTime } from '@/lib/date'
 import type { Patient, PatientAuditLog } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
+import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -187,6 +188,8 @@ onMounted(() => {
           <p v-if="patient.notes" class="mt-3 text-sm text-surface-500">{{ patient.notes }}</p>
         </template>
       </Card>
+
+      <PatientAppointmentsPanel class="lg:col-span-2" :patient-id="patientId" :patient="patient" />
 
       <Card v-if="auth.isAdmin" class="lg:col-span-2">
         <template #title>{{ t('patients.sections.history') }}</template>

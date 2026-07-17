@@ -28,7 +28,21 @@
       "today_appointments": "Bugünkü Randevular",
       "monthly_revenue": "Aylık Gelir"
     },
-    "loadError": "Panel verileri yüklenemedi"
+    "loadError": "Panel verileri yüklenemedi",
+    "widgets": {
+      "newAppointment": "Yeni Randevu",
+      "today": {
+        "title": "Bugünkü Program",
+        "myTitle": "Bugünkü Programım",
+        "empty": "Bugün için planlanmış randevu yok.",
+        "waiting": "Bekliyor",
+        "late": "Gecikti"
+      },
+      "upcoming": {
+        "title": "Yaklaşan Randevular",
+        "empty": "Yaklaşan randevu yok."
+      }
+    }
   },
   "common": {
     "language": "Dil",
@@ -141,6 +155,11 @@
         "updated": "Güncellendi",
         "deleted": "Silindi"
       }
+    },
+    "appointmentsPanel": {
+      "title": "Randevular",
+      "new": "Yeni Randevu",
+      "empty": "Bu hasta için henüz randevu yok."
     }
   },
   "appointments": {
