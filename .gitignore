@@ -3,6 +3,7 @@ Thumbs.db
 .idea
 .vscode
 *.log
+.claude/settings.local.json
 
 # Backend (Laravel)
 backend/vendor/
@@ -38,3 +39,4 @@ frontend/.env
 frontend/.env.*
 !frontend/.env.example
 frontend/coverage/
+

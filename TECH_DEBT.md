@@ -31,6 +31,16 @@ Documented in `PROJECT_CONTEXT.md`, not implemented. No table is branch-scoped.
 Applied globally by the assistant during the Authentication module to keep response shapes consistent; flagged in `ARCHITECTURE_REVIEW.md` for review but not explicitly re-approved since.
 **Revisit**: low priority — only if a future need for a structured envelope (e.g. API versioning metadata) arises.
 
+### `patch-package` patch on `primevue` is pinned to 4.5.5
+`frontend/patches/primevue+4.5.5.patch` fixes a real upstream `DatePicker` bug (`populateTime()` crashes
+parsing a typed 24-hour value with no AM/PM suffix, silently discarding it — see CHANGELOG, Phase 2 Step
+6). `patch-package` re-applies it automatically on every `npm install` at the *currently installed*
+version, but the patch file itself won't match a different `primevue` version's source and will fail to
+apply (loudly, via `postinstall`, not silently) if `primevue` is ever bumped.
+**Revisit**: whenever `primevue` is upgraded (including the eventual 5.x major), re-check whether this bug
+still exists in the new version — if fixed upstream, delete the patch file; if not, regenerate it against
+the new version's `datepicker/index.mjs`.
+
 ## Open (new from Appointments frontend design review, 2026-07-16)
 
 ### No dedicated dentists/providers listing endpoint
@@ -54,6 +64,21 @@ the write-side capture already works, only the read-side route is missing. Not b
 ### Appointment mutation endpoints don't eager-load relations
 `AppointmentResource` responses from `store`/`confirm`/`check-in`/`start`/`complete`/`cancel`/`no-show`/`update` don't eager-load `patient`/`dentist`/`appointment_type` (only `index`/`show` do), so the frontend's `appointments.store.ts` issues a follow-up `GET /api/appointments/{id}` after every mutation to re-hydrate those nested fields before updating its cache — see `docs/modules/appointments-ui-design.md` §11 "Post-Mutation Rehydration."
 **Revisit**: if these controller actions eager-load the same three relations before returning their `AppointmentResource` (mirroring what `index`/`show` already do), the frontend's extra round-trip can be deleted entirely. Small, low-risk backend change; not blocking initial implementation.
+
+## Open (new from Appointments Phase 2 Step 5 — Appointment Detail View, 2026-07-17)
+
+### No `confirmed_at` column — `AppointmentTimeline`'s Confirmed step is a status-order approximation
+Every other step in `AppointmentTimeline.vue` (Scheduled/Checked In/In Progress/Completed) reads a real,
+dedicated timestamp column (`created_at`/`checked_in_at`/`started_at`/`completed_at`) — confirmed directly
+against the `appointments` migration. `confirmed` has no such column, and Check-In can happen directly from
+`scheduled` (per the backend's state machine), so once an appointment has moved past `confirmed`, whether it
+was ever actually confirmed can no longer be proven from `status` alone. The component documents this
+explicitly (`TimelineStepDef.timestampField: null` for this one step) and never lets the approximation gate
+later, ground-truth steps for a cancelled/no-show appointment's chain.
+**Revisit**: if a real near-term need arises for reporting on confirmation lag/rate, add a `confirmed_at`
+column + set it in the `confirm()` service action. The frontend change is a one-line fix — flip `STEPS`'
+`confirmed` entry to `timestampField: 'confirmed_at'` — no other code change needed. Not blocking; low
+priority.
 
 ## Open (new from Appointments Phase 2 Step 1 — Infrastructure, 2026-07-16)
 
@@ -87,6 +112,17 @@ further (e.g. switching to polling-based file watching in `vite.config.ts`) if i
 down day-to-day frontend development.
 
 ## Resolved
+
+### Board day-navigation could land on the wrong calendar day (resolved 2026-07-16)
+Originally logged during Appointments Phase 2 Step 4 as a narrow "few hours near local midnight" edge
+case. A closer, user-requested audit of the whole datetime stack found that assessment was **wrong** — it
+was not narrow at all: once `AppointmentCalendar.vue` set FullCalendar's `timeZone: 'UTC'` (fixing a
+separate, confirmed event-rendering bug), passing `calendar.ts`'s genuinely-local `currentDate` straight
+into `gotoDate()`/`initialDate` selected the wrong day **every single day**, for any positive-UTC-offset
+browser — confirmed directly in a real browser (clicking "Today" showed Thursday instead of the real
+Friday). Fixed with a new `lib/date.ts` helper, `toCalendarUtcDate`, applied at both call sites in
+`AppointmentCalendar.vue`; regression-tested (`lib/date.test.ts`, `AppointmentCalendar.test.ts`). See
+`docs/decisions.md`'s "Project-wide datetime policy" entry for the full audit this came out of.
 
 ### Frontend had no linting/formatting configuration (resolved 2026-07-16)
 Added ESLint (flat config, `eslint-plugin-vue` + `@vue/eslint-config-typescript` + `@vue/eslint-config-prettier`) and Prettier (`semi: false, singleQuote: true, printWidth: 110, trailingComma: "all"`, matching the codebase's existing style exactly) as permanent frontend tooling, alongside the Vitest toolchain added in the same step. `npm run lint` / `npm run format` scripts added. See the note above re: pre-existing files not yet reformatted.

@@ -165,6 +165,20 @@ export interface CreateWorkingHourPayload {
   is_active?: boolean
 }
 
+/**
+ * Local editing state for one shift row in `WorkingHoursDayRow` (design doc §5) — `id: null`
+ * marks a row not yet persisted. Not a backend response shape; the backend only exposes
+ * create/delete for `dentist_working_hours` (no update), so `WorkingHoursEditor` diffs this
+ * against the store's real `DentistWorkingHour[]` to decide what to create/delete.
+ */
+export interface WorkingHourDraft {
+  id: string | null
+  day_of_week: number
+  start_time: string
+  end_time: string
+  is_active: boolean
+}
+
 export interface CreateTimeOffPayload {
   start_at: string
   end_at: string
@@ -173,3 +187,13 @@ export interface CreateTimeOffPayload {
 
 export type CalendarViewMode =
   'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'resourceTimeGridDay' | 'list'
+
+/** The six status-transition endpoints `AppointmentActionsBar`/`StatusActionButton` can trigger (§4.6). */
+export type AppointmentActionKind = 'confirm' | 'checkIn' | 'start' | 'complete' | 'cancel' | 'noShow'
+
+/** What `AppointmentDialog` prefills when opened from a calendar slot-click, patient panel, or dashboard quick action. */
+export interface AppointmentPrefill {
+  dentist_id?: string
+  start_at?: string
+  patient_id?: string
+}

@@ -1,0 +1,13 @@
+diff --git a/node_modules/primevue/datepicker/index.mjs b/node_modules/primevue/datepicker/index.mjs
+index 8e02702..2e6467b 100644
+--- a/node_modules/primevue/datepicker/index.mjs
++++ b/node_modules/primevue/datepicker/index.mjs
+@@ -1593,7 +1593,7 @@ var script = {
+       if (this.hourFormat == '12' && !ampm) {
+         throw 'Invalid Time';
+       }
+-      this.pm = ampm.toLowerCase() === this.$primevue.config.locale.pm.toLowerCase() || ampm.toLowerCase() === 'pm';
++      this.pm = ampm ? ampm.toLowerCase() === this.$primevue.config.locale.pm.toLowerCase() || ampm.toLowerCase() === 'pm' : false;
+       var time = this.parseTime(timeString);
+       value.setHours(time.hour);
+       value.setMinutes(time.minute);

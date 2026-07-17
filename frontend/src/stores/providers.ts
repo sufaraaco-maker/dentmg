@@ -16,17 +16,30 @@ export const useProvidersStore = defineStore('providers', () => {
   const loaded = ref(false)
   const loading = ref(false)
 
+  // Every consumer (CalendarFilters, DentistSelect, AppointmentsView, ...) calls fetchAll() on
+  // its own mount, all before `loaded` flips true — without this, each one would fire its own
+  // GET /api/users, and briefly toggling `loading` true→false→true→... as those redundant
+  // requests interleave is also what caused a transient duplicated-placeholder render in the
+  // MultiSelects bound to it. Concurrent callers now share the one in-flight request instead.
+  let inFlight: Promise<void> | null = null
+
   async function fetchAll(force = false): Promise<void> {
     if (loaded.value && !force) return
+    if (inFlight) return inFlight
 
     loading.value = true
 
-    try {
-      items.value = await providersApi.listAll()
-      loaded.value = true
-    } finally {
-      loading.value = false
-    }
+    inFlight = (async () => {
+      try {
+        items.value = await providersApi.listAll()
+        loaded.value = true
+      } finally {
+        loading.value = false
+        inFlight = null
+      }
+    })()
+
+    return inFlight
   }
 
   function $reset() {

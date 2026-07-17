@@ -55,6 +55,16 @@ describe('useAppointmentTypesStore.fetchAll', () => {
 
     expect(mockedApi.list).toHaveBeenCalledTimes(2)
   })
+
+  it('dedupes concurrent calls made before the first one resolves into a single request', async () => {
+    mockedApi.list.mockResolvedValue([makeType()])
+    const store = useAppointmentTypesStore()
+
+    await Promise.all([store.fetchAll(), store.fetchAll(), store.fetchAll()])
+
+    expect(mockedApi.list).toHaveBeenCalledTimes(1)
+    expect(store.loaded).toBe(true)
+  })
 })
 
 describe('useAppointmentTypesStore mutations', () => {

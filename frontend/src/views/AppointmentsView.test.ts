@@ -12,6 +12,7 @@ import {
   workingHoursApi,
   timeOffApi,
 } from '@/services/appointments'
+import { toCalendarUtcDate } from '@/lib/date'
 import type { Appointment } from '@/types/appointment'
 
 vi.mock('@/services/appointments', () => ({
@@ -116,8 +117,15 @@ describe('AppointmentsView board', () => {
     const { wrapper } = await mountView()
     vi.mocked(appointmentsApi.list).mockClear()
 
+    // AppointmentCalendar runs FullCalendar in `timeZone: 'UTC'` mode, so its real `datesSet`
+    // hands back Date objects whose *UTC* getters carry the visible range's boundary digits —
+    // `toCalendarUtcDate` simulates that shape here instead of a plain local Date, matching what
+    // `onRangeChange`'s `parseServerDateTime` call actually receives in production.
     const calendar = wrapper.findComponent(AppointmentCalendar)
-    await calendar.vm.$emit('range-change', { start: new Date(2026, 7, 1), end: new Date(2026, 7, 31) })
+    await calendar.vm.$emit('range-change', {
+      start: toCalendarUtcDate(new Date(2026, 7, 1)),
+      end: toCalendarUtcDate(new Date(2026, 7, 31)),
+    })
     await flushPromises()
 
     expect(appointmentsApi.list).toHaveBeenCalledWith(

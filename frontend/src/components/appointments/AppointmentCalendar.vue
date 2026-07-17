@@ -11,6 +11,7 @@ import ProgressBar from 'primevue/progressbar'
 import AppointmentEventContent from './AppointmentEventContent.vue'
 import type { AppointmentEventData } from './AppointmentEventContent.vue'
 import { RTL_LOCALES, type SupportedLocale } from '@/locales'
+import { toCalendarUtcDate } from '@/lib/date'
 import type { AppointmentStatus } from '@/types/appointment'
 
 /**
@@ -63,7 +64,20 @@ const calendarOptions = computed<CalendarOptions>(() => ({
   initialView: props.view,
   headerToolbar: false,
   direction: isRtl.value ? 'rtl' : 'ltr',
-  initialDate: props.currentDate,
+  // This is a single-clinic system with no real per-request timezone conversion (backend
+  // `start_at`/`end_at` digits ARE the clinic's own wall-clock time, just serialized with a
+  // "+00:00" suffix — see lib/date.ts's `parseServerDateTime`). Without this, FullCalendar's
+  // default `timeZone: 'local'` re-expresses those UTC-labeled digits through the browser's
+  // own offset, silently rendering every event at the wrong grid slot whenever a user's
+  // timezone isn't UTC+0 (confirmed directly: a 10:00 appointment rendered at 1:00 PM in this
+  // module's real-browser verification). `dateClick`'s emitted Date must be read via its UTC
+  // getters now, not local ones — see AppointmentsView.vue's `openSlotDialog`.
+  timeZone: 'UTC',
+  // `props.currentDate` is a genuinely local Date (`calendar.ts`) — FullCalendar, now in
+  // `timeZone: 'UTC'` mode, reads `initialDate`/`gotoDate()` via UTC getters, so without this
+  // conversion it lands one day off for any positive-UTC-offset browser (confirmed directly:
+  // clicking "Today" showed Thursday instead of Friday). See `lib/date.ts`'s `toCalendarUtcDate`.
+  initialDate: toCalendarUtcDate(props.currentDate),
   events: [
     ...props.events,
     ...(props.backgroundEvents ?? []).map((event) => ({ ...event, display: 'background' as const })),
@@ -91,7 +105,7 @@ watch(
 )
 watch(
   () => props.currentDate,
-  (date) => calendarRef.value?.getApi().gotoDate(date),
+  (date) => calendarRef.value?.getApi().gotoDate(toCalendarUtcDate(date)),
 )
 
 function toEventData(arg: EventContentArg): AppointmentEventData {

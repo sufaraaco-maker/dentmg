@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import { appointmentsApi } from '@/services/appointments'
-import { toLocalDateString } from '@/lib/date'
+import { parseServerDateTime, toLocalDateString } from '@/lib/date'
 import { useCalendarStore } from './calendar'
 import type {
   Appointment,
@@ -66,7 +66,11 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     const filters = calendar.filters
 
     return Array.from(cache.values()).filter((appointment) => {
-      const appointmentStart = new Date(appointment.start_at).getTime()
+      // `appointment.start_at` is the backend's naive-digits-labeled timestamp (lib/date.ts) —
+      // `parseServerDateTime` makes it comparable against `calendar.currentRange`'s genuinely
+      // local boundaries; a raw `new Date(...)` would misjudge range membership near the
+      // range's edges in a browser whose OS timezone isn't UTC.
+      const appointmentStart = parseServerDateTime(appointment.start_at).getTime()
 
       if (appointmentStart < startTime || appointmentStart > endTime) return false
       if (filters.dentistIds.length && !filters.dentistIds.includes(appointment.dentist_id)) return false
@@ -95,7 +99,8 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     const upperBound = toTime(end) + paddingMs
 
     for (const [id, appointment] of cache.entries()) {
-      const appointmentStart = new Date(appointment.start_at).getTime()
+      // See `filteredAppointments` above — same naive-digits-vs-local-boundary reasoning.
+      const appointmentStart = parseServerDateTime(appointment.start_at).getTime()
 
       if (appointmentStart < lowerBound || appointmentStart > upperBound) {
         cache.delete(id)

@@ -178,13 +178,13 @@
       "today": "Bugün",
       "previous": "Önceki dönem",
       "next": "Sonraki dönem",
-      "newAppointment": "Yeni Randevu",
-      "newAppointmentComingSoon": "Randevu oluşturma bir sonraki uygulama adımında sunulacak."
+      "newAppointment": "Yeni Randevu"
     },
     "filters": {
       "dentist": "Diş Hekimi",
       "status": "Durum",
       "type": "Randevu Türü",
+      "patient": "Hasta",
       "clearFilters": "Filtreleri temizle",
       "noResults": "Filtrelerinizle eşleşen randevu yok"
     },
@@ -197,6 +197,145 @@
       "durationMinutes": "{n} dk",
       "status": "Durum",
       "empty": "Randevu bulunamadı"
+    },
+    "dialog": {
+      "createTitle": "Yeni Randevu",
+      "editTitle": "Randevuyu Düzenle",
+      "tabs": {
+        "patient": "Hasta",
+        "appointment": "Randevu",
+        "notes": "Notlar"
+      },
+      "patientSearchPlaceholder": "İsim, kod veya telefonla arayın",
+      "changePatient": "Değiştir",
+      "createPatient": "Yeni Hasta Oluştur",
+      "noPatientsFound": "Hasta bulunamadı",
+      "patientLockedNote": "Hastayı değiştirmek için bu randevuyu iptal edip yeni bir randevu oluşturun.",
+      "ageYears": "{n} yaş",
+      "dentist": "Diş Hekimi",
+      "selectDentist": "Diş hekimi seçin",
+      "type": "Randevu Türü",
+      "selectType": "Randevu türü seçin",
+      "startAt": "Tarih ve Saat",
+      "endAtPreview": "{time} itibarıyla biter",
+      "duration": "Süre",
+      "showAvailableSlots": "Uygun saatleri göster",
+      "noSlotsFound": "Bu gün için uygun saat yok",
+      "reason": "Sebep",
+      "notes": "Dahili notlar",
+      "status": "Durum",
+      "statusNote": "Durum değişiklikleri randevunun işlem düğmelerinden yapılır, buradan değil.",
+      "bookAnyway": "Yine de Randevu Ver",
+      "fieldRequired": "Bu alan zorunludur",
+      "durationRange": "Süre 5 ile 480 dakika arasında olmalıdır",
+      "charactersRemaining": "{n} karakter kaldı"
+    },
+    "detail": {
+      "patientSection": "Hasta",
+      "viewFullRecord": "Tam hasta kaydını görüntüle",
+      "editDisabledNote": "Bu randevu tamamlandı — çoğu alan artık geçmiş bilgisidir",
+      "timeline": {
+        "title": "Zaman Çizelgesi",
+        "scheduled": "Planlandı",
+        "confirmed": "Onaylandı",
+        "checkedIn": "Giriş Yapıldı",
+        "inProgress": "Devam Ediyor",
+        "completed": "Tamamlandı",
+        "cancelled": "İptal Edildi",
+        "noShow": "Gelmedi",
+        "cancellationReason": "Sebep: {reason}"
+      },
+      "actionsTitle": "İşlemler",
+      "actions": {
+        "confirm": "Onayla",
+        "checkIn": "Giriş Yap",
+        "start": "Başlat",
+        "complete": "Tamamla",
+        "cancel": "İptal Et",
+        "noShow": "Gelmedi"
+      },
+      "confirmAction": "Bu randevuyu \"{action}\" olarak işaretlemek istediğinizden emin misiniz?",
+      "cancelHeader": "Randevuyu İptal Et",
+      "noShowHeader": "Gelmedi Olarak İşaretle",
+      "keepAppointment": "Randevuyu Koru",
+      "reasonOptional": "Sebep (isteğe bağlı)",
+      "actionSuccess": "Randevu güncellendi",
+      "actionError": "Randevu güncellenemedi",
+      "noActionsAvailable": "Bu randevu için kullanılabilir işlem yok",
+      "placeholders": {
+        "comingSoon": "Yakında",
+        "auditHistory": "Denetim Geçmişi",
+        "treatmentPlan": "Tedavi Planı",
+        "invoices": "Faturalar",
+        "clinicalNotes": "Klinik Notlar",
+        "attachments": "Ekler"
+      }
+    },
+    "schedule": {
+      "title": "Çalışma Saatleri ve İzinler",
+      "selectDentist": "Diş Hekimi",
+      "selectDentistPrompt": "Takvimini görüntülemek için bir diş hekimi seçin",
+      "tabs": {
+        "workingHours": "Çalışma Saatleri",
+        "timeOff": "İzinler"
+      },
+      "days": {
+        "0": "Pazar",
+        "1": "Pazartesi",
+        "2": "Salı",
+        "3": "Çarşamba",
+        "4": "Perşembe",
+        "5": "Cuma",
+        "6": "Cumartesi"
+      },
+      "workingHours": {
+        "viewOnlyNote": "Haftalık çalışma saatleri şablonunu yalnızca bir yönetici düzenleyebilir.",
+        "notSet": "Ayarlanmadı",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "addShift": "Vardiya ekle",
+        "startTime": "Başlangıç",
+        "endTime": "Bitiş",
+        "save": "Kaydet",
+        "discard": "Vazgeç",
+        "copyTo": "Şuraya kopyala…",
+        "copyToTitle": "{day} vardiyalarını şuraya kopyala…",
+        "copyToConfirm": "Kopyala",
+        "copySuccess": "Vardiyalar kopyalandı",
+        "copyError": "Vardiyalar kopyalanamadı",
+        "overlapWarning": "Bu vardiyalar çakışıyor",
+        "endAfterStart": "Bitiş saati başlangıç saatinden sonra olmalıdır",
+        "saveError": "Çalışma saatleri kaydedilemedi",
+        "deleteError": "Vardiya silinemedi",
+        "deleteConfirmMessage": "Bu vardiya silinsin mi?",
+        "deleteConfirmHeader": "Vardiyayı Sil"
+      },
+      "timeOff": {
+        "addTimeOff": "İzin Ekle",
+        "empty": "Planlanmış izin yok",
+        "reason": "Sebep",
+        "reasonPlaceholder": "İsteğe bağlı ayrıntılar",
+        "category": "Kategori",
+        "categories": {
+          "vacation": "Tatil",
+          "conference": "Konferans",
+          "sick_leave": "Hastalık İzni",
+          "emergency": "Acil Durum",
+          "other": "Diğer"
+        },
+        "startAt": "Başlangıç",
+        "endAt": "Bitiş",
+        "createTitle": "İzin Ekle",
+        "conflictWarningTitle": "Bu izin süresindeki randevular:",
+        "deleteConfirmMessage": "Bu izin kaydı silinsin mi?",
+        "deleteConfirmHeader": "İzni Sil",
+        "saveError": "İzin kaydedilemedi",
+        "deleteError": "İzin silinemedi",
+        "saved": "İzin kaydedildi",
+        "fieldRequired": "Bu alan zorunludur",
+        "endAfterStart": "Bitiş, başlangıçtan sonra olmalıdır",
+        "reasonMax": "Sebep 255 karakteri geçemez"
+      }
     }
   }
 }

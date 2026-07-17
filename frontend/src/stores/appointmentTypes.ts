@@ -16,17 +16,28 @@ export const useAppointmentTypesStore = defineStore('appointmentTypes', () => {
   const loaded = ref(false)
   const loading = ref(false)
 
+  // Same concurrent-mount race as providers.ts: every consumer (CalendarFilters,
+  // AppointmentTypeSelect, ...) calls fetchAll() on its own mount, all before `loaded` flips
+  // true. Concurrent callers now share the one in-flight request instead of each firing its own.
+  let inFlight: Promise<void> | null = null
+
   async function fetchAll(force = false): Promise<void> {
     if (loaded.value && !force) return
+    if (inFlight) return inFlight
 
     loading.value = true
 
-    try {
-      items.value = await appointmentTypesApi.list()
-      loaded.value = true
-    } finally {
-      loading.value = false
-    }
+    inFlight = (async () => {
+      try {
+        items.value = await appointmentTypesApi.list()
+        loaded.value = true
+      } finally {
+        loading.value = false
+        inFlight = null
+      }
+    })()
+
+    return inFlight
   }
 
   async function create(payload: CreateAppointmentTypePayload): Promise<AppointmentType> {

@@ -12,7 +12,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
-import { parseLocalDate } from '@/lib/date'
+import { parseLocalDate, parseServerDateTime } from '@/lib/date'
 import type { Patient, PatientAuditLog } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 
@@ -28,7 +28,10 @@ function formatDate(value: string) {
 }
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(locale.value)
+  // `value` (an audit log's `created_at`) is the backend's naive-digits-labeled timestamp
+  // (lib/date.ts) — must be read via `parseServerDateTime`, not a raw `new Date(...)`, or this
+  // displays the wrong time in a browser whose OS timezone isn't UTC.
+  return parseServerDateTime(value).toLocaleString(locale.value)
 }
 
 const canManage = ['admin', 'receptionist'].includes(auth.user?.role ?? '')

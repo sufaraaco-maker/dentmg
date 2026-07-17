@@ -129,9 +129,9 @@ onMounted(fetchPatients)
       paginator
       :rows="perPage"
       :total-records="totalRecords"
+      class="cursor-pointer"
       @page="onPage"
       @row-click="({ data }) => viewPatient(data)"
-      class="cursor-pointer"
     >
       <Column field="patient_code" :header="t('patients.code')" style="width: 8rem" />
       <Column field="full_name" :header="t('patients.name')" />

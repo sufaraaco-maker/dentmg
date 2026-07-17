@@ -178,13 +178,13 @@
       "today": "Today",
       "previous": "Previous period",
       "next": "Next period",
-      "newAppointment": "New Appointment",
-      "newAppointmentComingSoon": "Appointment creation is coming in the next implementation step."
+      "newAppointment": "New Appointment"
     },
     "filters": {
       "dentist": "Dentist",
       "status": "Status",
       "type": "Appointment Type",
+      "patient": "Patient",
       "clearFilters": "Clear filters",
       "noResults": "No appointments match your filters"
     },
@@ -197,6 +197,145 @@
       "durationMinutes": "{n} min",
       "status": "Status",
       "empty": "No appointments found"
+    },
+    "dialog": {
+      "createTitle": "New Appointment",
+      "editTitle": "Edit Appointment",
+      "tabs": {
+        "patient": "Patient",
+        "appointment": "Appointment",
+        "notes": "Notes"
+      },
+      "patientSearchPlaceholder": "Search by name, code, or phone",
+      "changePatient": "Change",
+      "createPatient": "Create New Patient",
+      "noPatientsFound": "No patients found",
+      "patientLockedNote": "To change the patient, cancel this appointment and create a new one.",
+      "ageYears": "{n} yrs",
+      "dentist": "Dentist",
+      "selectDentist": "Select dentist",
+      "type": "Appointment Type",
+      "selectType": "Select appointment type",
+      "startAt": "Date & Time",
+      "endAtPreview": "Ends at {time}",
+      "duration": "Duration",
+      "showAvailableSlots": "Show available slots",
+      "noSlotsFound": "No available slots for this day",
+      "reason": "Reason",
+      "notes": "Internal notes",
+      "status": "Status",
+      "statusNote": "Status changes happen from the appointment's action buttons, not here.",
+      "bookAnyway": "Book Anyway",
+      "fieldRequired": "This field is required",
+      "durationRange": "Duration must be between 5 and 480 minutes",
+      "charactersRemaining": "{n} characters left"
+    },
+    "detail": {
+      "patientSection": "Patient",
+      "viewFullRecord": "View full patient record",
+      "editDisabledNote": "This appointment is completed — most fields are historical",
+      "timeline": {
+        "title": "Timeline",
+        "scheduled": "Scheduled",
+        "confirmed": "Confirmed",
+        "checkedIn": "Checked In",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "noShow": "No Show",
+        "cancellationReason": "Reason: {reason}"
+      },
+      "actionsTitle": "Actions",
+      "actions": {
+        "confirm": "Confirm",
+        "checkIn": "Check In",
+        "start": "Start",
+        "complete": "Complete",
+        "cancel": "Cancel",
+        "noShow": "No Show"
+      },
+      "confirmAction": "Are you sure you want to mark this appointment as {action}?",
+      "cancelHeader": "Cancel Appointment",
+      "noShowHeader": "Mark as No Show",
+      "keepAppointment": "Keep Appointment",
+      "reasonOptional": "Reason (optional)",
+      "actionSuccess": "Appointment updated",
+      "actionError": "Failed to update appointment",
+      "noActionsAvailable": "No actions available for this appointment",
+      "placeholders": {
+        "comingSoon": "Coming soon",
+        "auditHistory": "Audit History",
+        "treatmentPlan": "Treatment Plan",
+        "invoices": "Invoices",
+        "clinicalNotes": "Clinical Notes",
+        "attachments": "Attachments"
+      }
+    },
+    "schedule": {
+      "title": "Working Hours & Time Off",
+      "selectDentist": "Dentist",
+      "selectDentistPrompt": "Select a dentist to view their schedule",
+      "tabs": {
+        "workingHours": "Working Hours",
+        "timeOff": "Time Off"
+      },
+      "days": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "workingHours": {
+        "viewOnlyNote": "Only an admin can edit the weekly working-hours template.",
+        "notSet": "Not set",
+        "active": "Active",
+        "inactive": "Inactive",
+        "addShift": "Add shift",
+        "startTime": "Start",
+        "endTime": "End",
+        "save": "Save",
+        "discard": "Discard",
+        "copyTo": "Copy to…",
+        "copyToTitle": "Copy {day}'s shifts to…",
+        "copyToConfirm": "Copy",
+        "copySuccess": "Shifts copied",
+        "copyError": "Failed to copy shifts",
+        "overlapWarning": "These shifts overlap",
+        "endAfterStart": "End time must be after start time",
+        "saveError": "Failed to save working hours",
+        "deleteError": "Failed to delete shift",
+        "deleteConfirmMessage": "Delete this shift?",
+        "deleteConfirmHeader": "Delete Shift"
+      },
+      "timeOff": {
+        "addTimeOff": "Add Time Off",
+        "empty": "No time off scheduled",
+        "reason": "Reason",
+        "reasonPlaceholder": "Optional details",
+        "category": "Category",
+        "categories": {
+          "vacation": "Vacation",
+          "conference": "Conference",
+          "sick_leave": "Sick Leave",
+          "emergency": "Emergency",
+          "other": "Other"
+        },
+        "startAt": "Start",
+        "endAt": "End",
+        "createTitle": "Add Time Off",
+        "conflictWarningTitle": "Appointments during this time off:",
+        "deleteConfirmMessage": "Delete this time off entry?",
+        "deleteConfirmHeader": "Delete Time Off",
+        "saveError": "Failed to save time off",
+        "deleteError": "Failed to delete time off",
+        "saved": "Time off saved",
+        "fieldRequired": "This field is required",
+        "endAfterStart": "End must be after start",
+        "reasonMax": "Reason must be 255 characters or fewer"
+      }
     }
   }
 }

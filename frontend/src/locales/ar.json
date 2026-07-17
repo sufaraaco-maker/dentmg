@@ -178,13 +178,13 @@
       "today": "اليوم",
       "previous": "الفترة السابقة",
       "next": "الفترة التالية",
-      "newAppointment": "موعد جديد",
-      "newAppointmentComingSoon": "إنشاء المواعيد سيتوفر في خطوة التنفيذ القادمة."
+      "newAppointment": "موعد جديد"
     },
     "filters": {
       "dentist": "الطبيب",
       "status": "الحالة",
       "type": "نوع الموعد",
+      "patient": "المريض",
       "clearFilters": "إزالة عوامل التصفية",
       "noResults": "لا توجد مواعيد مطابقة لعوامل التصفية"
     },
@@ -197,6 +197,145 @@
       "durationMinutes": "{n} دقيقة",
       "status": "الحالة",
       "empty": "لا توجد مواعيد"
+    },
+    "dialog": {
+      "createTitle": "موعد جديد",
+      "editTitle": "تعديل الموعد",
+      "tabs": {
+        "patient": "المريض",
+        "appointment": "الموعد",
+        "notes": "ملاحظات"
+      },
+      "patientSearchPlaceholder": "ابحث بالاسم أو الرمز أو رقم الهاتف",
+      "changePatient": "تغيير",
+      "createPatient": "إنشاء مريض جديد",
+      "noPatientsFound": "لا يوجد مرضى مطابقون",
+      "patientLockedNote": "لتغيير المريض، قم بإلغاء هذا الموعد وأنشئ موعدًا جديدًا.",
+      "ageYears": "{n} سنة",
+      "dentist": "الطبيب",
+      "selectDentist": "اختر الطبيب",
+      "type": "نوع الموعد",
+      "selectType": "اختر نوع الموعد",
+      "startAt": "التاريخ والوقت",
+      "endAtPreview": "ينتهي في {time}",
+      "duration": "المدة",
+      "showAvailableSlots": "عرض الأوقات المتاحة",
+      "noSlotsFound": "لا توجد أوقات متاحة لهذا اليوم",
+      "reason": "السبب",
+      "notes": "ملاحظات داخلية",
+      "status": "الحالة",
+      "statusNote": "تغييرات الحالة تتم من أزرار إجراءات الموعد، وليس من هنا.",
+      "bookAnyway": "احجز على أي حال",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "durationRange": "يجب أن تكون المدة بين 5 و480 دقيقة",
+      "charactersRemaining": "متبقٍ {n} حرف"
+    },
+    "detail": {
+      "patientSection": "المريض",
+      "viewFullRecord": "عرض السجل الكامل للمريض",
+      "editDisabledNote": "هذا الموعد مكتمل — معظم الحقول أصبحت سجلاً تاريخياً",
+      "timeline": {
+        "title": "المسار الزمني",
+        "scheduled": "مجدول",
+        "confirmed": "مؤكد",
+        "checkedIn": "تم تسجيل الحضور",
+        "inProgress": "قيد التنفيذ",
+        "completed": "مكتمل",
+        "cancelled": "ملغى",
+        "noShow": "لم يحضر",
+        "cancellationReason": "السبب: {reason}"
+      },
+      "actionsTitle": "الإجراءات",
+      "actions": {
+        "confirm": "تأكيد",
+        "checkIn": "تسجيل الحضور",
+        "start": "بدء",
+        "complete": "إتمام",
+        "cancel": "إلغاء",
+        "noShow": "لم يحضر"
+      },
+      "confirmAction": "هل أنت متأكد أنك تريد تعيين حالة هذا الموعد إلى \"{action}\"؟",
+      "cancelHeader": "إلغاء الموعد",
+      "noShowHeader": "تعيين كـ لم يحضر",
+      "keepAppointment": "الاحتفاظ بالموعد",
+      "reasonOptional": "السبب (اختياري)",
+      "actionSuccess": "تم تحديث الموعد",
+      "actionError": "تعذّر تحديث الموعد",
+      "noActionsAvailable": "لا توجد إجراءات متاحة لهذا الموعد",
+      "placeholders": {
+        "comingSoon": "قريباً",
+        "auditHistory": "سجل التدقيق",
+        "treatmentPlan": "خطة العلاج",
+        "invoices": "الفواتير",
+        "clinicalNotes": "الملاحظات السريرية",
+        "attachments": "المرفقات"
+      }
+    },
+    "schedule": {
+      "title": "ساعات العمل والإجازات",
+      "selectDentist": "الطبيب",
+      "selectDentistPrompt": "اختر طبيبًا لعرض جدوله",
+      "tabs": {
+        "workingHours": "ساعات العمل",
+        "timeOff": "الإجازات"
+      },
+      "days": {
+        "0": "الأحد",
+        "1": "الاثنين",
+        "2": "الثلاثاء",
+        "3": "الأربعاء",
+        "4": "الخميس",
+        "5": "الجمعة",
+        "6": "السبت"
+      },
+      "workingHours": {
+        "viewOnlyNote": "يمكن للمسؤول فقط تعديل قالب ساعات العمل الأسبوعي.",
+        "notSet": "غير محدد",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "addShift": "إضافة فترة",
+        "startTime": "البداية",
+        "endTime": "النهاية",
+        "save": "حفظ",
+        "discard": "تجاهل",
+        "copyTo": "نسخ إلى…",
+        "copyToTitle": "نسخ فترات {day} إلى…",
+        "copyToConfirm": "نسخ",
+        "copySuccess": "تم نسخ الفترات",
+        "copyError": "تعذّر نسخ الفترات",
+        "overlapWarning": "هذه الفترات متداخلة",
+        "endAfterStart": "يجب أن يكون وقت النهاية بعد وقت البداية",
+        "saveError": "تعذّر حفظ ساعات العمل",
+        "deleteError": "تعذّر حذف الفترة",
+        "deleteConfirmMessage": "هل تريد حذف هذه الفترة؟",
+        "deleteConfirmHeader": "حذف الفترة"
+      },
+      "timeOff": {
+        "addTimeOff": "إضافة إجازة",
+        "empty": "لا توجد إجازات مجدولة",
+        "reason": "السبب",
+        "reasonPlaceholder": "تفاصيل اختيارية",
+        "category": "الفئة",
+        "categories": {
+          "vacation": "إجازة",
+          "conference": "مؤتمر",
+          "sick_leave": "إجازة مرضية",
+          "emergency": "طارئ",
+          "other": "أخرى"
+        },
+        "startAt": "البداية",
+        "endAt": "النهاية",
+        "createTitle": "إضافة إجازة",
+        "conflictWarningTitle": "مواعيد ضمن فترة الإجازة هذه:",
+        "deleteConfirmMessage": "هل تريد حذف هذه الإجازة؟",
+        "deleteConfirmHeader": "حذف الإجازة",
+        "saveError": "تعذّر حفظ الإجازة",
+        "deleteError": "تعذّر حذف الإجازة",
+        "saved": "تم حفظ الإجازة",
+        "fieldRequired": "هذا الحقل مطلوب",
+        "endAfterStart": "يجب أن تكون النهاية بعد البداية",
+        "reasonMax": "يجب ألا يتجاوز السبب 255 حرفًا"
+      }
     }
   }
 }

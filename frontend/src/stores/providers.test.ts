@@ -39,4 +39,15 @@ describe('useProvidersStore', () => {
 
     expect(mockedApi.listAll).toHaveBeenCalledTimes(2)
   })
+
+  it('dedupes concurrent calls made before the first one resolves into a single request', async () => {
+    mockedApi.listAll.mockResolvedValue([dentist])
+    const store = useProvidersStore()
+
+    await Promise.all([store.fetchAll(), store.fetchAll(), store.fetchAll()])
+
+    expect(mockedApi.listAll).toHaveBeenCalledTimes(1)
+    expect(store.items).toEqual([dentist])
+    expect(store.loaded).toBe(true)
+  })
 })

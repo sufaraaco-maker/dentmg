@@ -4,6 +4,179 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (Dentist Schedule View, Phase 2 Step 6)
+- **`DentistScheduleView.vue`** (design doc §5-§6): a `DentistSelect`-driven page (admin can pick any
+  dentist; a dentist-role user only ever sees their own, no selector) with two tabs.
+  - **Working Hours** — `WorkingHoursEditor.vue` + `WorkingHoursDayRow.vue`: a 7-day weekly grid, each day
+    supporting multiple shift rows (split-shift/lunch-break support), a per-day active toggle (bulk-sets
+    every shift row's `is_active`), and a "Copy to…" action to duplicate a day's shifts onto other days.
+    Since the backend exposes no update endpoint for `dentist_working_hours`, editing a shift is
+    implemented as delete-old + create-new under the hood, presented as a single in-place edit. A
+    dentist-role user sees the same grid read-only, with an explanatory note.
+  - **Time Off** — `TimeOffCalendar.vue` (a chronological list, not a mini calendar — the Board's own
+    time-off overlay already covers that visualization) + `TimeOffFormDialog.vue`. The category picker
+    (Vacation/Conference/Sick Leave/Emergency/Other) is a client-side-only convenience that writes its
+    label into the backend's free-text `reason` field (e.g. `"Vacation: Family trip"`) — the backend has
+    no structured category column, so this is never treated as one downstream. The dialog cross-references
+    the dentist's cached appointments for the proposed range and shows a non-blocking conflict warning
+    list (the backend neither blocks nor cascade-cancels on an overlapping time-off entry).
+- Full Vitest coverage for every new component/store and the wired view (214/214 passing); `vue-tsc`,
+  ESLint, and Prettier all clean.
+
+### Fixed — real bugs found via this step's mandatory real-browser verification
+- **Upstream PrimeVue `DatePicker` defect**: with `show-time` + `hour-format="24"` (used here and by the
+  already-shipped `AppointmentDialog`, Step 4), typing a full date/time string and tabbing away silently
+  cleared the field — no error, just data loss. Root cause: `primevue/datepicker`'s `populateTime()`
+  unconditionally calls `ampm.toLowerCase()` even in 24-hour mode, where `ampm` is `undefined`, throwing
+  and discarding the parsed value. Since this is a defect in the vendored library itself, not our code,
+  fixed via a permanent `patch-package` patch (`frontend/patches/primevue+4.5.5.patch`, applied on every
+  `npm install` via a new `postinstall` script) rather than working around it at each call site. Confirmed
+  this also silently affected the Step 4 `AppointmentDialog` date/time fields, since that step's browser
+  verification had only exercised the calendar-click path, never manual typing.
+- **Working-hours "Add shift" race condition**: if an unrelated day's edit (e.g. a "Copy to…" action)
+  forced the whole working-hours list to refresh while a just-saved shift's create request was still in
+  flight, the row's resync logic treated the still-`id`-less draft as "never persisted" and silently
+  stranded it — a later delete on that row would then discard it locally without ever calling the API,
+  leaving an orphaned row on the backend with no way to remove it from the UI. Fixed in
+  `WorkingHoursDayRow.vue` by tracking which drafts are genuinely uncommitted (added but not yet Saved)
+  versus merely awaiting their real server-issued id, and only guarding the resync against the former.
+- **Read-only working-hours display leaked the backend's raw `HH:mm:ss`** (e.g. `"08:00:00 – 18:00:00"`)
+  for a dentist viewing their own schedule, instead of the `HH:mm` format the editable admin view already
+  showed. Fixed by formatting both consistently in `WorkingHoursDayRow.vue`.
+
+### Added — Appointments (Appointment Detail View, Phase 2 Step 5)
+- **`AppointmentDetailView.vue`** rebuilt from its Step-1 stub into the real detail screen (design doc §4):
+  header summary, timeline, patient panel, action bar, and future-module placeholders, all wired to the
+  `appointments` store's `fetchOne`/mutation actions.
+- **New components**, each unit-tested in isolation:
+  - `AppointmentCard.vue` — presentational summary card (type, patient, dentist, date/time range, duration,
+    status, reason). Deliberately store-free (props/events only) so it can be reused by a future Dashboard
+    or search-results row without pulling in any store or permission logic.
+  - `AppointmentTimeline.vue` — vertical status stepper driven by a data-driven step-definition array keyed
+    to each status's real timestamp column, not the current status enum alone; a cancelled/no-show
+    appointment's chain terminates at the point it actually stopped rather than showing a ghost "Completed
+    (pending)" step. See TECH_DEBT.md for the one documented exception (`confirmed` has no dedicated
+    timestamp column yet).
+  - `AppointmentActionsBar.vue` + `StatusActionButton.vue` — the six status-transition buttons
+    (Confirm/Check In/Start/Complete/Cancel/No Show), gated by a status/role/ownership visibility table.
+    This table decides visibility and UX messaging only; the backend's own state machine and policies
+    remain the sole authority — a stale assumption still gets rejected by the real API call, and the
+    component re-fetches and re-syncs the displayed appointment rather than trusting its own guess. The
+    early-no-show conflict reuses the existing `ConflictAlert`/override pattern from the booking dialog.
+  - `FutureFeaturePlaceholder.vue` — generic "coming soon" card, used for Treatment Plan/Invoices/Clinical
+    Notes/Attachments plus the admin-only Audit History slot (§4.2 — no backend route exists yet, see
+    TECH_DEBT.md).
+- Edit now has a live call site: the Detail view's Edit button opens the existing `AppointmentDialog` in
+  edit mode (built in Step 4, previously unwired).
+- Every new datetime display goes through `frontend/src/lib/date.ts`'s shared helpers per the project's
+  datetime policy (`docs/decisions.md`) — no new ad hoc date handling introduced.
+- Full Vitest coverage for every new component and the wired view; `vue-tsc`, ESLint, and Prettier all clean.
+
+### Fixed — real bugs found via this step's mandatory real-browser verification
+- **Ambiguous "Cancel" button pair**: the Cancel-with-reason dialog showed two buttons both labeled
+  "Cancel" — the dismiss button (close the dialog) and the destructive confirm button (actually cancel the
+  appointment), since both reused the bare action verb. Renamed the dismiss button to "Keep Appointment"
+  and the confirm button to the dialog's own full header text ("Cancel Appointment" / "Mark as No Show"),
+  so the two are never textually identical (`StatusActionButton.vue`).
+- **Empty "Actions" card for a terminal appointment**: a completed/cancelled/no-show appointment has no
+  visible status-transition buttons by design, but the Actions card rendered as a blank box with no
+  explanation. Added a "No actions available for this appointment" message in that state
+  (`AppointmentActionsBar.vue`).
+- Both found and fixed via the full Confirm→Check In→Start→Complete lifecycle, Cancel-with-reason, and
+  No-Show early-conflict/override flows driven end to end against the real dev stack (Docker/Postgres) in
+  English/Arabic × light/dark — see the design doc's §20 status table for Step 5.
+
+### Added — Appointments (Appointment Dialog, Phase 2 Step 4)
+- **`AppointmentDialog.vue`** (Patient / Appointment / Notes tabs, design doc §3) — the full Create flow end
+  to end: patient search-and-select or inline creation, dentist/type selection with duration auto-fill
+  (only while the user hasn't manually touched duration), a calendar-driven date/time picker with a live
+  "Ends at" preview, an available-slots toggle, and reason/notes fields with character counters. Edit mode
+  (`:appointment` prop) locks the Patient tab per the backend's "patient_id not editable" rule and shows a
+  read-only status chip; not yet wired to a live call site (that's `AppointmentDetailView`, Step 5) but
+  fully implemented and unit-tested.
+- **New components**: `PatientSearchSelect.vue` (debounced typeahead + "Create New Patient", reusing the
+  existing `PatientFormDialog.vue` rather than a second form), `PatientSummaryCard.vue` (shared by the
+  search results and edit-mode display), `DentistSelect.vue`, `AppointmentTypeSelect.vue` (color swatch,
+  still resolves a since-deactivated type on an existing appointment), `DurationInput.vue`, `SlotPicker.vue`
+  (candidate slots computed from working hours, cross-referenced against `GET /available-slots`),
+  `ConflictAlert.vue` (hard-stop `dentist_conflict` vs. soft/overridable `patient_conflict` /
+  `outside_working_hours`, per §3.8).
+- **Wired into the Board**: `AppointmentsView.vue`'s "New Appointment" button and clicking an empty calendar
+  slot both open the dialog now (previously a "coming soon" toast); `CalendarFilters.vue` gained the Patient
+  filter (deferred from Step 2/3 pending `PatientSearchSelect.vue`).
+- Full Vitest coverage for every new component plus the create/conflict/override paths (150+ new assertions
+  across the module); `vue-tsc`, ESLint, and Prettier all clean.
+
+### Fixed — real bugs found via this step's mandatory real-browser verification
+- **Date-time silently shifted by the browser's OS timezone** (the most significant finding): the dialog
+  built `start_at` with `.toISOString()`, and the Board (`AppointmentCalendar.vue`) rendered `start_at`/
+  `end_at` under FullCalendar's default `timeZone: 'local'`. DentalSuite is a single-clinic system with no
+  real per-request timezone conversion (`config/app.php`'s `timezone` is `UTC` used as a neutral baseline,
+  not a real UTC boundary) — every stored digit already **is** the clinic's own wall-clock time. Confirmed
+  directly: booking "10:00" from a browser whose OS timezone wasn't UTC submitted `07:00:00.000Z`, and an
+  existing 10:00 appointment rendered on the Board at 1:00 PM. Fixed by extending the project's existing
+  `parseLocalDate`/`toLocalDateString` convention (already used for date-only fields) to date-*time* values:
+  new `frontend/src/lib/date.ts` helpers `toLocalDateTimeString`/`parseServerDateTime`, used by
+  `AppointmentDialog.vue` and `AppointmentsView.vue`'s slot-click prefill; `AppointmentCalendar.vue` now
+  sets FullCalendar's `timeZone: 'UTC'` explicitly. Regression-tested (`lib/date.test.ts`, new
+  `AppointmentCalendar.test.ts` assertion).
+- **PrimeVue `MultiSelect` rendered its placeholder twice** (e.g. "DentistDentist") for the ~1-2s a
+  `:loading` prop stayed `true` before its `options` populated — a real PrimeVue 4.5.5 rendering quirk
+  specific to `display="chip"` + `loading` + empty `modelValue`/`options` all being true at once. Fixed by
+  no longer passing `:loading` to `CalendarFilters.vue`'s Dentist/Type filters (never required by design
+  doc §1.7; the Status filter already had no `loading` prop and never showed the bug).
+- **Concurrent `fetchAll()` calls raced into duplicate network requests**: `providers.ts`/
+  `appointmentTypes.ts` had no in-flight-request guard, so every consumer mounting at once (the Board, the
+  filters, and now `DentistSelect`/`AppointmentTypeSelect` inside the new dialog) each fired their own `GET
+  /api/users`/`GET /api/appointment-types`. Fixed with a shared in-flight-promise guard in both stores;
+  regression tests added.
+- **Buttons without an explicit `type` inside a `<form>` default to `type="submit"`**: clicking "Cancel", a
+  patient search result's "Change" button, or `ConflictAlert`'s "Book Anyway" inside `AppointmentDialog`'s
+  form additionally triggered a native form submission alongside the button's own `@click` handler (caught
+  by a real double-`POST` in browser verification, not by unit tests, which don't exercise native form
+  submission). Fixed by adding `type="button"` to every non-submit button inside the form, including
+  `PatientFormDialog.vue`'s pre-existing Cancel button (same latent bug, same fix).
+- **`ToggleSwitch`'s label text wasn't clickable** — "Show available slots" only responded to clicks on the
+  switch itself, not the adjacent text (the native `<label>`/control association PrimeVue's own markup
+  supports was never wired up). Fixed by wrapping both in a `<label>`.
+- **PHP-FPM's pool (`pm.max_children = 5`, the base `php:8.4-fpm-alpine` image's default) saturates under
+  a single page load's normal concurrency** — the Board alone fires 4-5 concurrent requests on mount, and
+  opening the dialog adds more; requests past the limit queue or briefly appear to hang rather than the app
+  actually being broken (confirmed via `pm.max_children` warnings in the container logs and Postgres
+  showing no stuck queries). `docker/php/www.conf` now sets a larger local-dev pool
+  (`max_children=20`), copied into the image by `docker/php/Dockerfile`. Local-dev tuning only, not a
+  production sizing decision.
+- Verified manually against the real dev stack (Docker/Postgres): full create flow (existing-patient search
+  and inline patient creation, dentist/type/duration, calendar-driven date-time + available slots, notes),
+  the hard-stop `dentist_conflict` banner, the overridable `outside_working_hours` banner and its "Book
+  Anyway" resubmission, all across Arabic/English × light/dark. No remaining visual issues found.
+
+### Fixed — project-wide datetime audit (requested before Step 4 sign-off, not narrower Appointments-only follow-up)
+Before approving Step 4, the datetime fix above was required to be verified as an explicit, project-wide
+policy rather than a local patch — see `docs/decisions.md`'s "Project-wide datetime policy" entry for the
+full verified audit (database column types, Laravel serialization, every API Resource, every frontend call
+site). That audit found and fixed real gaps the original Step 4 pass missed:
+- **Board day-navigation landed on the wrong day, every day, for any positive-UTC-offset browser** — not
+  the "few hours near midnight" edge case originally logged in `TECH_DEBT.md`. Once `AppointmentCalendar.vue`
+  set `timeZone: 'UTC'` (fixing event rendering), its `gotoDate()`/`initialDate` calls still received
+  `calendar.ts`'s genuinely-local `currentDate` unconverted. Confirmed directly in a real browser (clicking
+  "Today" showed Thursday instead of the real Friday). Fixed with a new `toCalendarUtcDate` helper
+  (`lib/date.ts`), the inverse of `parseServerDateTime`; regression-tested.
+- **`SlotPicker.vue` silently showed "no available slots" for any dentist not currently selected in the
+  Board's own Dentist filter** — it read `workingHours.byDentist`, a store only ever populated as a side
+  effect of that unrelated filter, never by the dialog's own dentist selection. Fixed by having `SlotPicker`
+  fetch working hours for its own `dentistId` itself; regression-tested.
+- **List view's Date/Time column, the Board's `filteredAppointments` range filtering/cache eviction, and
+  `PatientDetailView.vue`'s audit-log timestamp column** (this last one a pre-existing bug in the Patients
+  module, predating Appointments entirely) all read a raw `new Date(apiValue)` instead of
+  `parseServerDateTime` — same silent-shift bug as the original finding, just not yet swept into the fix.
+  All four switched to `parseServerDateTime`.
+- Whole-tree grep for every remaining date-construction/formatting call site as the closing check — no
+  further gaps found. `lib/date.ts`'s four helpers are the sole approach in force project-wide going
+  forward, not an Appointments-module convention.
+- 160/160 Vitest passing, `vue-tsc` clean; re-verified manually against the real dev stack (day-alignment,
+  slot-matching for a dentist not in the Board filter, full create/conflict flows all still correct).
+
 ### Added — Appointments (List View, Phase 2 Step 3)
 - **`AppointmentListTable.vue`**: client-paginated (`:rows="20"`, no server round-trip — `GET
   /api/appointments` has no server-side pagination to hook into, per the backend design) DataTable, sortable

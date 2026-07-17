@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import CalendarToolbar from '@/components/appointments/CalendarToolbar.vue'
 import CalendarFilters from '@/components/appointments/CalendarFilters.vue'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar.vue'
 import AppointmentListTable from '@/components/appointments/AppointmentListTable.vue'
+import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
 import type { BoardViewMode } from '@/components/appointments/CalendarToolbar.vue'
 import type { AppointmentCalendarEvent } from '@/components/appointments/AppointmentCalendar.vue'
 import { useCalendarStore, type CalendarFilters as CalendarFiltersState } from '@/stores/calendar'
@@ -15,7 +15,8 @@ import { useAppointmentsStore } from '@/stores/appointments'
 import { useProvidersStore } from '@/stores/providers'
 import { useWorkingHoursStore } from '@/stores/workingHours'
 import { useTimeOffStore } from '@/stores/timeOff'
-import { APPOINTMENT_STATUS_COLORS, type Appointment } from '@/types/appointment'
+import { parseServerDateTime, toLocalDateTimeString } from '@/lib/date'
+import { APPOINTMENT_STATUS_COLORS, type Appointment, type AppointmentPrefill } from '@/types/appointment'
 
 const DEFAULT_SLOT_MIN_TIME = '08:00:00'
 const DEFAULT_SLOT_MAX_TIME = '20:00:00'
@@ -23,7 +24,6 @@ const SLOT_PADDING_MINUTES = 60
 
 const { t, locale } = useI18n()
 const router = useRouter()
-const toast = useToast()
 
 const calendar = useCalendarStore()
 const appointments = useAppointmentsStore()
@@ -187,15 +187,40 @@ function onNavigate(direction: 'prev' | 'next' | 'today') {
 }
 
 function onRangeChange(range: { start: Date; end: Date }) {
-  appointments.fetchRange(range.start, range.end)
+  // `range` comes from FullCalendar's `datesSet` — since AppointmentCalendar runs in
+  // `timeZone: 'UTC'` mode, these Date objects' meaningful digits are in their *UTC* getters,
+  // not their local ones (same reasoning as the slot-click prefill above). `fetchRange` reads
+  // local date components (`toLocalDateString`), so re-express each boundary as a genuinely
+  // local Date first — otherwise `date_from`/`date_to` would be off by the browser's UTC offset.
+  appointments.fetchRange(
+    parseServerDateTime(range.start.toISOString()),
+    parseServerDateTime(range.end.toISOString()),
+  )
 }
 
 function onEventClick(appointmentId: string) {
   router.push({ name: 'appointment-detail', params: { id: appointmentId } })
 }
 
-function showCreationComingSoon() {
-  toast.add({ severity: 'info', summary: t('appointments.calendar.newAppointmentComingSoon'), life: 4000 })
+const dialogVisible = ref(false)
+const dialogPrefill = ref<AppointmentPrefill | null>(null)
+
+function openNewAppointmentDialog() {
+  dialogPrefill.value = singleSelectedDentistId.value ? { dentist_id: singleSelectedDentistId.value } : null
+  dialogVisible.value = true
+}
+
+function openSlotDialog(payload: { start: Date }) {
+  dialogPrefill.value = {
+    // AppointmentCalendar renders with `timeZone: 'UTC'` (see its own comment), so
+    // `payload.start`'s wall-clock slot lives in its *UTC* getters, not its local ones —
+    // `parseServerDateTime` + `toLocalDateTimeString` together read it out the same way the
+    // backend's own UTC-labeled timestamps are read, then re-serialize as the naive string
+    // AppointmentDialog's `parseServerDateTime` expects (§3).
+    start_at: toLocalDateTimeString(parseServerDateTime(payload.start.toISOString())),
+    ...(singleSelectedDentistId.value ? { dentist_id: singleSelectedDentistId.value } : {}),
+  }
+  dialogVisible.value = true
 }
 
 onMounted(() => {
@@ -217,7 +242,7 @@ onMounted(() => {
             v-model:view-mode="viewMode"
             :range-label="rangeLabel"
             @navigate="onNavigate"
-            @new-appointment="showCreationComingSoon"
+            @new-appointment="openNewAppointmentDialog"
           />
           <AppointmentListTable
             v-if="viewMode === 'list'"
@@ -236,11 +261,13 @@ onMounted(() => {
             :slot-max-time="slotBounds.max"
             :loading="appointments.loading"
             @event-click="onEventClick"
-            @date-click="showCreationComingSoon"
+            @date-click="openSlotDialog"
             @range-change="onRangeChange"
           />
         </div>
       </template>
     </Card>
+
+    <AppointmentDialog v-model:visible="dialogVisible" :prefill="dialogPrefill" />
   </div>
 </template>

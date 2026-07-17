@@ -105,3 +105,110 @@ and approved.
 
 Moved `backend/docs/modules/*.md` → `docs/modules/`, and added `docs/architecture.md`, `docs/database-design.md`, `docs/api-guidelines.md`, `docs/coding-standards.md`, `docs/roadmap.md`, `docs/deployment.md`, plus root `CHANGELOG.md` and `TECH_DEBT.md`. Root-level docs cover both `backend/` and `frontend/`, so they don't belong nested under `backend/`. No content was lost — module docs were moved, not rewritten.
 **Status**: Housekeeping, not a product/architecture change — proceeding without a separate approval round.
+
+## 2026-07-16 — Project-wide datetime policy: naive "UTC-labeled digits = wall-clock time"
+
+**This entry documents a project-wide policy, not an Appointments-module fix.** It started as a narrower
+Step 4 (Appointment Dialog) fix, but the user requested explicit, verified answers — not assumptions —
+about every layer of the stack before approving that step, and the resulting audit found the same bug
+class in three more places outside Appointments' own new code (the already-shipped Board's event
+rendering and day navigation, the List view, and the pre-existing Patients audit-log timestamp display).
+The verified findings below are the actual policy now in force everywhere in the frontend.
+
+### The canonical format, verified end-to-end (not assumed)
+
+DentalSuite is a **single-clinic system with no real per-request timezone conversion**. Every layer was
+checked directly:
+
+- **Database**: every timestamp column, in every table (`appointments`, `patients`, `dentist_time_off`,
+  `audit_logs`, and by the same `$table->timestamps()` convention `users`/`appointment_reminders`/etc.), is
+  Postgres `timestamp(0) WITHOUT TIME ZONE` — confirmed via `\d` on each table directly. Postgres performs
+  **zero** timezone conversion on these columns regardless of session timezone; the stored digits are
+  exactly the digits the application wrote, with no timezone semantics attached at the database layer.
+- **`config/app.php`**: `'timezone' => 'UTC'`. No connection-level override exists in `config/database.php`
+  (checked directly — the `pgsql` connection array has no `'timezone'` key), and no app code overrides
+  Carbon's default serialization (checked directly — no `serializeUsing`/`Carbon::use...` call anywhere in
+  `app/`, `bootstrap/`, or `config/`). This "UTC" is a neutral label Carbon attaches for formatting, not a
+  real conversion boundary — nothing in the stack ever converts a wall-clock instant *to* or *from* a
+  different zone.
+- **Every Laravel API response** (checked every `Http/Resources/*.php` with a datetime field —
+  `AppointmentResource`, `AppointmentTypeResource`, `AuditLogResource`, `DentistTimeOffResource`,
+  `PatientResource`): all explicitly call `->toIso8601String()`, consistently, producing e.g.
+  `2026-07-16T10:00:00+00:00`. The `+00:00` is Carbon's label for "this app's configured timezone," not a
+  claim that a real UTC conversion happened — the digits are the naive, unconverted wall-clock value.
+  (`DentistWorkingHourResource`'s `start_time`/`end_time` are plain `"HH:mm"` strings from a `time` column,
+  not full timestamps — a different, timezone-agnostic case that needs no fix.)
+
+**So: every datetime value flowing through the API — request or response — is a naive wall-clock instant
+wearing a UTC label it hasn't earned.** The frontend's job is to read and write those digits as-is, never
+letting a browser's own OS timezone silently re-derive them.
+
+### The one official frontend approach — `frontend/src/lib/date.ts` (already shared, no module owns it)
+
+This file already lived outside any single module's component/store folder before this decision, so no
+file move was needed to make it "shared" — the fix was making every consumer actually use it consistently:
+
+| Helper | Direction | Use when |
+|---|---|---|
+| `parseServerDateTime(iso)` | API → local Date, digits preserved | Reading any `start_at`/`end_at`/`created_at`/etc. the backend returned |
+| `toLocalDateTimeString(date)` | Local Date → API string, digits preserved | Writing any datetime field into a request payload |
+| `parseLocalDate(str)` / `toLocalDateString(date)` | Date-*only* fields (`date_of_birth`, `date_from`/`date_to` range params) | Pre-existing (Patients module), unaffected by this decision |
+| `toCalendarUtcDate(date)` | Local Date → FullCalendar-compatible instant | Only when feeding a local Date into a FullCalendar instance running `timeZone: 'UTC'` (`initialDate`/`gotoDate()`) — the inverse of `parseServerDateTime`, needed because FullCalendar itself becomes a second "UTC-labeled" boundary once it's configured this way |
+
+A plain `new Date(iso)` or `.toISOString()`/`.getHours()` is **only** safe when the Date didn't come from
+the API or from a UTC-mode FullCalendar instance (e.g. `new Date()` for "right now," a native date-picker's
+own emitted value). Every other case must go through the table above.
+
+### Verified: is this uniformly applied today, or are there other places doing it differently?
+
+At the time of this decision, **yes, uniformly** — every remaining inconsistency found during the audit was
+fixed in the same pass, not left as a known gap:
+
+- `AppointmentDialog.vue` (read + write), `AppointmentsView.vue` (slot-click prefill, range-fetch from
+  FullCalendar's `datesSet`), `AppointmentCalendar.vue` (`timeZone: 'UTC'` + `initialDate`/`gotoDate()` via
+  `toCalendarUtcDate`), `AppointmentListTable.vue` (List view's Date/Time column), `SlotPicker.vue`
+  (available-slot matching), `stores/appointments.ts` (range-membership filtering/cache eviction) — all
+  fixed and using the table above.
+- `PatientDetailView.vue`'s audit-log timestamp column — a **pre-existing bug outside the Appointments
+  module entirely**, predating Phase 2 — was found by this same audit and fixed the same way.
+- Grepped the whole `frontend/src/` tree for every date-construction/formatting pattern
+  (`new Date(`, `.toISOString(`, `.toLocaleString(`, `.getHours()`, etc.) as the closing check — no
+  remaining site touches a datetime field outside this table's contract.
+
+Two bugs were caught only because this rigor was demanded, not because they were anticipated: (1)
+`AppointmentCalendar.vue`'s `gotoDate()`/`initialDate` still received a genuinely-local `currentDate`
+un-converted, which — once FullCalendar was put in `timeZone: 'UTC'` mode to fix event rendering — made
+**every single day** display one day off for any positive-UTC-offset browser (not the "few hours near
+midnight" edge case originally assumed; confirmed directly: clicking "Today" showed Thursday instead of
+the real Friday). (2) `SlotPicker.vue` read `workingHours.byDentist`, a store only ever populated as a side
+effect of the Board's own Dentist filter — opening the dialog for a dentist not currently selected in that
+unrelated filter left available-slot matching silently empty. Both are fixed (see `CHANGELOG.md`) and
+covered by regression tests (`lib/date.test.ts`, `AppointmentCalendar.test.ts`, `SlotPicker.test.ts`).
+
+### Decision, going forward
+
+Any new frontend code that reads or writes a date-*time* field — in any module, not just Appointments —
+must go through this file's helpers per the table above. Code review for any future module (Dental Chart,
+Billing, Treatment Plans, etc.) should check for a raw `new Date(apiValue)` or `.toISOString()` on a value
+that came from or is going to the API, the same way this audit did.
+
+**Status**: Fixed and shipped as part of Step 4, expanded project-wide per this decision. No known remaining
+gaps as of this audit — `calendar.ts`'s own range/day boundary math (`startOfWeek`/`startOfMonth`/etc.)
+correctly stays in local-time semantics (it's pure UI navigation state that never touches FullCalendar's
+UTC-mode boundary directly: `appointments.fetchRange()` reads it via matching local getters, and the one
+place it's handed to FullCalendar — `AppointmentCalendar.vue`'s `initialDate`/`gotoDate()` — now goes
+through `toCalendarUtcDate` first). The `TECH_DEBT.md` entry that originally tracked the day-navigation bug
+as a "narrow edge case" has been corrected and closed — it turned out to be a confirmed, non-narrow bug,
+fixed here, not deferred.
+
+## 2026-07-17 — Step 4 approved; datetime policy elevated to a hard Architecture Violation rule
+
+Step 4 (`AppointmentDialog` and its sub-components) is approved and closed. The user additionally elevated
+the datetime policy above (2026-07-16 entry) from "the current convention" to a permanent, general system
+rule with an explicit enforcement mechanism: **any future Code Review that finds a raw `new Date(apiValue)`,
+`.toISOString()`, `.toLocaleString()`, `.getHours()`, etc. touching a value that came from or is going to the
+API, in any module, is an Architecture Violation** — not a style nitpick — unless the deviation is
+explicitly documented with a reason here, the same way this file already documents `calendar.ts`'s
+legitimate local-time exception. Every new module must use `frontend/src/lib/date.ts`'s helpers directly;
+no module may invent its own date/timezone handling.
+**Status**: Agreed with user. Standing rule for every module from Step 5 onward.

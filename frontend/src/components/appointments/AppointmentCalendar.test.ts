@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import FullCalendar from '@fullcalendar/vue3'
 import AppointmentCalendar from './AppointmentCalendar.vue'
 import type { AppointmentCalendarEvent } from './AppointmentCalendar.vue'
 
@@ -30,6 +31,43 @@ describe('AppointmentCalendar', () => {
     })
 
     expect(wrapper.find('.fc').exists()).toBe(true)
+  })
+
+  it('forces FullCalendar to timeZone "UTC" so UTC-labeled event digits are never re-expressed through the browser\'s own offset', () => {
+    const wrapper = mount(AppointmentCalendar, {
+      props: {
+        view: 'timeGridWeek',
+        currentDate: new Date(2026, 6, 15),
+        events: makeEvents(),
+        slotMinTime: '08:00:00',
+        slotMaxTime: '18:00:00',
+        loading: false,
+      },
+    })
+
+    expect(wrapper.findComponent(FullCalendar).props('options').timeZone).toBe('UTC')
+  })
+
+  it("converts the local `currentDate` prop so FullCalendar's UTC-mode initialDate lands on the same calendar day", () => {
+    // Regression test for a confirmed real bug: passing `currentDate` straight through landed
+    // FullCalendar on the wrong (previous) day for any positive-UTC-offset host, since
+    // `timeZone: 'UTC'` makes it read `initialDate` via UTC getters, not local ones.
+    const currentDate = new Date(2026, 6, 17, 0, 0, 0) // July 17 2026, local midnight
+    const wrapper = mount(AppointmentCalendar, {
+      props: {
+        view: 'timeGridWeek',
+        currentDate,
+        events: [],
+        slotMinTime: '08:00:00',
+        slotMaxTime: '18:00:00',
+        loading: false,
+      },
+    })
+
+    const initialDate = wrapper.findComponent(FullCalendar).props('options').initialDate as Date
+    expect(initialDate.getUTCFullYear()).toBe(2026)
+    expect(initialDate.getUTCMonth()).toBe(6)
+    expect(initialDate.getUTCDate()).toBe(17)
   })
 
   it('shows the loading progress bar only while loading', () => {

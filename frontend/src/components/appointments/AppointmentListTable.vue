@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import AppointmentStatusChip from './AppointmentStatusChip.vue'
+import { parseServerDateTime } from '@/lib/date'
 import type { Appointment } from '@/types/appointment'
 
 /**
@@ -21,8 +22,11 @@ const emit = defineEmits<{ (e: 'row-click', appointmentId: string): void }>()
 const { t, locale } = useI18n()
 
 function formatDateTime(startAt: string): string {
+  // `startAt` is the backend's naive-digits-labeled timestamp (lib/date.ts) — must be read via
+  // `parseServerDateTime`, not a raw `new Date(...)`, or this column displays the wrong time in
+  // a browser whose OS timezone isn't UTC.
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(startAt),
+    parseServerDateTime(startAt),
   )
 }
 </script>

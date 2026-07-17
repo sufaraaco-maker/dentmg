@@ -26,7 +26,10 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 
-const genderOptions = PATIENT_GENDERS.map((gender) => ({ value: gender, label: t(`patients.genders.${gender}`) }))
+const genderOptions = PATIENT_GENDERS.map((gender) => ({
+  value: gender,
+  label: t(`patients.genders.${gender}`),
+}))
 const bloodTypeOptions = BLOOD_TYPES.map((type) => ({ value: type, label: type }))
 
 const today = new Date()
@@ -161,12 +164,20 @@ async function onSave() {
           fluid
           required
         />
-        <Message v-if="errors.date_of_birth" severity="error" size="small">{{ errors.date_of_birth[0] }}</Message>
+        <Message v-if="errors.date_of_birth" severity="error" size="small">{{
+          errors.date_of_birth[0]
+        }}</Message>
       </div>
 
       <div class="flex flex-col gap-2">
         <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('patients.gender') }}</label>
-        <Select v-model="form.gender" :options="genderOptions" option-label="label" option-value="value" fluid />
+        <Select
+          v-model="form.gender"
+          :options="genderOptions"
+          option-label="label"
+          option-value="value"
+          fluid
+        />
         <Message v-if="errors.gender" severity="error" size="small">{{ errors.gender[0] }}</Message>
       </div>
 
@@ -227,7 +238,9 @@ async function onSave() {
       </div>
 
       <div class="flex flex-col gap-2 sm:col-span-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('patients.medicalHistory') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('patients.medicalHistory')
+        }}</label>
         <Textarea v-model="form.medical_history" rows="2" auto-resize />
       </div>
 
@@ -251,7 +264,7 @@ async function onSave() {
       </div>
 
       <div class="flex justify-end gap-2 pt-2 sm:col-span-2">
-        <Button :label="t('common.cancel')" text @click="emit('update:visible', false)" />
+        <Button type="button" :label="t('common.cancel')" text @click="emit('update:visible', false)" />
         <Button type="submit" :label="t('common.save')" :loading="saving" />
       </div>
     </form>

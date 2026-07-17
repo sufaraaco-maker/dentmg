@@ -3,15 +3,22 @@ import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
+import PatientSearchSelect from './PatientSearchSelect.vue'
 import { useProvidersStore } from '@/stores/providers'
 import { useAppointmentTypesStore } from '@/stores/appointmentTypes'
 import { APPOINTMENT_STATUSES } from '@/types/appointment'
 import type { CalendarFilters } from '@/stores/calendar'
 
 /**
- * Dentist / Status / Type filters, shared by the Board and (in the next step) the List view.
- * Patient filter is deferred until `PatientSearchSelect.vue` exists (design doc §2.7 reuses it —
- * built alongside AppointmentDialog in the next implementation step), not stubbed out here.
+ * Dentist / Status / Type / Patient filters, shared by the Board and the List view (§2.7).
+ *
+ * Deliberately not passing `:loading` to the Dentist/Type `MultiSelect`s: with `display="chip"`,
+ * an empty `modelValue` and empty `options` (the state on first mount, before `fetchAll()`
+ * resolves), PrimeVue 4.5.5's MultiSelect renders its placeholder from two independent branches
+ * that are both true at once in exactly that combination, printing it twice (e.g. "DentistDentist")
+ * for the ~1-2s the fetch is in flight. `loading` is what makes that combination reachable; the
+ * Status filter (no `loading` prop, static enum options) never hits it. Removing the prop is a
+ * clean, permanent fix — no per-filter loading spinner was ever required by design doc §1.7.
  */
 const props = defineProps<{ modelValue: CalendarFilters }>()
 
@@ -42,7 +49,6 @@ function clearFilters() {
       :options="providers.items"
       option-label="name"
       option-value="id"
-      :loading="providers.loading"
       :placeholder="t('appointments.filters.dentist')"
       display="chip"
       class="min-w-48"
@@ -64,14 +70,23 @@ function clearFilters() {
       :options="appointmentTypes.items"
       option-label="name"
       option-value="id"
-      :loading="appointmentTypes.loading"
       :placeholder="t('appointments.filters.type')"
       display="chip"
       class="min-w-48"
       @update:model-value="update('typeIds', $event)"
     />
+    <PatientSearchSelect
+      :model-value="modelValue.patientId"
+      class="min-w-48"
+      @update:model-value="update('patientId', $event)"
+    />
     <Button
-      v-if="modelValue.dentistIds.length || modelValue.statuses.length || modelValue.typeIds.length"
+      v-if="
+        modelValue.dentistIds.length ||
+        modelValue.statuses.length ||
+        modelValue.typeIds.length ||
+        modelValue.patientId
+      "
       :label="t('appointments.filters.clearFilters')"
       text
       size="small"
