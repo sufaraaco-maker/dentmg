@@ -88,7 +88,12 @@ function onParentClick() {
       </template>
     </button>
 
-    <div v-else v-tooltip.right="collapsed ? t(item.labelKey) : undefined" :class="rowClasses" aria-disabled="true">
+    <div
+      v-else
+      v-tooltip.right="collapsed ? t(item.labelKey) : undefined"
+      :class="rowClasses"
+      aria-disabled="true"
+    >
       <i :class="item.icon" class="text-base" />
       <template v-if="!collapsed">
         <span class="flex-1 truncate text-start">{{ t(item.labelKey) }}</span>

@@ -145,7 +145,14 @@ onMounted(fetchPatients)
         <template #body="{ data }">
           <div class="flex gap-2" @click.stop>
             <Button v-if="canManage" icon="pi pi-pencil" text rounded @click="openEditDialog(data)" />
-            <Button v-if="canDelete" icon="pi pi-trash" text rounded severity="danger" @click="confirmDelete(data)" />
+            <Button
+              v-if="canDelete"
+              icon="pi pi-trash"
+              text
+              rounded
+              severity="danger"
+              @click="confirmDelete(data)"
+            />
           </div>
         </template>
       </Column>

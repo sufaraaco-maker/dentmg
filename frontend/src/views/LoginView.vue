@@ -55,14 +55,7 @@ async function onSubmit() {
             <label for="password" class="text-sm text-surface-700 dark:text-surface-200">
               {{ t('auth.password') }}
             </label>
-            <Password
-              id="password"
-              v-model="password"
-              :feedback="false"
-              toggle-mask
-              fluid
-              required
-            />
+            <Password id="password" v-model="password" :feedback="false" toggle-mask fluid required />
           </div>
 
           <Button type="submit" :label="t('auth.submit')" :loading="loading" class="w-full" />

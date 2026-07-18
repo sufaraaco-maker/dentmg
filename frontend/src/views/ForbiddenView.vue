@@ -14,6 +14,10 @@ const { t } = useI18n()
       {{ t('errors.forbidden.heading') }}
     </h1>
     <p class="text-surface-500 dark:text-surface-400">{{ t('errors.forbidden.message') }}</p>
-    <Button class="mt-2" :label="t('errors.forbidden.backToDashboard')" @click="$router.push({ name: 'dashboard' })" />
+    <Button
+      class="mt-2"
+      :label="t('errors.forbidden.backToDashboard')"
+      @click="$router.push({ name: 'dashboard' })"
+    />
   </div>
 </template>

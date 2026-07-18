@@ -111,7 +111,12 @@ onMounted(() => {
         <Tag v-if="patient" :value="patient.patient_code" severity="secondary" />
       </div>
       <div v-if="patient" class="flex gap-2">
-        <Button v-if="canManage" :label="t('common.edit')" icon="pi pi-pencil" @click="dialogVisible = true" />
+        <Button
+          v-if="canManage"
+          :label="t('common.edit')"
+          icon="pi pi-pencil"
+          @click="dialogVisible = true"
+        />
         <Button
           v-if="canDelete"
           :label="t('common.delete')"

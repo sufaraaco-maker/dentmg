@@ -64,11 +64,7 @@ onMounted(async () => {
     <Message v-if="error" severity="error">{{ t('dashboard.loadError') }}</Message>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <Card
-        v-for="stat in statCards"
-        :key="stat.key"
-        class="transition-shadow duration-200 hover:shadow-md"
-      >
+      <Card v-for="stat in statCards" :key="stat.key" class="transition-shadow duration-200 hover:shadow-md">
         <template #content>
           <div class="flex items-center gap-3">
             <span
