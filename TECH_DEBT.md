@@ -104,9 +104,9 @@ priority.
 
 ## Open (new from Appointments Phase 2 Step 1 — Infrastructure, 2026-07-16)
 
-### Pre-existing Patients/Users files are not yet ESLint/Prettier-clean
-Introducing ESLint + Prettier this step (see Resolved section below) surfaced pre-existing issues in files this step didn't touch: `PatientFormDialog.vue` and `UsersView.vue` each have one `@typescript-eslint/no-explicit-any` error (`catch (err: any)`), `PatientsView.vue` has one `vue/attributes-order` warning, and a handful of files (`PatientFormDialog.vue`, `DefaultLayout.vue`, `style.css`, `LoginView.vue`, `PatientDetailView.vue`, `PatientsView.vue`) have minor Prettier formatting drift. Deliberately **not** fixed as part of this infrastructure step — bundling unrelated formatting/lint fixes into a feature commit would obscure the actual diff being reviewed (every new/touched Appointments file in this step is already lint- and format-clean, verified via `npx eslint .` and `npx prettier --check src/`).
-**Revisit**: a small, dedicated, easy-to-review follow-up pass — `npm run lint` + `npm run format` across the whole `frontend/src/` tree — whenever convenient. Purely mechanical, low risk.
+### Pre-existing Patients/Users files are not yet Prettier-clean
+Introducing ESLint + Prettier this step (see Resolved section below) surfaced pre-existing issues in files this step didn't touch: `PatientsView.vue` has one `vue/attributes-order` warning, and a handful of files (`PatientFormDialog.vue`, `DefaultLayout.vue`, `style.css`, `LoginView.vue`, `PatientDetailView.vue`, `PatientsView.vue`) have minor Prettier formatting drift. The `@typescript-eslint/no-explicit-any` errors in `PatientFormDialog.vue`/`UsersView.vue` (`catch (err: any)`) were fixed during the 2026-07-18 Production Gate — `npx eslint .` is fully clean now, matching the pattern already used in `AppointmentDialog.vue` (`catch (err: unknown)` + narrowed inline casts). Only the Prettier-formatting/attribute-order drift remains, deliberately not touched to keep unrelated diffs out of feature commits.
+**Revisit**: a small, dedicated, easy-to-review follow-up pass — `npm run format` across the whole `frontend/src/` tree — whenever convenient. Purely mechanical, low risk.
 
 ### `providers.ts` store filename doesn't match the design doc's suggested `providers.store.ts`
 `docs/modules/appointments-ui-design.md` §10.2 (written per explicit user instruction) names the file `providers.store.ts`. Implemented as `frontend/src/stores/providers.ts` instead, for consistency with every other store in the directory (`auth.ts`, `ui.ts`, `calendar.ts`, `appointments.ts`, `appointmentTypes.ts`, `workingHours.ts`, `timeOff.ts` — none use a `.store.ts` suffix). The store's actual intent (temporary, explicitly documented as not a permanent domain model, §10.2) is preserved via a doc-comment in the file itself.
@@ -134,6 +134,47 @@ further (e.g. switching to polling-based file watching in `vite.config.ts`) if i
 down day-to-day frontend development.
 
 ## Resolved
+
+### System-Wide Production Gate (resolved 2026-07-18)
+Full pre-launch audit and hardening pass across the whole system (not scoped to one module), per
+explicit user request after Appointments' Step 10 Final QA was approved. See
+`docs/deployment.md` for the full production runbook this pass produced, and the Production Gate
+report delivered in-conversation for the complete verified/fixed/risk breakdown. Highlights:
+
+- **`DatabaseSeeder` demo-account gate** (closes the "no environment gate on demo accounts" item
+  above): demo users/patients now only seed under `app()->environment('local')`;
+  `AppointmentTypeSeeder` (real reference data) always runs. New `php artisan app:create-admin`
+  interactive command creates the real first production admin with no known/default credential.
+- **General API rate limiting**: `bootstrap/app.php` now calls `throttleApi()`, backed by a
+  `RateLimiter::for('api', ...)` (120 req/min per user/IP) registered in `AppServiceProvider` —
+  previously only `/login` had any throttling; every other endpoint (patients, users,
+  appointments) had none.
+- **Production Docker topology**: new `docker-compose.prod.yml`, `docker/php/Dockerfile.prod` +
+  `entrypoint.prod.sh` (refuses to boot on a missing `.env`, unset `APP_KEY`, or
+  `APP_ENV=local`), `docker/nginx/default.prod.conf` (serves the built frontend + proxies
+  `/api`/`/sanctum`/`/up` to php-fpm from one origin), `backend/.env.production.example`,
+  `frontend/.env.production.example`. Postgres/Redis no longer publish host ports in production.
+- **Backup & recovery**: `docker/scripts/backup.sh` (nightly Postgres dump + storage tar, 14-day
+  local retention, optional S3 sync) and `restore.sh` (explicit two-argument, confirmation-gated
+  restore). See the "No S3/offsite backup configured yet" and "Restore procedure has not yet been
+  exercised" items above — written and reviewed, not yet exercised against real data.
+- **CI/CD quality gate**: new `.github/workflows/ci.yml` — backend (Pint, Larastan, `php artisan
+  test`) and frontend (`vue-tsc`, ESLint, Prettier check, Vitest, `npm run build`) jobs on every
+  push/PR.
+- **Frontend fixes**: `PatientFormDialog.vue`/`UsersView.vue`'s `catch (err: any)` → `catch (err:
+  unknown)` with narrowed casts (matching `AppointmentDialog.vue`'s existing pattern) — closes the
+  ESLint-error half of the "pre-existing files not lint-clean" item above. `vite.config.ts` now
+  sets `build.sourcemap: false` explicitly (was relying on an implicit default).
+- **Verification performed**: 188/188 backend tests, Pint clean, PHPStan/Larastan 0 errors (level
+  5), `vue-tsc` clean, ESLint clean, 259/259 frontend Vitest tests (one router-guard test's
+  apparent flake under heavy session-local CPU contention was confirmed, via isolated re-run, to
+  be environment-induced, not a real bug — see the isolated 11/11-pass result), production
+  frontend build succeeds with no source maps and reasonable chunk sizes. Live-browser Playwright
+  verification covered login, dashboard, patients CRUD (cross-checked against the database
+  directly), Calendar Board + Day/Week/Month/List views, RTL↔LTR switching, 390px mobile viewport
+  (no horizontal overflow), and all four permission-boundary scenarios (dentist/receptionist/guest/
+  admin) — all confirmed passing. See the "Playwright E2E coverage exists only as ad hoc scratchpad
+  scripts" item above for what wasn't committed as a durable test suite.
 
 ### Board day-navigation could land on the wrong calendar day (resolved 2026-07-16)
 Originally logged during Appointments Phase 2 Step 4 as a narrow "few hours near local midnight" edge
@@ -228,20 +269,51 @@ handlers move focus to a stable anchor (e.g. the page's `<h1>` or the New Appoin
 immediately before opening the dialog, so there's something meaningful for the restore to return to.
 Low priority, narrow fix.
 
-### `DatabaseSeeder` has no environment gate on demo accounts (system-wide, not Appointments-specific)
-Confirmed by reading `backend/database/seeders/DatabaseSeeder.php` directly: it unconditionally
-creates `admin@example.com`/`dentist@example.com`/`receptionist@example.com` (all password
-`"password"`, documented in `docs/demo-guide.md`) plus 8 fake patients, with no
-`app()->environment('local')` check. `docs/deployment.md` has no mention of seeders or a warning
-against running `db:seed` against a production database. `AppointmentTypeSeeder` (called from the
-same file) is fine as-is — Consultation/Cleaning/etc. are legitimate baseline data, not demo noise.
-**Revisit**: before any production deployment (not gated to a specific module) — split
-`DatabaseSeeder` so the demo users/patients only run under `app()->environment('local')`, or
-explicitly document in `docs/deployment.md` that `db:seed` must never run against production. See
-also the standing "Seed Data Gate" note this pass re-confirmed, not newly discovered.
-
 ## Open (new from 2026-07-15 review)
 
 ### PHPStan level 5, not stricter
 Chosen as a pragmatic starting point for a codebase with no prior static analysis (Larastan's own recommended default). Levels 6-9 add generic-type-hint strictness that would need broader retrofitting across the codebase.
 **Revisit**: raise incrementally (6, then 7, ...) as new modules are built and the team has bandwidth to address the stricter findings — not urgent, no known bugs are being masked by staying at 5 today.
+
+## Open (new from System-Wide Production Gate, 2026-07-18)
+
+### No S3/offsite backup configured yet — local-disk-only
+`docker/scripts/backup.sh` dumps Postgres + `storage/app/private` to a local directory on the VPS
+host (`/var/backups/dentalsuite`) with a 14-day retention prune. The `aws s3 sync` offsite-copy line
+is present but commented out — no S3-compatible bucket has been provisioned yet. A local-disk-only
+backup does not survive VPS loss, disk failure, or provider-level incident.
+**Revisit**: before onboarding the first real clinic — provision an S3-compatible bucket
+(Backblaze B2, Wasabi, or AWS S3) and uncomment the sync line in `backup.sh`. See
+`docs/deployment.md` "Backup & Recovery".
+
+### Restore procedure has not yet been exercised against a real backup
+`docker/scripts/restore.sh` and the "Testing restore" runbook in `docs/deployment.md` were written
+and reviewed this pass, but never actually run end-to-end against a populated database — there is
+no production data yet to restore. The mechanics (drop/recreate DB, `pg_restore`, storage tar
+extraction) follow standard, well-understood patterns, but "written" and "proven" are different
+claims.
+**Revisit**: run the full restore runbook against a scratch stack once real backups exist (post
+first-clinic-onboarding), and log the date in `docs/deployment.md` per that section's closing note.
+
+### `vue-tsc -b && vite build` full production build was verified once, manually, not yet in CI
+The build succeeds cleanly (509 modules, 27s, no source maps, reasonable chunk sizes — see the
+Production Gate report) when run manually inside the `node` container. `.github/workflows/ci.yml`
+(new this pass) runs the same `npm run build` step on every push/PR, but that workflow itself has
+not yet had its first real CI run (no push has happened since it was added).
+**Revisit**: after the next push to `main` — confirm the Actions run is green, not just that the
+YAML is well-formed.
+
+### Playwright E2E coverage exists only as ad hoc scratchpad scripts, not a committed test suite
+The Production Gate's browser verification pass (login, dashboard, patients CRUD, appointments
+Board/List views, RTL/LTR, mobile viewport, permission boundaries) was done with one-off Playwright
+scripts in the session scratchpad, not committed to the repo. Confirmed reliable results for every
+scenario except live-browser appointment create/reschedule/cancel, which was blocked repeatedly by
+this specific dev machine's Vite-dev-server cold-start latency and inter-process CPU contention
+(unrelated to application correctness — the same logic is covered by 188 passing backend
+`AppointmentTest` cases, and the New Appointment dialog was independently confirmed to render every
+expected field via a raw DOM dump).
+**Revisit**: promote the more valuable scenarios (permission boundaries, RTL/LTR, mobile overflow)
+into a committed `frontend/e2e/` Playwright suite wired into CI, since re-deriving these scripts by
+hand every review cycle doesn't scale. Not blocking a first production deploy — Vitest component
+tests plus the backend feature-test suite already cover the underlying logic; this is about
+closing the last mile of true cross-stack browser confirmation.

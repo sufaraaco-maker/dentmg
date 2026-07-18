@@ -121,9 +121,10 @@ async function onSave() {
 
     emit('saved', data)
     emit('update:visible', false)
-  } catch (err: any) {
-    if (err?.response?.status === 422) {
-      errors.value = err.response.data.errors ?? {}
+  } catch (err: unknown) {
+    if ((err as { response?: { status?: number } })?.response?.status === 422) {
+      errors.value =
+        (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
     } else {
       toast.add({ severity: 'error', summary: t('patients.saveError'), life: 3000 })
     }

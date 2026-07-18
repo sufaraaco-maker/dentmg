@@ -1,0 +1,72 @@
+name: dentalsuite
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: dentalsuite_app
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: dentalsuite_nginx
+    restart: unless-stopped
+    ports:
+      # Bind to loopback only — a host-level reverse proxy (Nginx/Caddy) terminates TLS on
+      # 443 and forwards to 127.0.0.1:8000. Never publish this directly to 0.0.0.0 in
+      # production. See docs/deployment.md "SSL / TLS".
+      - '127.0.0.1:8000:80'
+    volumes:
+      - ./backend:/var/www/html:ro
+      - ./frontend/dist:/usr/share/nginx/frontend:ro
+      - ./docker/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - dentalsuite
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: dentalsuite_postgres
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - dentalsuite
+    # No host port published — only reachable from other containers on the dentalsuite
+    # network. Use `docker compose -f docker-compose.prod.yml exec postgres psql ...` or an
+    # SSH tunnel for direct DB access.
+
+  redis:
+    image: redis:7-alpine
+    container_name: dentalsuite_redis
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    networks:
+      - dentalsuite
+    # No host port published — same reasoning as postgres above.
+
+networks:
+  dentalsuite:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:

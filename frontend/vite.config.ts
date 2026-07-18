@@ -14,4 +14,9 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  build: {
+    // Explicit, not just relying on Vite's default — a production build must never ship
+    // source maps that reveal original file structure/source to end users.
+    sourcemap: false,
+  },
 })

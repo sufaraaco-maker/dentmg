@@ -1,0 +1,37 @@
+name: dentalsuite-rehearsal
+
+# Throwaway stack used ONLY to rehearse docker/scripts/restore.sh end-to-end against a fresh,
+# isolated target — proves the real restore mechanics work without touching the working dev
+# stack (docker-compose.yml) or requiring a second production host. See docs/deployment.md
+# "Testing restore". Not referenced by any other compose file; safe to delete/recreate freely.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dentalsuite_rehearsal_app
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ./backend/.env.rehearsal.example
+    depends_on:
+      - postgres
+    networks:
+      - rehearsal
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: dentalsuite_rehearsal_postgres
+    environment:
+      POSTGRES_DB: dentalsuite_rehearsal
+      POSTGRES_USER: dentalsuite_rehearsal
+      POSTGRES_PASSWORD: rehearsal_only_secret
+    networks:
+      - rehearsal
+    # No host port published and no named volume — an anonymous volume is fine since this
+    # stack is torn down (`docker compose -f docker-compose.rehearsal.yml down -v`) at the end
+    # of every rehearsal; nothing here is meant to persist.
+
+networks:
+  rehearsal:
+    driver: bridge

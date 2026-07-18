@@ -18,6 +18,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: false,
+    // Explicit, not the default (which would also match `e2e/*.spec.ts` — the Playwright suite,
+    // a different test runner entirely with an incompatible `test()`/`expect()` API).
+    include: ['src/**/*.test.ts'],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',

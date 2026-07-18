@@ -14,11 +14,20 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Demo accounts below all share the password "password" (Laravel's default factory
-     * password) — documented for reviewers in docs/demo-guide.md, not a production credential.
+     * AppointmentTypeSeeder seeds real reference data the app needs to function (a clinic can't
+     * book an appointment without types) and always runs. The demo users/patients below use a
+     * known password ("password", Laravel's factory default — see docs/demo-guide.md) and must
+     * never exist outside local/dev environments — see docs/deployment.md "First Admin User" for
+     * the production equivalent (`php artisan app:create-admin`).
      */
     public function run(): void
     {
+        $this->call(AppointmentTypeSeeder::class);
+
+        if (! app()->environment('local')) {
+            return;
+        }
+
         User::factory()->admin()->create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -35,7 +44,5 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Patient::factory()->count(8)->create();
-
-        $this->call(AppointmentTypeSeeder::class);
     }
 }

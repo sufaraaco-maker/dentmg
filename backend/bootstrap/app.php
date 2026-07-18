@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->throttleApi();
 
         // Laravel's ApplicationBuilder registers a default guest-redirect to route('login')
         // before this callback runs. This app has no 'login' web route (auth is SPA/API-only),

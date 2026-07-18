@@ -127,9 +127,10 @@ async function onSave() {
     dialogVisible.value = false
     toast.add({ severity: 'success', summary: t('users.saved'), life: 3000 })
     await fetchUsers()
-  } catch (err: any) {
-    if (err?.response?.status === 422) {
-      errors.value = err.response.data.errors ?? {}
+  } catch (err: unknown) {
+    if ((err as { response?: { status?: number } })?.response?.status === 422) {
+      errors.value =
+        (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
     } else {
       toast.add({ severity: 'error', summary: t('users.saveError'), life: 3000 })
     }
