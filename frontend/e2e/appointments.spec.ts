@@ -23,7 +23,11 @@ test.describe('appointments', () => {
     await page.goto('/appointments')
     await page.getByRole('button', { name: 'New Appointment' }).click()
 
-    const searchInput = page.getByPlaceholder('Search by name, code, or phone')
+    // Scoped to the dialog — the Board's always-visible CalendarFilters sidebar has its own
+    // PatientSearchSelect (for filtering the calendar) with this exact same placeholder text,
+    // so an unscoped page-wide locator matches two elements (strict-mode violation).
+    const dialog = page.locator('.p-dialog')
+    const searchInput = dialog.getByPlaceholder('Search by name, code, or phone')
     await expect(searchInput).toBeVisible({ timeout: 15_000 })
     await searchInput.fill('Fernando')
 
@@ -32,7 +36,7 @@ test.describe('appointments', () => {
     // exact visible text is both correct and immune to the earlier debugging session's mistake
     // of guessing PrimeVue-style `.p-listbox-option`/`[role="option"]` classes that don't exist
     // on this component.
-    const patientOption = page.locator('li', { hasText: 'Fernando Russel' })
+    const patientOption = dialog.locator('li', { hasText: 'Fernando Russel' })
     await expect(patientOption).toBeVisible({ timeout: 10_000 })
     await patientOption.click()
 

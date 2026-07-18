@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { DEMO_USERS, loginAsEnglish } from './fixtures'
+import { DEMO_USERS, forceEnglishLocale, loginAsEnglish } from './fixtures'
 
 test.describe('authentication', () => {
   test('logs in with valid credentials and reaches the dashboard', async ({ page }) => {
@@ -9,6 +9,9 @@ test.describe('authentication', () => {
   })
 
   test('rejects an invalid password and stays on the login page', async ({ page }) => {
+    // Without this, the app's real default locale (Arabic) renders the error message in
+    // Arabic, and the English-text assertion below times out — not a login failure at all.
+    await forceEnglishLocale(page)
     await page.goto('/login')
     await page.waitForSelector('#email')
     await page.fill('#email', DEMO_USERS.admin.email)
