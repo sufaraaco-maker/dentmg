@@ -20,6 +20,15 @@ test.describe('appointments', () => {
 
   test('creates, reschedules, and cancels an appointment', async ({ page }) => {
     await loginAsEnglish(page, 'admin')
+
+    // Seeded patients have randomly-generated names (PatientFactory — see docs/demo-guide.md,
+    // "exact names differ on every fresh migrate:fresh --seed") and `patient_code` isn't a
+    // searchable field (see PatientService::paginate), so a hardcoded name only works against
+    // whatever happened to be seeded locally when the test was written. Fetch a real one instead.
+    const patientsResponse = await page.request.get('/api/patients?per_page=1')
+    const { data: patients } = await patientsResponse.json()
+    const patientName: string = patients[0].full_name
+
     await page.goto('/appointments')
     await page.getByRole('button', { name: 'New Appointment' }).click()
 
@@ -29,14 +38,14 @@ test.describe('appointments', () => {
     const dialog = page.locator('.p-dialog')
     const searchInput = dialog.getByPlaceholder('Search by name, code, or phone')
     await expect(searchInput).toBeVisible({ timeout: 15_000 })
-    await searchInput.fill('Fernando')
+    await searchInput.fill(patientName)
 
     // PatientSearchSelect renders results as a plain `<ul>/<li>` list (not a PrimeVue overlay
     // component) — the patient's name lives in a `<span>` inside each `<li>`, so scoping by
     // exact visible text is both correct and immune to the earlier debugging session's mistake
     // of guessing PrimeVue-style `.p-listbox-option`/`[role="option"]` classes that don't exist
     // on this component.
-    const patientOption = dialog.locator('li', { hasText: 'Fernando Russel' })
+    const patientOption = dialog.locator('li', { hasText: patientName })
     await expect(patientOption).toBeVisible({ timeout: 10_000 })
     await patientOption.click()
 
