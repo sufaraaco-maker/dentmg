@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
@@ -22,6 +23,7 @@ const emit = defineEmits<{ 'new-appointment': [] }>()
 
 const { t } = useI18n()
 const router = useRouter()
+const toast = useToast()
 const appointmentsStore = useAppointmentsStore()
 const auth = useAuthStore()
 
@@ -52,6 +54,15 @@ async function load() {
     loading.value = false
   }
 }
+
+// See AppointmentsView.vue's identical watcher: `fetchRange` otherwise fails silently — this
+// widget would just render its empty state, indistinguishable from "nothing upcoming".
+watch(
+  () => appointmentsStore.error,
+  (error) => {
+    if (error) toast.add({ severity: 'error', summary: t(error), life: 3000 })
+  },
+)
 
 const upcomingAppointments = computed<Appointment[]>(() => {
   const { start, end } = upcomingRange()

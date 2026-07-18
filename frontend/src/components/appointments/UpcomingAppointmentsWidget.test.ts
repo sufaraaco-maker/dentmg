@@ -105,9 +105,21 @@ describe('UpcomingAppointmentsWidget', () => {
 
   it('excludes cancelled and no-show appointments', async () => {
     mockedApi.list.mockResolvedValue([
-      makeAppointment({ id: 'a1', status: 'cancelled', patient: { id: 'p1', patient_code: 'P-1', full_name: 'Cancelled Patient' } }),
-      makeAppointment({ id: 'a2', status: 'no_show', patient: { id: 'p2', patient_code: 'P-2', full_name: 'NoShow Patient' } }),
-      makeAppointment({ id: 'a3', status: 'confirmed', patient: { id: 'p3', patient_code: 'P-3', full_name: 'Confirmed Patient' } }),
+      makeAppointment({
+        id: 'a1',
+        status: 'cancelled',
+        patient: { id: 'p1', patient_code: 'P-1', full_name: 'Cancelled Patient' },
+      }),
+      makeAppointment({
+        id: 'a2',
+        status: 'no_show',
+        patient: { id: 'p2', patient_code: 'P-2', full_name: 'NoShow Patient' },
+      }),
+      makeAppointment({
+        id: 'a3',
+        status: 'confirmed',
+        patient: { id: 'p3', patient_code: 'P-3', full_name: 'Confirmed Patient' },
+      }),
     ])
     const wrapper = await mountWidget()
 
@@ -116,11 +128,19 @@ describe('UpcomingAppointmentsWidget', () => {
     expect(wrapper.text()).toContain('Confirmed Patient')
   })
 
-  it('filters to only the dentist\'s own appointments for scope=own', async () => {
+  it("filters to only the dentist's own appointments for scope=own", async () => {
     useAuthStore().user = { id: 'd1', name: 'Dr. Smith', email: 'd1@example.com', role: 'dentist' }
     mockedApi.list.mockResolvedValue([
-      makeAppointment({ id: 'a1', dentist_id: 'd1', patient: { id: 'p1', patient_code: 'P-1', full_name: 'Own Patient' } }),
-      makeAppointment({ id: 'a2', dentist_id: 'other', patient: { id: 'p2', patient_code: 'P-2', full_name: 'Other Patient' } }),
+      makeAppointment({
+        id: 'a1',
+        dentist_id: 'd1',
+        patient: { id: 'p1', patient_code: 'P-1', full_name: 'Own Patient' },
+      }),
+      makeAppointment({
+        id: 'a2',
+        dentist_id: 'other',
+        patient: { id: 'p2', patient_code: 'P-2', full_name: 'Other Patient' },
+      }),
     ])
     const wrapper = await mountWidget('own')
 

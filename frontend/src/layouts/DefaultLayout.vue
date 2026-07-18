@@ -26,7 +26,7 @@ const isRtl = computed(() => RTL_LOCALES.includes(locale.value as SupportedLocal
       <AppSidebar variant="drawer" />
     </Drawer>
 
-    <div class="flex min-h-screen flex-1 flex-col">
+    <div class="flex min-h-screen min-w-0 flex-1 flex-col">
       <AppHeader />
       <main class="flex-1 p-6">
         <RouterView />

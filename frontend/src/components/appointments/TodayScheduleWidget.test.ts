@@ -125,7 +125,9 @@ describe('TodayScheduleWidget', () => {
   })
 
   it('shows a Waiting tag for a checked-in appointment still not started, scope=all', async () => {
-    mockedApi.list.mockResolvedValue([makeAppointment({ status: 'checked_in', checked_in_at: isoAtTodayOffset(9) })])
+    mockedApi.list.mockResolvedValue([
+      makeAppointment({ status: 'checked_in', checked_in_at: isoAtTodayOffset(9) }),
+    ])
     const wrapper = await mountWidget('all')
 
     expect(wrapper.text()).toContain('Waiting')
@@ -147,11 +149,19 @@ describe('TodayScheduleWidget', () => {
     expect(wrapper.find('button[data-action="checkIn"]').exists()).toBe(false)
   })
 
-  it('filters to only the dentist\'s own appointments for scope=own', async () => {
+  it("filters to only the dentist's own appointments for scope=own", async () => {
     useAuthStore().user = { id: 'd1', name: 'Dr. Smith', email: 'd1@example.com', role: 'dentist' }
     mockedApi.list.mockResolvedValue([
-      makeAppointment({ id: 'a1', dentist_id: 'd1', patient: { id: 'p1', patient_code: 'P-1', full_name: 'Own Patient' } }),
-      makeAppointment({ id: 'a2', dentist_id: 'other', patient: { id: 'p2', patient_code: 'P-2', full_name: 'Other Patient' } }),
+      makeAppointment({
+        id: 'a1',
+        dentist_id: 'd1',
+        patient: { id: 'p1', patient_code: 'P-1', full_name: 'Own Patient' },
+      }),
+      makeAppointment({
+        id: 'a2',
+        dentist_id: 'other',
+        patient: { id: 'p2', patient_code: 'P-2', full_name: 'Other Patient' },
+      }),
     ])
     const wrapper = await mountWidget('own')
 

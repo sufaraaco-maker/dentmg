@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -58,6 +58,15 @@ async function load() {
     loading.value = false
   }
 }
+
+// See AppointmentsView.vue's identical watcher: `fetchRange` otherwise fails silently — this
+// widget would just render its empty state, indistinguishable from "no appointments today".
+watch(
+  () => appointmentsStore.error,
+  (error) => {
+    if (error) toast.add({ severity: 'error', summary: t(error), life: 3000 })
+  },
+)
 
 const todaysAppointments = computed<Appointment[]>(() => {
   const { start, end } = todayRange()

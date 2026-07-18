@@ -174,6 +174,72 @@ Fixed by switching to Laravel's `whereLike()`/`orWhereLike()`. See [docs/decisio
 ### Patient search had no usable index for `LIKE '%term%'` queries (resolved 2026-07-15)
 `pg_trgm` GIN indexes added on the searched columns (Postgres-only migration). See [docs/decisions.md](docs/decisions.md).
 
+## Open (new from Appointments Phase 2 Step 10 — Final QA, 2026-07-18)
+
+### Board's fetch-failure UX is a toast, not the inline retry state the design doc calls for
+Design doc §1.9 ("If the Board's range fetch itself fails... show an inline retry state in place of
+the calendar grid — a broken calendar with no data and no way to retry is a dead end") describes a
+richer treatment than what Step 10 actually shipped: `AppointmentsView`/the three Dashboard-adjacent
+widgets now show an error toast when `appointments.error` is set (previously showed nothing at all —
+see CHANGELOG), but the calendar/widget still renders its ordinary empty state underneath, and there
+is no in-place "Retry" affordance.
+**Revisit**: if silent/toast-only failure proves insufficient in practice, replace the Board's empty
+render with a dedicated error state (message + retry button) when `appointments.error` is set,
+matching §1.9 as originally specified. Not blocking — the toast closes the "totally silent" gap that
+existed before; this is about matching the fuller documented design, not fixing a currently-broken
+experience.
+
+### Mobile Week/Month view is legible but cramped; design doc's "auto-select Day view on narrow
+viewports" isn't implemented
+Design doc §1.11 states Day view "is auto-selected when the viewport is narrow on first load (still
+user-overridable)." No such logic exists anywhere in `calendar.ts`/`AppointmentsView.vue` — confirmed
+by reading both files. Verified directly at a 390px viewport: Week view (the default) still renders
+all 7 day columns, each only a few pixels wide once time labels are accounted for — readable, and no
+longer causes the whole-page horizontal scroll fixed this step (see CHANGELOG), but a poor first
+impression compared to what the design doc describes.
+**Revisit**: add a `window.innerWidth` (or a CSS-driven) check on first mount that defaults
+`calendar.viewMode` to `timeGridDay` below a mobile breakpoint, only when the user hasn't already
+picked a view this session. Small, self-contained change; not blocking.
+
+### `vue-i18n`'s full compiler+runtime build ships on every page (~84 KB gzipped)
+Confirmed via `npm run build`: `vue-i18n` is the second-largest chunk in the whole app (273 KB /
+84 KB gzip), eagerly loaded on every route since `main.ts` installs it globally. This project has no
+`@intlify/unplugin-vue-i18n` (or equivalent) build step — locale JSON is passed straight to
+`createI18n({ messages })` and compiled to render functions **at runtime** via `t()`, which is exactly
+why the full (not runtime-only) build is required. Simply aliasing to
+`vue-i18n/dist/vue-i18n.runtime.esm-bundler.js` without also adding message precompilation would break
+every translation in the app — not attempted this step; the fix has real setup cost and its own
+regression surface across all 3 locales.
+**Revisit**: add `@intlify/unplugin-vue-i18n` to `vite.config.ts` to precompile `locales/*.json` into
+message functions at build time, then switch the `vue-i18n` import to its runtime-only build. Worth
+doing given the app-wide (not just Appointments) bundle-size win, but needs its own dedicated,
+carefully-verified pass across `en`/`ar`/`tr`.
+
+### Keyboard-shortcut-triggered dialog close doesn't restore focus anywhere meaningful
+`useDialogFocusRestore()` correctly returns focus to the triggering element when a dialog is opened
+by a **click** (confirmed directly: closing a mouse-opened "New Appointment" dialog returns focus to
+that exact button). But when the same dialog is opened via the `N` keyboard shortcut, there was no
+specific focused element to begin with (the shortcut is a global `window` keydown listener, not tied
+to any button) — closing it restores focus to `<body>`, forcing a keyboard-only user to tab from the
+very top of the page again. This is the composable behaving exactly as designed ("restore whatever
+had focus"); the gap is that "whatever had focus" is meaningless for this specific entry path.
+**Revisit**: if this proves a real friction point for keyboard users, have the `N`/`?` shortcut
+handlers move focus to a stable anchor (e.g. the page's `<h1>` or the New Appointment button itself)
+immediately before opening the dialog, so there's something meaningful for the restore to return to.
+Low priority, narrow fix.
+
+### `DatabaseSeeder` has no environment gate on demo accounts (system-wide, not Appointments-specific)
+Confirmed by reading `backend/database/seeders/DatabaseSeeder.php` directly: it unconditionally
+creates `admin@example.com`/`dentist@example.com`/`receptionist@example.com` (all password
+`"password"`, documented in `docs/demo-guide.md`) plus 8 fake patients, with no
+`app()->environment('local')` check. `docs/deployment.md` has no mention of seeders or a warning
+against running `db:seed` against a production database. `AppointmentTypeSeeder` (called from the
+same file) is fine as-is — Consultation/Cleaning/etc. are legitimate baseline data, not demo noise.
+**Revisit**: before any production deployment (not gated to a specific module) — split
+`DatabaseSeeder` so the demo users/patients only run under `app()->environment('local')`, or
+explicitly document in `docs/deployment.md` that `db:seed` must never run against production. See
+also the standing "Seed Data Gate" note this pass re-confirmed, not newly discovered.
+
 ## Open (new from 2026-07-15 review)
 
 ### PHPStan level 5, not stricter

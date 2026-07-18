@@ -22,5 +22,12 @@ export function getContrastTextColor(hexColor: string): '#000000' | '#ffffff' {
 
   const luminance = 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
 
-  return luminance > 0.5 ? '#000000' : '#ffffff'
+  // WCAG contrast ratio against each candidate — not a flat 0.5 luminance split, which picks the
+  // wrong (lower-contrast) option for any background whose luminance falls in ~[0.179, 0.5): in
+  // that band black-on-bg actually scores higher than white-on-bg even though the bg reads as
+  // "darkish". Comparing the two ratios directly is correct at every luminance, not just the ends.
+  const contrastWithWhite = 1.05 / (luminance + 0.05)
+  const contrastWithBlack = (luminance + 0.05) / 0.05
+
+  return contrastWithBlack >= contrastWithWhite ? '#000000' : '#ffffff'
 }

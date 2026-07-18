@@ -126,10 +126,16 @@ function toEventData(arg: EventContentArg): AppointmentEventData {
     <div v-if="loading" class="absolute inset-x-0 top-0 z-10">
       <ProgressBar mode="indeterminate" style="height: 3px" />
     </div>
-    <FullCalendar ref="calendarRef" :options="calendarOptions">
-      <template #eventContent="arg">
-        <AppointmentEventContent :event="toEventData(arg)" @activate="emit('event-click', arg.event.id)" />
-      </template>
-    </FullCalendar>
+    <!-- FullCalendar's Day/Week grid has a real minimum column width (time labels + 7 day columns
+         in Week view) that exceeds narrow viewports — this wrapper scrolls sideways on its own so
+         the page body never does (confirmed on a 390px viewport: without it, the whole page grew a
+         horizontal scrollbar instead of just the grid). -->
+    <div class="overflow-x-auto">
+      <FullCalendar ref="calendarRef" :options="calendarOptions">
+        <template #eventContent="arg">
+          <AppointmentEventContent :event="toEventData(arg)" @activate="emit('event-click', arg.event.id)" />
+        </template>
+      </FullCalendar>
+    </div>
   </div>
 </template>

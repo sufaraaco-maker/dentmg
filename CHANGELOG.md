@@ -4,6 +4,40 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Fixed — Appointments (Final QA pass, Phase 2 Step 10)
+- **Silent fetch failures across every appointments surface**: `appointments.ts`'s `fetchRange` has
+  always captured a network/server failure into a reactive `error` ref (translation key
+  `appointments.loadError`, already present in all 3 locales) — but nothing ever read it. Confirmed
+  directly: forcing the list endpoint to 500 rendered a completely empty Board/widget, visually
+  indistinguishable from "nothing scheduled" — a real risk for a clinical scheduling app (a
+  receptionist could mistake a failed fetch for a genuinely open day). Fixed by adding an
+  `error`-watching toast in the four consumers of the shared cache: `AppointmentsView`,
+  `TodayScheduleWidget`, `UpcomingAppointmentsWidget`, `PatientAppointmentsPanel`. Design doc §1.9
+  actually calls for a fuller inline retry state replacing the grid on the Board's initial load, not
+  just a toast — that richer treatment is **not** implemented here; see TECH_DEBT.md.
+- **`getContrastTextColor()` picked the wrong (lower-contrast) text color for backgrounds in the
+  luminance range ~[0.179, 0.5)**: its old rule was a flat `luminance > 0.5 ? black : white` split,
+  but the actual black-vs-white WCAG crossover is at ~0.179, not 0.5. Confirmed with `#3b82f6` (a
+  plausible clinic-picked appointment color): the old logic returned white at a 3.68:1 contrast
+  ratio (fails WCAG AA's 4.5:1), when black scores 5.71:1 (passes) on the same background. Fixed by
+  comparing both candidates' actual contrast ratios instead of a fixed threshold; regression test
+  added. Affects every consumer (`AppointmentStatusChip`, calendar events, Appointment Types table).
+- **Whole-page horizontal scroll on narrow (~390px) viewports on the Appointments Calendar**: traced
+  through the full ancestor chain to `DefaultLayout.vue`'s main-content flex item, which had no
+  `min-w-0` — a classic flexbox pitfall where a flex item's default `min-width: auto` refuses to
+  shrink below its content's intrinsic width, so FullCalendar's Week grid forced the *entire app
+  shell* wider than the viewport instead of scrolling within its own card. Fixed at the shared
+  layout level (protects every current and future module, not just this one), plus two
+  Appointments-local contributors: `AppointmentCalendar.vue`'s grid now has its own
+  `overflow-x-auto` wrapper, and `CalendarToolbar.vue`'s view-switch/New-Appointment button group
+  now wraps instead of forcing its parent wider. Confirmed fixed via Playwright at 390px/834px.
+- **RTL chevron mirroring**: `AppointmentCalendar` already mirrors the day grid itself for RTL
+  (Saturday...Sunday, right to left, so "forward in time" reads leftward) — but
+  `CalendarToolbar`'s prev/next buttons kept hardcoded LTR icons (`pi-chevron-left`/`-right`)
+  regardless of direction, so "next" pointed the opposite way from how the grid underneath it
+  actually reads. Fixed by swapping both icons under `isRtl`; confirmed live (RTL desktop
+  screenshot) and via a new unit test.
+
 ### Added — Appointments (Accessibility + Keyboard Shortcuts polish, Phase 2 Step 9)
 - **Keyboard shortcuts** on the Appointments Board/List (design doc §2.10): `N` new appointment,
   `←`/`→` prev/next period, `T` today, `1`/`2`/`3`/`5` switch view (`4`, Dentists view, reserved but

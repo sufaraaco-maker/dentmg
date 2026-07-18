@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import AppointmentListTable from './AppointmentListTable.vue'
@@ -41,6 +42,7 @@ const RANGE_FUTURE_MONTHS = 6
 
 const { t } = useI18n()
 const router = useRouter()
+const toast = useToast()
 const appointmentsStore = useAppointmentsStore()
 const auth = useAuthStore()
 
@@ -63,6 +65,15 @@ async function load() {
     loading.value = false
   }
 }
+
+// See AppointmentsView.vue's identical watcher: `fetchRange` otherwise fails silently — this
+// panel would just render its empty state, indistinguishable from "no appointments on file".
+watch(
+  () => appointmentsStore.error,
+  (error) => {
+    if (error) toast.add({ severity: 'error', summary: t(error), life: 3000 })
+  },
+)
 
 const patientAppointments = computed<Appointment[]>(() => {
   const { start, end } = panelRange()

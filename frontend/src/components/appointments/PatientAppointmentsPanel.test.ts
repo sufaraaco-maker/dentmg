@@ -81,7 +81,7 @@ beforeEach(() => {
 })
 
 describe('PatientAppointmentsPanel', () => {
-  it('fetches an unfiltered range and shows only this patient\'s appointments', async () => {
+  it("fetches an unfiltered range and shows only this patient's appointments", async () => {
     mockedApi.list.mockResolvedValue([
       makeAppointment({ id: 'a1', patient_id: 'p1' }),
       makeAppointment({

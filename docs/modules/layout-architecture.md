@@ -210,3 +210,19 @@ system — typography (Inter/IBM Plex Sans Arabic), border-radius/shadow tokens,
 polish pass. See [design-system.md](../design-system.md) for the full reference; this is the point at which
 the design system is considered **frozen** for use by all future modules (starting with Appointments Phase
 2 — Calendar UI).
+
+## Addendum (2026-07-18): `min-w-0` added to the main-content flex item
+
+Found during Appointments Phase 2 Step 10 (Final QA): `DefaultLayout.vue`'s main-content wrapper
+(`<div class="flex min-h-screen flex-1 flex-col">`, a flex item of the shell's outer row alongside the
+sidebar) had no `min-w-0`, so it inherited the browser's default `min-width: auto` for flex items — a
+descendant with a wide intrinsic content size (confirmed with Appointments' Week-view calendar grid at
+a 390px viewport) forced this flex item, and therefore the whole app shell, wider than the viewport
+instead of scrolling within its own card. Fixed by adding `min-w-0` to that one div — a single-line,
+shell-level fix that protects every current and future module from the same class of bug, not just
+Appointments. See `CHANGELOG.md` (Step 10) for the full trace and the Appointments-local fixes that
+accompanied it (`AppointmentCalendar.vue`'s own `overflow-x-auto` wrapper,
+`CalendarToolbar.vue`'s button-group wrap).
+**Any future module rendering wide content (a table, a chart, another calendar) should still wrap that
+content in its own `overflow-x-auto` container — this shell fix means that container will now actually
+have room to scroll instead of being forced wider itself, not that the wrapping is no longer needed.**

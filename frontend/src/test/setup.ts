@@ -7,7 +7,10 @@ import Tooltip from 'primevue/tooltip'
 import Aura from '@primeuix/themes/aura'
 import en from '@/locales/en.json'
 
-const i18n = createI18n({
+// Exported so a component test can flip `locale.value` to 'ar' to assert RTL-conditional
+// rendering (e.g. mirrored icons) — every other test file only ever runs against the 'en'
+// default, so this was previously untestable outside a real-browser pass.
+export const i18n = createI18n({
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',

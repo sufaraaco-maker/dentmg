@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import CalendarToolbar from '@/components/appointments/CalendarToolbar.vue'
@@ -28,6 +29,7 @@ const SLOT_PADDING_MINUTES = 60
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const toast = useToast()
 
 const calendar = useCalendarStore()
 const appointments = useAppointmentsStore()
@@ -234,6 +236,16 @@ onMounted(() => {
   providers.fetchAll()
   appointments.fetchRange(calendar.currentRange.start, calendar.currentRange.end)
 })
+
+// `appointments.fetchRange` fails silently otherwise (confirmed directly: forcing a 500 renders
+// an empty-looking Board with zero indication anything went wrong, which is exactly what a
+// receptionist would misread as "no appointments this week" instead of "the fetch failed").
+watch(
+  () => appointments.error,
+  (error) => {
+    if (error) toast.add({ severity: 'error', summary: t(error), life: 3000 })
+  },
+)
 
 const calendarFiltersRef = ref<InstanceType<typeof CalendarFilters>>()
 const shortcutsHelpVisible = ref(false)
