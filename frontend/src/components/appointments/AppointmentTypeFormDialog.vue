@@ -10,6 +10,7 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import DurationInput from './DurationInput.vue'
 import { useAppointmentTypesStore } from '@/stores/appointmentTypes'
+import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import type { AppointmentType } from '@/types/appointment'
 
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/
@@ -79,6 +80,9 @@ watch(
   // the false→true transition (matches AppointmentDialog's identical convention).
   { immediate: true },
 )
+
+// Design doc §14 (Focus management): returns focus to whatever opened this dialog once it closes.
+useDialogFocusRestore(() => props.visible)
 
 function validate(): boolean {
   const nextErrors: Record<string, string[]> = {}

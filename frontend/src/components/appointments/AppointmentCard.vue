@@ -12,13 +12,21 @@ import type { Appointment } from '@/types/appointment'
  * emits `click`, so any future call site can reuse it without pulling in the appointments store
  * or any auth/permission logic — those decisions belong to the parent, not this component.
  */
-const props = withDefaults(defineProps<{ appointment: Appointment; variant?: 'default' | 'compact' }>(), {
-  variant: 'default',
-})
+const props = withDefaults(
+  defineProps<{ appointment: Appointment; variant?: 'default' | 'compact'; clickable?: boolean }>(),
+  { variant: 'default', clickable: false },
+)
 
 const emit = defineEmits<{ click: [] }>()
 
 const { t, locale } = useI18n()
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    emit('click')
+  }
+}
 
 const startAt = computed(() => parseServerDateTime(props.appointment.start_at))
 const endAt = computed(() => parseServerDateTime(props.appointment.end_at))
@@ -46,7 +54,17 @@ const dentistName = computed(() => props.appointment.dentist?.name ?? '—')
 </script>
 
 <template>
-  <Card @click="emit('click')">
+  <Card
+    :tabindex="clickable ? 0 : undefined"
+    :role="clickable ? 'button' : undefined"
+    :class="
+      clickable
+        ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400'
+        : undefined
+    "
+    @click="emit('click')"
+    @keydown="clickable && onKeydown($event)"
+  >
     <template #content>
       <div class="flex flex-col gap-3" :class="variant === 'compact' ? 'text-sm' : ''">
         <div class="flex items-start justify-between gap-3">

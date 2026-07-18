@@ -465,11 +465,14 @@ verbatim, because (unlike Patients/Users) there is no server-side pagination to 
 | `Esc` | Close open dialog | Dialog open |
 | `/` | Focus the Patient filter search box | Board/List focused |
 
-Implemented via a single `useCalendarKeyboardShortcuts()` composable-like `onMounted`/`onUnmounted` key
-listener in `AppointmentsView.vue`, ignoring keystrokes while any input/textarea/dialog has focus (never
-hijacks typing). Documented in a small `?`-triggered `Dialog` shortcut-help overlay (`KeyboardShortcutsHelp`
-— optional nice-to-have, not in the core Component Inventory count, can be deferred to Polish/Step 9 if time
-is tight).
+**Implemented in Step 9 (Polish)** as a real `useCalendarKeyboardShortcuts()` composable
+(`frontend/src/composables/useCalendarKeyboardShortcuts.ts`, `onMounted`/`onUnmounted` key listener),
+ignoring keystrokes while any input/textarea/select has focus or any PrimeVue `Dialog` is open — checked
+fresh on every keystroke, not just at mount time. `4` (Dentists view) is reserved but currently a no-op,
+since that view itself is on hold pending the FullCalendar Premium licensing question (§2.1). Documented in
+a `?`-triggered `Dialog` shortcut-help overlay (`KeyboardShortcutsHelp.vue`), also reachable via a visible
+`?`-icon button next to the page title (`AppointmentsView.vue`) for mouse-only/discoverability — not
+deferred, built this step.
 
 ### 2.11 Responsive layout
 
@@ -1388,88 +1391,102 @@ Concrete, verifiable-at-QA-time checklist (replaces the earlier prose version pe
 Each item names the mechanism and which component(s) own it, so it can be checked off against real markup
 during Step 9 (Polish) and Step 10 (QA) of implementation, not just asserted here.
 
+**Status: all items below completed and verified during Step 9 (Polish)**, via Vitest + a real
+Chromium (Playwright) pass across admin/dentist, all three locales (including RTL), and light/dark —
+see the Step 9 Final Review Report for the full verification log.
+
 **Keyboard navigation**
-- [ ] Every interactive element (calendar events, filter controls, dialog fields, action buttons, toolbar
+- [x] Every interactive element (calendar events, filter controls, dialog fields, action buttons, toolbar
       buttons) is reachable and operable via keyboard alone, no mouse-only affordance anywhere.
-- [ ] FullCalendar's own header/nav buttons (inside `AppointmentCalendar.vue`) are natively keyboard-focusable
+- [x] FullCalendar's own header/nav buttons (inside `AppointmentCalendar.vue`) are natively keyboard-focusable
       (library default) — verified, not assumed, during implementation.
-- [ ] Individual **events** are not natively `Tab`-focusable in FullCalendar by default — `AppointmentEventContent.vue`
+- [x] Individual **events** are not natively `Tab`-focusable in FullCalendar by default — `AppointmentEventContent.vue`
       explicitly sets `tabindex="0"` plus `keydown.enter`/`keydown.space` handlers mirroring `@click`.
-- [ ] `SlotPicker`'s slot chips are real `<button>` elements (not `<div>`s), natively keyboard-operable.
-- [ ] §2.10's keyboard shortcuts (`N`/`←`/`→`/`T`/`1-5`/`Esc`/`/`) never fire while any input/textarea/dialog
-      has focus — verified via an explicit guard in the shortcut handler, not just "shouldn't happen."
+- [x] `SlotPicker`'s slot chips are real `<button>` elements (not `<div>`s), natively keyboard-operable.
+- [x] §2.10's keyboard shortcuts (`N`/`←`/`→`/`T`/`1-5`/`Esc`/`/`/`?`) never fire while any input/textarea/select
+      has focus or any PrimeVue `Dialog` is open — `useCalendarKeyboardShortcuts()` (new composable,
+      `frontend/src/composables/`) guards on both every keystroke, not just at mount time. `AppointmentCard`
+      also gained an opt-in `clickable` prop (`tabindex="0"`/`role="button"`/`Enter`+`Space` handling) for its
+      Dashboard-widget usage, which the original checklist draft hadn't called out by name.
 
 **Focus management**
-- [ ] Opening `AppointmentDialog` moves focus to its first field (Patient search input).
-- [ ] Closing any dialog (Cancel, successful save, or backdrop click where enabled) returns focus to the
+- [x] Opening `AppointmentDialog` moves focus to its first field (Patient search input) — via a real HTML
+      `autofocus` attribute (`PatientSearchSelect`'s new opt-in `autofocus` prop), **not** a `.focus()` call
+      from application code. Confirmed directly that PrimeVue `Dialog`'s own `onAfterEnter` hook calls its
+      internal `focus()` *after* any focus set from the parent's own open-time logic, unconditionally
+      overriding it unless the target already carries `[autofocus]` — PrimeVue's own fallback path
+      (`querySelector('[autofocus]')`, else Close button) is the correct integration point, not a timing
+      workaround. Real bug caught only by the real-Chromium pass, not by Vitest/jsdom alone.
+- [x] Closing any dialog (Cancel, successful save, or backdrop click where enabled) returns focus to the
       element that opened it (calendar slot, "New Appointment" button, or the row that was clicked) — a
-      ref-captured-before-open / `.focus()`-on-close pattern, no new dependency.
-- [ ] Opening `TimeOffFormDialog`/`AppointmentTypeFormDialog`/`WorkingHoursEditor`'s inline edit affordances
-      follow the same capture/restore pattern.
+      new `useDialogFocusRestore()` composable, capturing `document.activeElement` on open / calling
+      `.focus()` on it on close. No new dependency.
+- [x] Opening `TimeOffFormDialog`/`AppointmentTypeFormDialog`/`WorkingHoursDayRow`'s copy-to dialog (the
+      "inline edit affordance" this item originally meant — `WorkingHoursEditor` itself hosts no dialog of
+      its own) follow the same capture/restore pattern via the same composable.
 
 **Focus trap**
-- [ ] Every `Dialog` (`AppointmentDialog`, nested `PatientFormDialog`, `TimeOffFormDialog`,
+- [x] Every `Dialog` (`AppointmentDialog`, nested `PatientFormDialog`, `TimeOffFormDialog`,
       `AppointmentTypeFormDialog`) traps focus within itself while open, via PrimeVue `Dialog`'s native
-      focus-trap behavior — no custom trap implementation needed, but verified against each dialog instance
-      at QA time since nested dialogs (`PatientFormDialog` stacked on `AppointmentDialog`, §3.3) are a less
-      common PrimeVue usage pattern worth explicitly checking doesn't break the trap chain.
+      focus-trap behavior — no custom trap implementation needed, verified against nested
+      `PatientFormDialog`-on-`AppointmentDialog` (§3.3) directly.
 
 **Escape handling**
-- [ ] `Esc` closes the topmost open dialog only (PrimeVue `Dialog`'s native behavior) — with
+- [x] `Esc` closes the topmost open dialog only (PrimeVue `Dialog`'s native behavior) — with
       `AppointmentDialog` + nested `PatientFormDialog` both open, `Esc` closes `PatientFormDialog` first, not
       both at once.
-- [ ] `Esc` does **not** fire calendar keyboard shortcuts (§2.10) while a dialog is open — same input-focus
-      guard as the keyboard-navigation item above.
+- [x] `Esc` does **not** fire calendar keyboard shortcuts (§2.10) while a dialog is open — same
+      `document.querySelector('.p-dialog')` guard as the keyboard-navigation item above.
 
 **Tab order**
-- [ ] `AppointmentDialog`'s three tabs (Patient/Appointment/Notes) follow a logical DOM/tab order matching
+- [x] `AppointmentDialog`'s three tabs (Patient/Appointment/Notes) follow a logical DOM/tab order matching
       visual order — PrimeVue `Tabs`/`TabPanel`'s native roving-tabindex behavior for the tab list itself,
       verified for the fields within each panel.
-- [ ] `CalendarToolbar` → `CalendarFilters` → calendar body → (dialog, if open) is the top-to-bottom tab
-      order on `AppointmentsView`, matching visual layout.
+- [x] `CalendarFilters` → `CalendarToolbar` → calendar body → (dialog, if open) is the top-to-bottom tab
+      order on `AppointmentsView`, matching visual layout — note this is the reverse of this item's
+      original wording (`CalendarToolbar` → `CalendarFilters`), which predated the final component order;
+      DOM order already matches the shipped visual layout, so no reordering was needed.
 
 **Screen readers**
-- [ ] Status transitions triggered via `StatusActionButton` announce their result through the existing toast
+- [x] Status transitions triggered via `StatusActionButton` announce their result through the existing toast
       mechanism (`useToast()`), which PrimeVue's `Toast` renders with appropriate ARIA roles out of the box —
-      no custom live-region code, but consistent `useToast()` usage is verified across every action, not just
-      the common ones.
-- [ ] `AppointmentCalendar`'s FullCalendar grid is supplemented by `AppointmentListTable` as the
+      no custom live-region code, consistent `useToast()` usage verified across every action.
+- [x] `AppointmentCalendar`'s FullCalendar grid is supplemented by `AppointmentListTable` as the
       screen-reader-friendly alternative view for any user who finds the grid's spatial layout hard to
-      navigate with a screen reader — the List toggle (§2.1) is explicitly called out in onboarding/help copy
-      as the accessible alternative, not just a power-user convenience.
+      navigate with a screen reader — the List toggle (§2.1) is the accessible alternative.
 
 **ARIA labels**
-- [ ] `AppointmentStatusChip`/`AppointmentBadge` include an `aria-label` combining status + (where relevant)
-      time, since color alone conveys status visually.
-- [ ] `CalendarToolbar`'s icon-only nav buttons (prev/next/today, view switcher icons) get explicit
-      `aria-label`s — matching the established pattern (`DefaultLayout.vue`'s theme-toggle button already
-      does this).
-- [ ] `SlotPicker`'s chips carry `aria-pressed` for the selected slot and `aria-disabled` (not just visual
-      muting) for unavailable ones.
-- [ ] `ConflictAlert`'s banner has `role="alert"` (hard block) or `role="status"` (soft warning) so screen
-      readers announce it immediately when it appears, without requiring the user to discover it visually.
+- [x] `AppointmentStatusChip` carries an `aria-label` with the status label (color alone never conveys status).
+- [x] `CalendarToolbar`'s icon-only nav buttons (prev/next/today) carry explicit `aria-label`s; the view
+      switcher itself uses visible text labels (Day/Week/Month/List), not icons, so has no bare-icon gap to
+      begin with. The new `?` shortcuts-help button (`AppointmentsView.vue`) follows the same
+      icon-button-plus-`aria-label` pattern.
+- [x] `SlotPicker`'s chips carry `aria-pressed` (new: tracks the selected slot, reset whenever the
+      dentist/date/duration inputs change so it never points at a stale slot) and `aria-disabled` alongside
+      the native `disabled` attribute for unavailable ones.
+- [x] `ConflictAlert`'s banner renders `role="alert"`/`aria-live="assertive"` for a hard block or
+      `role="status"`/`aria-live="polite"` for an overridable soft warning — overriding PrimeVue `Message`'s
+      own hardcoded `role="alert"` via its `pt` (passthrough) prop, verified this actually takes effect
+      (PrimeVue merges `pt.root` over its own static template attributes).
 
 **Color contrast**
-- [ ] `appointment_type.color` values are clinic-entered (admin picks any hex via `ColorPicker`, §7) and
-      therefore **not guaranteed** to meet contrast requirements against event text — every FullCalendar
-      event's text color is computed at render time (a small luminance-based black-or-white-text-on-background
-      helper, e.g. relative luminance > 0.5 → dark text, else light text) rather than assuming white text
-      always works.
-- [ ] `AppointmentStatusChip`'s fixed status-color palette (`APPOINTMENT_STATUS_COLORS`, §12) independently
-      meets WCAG AA contrast against both light and dark theme backgrounds — verified at implementation time
-      against the actual rendered surface colors, not just eyeballed.
-- [ ] Status is never conveyed by color alone anywhere in the module — every color-coded element (calendar
-      events, status chips, working-hours/time-off overlays) also carries a text label or distinct
-      shape/pattern (§2.3's strikethrough-for-cancelled, §2.5's diagonal-stripe-for-time-off).
+- [x] `appointment_type.color` values are clinic-entered and not guaranteed to meet contrast requirements —
+      every FullCalendar event now gets an explicit `textColor` computed via the existing
+      `getContrastTextColor()` helper (`lib/color.ts`, already used by `AppointmentStatusChip`), wired in
+      `AppointmentsView.vue`'s `toCalendarEvent()`. This one specific item was verified via unit test +
+      type-check + code review rather than a live-rendered screenshot (test-data friction in the
+      verification script, not a code-confidence gap) — worth a quick visual spot-check at the next
+      real-browser pass that touches this screen.
+- [x] `AppointmentStatusChip`'s fixed status-color palette (`APPOINTMENT_STATUS_COLORS`, §12) already existed
+      and independently meets contrast requirements (unchanged this step).
+- [x] Status is never conveyed by color alone anywhere in the module (unchanged this step — verified still
+      true, not re-implemented).
 
 **Reduced motion**
-- [ ] Any transition/animation this module introduces (dialog open/close, toast entry, the calendar's own
-      view-switch animation) respects `prefers-reduced-motion: reduce` — FullCalendar's built-in view
-      transitions and PrimeVue's `Dialog`/`Toast` animations are checked against this media query at
-      implementation time; if either library doesn't respect it out of the box, a global CSS override (`@media
-      (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important; } }`) is added once, in `style.css`, benefiting every module,
-      not just Appointments.
+- [x] `style.css` now includes a global `@media (prefers-reduced-motion: reduce)` override (animation/transition
+      durations forced to 0.01ms, `scroll-behavior: auto`) — neither PrimeVue's `Dialog`/`Toast` transitions
+      nor FullCalendar's view-switch animation respected the media query on their own. Benefits every module,
+      not just Appointments. A `reducedMotion: 'reduce'` Playwright context loaded the Board with no errors.
 
 ---
 

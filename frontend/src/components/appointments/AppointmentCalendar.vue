@@ -28,6 +28,7 @@ export interface AppointmentCalendarEvent {
   end: string
   backgroundColor?: string
   borderColor?: string
+  textColor?: string
   classNames?: string[]
   /** `status` is absent for non-appointment events (e.g. the time-off background overlay) —
    * FullCalendar doesn't invoke `eventContent` for `display: 'background'` events, so

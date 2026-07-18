@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
@@ -24,6 +24,12 @@ const props = defineProps<{
    *  partial `AppointmentPatientSummary` nested on the appointment; create-mode prefill has none. */
   selectedPatient?: Patient | AppointmentPatientSummary | null
   disabled?: boolean
+  /** Opt-in only (e.g. `AppointmentDialog`, design doc §14) — the filter-bar usage in
+   *  `CalendarFilters` must never grab focus the moment the page loads. A real HTML `autofocus`
+   *  attribute, not a `.focus()` call, because PrimeVue `Dialog`'s own `onAfterEnter` handler
+   *  looks for `[autofocus]` first and only falls back to its Close button when nothing has it —
+   *  a `.focus()` call made before that handler runs gets silently overridden once it does. */
+  autofocus?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -39,6 +45,20 @@ const searching = ref(false)
 const showDropdown = ref(false)
 const createDialogVisible = ref(false)
 const pickedPatient = ref<Patient | null>(null)
+const searchInputRef = ref<InstanceType<typeof InputText>>()
+
+/** Only meaningful while the search box is actually rendered (no patient selected/locked yet) —
+ *  a no-op otherwise, which lets callers (e.g. AppointmentDialog's open-focus, design doc §14)
+ *  invoke it unconditionally without checking `modelValue`/`disabled` themselves. `InputText`'s
+ *  public instance type doesn't declare `$el` (it's an options-API component, not typed via
+ *  `defineExpose`), so this reads it through the one root DOM element it actually renders.
+ */
+function focus() {
+  const instance = searchInputRef.value as ComponentPublicInstance | undefined
+  ;(instance?.$el as HTMLElement | undefined)?.focus()
+}
+
+defineExpose({ focus })
 
 const displayPatient = computed<Patient | AppointmentPatientSummary | null>(
   () => pickedPatient.value ?? props.selectedPatient ?? null,
@@ -115,7 +135,9 @@ function onPatientCreated(patient: Patient) {
       <IconField>
         <InputIcon class="pi pi-search" />
         <InputText
+          ref="searchInputRef"
           v-model="query"
+          :autofocus="autofocus"
           :placeholder="t('appointments.dialog.patientSearchPlaceholder')"
           :disabled="disabled"
           class="w-full"

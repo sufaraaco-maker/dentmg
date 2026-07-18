@@ -17,6 +17,33 @@ describe('ConflictAlert', () => {
     expect(wrapper.find('button').exists()).toBe(false)
   })
 
+  it('announces a hard-stop conflict assertively (role="alert", design doc §14)', () => {
+    const wrapper = mount(ConflictAlert, {
+      props: { error: { message: 'Dentist already booked', code: 'dentist_conflict' } },
+    })
+
+    const root = wrapper.find('.p-message')
+    expect(root.attributes('role')).toBe('alert')
+    expect(root.attributes('aria-live')).toBe('assertive')
+  })
+
+  it('announces an overridable soft warning politely (role="status", design doc §14)', () => {
+    const wrapper = mount(ConflictAlert, {
+      props: {
+        error: {
+          message: 'Patient already booked',
+          code: 'patient_conflict',
+          overridable: true,
+          override_field: 'override_patient_conflict',
+        },
+      },
+    })
+
+    const root = wrapper.find('.p-message')
+    expect(root.attributes('role')).toBe('status')
+    expect(root.attributes('aria-live')).toBe('polite')
+  })
+
   it('shows a "Book Anyway" button for an overridable patient conflict', async () => {
     const wrapper = mount(ConflictAlert, {
       props: {

@@ -4,6 +4,50 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+### Added — Appointments (Accessibility + Keyboard Shortcuts polish, Phase 2 Step 9)
+- **Keyboard shortcuts** on the Appointments Board/List (design doc §2.10): `N` new appointment,
+  `←`/`→` prev/next period, `T` today, `1`/`2`/`3`/`5` switch view (`4`, Dentists view, reserved but
+  a no-op until that view itself ships), `/` focus the patient filter, `?` show a shortcuts-help
+  dialog (also reachable via a visible `?` icon button). New `useCalendarKeyboardShortcuts()`
+  composable never fires while an input/textarea/select has focus or any dialog is open — checked
+  on every keystroke.
+- **`KeyboardShortcutsHelp.vue`** (new) — the `?`-triggered reference dialog.
+- **Focus management** across every dialog in the module: new `useDialogFocusRestore()` composable
+  captures whatever had focus before a dialog opened and restores it on close (`AppointmentDialog`,
+  `TimeOffFormDialog`, `AppointmentTypeFormDialog`, `WorkingHoursDayRow`'s copy-to dialog).
+  `AppointmentDialog` additionally autofocuses the Patient search field on open, via a real HTML
+  `autofocus` attribute — not a `.focus()` call, since PrimeVue `Dialog`'s own post-open focus
+  logic unconditionally overrides anything set earlier unless the target already carries
+  `[autofocus]` (a real bug, only caught by the real-browser verification pass; see Fixed below).
+- **Keyboard-accessible `AppointmentCard`**: new opt-in `clickable` prop adds `tabindex="0"`,
+  `role="button"`, and `Enter`/`Space` handling for its Dashboard-widget usage (`TodayScheduleWidget`,
+  `UpcomingAppointmentsWidget`) — previously mouse-only despite emitting `click`.
+- **`SlotPicker`** chips now carry `aria-pressed` (tracks the selected slot) and `aria-disabled`
+  alongside the native `disabled` attribute.
+- **`ConflictAlert`** now renders `role="alert"`/`aria-live="assertive"` for a hard-block conflict
+  vs. `role="status"`/`aria-live="polite"` for an overridable soft warning (previously PrimeVue
+  `Message`'s own hardcoded `role="alert"` for both), via its `pt` passthrough prop.
+- **FullCalendar event text contrast**: every event now gets an explicit `textColor` from the
+  existing luminance-based `getContrastTextColor()` helper — previously only `AppointmentStatusChip`
+  used it; a light clinic-entered `appointment_type.color` could render illegible white-on-light
+  event text on the Board.
+- **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` override in `style.css`,
+  since neither PrimeVue's `Dialog`/`Toast` transitions nor FullCalendar's view-switch animation
+  respect the media query on their own. Benefits every module.
+- Docs: `docs/modules/appointments-ui-design.md` §14 (Accessibility Checklist) and §2.10 (Keyboard
+  shortcuts) updated to reflect what actually shipped.
+- Full Vitest coverage for all new/changed behavior (two new composable test files, updated
+  component tests); `vue-tsc`, ESLint, and Prettier all clean on every touched file.
+
+### Fixed — real bug found via this step's mandatory real-browser verification
+- **PrimeVue `Dialog` silently overrides a parent-set focus target after it opens**: a `.focus()`
+  call made from `AppointmentDialog`'s own open-time logic (even via `nextTick`) was reliably
+  overridden ~150–200ms later by `Dialog`'s own `onAfterEnter` hook, which always calls its internal
+  `focus()` and falls back to its Close button unless the target already carries the native HTML
+  `[autofocus]` attribute. Confirmed directly with a Playwright timing probe (focus was correctly on
+  the Patient search field at t+100ms, then jumped to the Close button by t+200ms). Fixed by giving
+  the intended field a real `autofocus` attribute instead of fighting the timing.
+
 ### Added — Appointments (Dashboard widgets + Patient Appointments panel, Phase 2 Step 8)
 - **`TodayScheduleWidget.vue`** (new) — today's appointments on `DashboardView`, sorted by time.
   `scope="all"` (admin/receptionist) adds "Waiting" (checked in, not yet started) and "Late"

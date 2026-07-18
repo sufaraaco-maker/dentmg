@@ -22,6 +22,7 @@ import ConflictAlert from './ConflictAlert.vue'
 import AppointmentStatusChip from './AppointmentStatusChip.vue'
 import { useAppointmentsStore } from '@/stores/appointments'
 import { isAppointmentConflictError } from '@/services/appointments'
+import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { parseServerDateTime, toLocalDateTimeString } from '@/lib/date'
 import type {
   Appointment,
@@ -63,6 +64,14 @@ const showSlotPicker = ref(false)
 const selectedPatientSummary = ref<Patient | AppointmentPatientSummary | null>(null)
 
 const isEditMode = computed(() => Boolean(props.appointment))
+
+// Design doc §14 (Focus management): closing this dialog (Cancel, successful save, or backdrop
+// click) returns focus to whatever triggered it — a calendar slot, the "New Appointment" button,
+// or the row that was clicked. Opening it moves focus to the Patient search field, but that part
+// is handled by that field's own `autofocus` (see PatientSearchSelect's prop doc) — PrimeVue's
+// `Dialog` does its own focus pass after this composable's, so a focus call made from here would
+// just get overridden.
+useDialogFocusRestore(() => props.visible)
 
 function emptyForm() {
   return {
@@ -266,6 +275,7 @@ function onOverride(field: string) {
             <div class="flex flex-col gap-2 pt-2">
               <PatientSearchSelect
                 v-model="form.patient_id"
+                autofocus
                 :selected-patient="selectedPatientSummary"
                 :disabled="isEditMode"
                 @patient-selected="onPatientSelected"

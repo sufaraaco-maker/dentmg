@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
@@ -40,6 +40,15 @@ function update<K extends keyof CalendarFilters>(key: K, value: CalendarFilters[
 function clearFilters() {
   emit('update:modelValue', { dentistIds: [], statuses: [], typeIds: [], patientId: null })
 }
+
+const patientSearchRef = ref<InstanceType<typeof PatientSearchSelect>>()
+
+/** Backs the `/` keyboard shortcut (design doc §2.10), invoked from AppointmentsView. */
+function focusPatientSearch() {
+  patientSearchRef.value?.focus()
+}
+
+defineExpose({ focusPatientSearch })
 </script>
 
 <template>
@@ -76,6 +85,7 @@ function clearFilters() {
       @update:model-value="update('typeIds', $event)"
     />
     <PatientSearchSelect
+      ref="patientSearchRef"
       :model-value="modelValue.patientId"
       class="min-w-48"
       @update:model-value="update('patientId', $event)"

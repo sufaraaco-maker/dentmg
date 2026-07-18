@@ -71,9 +71,7 @@ const todaysAppointments = computed<Appointment[]>(() => {
       if (props.scope === 'own' && appointment.dentist_id !== auth.user?.id) return false
       return true
     })
-    .sort(
-      (a, b) => parseServerDateTime(a.start_at).getTime() - parseServerDateTime(b.start_at).getTime(),
-    )
+    .sort((a, b) => parseServerDateTime(a.start_at).getTime() - parseServerDateTime(b.start_at).getTime())
 })
 
 /** Operational highlighting only applies to the front-desk ("all") framing, not a dentist's own read-only view. */
@@ -152,6 +150,7 @@ onUnmounted(() => {
           v-for="appointment in todaysAppointments"
           :key="appointment.id"
           variant="compact"
+          clickable
           :appointment="appointment"
           @click="goToDetail(appointment.id)"
         >

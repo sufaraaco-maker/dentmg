@@ -6,6 +6,7 @@ import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Dialog from 'primevue/dialog'
 import MultiSelect from 'primevue/multiselect'
+import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import type { DentistWorkingHour, WorkingHourDraft } from '@/types/appointment'
 
 /**
@@ -192,6 +193,9 @@ function toggleDayActive(value: boolean) {
 
 const copyDialogVisible = ref(false)
 const copyTargets = ref<number[]>([])
+
+// Design doc §14 (Focus management): returns focus to whatever opened this dialog once it closes.
+useDialogFocusRestore(() => copyDialogVisible.value)
 
 const otherDayOptions = computed(() =>
   DAY_NUMBERS.filter((day) => day !== props.dayOfWeek).map((day) => ({

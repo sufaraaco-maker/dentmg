@@ -10,6 +10,7 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { useTimeOffStore } from '@/stores/timeOff'
 import { useAppointmentsStore } from '@/stores/appointments'
+import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { parseServerDateTime, toLocalDateTimeString } from '@/lib/date'
 import type { DentistTimeOff } from '@/types/appointment'
 
@@ -64,6 +65,9 @@ watch(
     Object.assign(form, emptyForm())
   },
 )
+
+// Design doc §14 (Focus management): returns focus to whatever opened this dialog once it closes.
+useDialogFocusRestore(() => props.visible)
 
 function buildReason(): string | null {
   const detail = form.reasonDetail.trim()

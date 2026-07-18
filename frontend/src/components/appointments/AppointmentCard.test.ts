@@ -71,4 +71,29 @@ describe('AppointmentCard', () => {
 
     expect(wrapper.text()).toContain('Untitled appointment')
   })
+
+  it('is not keyboard-focusable by default (a non-interactive summary, e.g. the Detail header)', () => {
+    const wrapper = mount(AppointmentCard, { props: { appointment: APPOINTMENT } })
+    const root = wrapper.findComponent({ name: 'Card' })
+
+    expect(root.attributes('tabindex')).toBeUndefined()
+    expect(root.attributes('role')).toBeUndefined()
+  })
+
+  it('is keyboard-operable when clickable (design doc §14 — no mouse-only affordance)', async () => {
+    const wrapper = mount(AppointmentCard, { props: { appointment: APPOINTMENT, clickable: true } })
+    const root = wrapper.findComponent({ name: 'Card' })
+
+    expect(root.attributes('tabindex')).toBe('0')
+    expect(root.attributes('role')).toBe('button')
+
+    await root.trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('click')).toHaveLength(1)
+
+    await root.trigger('keydown', { key: ' ' })
+    expect(wrapper.emitted('click')).toHaveLength(2)
+
+    await root.trigger('keydown', { key: 'Tab' })
+    expect(wrapper.emitted('click')).toHaveLength(2)
+  })
 })

@@ -56,9 +56,14 @@ describe('SlotPicker', () => {
     // so "not disabled" must check for the attribute's absence (undefined), not just falsiness.
     const enabled = buttons.filter((b) => b.attributes('disabled') === undefined)
     expect(enabled).toHaveLength(1)
+    expect(enabled[0].attributes('aria-pressed')).toBe('false')
+
+    const disabled = buttons.find((b) => b.attributes('disabled') !== undefined)
+    expect(disabled?.attributes('aria-disabled')).toBe('true')
 
     await enabled[0].trigger('click')
     expect(wrapper.emitted('slot-selected')?.[0][0]).toEqual(nineAm())
+    expect(enabled[0].attributes('aria-pressed')).toBe('true')
   })
 
   it('does not emit when clicking a disabled (unavailable) slot', async () => {

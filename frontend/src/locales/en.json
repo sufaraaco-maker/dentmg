@@ -197,7 +197,17 @@
       "today": "Today",
       "previous": "Previous period",
       "next": "Next period",
-      "newAppointment": "New Appointment"
+      "newAppointment": "New Appointment",
+      "shortcutsHelp": "Keyboard shortcuts",
+      "shortcuts": {
+        "new": "New appointment",
+        "navigate": "Previous / next period",
+        "today": "Jump to today",
+        "switchView": "Switch view (Day / Week / Month / List)",
+        "focusSearch": "Focus the patient filter",
+        "closeDialog": "Close the open dialog",
+        "showHelp": "Show this help"
+      }
     },
     "filters": {
       "dentist": "Dentist",

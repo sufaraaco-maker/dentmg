@@ -66,9 +66,7 @@ const upcomingAppointments = computed<Appointment[]>(() => {
       if (props.scope === 'own' && appointment.dentist_id !== auth.user?.id) return false
       return true
     })
-    .sort(
-      (a, b) => parseServerDateTime(a.start_at).getTime() - parseServerDateTime(b.start_at).getTime(),
-    )
+    .sort((a, b) => parseServerDateTime(a.start_at).getTime() - parseServerDateTime(b.start_at).getTime())
     .slice(0, MAX_ROWS)
 })
 
@@ -104,6 +102,7 @@ onMounted(load)
           v-for="appointment in upcomingAppointments"
           :key="appointment.id"
           variant="compact"
+          clickable
           :appointment="appointment"
           @click="goToDetail(appointment.id)"
         />

@@ -27,7 +27,17 @@ function bookAnyway() {
 </script>
 
 <template>
-  <Message v-if="error" :severity="severity" :closable="false">
+  <Message
+    v-if="error"
+    :severity="severity"
+    :closable="false"
+    :pt="{
+      root: {
+        role: severity === 'warn' ? 'status' : 'alert',
+        'aria-live': severity === 'warn' ? 'polite' : 'assertive',
+      },
+    }"
+  >
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <span>{{ error.message }}</span>
       <Button

@@ -197,7 +197,17 @@
       "today": "Bugün",
       "previous": "Önceki dönem",
       "next": "Sonraki dönem",
-      "newAppointment": "Yeni Randevu"
+      "newAppointment": "Yeni Randevu",
+      "shortcutsHelp": "Klavye kısayolları",
+      "shortcuts": {
+        "new": "Yeni randevu",
+        "navigate": "Önceki / sonraki dönem",
+        "today": "Bugüne git",
+        "switchView": "Görünümü değiştir (Gün / Hafta / Ay / Liste)",
+        "focusSearch": "Hasta filtresine odaklan",
+        "closeDialog": "Açık iletişim kutusunu kapat",
+        "showHelp": "Bu yardımı göster"
+      }
     },
     "filters": {
       "dentist": "Diş Hekimi",

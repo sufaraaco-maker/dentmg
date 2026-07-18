@@ -1,4 +1,5 @@
 import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AppointmentDialog from './AppointmentDialog.vue'
@@ -174,5 +175,29 @@ describe('AppointmentDialog', () => {
       expect.objectContaining({ override_patient_conflict: true }),
     )
     expect(wrapper.emitted('saved')).toBeTruthy()
+  })
+
+  it('moves focus to the patient search field when opened, and restores it on close (design doc §14)', async () => {
+    const trigger = document.createElement('button')
+    document.body.appendChild(trigger)
+    trigger.focus()
+
+    const wrapper = mount(AppointmentDialog, { props: { visible: false }, attachTo: document.body })
+    await flushPromises()
+
+    await wrapper.setProps({ visible: true })
+    await flushPromises()
+    await nextTick()
+
+    const searchInput = wrapper.find('input[placeholder="Search by name, code, or phone"]')
+    expect(document.activeElement).toBe(searchInput.element)
+
+    await wrapper.setProps({ visible: false })
+    await flushPromises()
+
+    expect(document.activeElement).toBe(trigger)
+
+    wrapper.unmount()
+    trigger.remove()
   })
 })

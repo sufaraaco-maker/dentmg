@@ -3,11 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Card from 'primevue/card'
+import Button from 'primevue/button'
 import CalendarToolbar from '@/components/appointments/CalendarToolbar.vue'
 import CalendarFilters from '@/components/appointments/CalendarFilters.vue'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar.vue'
 import AppointmentListTable from '@/components/appointments/AppointmentListTable.vue'
 import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
+import KeyboardShortcutsHelp from '@/components/appointments/KeyboardShortcutsHelp.vue'
 import type { BoardViewMode } from '@/components/appointments/CalendarToolbar.vue'
 import type { AppointmentCalendarEvent } from '@/components/appointments/AppointmentCalendar.vue'
 import { useCalendarStore, type CalendarFilters as CalendarFiltersState } from '@/stores/calendar'
@@ -15,7 +17,9 @@ import { useAppointmentsStore } from '@/stores/appointments'
 import { useProvidersStore } from '@/stores/providers'
 import { useWorkingHoursStore } from '@/stores/workingHours'
 import { useTimeOffStore } from '@/stores/timeOff'
+import { useCalendarKeyboardShortcuts } from '@/composables/useCalendarKeyboardShortcuts'
 import { parseServerDateTime, toLocalDateTimeString } from '@/lib/date'
+import { getContrastTextColor } from '@/lib/color'
 import { APPOINTMENT_STATUS_COLORS, type Appointment, type AppointmentPrefill } from '@/types/appointment'
 
 const DEFAULT_SLOT_MIN_TIME = '08:00:00'
@@ -106,6 +110,9 @@ function toCalendarEvent(appointment: Appointment): AppointmentCalendarEvent {
     end: appointment.end_at,
     backgroundColor: color,
     borderColor: color,
+    // `appointment_type.color` is clinic-entered (any hex via ColorPicker, §7) — never assume
+    // white text reads legibly on top of it (design doc §14, Color Contrast).
+    textColor: getContrastTextColor(color),
     classNames,
     extendedProps: {
       status: appointment.status,
@@ -227,13 +234,55 @@ onMounted(() => {
   providers.fetchAll()
   appointments.fetchRange(calendar.currentRange.start, calendar.currentRange.end)
 })
+
+const calendarFiltersRef = ref<InstanceType<typeof CalendarFilters>>()
+const shortcutsHelpVisible = ref(false)
+
+/** `4` (Dentists) has no slot to switch to yet (§2.1 — on hold) — the shortcut simply no-ops
+ *  rather than falling back to another view, so the numbering stays stable once it ships. */
+const VIEW_BY_SLOT: Partial<Record<1 | 2 | 3 | 4 | 5, BoardViewMode>> = {
+  1: 'timeGridDay',
+  2: 'timeGridWeek',
+  3: 'dayGridMonth',
+  5: 'list',
+}
+
+useCalendarKeyboardShortcuts({
+  onNewAppointment: openNewAppointmentDialog,
+  onPrevious: () => onNavigate('prev'),
+  onNext: () => onNavigate('next'),
+  onToday: () => onNavigate('today'),
+  onSwitchView: (slot) => {
+    const mode = VIEW_BY_SLOT[slot]
+    if (mode) viewMode.value = mode
+  },
+  onFocusSearch: () => calendarFiltersRef.value?.focusPatientSearch(),
+  onShowHelp: () => {
+    shortcutsHelpVisible.value = true
+  },
+})
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ t('appointments.title') }}</h1>
+    <div class="flex items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+        {{ t('appointments.title') }}
+      </h1>
+      <Button
+        icon="pi pi-question-circle"
+        text
+        rounded
+        :aria-label="t('appointments.calendar.shortcutsHelp')"
+        @click="shortcutsHelpVisible = true"
+      />
+    </div>
 
-    <CalendarFilters :model-value="calendar.filters" @update:model-value="onFiltersChange" />
+    <CalendarFilters
+      ref="calendarFiltersRef"
+      :model-value="calendar.filters"
+      @update:model-value="onFiltersChange"
+    />
 
     <Card>
       <template #content>
@@ -269,5 +318,6 @@ onMounted(() => {
     </Card>
 
     <AppointmentDialog v-model:visible="dialogVisible" :prefill="dialogPrefill" />
+    <KeyboardShortcutsHelp v-model:visible="shortcutsHelpVisible" />
   </div>
 </template>

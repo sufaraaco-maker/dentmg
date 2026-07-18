@@ -29,6 +29,7 @@ const workingHours = useWorkingHoursStore()
 
 const loadingSlots = ref(false)
 const availableTimestamps = ref<Set<number>>(new Set())
+const selectedSlotTime = ref<number | null>(null)
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number)
@@ -59,6 +60,10 @@ const candidateSlots = computed<Date[]>(() => {
 })
 
 async function fetchAvailableSlots() {
+  // A dentist/date/duration change invalidates whatever was picked under the old slot list
+  // (design doc §14 — `aria-pressed` must never point at a slot that's no longer offered).
+  selectedSlotTime.value = null
+
   if (!props.dentistId || !props.durationMinutes) {
     availableTimestamps.value = new Set()
     return
@@ -102,12 +107,18 @@ function isAvailable(slot: Date): boolean {
   return availableTimestamps.value.has(slot.getTime())
 }
 
+function isSelected(slot: Date): boolean {
+  return selectedSlotTime.value === slot.getTime()
+}
+
 function formatTime(slot: Date): string {
   return slot.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
 }
 
 function pick(slot: Date) {
-  if (isAvailable(slot)) emit('slot-selected', slot)
+  if (!isAvailable(slot)) return
+  selectedSlotTime.value = slot.getTime()
+  emit('slot-selected', slot)
 }
 </script>
 
@@ -127,12 +138,15 @@ function pick(slot: Date) {
         :key="slot.getTime()"
         type="button"
         :disabled="!isAvailable(slot)"
+        :aria-disabled="!isAvailable(slot)"
+        :aria-pressed="isSelected(slot)"
         class="rounded-full border px-3 py-1 text-sm transition-colors"
-        :class="
+        :class="[
           isAvailable(slot)
             ? 'cursor-pointer border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50'
-            : 'cursor-not-allowed border-surface-200 text-surface-400 dark:border-surface-700 dark:text-surface-600'
-        "
+            : 'cursor-not-allowed border-surface-200 text-surface-400 dark:border-surface-700 dark:text-surface-600',
+          isSelected(slot) ? 'ring-2 ring-primary-500 dark:ring-primary-400' : '',
+        ]"
         @click="pick(slot)"
       >
         {{ formatTime(slot) }}
