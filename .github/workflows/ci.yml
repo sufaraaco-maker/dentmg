@@ -145,7 +145,14 @@ jobs:
 
       - name: Start backend server
         working-directory: backend
-        run: PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=127.0.0.1 --port=8000 &
+        # `localhost`, not 127.0.0.1 — must match backend/.env.example's FRONTEND_URL and
+        # SANCTUM_STATEFUL_DOMAINS (both "localhost:5173") exactly, or every browser-driven
+        # request's Origin header fails Sanctum/CORS's origin check and gets silently blocked
+        # by the browser before it ever reaches the server. This was the actual root cause of
+        # 12/13 E2E tests hanging until timeout in earlier CI runs — not a real app bug, and not
+        # the php artisan serve worker-count issue that commit ba2bc1c (also fixed, still
+        # needed) addressed.
+        run: PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=localhost --port=8000 &
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -166,18 +173,18 @@ jobs:
         working-directory: frontend
         run: npm run dev -- --host --port 5173 &
         env:
-          VITE_API_URL: http://127.0.0.1:8000/api
-          VITE_APP_URL: http://127.0.0.1:8000
+          VITE_API_URL: http://localhost:8000/api
+          VITE_APP_URL: http://localhost:8000
 
       - name: Wait for both servers
         run: |
-          npx wait-on http://127.0.0.1:8000/api/ping http://127.0.0.1:5173 --timeout 60000
+          npx wait-on http://localhost:8000/api/ping http://localhost:5173 --timeout 60000
 
       - name: Run E2E suite
         working-directory: frontend
         run: npx playwright test --project=chromium
         env:
-          E2E_BASE_URL: http://127.0.0.1:5173
+          E2E_BASE_URL: http://localhost:5173
 
       - name: Upload Playwright report on failure
         if: failure()
