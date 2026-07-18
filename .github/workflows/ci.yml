@@ -132,6 +132,12 @@ jobs:
           php artisan key:generate
           sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
           sed -i 's/^REDIS_HOST=.*/REDIS_HOST=127.0.0.1/' .env
+          # php artisan serve's built-in PHP dev server handles one request at a time by
+          # default — a real browser driving the SPA fires several concurrent requests per
+          # navigation (CSRF cookie, login POST, the router guard's immediate /api/user call),
+          # which serializes and stalls badly under a single worker. See the commented hint
+          # already in .env.example for exactly this setting.
+          echo "PHP_CLI_SERVER_WORKERS=4" >> .env
 
       - name: Migrate and seed (demo accounts — APP_ENV=local, matches docs/demo-guide.md)
         working-directory: backend
@@ -139,7 +145,7 @@ jobs:
 
       - name: Start backend server
         working-directory: backend
-        run: php artisan serve --host=127.0.0.1 --port=8000 &
+        run: PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=127.0.0.1 --port=8000 &
 
       - name: Setup Node
         uses: actions/setup-node@v4
