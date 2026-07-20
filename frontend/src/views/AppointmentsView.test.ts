@@ -1,7 +1,7 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppointmentsView from './AppointmentsView.vue'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar.vue'
 import AppointmentListTable from '@/components/appointments/AppointmentListTable.vue'
@@ -62,6 +62,14 @@ function makeRouter() {
 }
 
 beforeEach(() => {
+  // calendar.ts's `currentDate` initializes to the real `new Date()`, which drives the
+  // Board's initial week/month range — makeAppointment()'s fixed `start_at` (2026-07-15) only
+  // stays inside that range as long as the real wall-clock date hasn't drifted away from it.
+  // Freezing "now" to the same date makes this test's pass/fail independent of when it happens
+  // to run, not just of what day it was written on.
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-07-15T12:00:00'))
+
   setActivePinia(createPinia())
   vi.mocked(appointmentsApi.list).mockResolvedValue([makeAppointment()])
   vi.mocked(providersApi.listAll).mockResolvedValue([
@@ -70,6 +78,10 @@ beforeEach(() => {
   vi.mocked(appointmentTypesApi.list).mockResolvedValue([])
   vi.mocked(workingHoursApi.listForDentist).mockResolvedValue([])
   vi.mocked(timeOffApi.listForDentist).mockResolvedValue([])
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 async function mountView() {

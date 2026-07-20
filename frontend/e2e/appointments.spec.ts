@@ -2,29 +2,48 @@ import { test, expect, type Page } from '@playwright/test'
 import { API_BASE_URL, loginAsEnglish } from './fixtures'
 
 /**
- * Working hours are seeded, dynamic per-dentist data (not a fixed 9-to-5), so a hardcoded
- * date/time reliably lands outside them (OutsideWorkingHoursException) — confirmed directly
- * against backend/storage/logs/laravel.log while debugging this suite. Fetch the first dentist's
- * actual active shift and compute a real, valid instant instead of guessing one.
+ * Working hours are never seeded by DatabaseSeeder — deliberately (see docs/demo-guide.md: they
+ * "become meaningful once the Appointments frontend exists to book against them," i.e. they're
+ * clinic-configured setup, not demo data). A fresh CI seed genuinely has none for any dentist,
+ * so `GET /dentists/{id}/working-hours` returns `[]` and any hardcoded date/time — or one
+ * inferred from a shift that doesn't exist — fails with OutsideWorkingHoursException (confirmed
+ * directly against backend/storage/logs/laravel.log while debugging this suite; a local dev
+ * database that happens to have working hours left over from earlier manual testing masked this
+ * for a while). Create a real shift via the API first, so the test is self-contained and doesn't
+ * assume anything about what's already configured.
  */
-async function computeValidSlot(page: Page, weeksAhead = 1): Promise<string> {
+async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Promise<string> {
   return page.evaluate(
     async ({ apiUrl, weeksAhead }) => {
       const usersRes = await fetch(`${apiUrl}/users?per_page=50`, { credentials: 'include' })
       const { data: users } = await usersRes.json()
       const dentist = users.find((u: { role: string }) => u.role === 'dentist')
 
-      const hoursRes = await fetch(`${apiUrl}/dentists/${dentist.id}/working-hours`, {
-        credentials: 'include',
-      })
-      const { data: hours } = await hoursRes.json()
-      const shift = hours.find((h: { is_active: boolean }) => h.is_active)
-
-      const [startHour, startMinute] = shift.start_time.split(':').map(Number)
       const target = new Date()
-      const daysUntilShift = (shift.day_of_week - target.getDay() + 7) % 7 || 7 // next occurrence, never today
-      target.setDate(target.getDate() + daysUntilShift + (weeksAhead - 1) * 7)
-      target.setHours(startHour, startMinute, 0, 0)
+      const daysAhead = 1 + (weeksAhead - 1) * 7 // tomorrow, or +weeksAhead weeks — never today
+      target.setDate(target.getDate() + daysAhead)
+      target.setHours(9, 0, 0, 0)
+
+      // axios's withXSRFToken (frontend/src/lib/api.ts) reads the XSRF-TOKEN cookie and attaches
+      // it automatically for state-changing requests — a raw fetch() has to do that by hand, or
+      // Laravel's VerifyCsrfToken middleware rejects the POST.
+      const xsrfToken = decodeURIComponent(
+        document.cookie
+          .split('; ')
+          .find((row) => row.startsWith('XSRF-TOKEN='))
+          ?.split('=')[1] ?? '',
+      )
+
+      await fetch(`${apiUrl}/dentists/${dentist.id}/working-hours`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken },
+        body: JSON.stringify({
+          day_of_week: target.getDay(),
+          start_time: '08:00',
+          end_time: '20:00',
+        }),
+      })
 
       const pad = (n: number) => String(n).padStart(2, '0')
       return `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())} ${pad(target.getHours())}:${pad(target.getMinutes())}`
@@ -98,7 +117,7 @@ test.describe('appointments', () => {
     await page.locator('div:has(> label:text-is("Appointment Type")) .p-select').click()
     await page.locator('li.p-select-option').first().click()
 
-    const validSlot = await computeValidSlot(page)
+    const validSlot = await ensureWorkingHoursAndComputeSlot(page)
     const createStartAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await createStartAtInput.click()
     await createStartAtInput.pressSequentially(validSlot, { delay: 20 })
@@ -115,7 +134,7 @@ test.describe('appointments', () => {
     await firstRow.click()
 
     await page.getByRole('button', { name: 'Edit' }).click()
-    const rescheduleSlot = await computeValidSlot(page, 2) // a different week than the created slot
+    const rescheduleSlot = await ensureWorkingHoursAndComputeSlot(page, 2) // a different week than the created slot
     const startAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await startAtInput.click()
     await page.keyboard.press('Control+A')
