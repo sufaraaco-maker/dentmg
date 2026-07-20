@@ -126,10 +126,20 @@ test.describe('appointments', () => {
     const createStartAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await createStartAtInput.click()
     await createStartAtInput.pressSequentially(validSlot, { delay: 20 })
-    await page.keyboard.press('Escape')
+    // Click the dialog title, not Escape, to dismiss the DatePicker's own popover — Escape can
+    // bubble past a popover that doesn't stop propagation and trigger the outer PrimeVue
+    // Dialog's own closeOnEscape, discarding everything just filled in.
+    await dialog.getByText('New Appointment').click()
 
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Appointment saved successfully')).toBeVisible({ timeout: 10_000 })
+    // If the save didn't go through, surface whatever the dialog actually shows instead of a
+    // generic "text not found" timeout — a validation/conflict message here is far more useful
+    // for the CI annotation than "waited 10s, nothing happened."
+    const successToast = page.getByText('Appointment saved successfully')
+    if (!(await successToast.isVisible({ timeout: 10_000 }).catch(() => false))) {
+      const dialogText = await dialog.innerText().catch(() => '(dialog not found)')
+      throw new Error(`Save did not succeed. Dialog contents:\n${dialogText}`)
+    }
 
     // Reschedule via the List view's most recently created row.
     await page.goto('/appointments')
@@ -144,9 +154,13 @@ test.describe('appointments', () => {
     await startAtInput.click()
     await page.keyboard.press('Control+A')
     await startAtInput.pressSequentially(rescheduleSlot, { delay: 20 })
-    await page.keyboard.press('Escape')
+    await dialog.getByText('Edit Appointment').click() // dismiss the popover, not Escape — see above
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Appointment saved successfully')).toBeVisible({ timeout: 10_000 })
+    const rescheduleToast = page.getByText('Appointment saved successfully')
+    if (!(await rescheduleToast.isVisible({ timeout: 10_000 }).catch(() => false))) {
+      const dialogText = await dialog.innerText().catch(() => '(dialog not found)')
+      throw new Error(`Reschedule save did not succeed. Dialog contents:\n${dialogText}`)
+    }
 
     // Cancel from the same detail page.
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
