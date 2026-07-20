@@ -298,7 +298,7 @@ confirming the source dev stack was completely unaffected throughout. See `docs/
 "Testing restore" for the exact commands and full result. Only remaining gap: this proved the
 mechanics work, not a run against real production data (none exists yet) — re-run once live.
 
-### `.github/workflows/ci.yml` — CONFIRMED running, backend + frontend green, e2e 12/13
+### `.github/workflows/ci.yml` — CONFIRMED running, all three jobs green, e2e 13/13 (RESOLVED 2026-07-20)
 Updated 2026-07-20 (later same pass): the workflow's first real pushes to `main` (commits
 `b2459de` onward) surfaced and closed several genuine CI-harness-only bugs — none were
 application bugs, all confirmed via reading actual job logs/screenshots/backend logs, not
@@ -318,30 +318,50 @@ assumed:
 - Backend (Pint, Larastan, 188 tests) and Frontend (`vue-tsc`, ESLint, Prettier, 259 Vitest
   tests, production build) jobs are both **fully green** as of `33eb84d`.
 
-**Update 2026-07-20 (later same pass) — likely root cause found, fix pushed (`3ca7c30`),
-pending CI confirmation**: the E2E job's "creates, reschedules, and cancels an appointment"
-test — 12/13 other E2E tests pass reliably (auth, dashboard, patients CRUD, calendar views,
-RTL/LTR, mobile, all permission boundaries). Two real bugs identified and fixed, verified locally
-end-to-end against a fresh-seeded DB (with local timeouts temporarily raised only to work around
-this dev machine's slow Docker-Desktop bind mount — not committed, not a CI concern):
-1. The prior fix (`3d684fe`) dismissed the DatePicker's popover by clicking the dialog title, but
-   when the time-picker view is tall enough to flip and render *above* the input, the popover
-   overlaps the title and swallows the click meant for it — confirmed via the exact "subtree
-   intercepts pointer events" Playwright error on the datepicker panel. Now clicks the modal mask
-   instead: `Dialog` here has no `dismissable-mask`, so it can't close the Dialog, but it's still
-   a real "outside click" for the popover's own document-level listener, and it's never covered
-   by the popover regardless of flip direction.
-2. The actual likely root cause of the whole flaky trail: both save-success checks used
-   `Locator.isVisible({ timeout })`, which does **not** wait/retry — it checks once and returns
-   immediately. It was racing the save request and reporting failure before the toast had
-   rendered, and kept getting misattributed to the DatePicker each time because that was the last
-   visible action before the false failure. Replaced with `expect(...).toBeVisible()`, which
-   polls; bumped the toast wait from 10s to 15s to match the margin already used elsewhere in the
-   file for other network-bound waits.
+**RESOLVED 2026-07-20** — the E2E job's "creates, reschedules, and cancels an appointment" test
+took four rounds to actually close, each one root-caused from real evidence (GitHub's REST API
+for job annotations/logs — `gh` CLI wasn't available in-session, but the API needs no auth for a
+public repo) rather than assumed from local runs alone, after commit `3ca7c30`'s first "verified
+locally, should be green" claim turned out wrong on real CI (a lesson in itself — see below):
 
-**Not release-blocking on its own**: the same create/reschedule/cancel/status-transition logic is
-proven by 32/32 passing backend `AppointmentTest` cases and the `AppointmentDialog`/`SlotPicker`
-Vitest component suites — this was always about closing the last gap in live-browser E2E
-coverage, not an unverified feature. **Revisit**: confirm the next CI run on `main` shows 13/13,
-then flip the "Gate status" line in `PROJECT_CONTEXT.md` from "not yet formally closed" to
-closed.
+1. (`3d684fe`, superseded) Dismissing the DatePicker's popover by clicking the dialog title broke
+   when the time-picker view is tall enough to flip and render *above* the input — the popover
+   overlaps the title and swallows the click. `3ca7c30` fixed this by clicking the modal mask
+   instead (`Dialog` here has no `dismissable-mask`, so it can't close the Dialog, but it's still
+   a real "outside click" for the popover's own listener).
+2. (`3ca7c30`) Both save-success checks used `Locator.isVisible({ timeout })`, which does **not**
+   wait/retry — it checks once and returns immediately, racing the save request and reporting
+   failure before the toast rendered. Replaced with `expect(...).toBeVisible()`, which polls.
+3. (`9bcf078`, found by reading `3ca7c30`'s own CI run via the Actions API, not by re-guessing)
+   Two further bugs, both real: (a) `AppointmentDialog.vue`'s `visible` watcher unconditionally
+   resets `activeTab` to `'patient'` on open, edit mode included, so the reschedule step's
+   `startAtInput.click()` was timing out on a field that literally wasn't rendered yet — fixed
+   with the missing "Appointment" tab click. (b) The suite computed a hardcoded "tomorrow 9am"
+   slot by hand; Playwright's CI-only `retries: 1` re-runs a failed test from scratch, so when
+   attempt 1 booked that slot and then failed *later* (on bug (a)), the automatic retry's fresh
+   attempt collided with attempt 1's own leftover appointment — a genuine
+   `DentistConflictException`, but caused by the test never asking the backend what was actually
+   free, not by any bug in `AppointmentService::availableSlots`/`busyRangesForDentist` (read and
+   confirmed correct). Fixed by driving the app's own "Show available slots" toggle
+   (`SlotPicker.vue`, backed by the real `GET /available-slots` endpoint) and clicking a real free
+   slot on every attempt — the same thing a real user would do, and immune to retries because it
+   always reflects current state.
+4. (`3faf2d7`, again found by reading `9bcf078`'s own CI run) A cancellation renders "Cancelled"
+   in two places at once — the status chip and the Timeline's own step label — so
+   `page.getByText('Cancelled')` was a strict-mode violation the instant the page updated in time
+   to show both. No prior run (local or CI) had ever reached a real successful cancellation before
+   `9bcf078`'s fixes, so this had been latent and unreachable the entire time. Scoped to
+   `getByLabel('Cancelled')` (the status chip's own `aria-label`).
+
+**Lesson captured**: local verification alone was insufficient and produced a false "should be
+green" claim twice (this dev machine's Docker Desktop networking adds multi-second latency to
+tiny localhost requests — confirmed directly via Playwright trace timing data, e.g. a 660-byte
+`/cancel` response taking 5.3s to first byte + 8.2s to receive — which reliably masked timing-
+dependent bugs, including bug 4 above, that only a fast runner like CI's would ever actually
+reach). Treat "pushed, verified locally" as provisional until the *actual* CI run is read back
+via its API/logs, not assumed from local behavior, whenever CI and local environments materially
+differ in speed or topology.
+
+Confirmed via the GitHub Actions API (not just workflow-level "success" — the individual E2E job
+and its own Playwright summary annotation): run `29763458360` on commit `3faf2d7`, all three jobs
+(Backend, Frontend, E2E) green, **13 passed (36.2s)**.
