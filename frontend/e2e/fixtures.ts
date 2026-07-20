@@ -1,5 +1,13 @@
 import { type Page } from '@playwright/test'
 
+/**
+ * `page.request` resolves relative URLs against Playwright's `baseURL` (the frontend dev
+ * server), not the backend — Vite has no `/api` proxy configured (the app calls the backend via
+ * an absolute `VITE_API_URL`, see `frontend/src/lib/api.ts`), so a relative `/api/...` request
+ * here would hit Vite's SPA fallback and return `index.html` instead of JSON.
+ */
+export const API_BASE_URL = process.env.E2E_API_URL ?? 'http://localhost:8000/api'
+
 export const DEMO_USERS = {
   admin: { email: 'admin@example.com', password: 'password' },
   dentist: { email: 'dentist@example.com', password: 'password' },
