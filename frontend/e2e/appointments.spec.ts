@@ -221,6 +221,12 @@ test.describe('appointments', () => {
     // Cancel from the same detail page.
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
     await page.getByRole('button', { name: 'Cancel Appointment' }).click()
-    await expect(page.getByText('Cancelled')).toBeVisible({ timeout: 15_000 })
+    // A real cancellation renders "Cancelled" in two places at once — the status chip
+    // (`AppointmentStatusChip.vue`, which sets `aria-label` to the status label) and the
+    // Timeline's own plain-text step — so `getByText('Cancelled')` is a strict-mode violation the
+    // moment the page actually updates in time to show both (confirmed via CI, where the update
+    // is fast enough to hit this; local runs were slow enough to mask it entirely). `getByLabel`
+    // targets only the status chip.
+    await expect(page.getByLabel('Cancelled')).toBeVisible({ timeout: 15_000 })
   })
 })
