@@ -286,34 +286,54 @@ backup does not survive VPS loss, disk failure, or provider-level incident.
 (Backblaze B2, Wasabi, or AWS S3) and uncomment the sync line in `backup.sh`. See
 `docs/deployment.md` "Backup & Recovery".
 
-### Restore procedure has not yet been exercised against a real backup
-`docker/scripts/restore.sh` and the "Testing restore" runbook in `docs/deployment.md` were written
-and reviewed this pass, but never actually run end-to-end against a populated database — there is
-no production data yet to restore. The mechanics (drop/recreate DB, `pg_restore`, storage tar
-extraction) follow standard, well-understood patterns, but "written" and "proven" are different
-claims.
-**Revisit**: run the full restore runbook against a scratch stack once real backups exist (post
-first-clinic-onboarding), and log the date in `docs/deployment.md` per that section's closing note.
+### Restore procedure — RESOLVED (2026-07-20): rehearsed end-to-end, not just written
+Updated same pass: ran the full runbook for real, not just reviewed it. Added
+`docker-compose.rehearsal.yml` (isolated, disposable Postgres + app stack — its own network, no
+host ports, anonymous volume) plus `COMPOSE_FILE`/`ENV_FILE` overrides on `backup.sh`/`restore.sh`
+so the *actual*, unmodified production scripts could target it. Took a real backup from the dev
+stack, restored it into the fresh rehearsal target, and verified: every table's row count matched
+the source exactly (9 patients, 3 users, 6 appointment types, 0 appointments), the first patient
+record matched field-by-field including the UUID, and the storage tar extracted correctly — while
+confirming the source dev stack was completely unaffected throughout. See `docs/deployment.md`
+"Testing restore" for the exact commands and full result. Only remaining gap: this proved the
+mechanics work, not a run against real production data (none exists yet) — re-run once live.
 
-### `vue-tsc -b && vite build` full production build was verified once, manually, not yet in CI
-The build succeeds cleanly (509 modules, 27s, no source maps, reasonable chunk sizes — see the
-Production Gate report) when run manually inside the `node` container. `.github/workflows/ci.yml`
-(new this pass) runs the same `npm run build` step on every push/PR, but that workflow itself has
-not yet had its first real CI run (no push has happened since it was added).
-**Revisit**: after the next push to `main` — confirm the Actions run is green, not just that the
-YAML is well-formed.
+### `.github/workflows/ci.yml` — CONFIRMED running, backend + frontend green, e2e 12/13
+Updated 2026-07-20 (later same pass): the workflow's first real pushes to `main` (commits
+`b2459de` onward) surfaced and closed several genuine CI-harness-only bugs — none were
+application bugs, all confirmed via reading actual job logs/screenshots/backend logs, not
+assumed:
+- `php artisan serve` needs `PHP_CLI_SERVER_WORKERS` (single-threaded by default; a real browser
+  fires several concurrent requests per navigation) — fixed (`ba2bc1c`).
+- The E2E job pointed the browser/Vite at `127.0.0.1` while `backend/.env.example`'s
+  `FRONTEND_URL`/`SANCTUM_STATEFUL_DOMAINS` say `localhost` — different strings, so every
+  cross-origin request failed Sanctum/CORS's origin check and was silently blocked by the
+  browser before reaching the server (this was the single biggest fix — took the suite from
+  12/13 *failing* to 11/13 *passing*) — fixed (`f3447cf`).
+- `frontend/src/views/AppointmentsView.test.ts` (Vitest, pre-existing, unrelated to this
+  session's E2E work): a fixture appointment hardcoded to `2026-07-15` only stayed inside the
+  Board's "current week" filter (computed from the real `new Date()`) as long as wall-clock time
+  hadn't drifted past it — broke once it finally did, mid-session. Fixed with
+  `vi.useFakeTimers()`/`setSystemTime()` (`33eb84d`).
+- Backend (Pint, Larastan, 188 tests) and Frontend (`vue-tsc`, ESLint, Prettier, 259 Vitest
+  tests, production build) jobs are both **fully green** as of `33eb84d`.
 
-### Playwright E2E coverage exists only as ad hoc scratchpad scripts, not a committed test suite
-The Production Gate's browser verification pass (login, dashboard, patients CRUD, appointments
-Board/List views, RTL/LTR, mobile viewport, permission boundaries) was done with one-off Playwright
-scripts in the session scratchpad, not committed to the repo. Confirmed reliable results for every
-scenario except live-browser appointment create/reschedule/cancel, which was blocked repeatedly by
-this specific dev machine's Vite-dev-server cold-start latency and inter-process CPU contention
-(unrelated to application correctness — the same logic is covered by 188 passing backend
-`AppointmentTest` cases, and the New Appointment dialog was independently confirmed to render every
-expected field via a raw DOM dump).
-**Revisit**: promote the more valuable scenarios (permission boundaries, RTL/LTR, mobile overflow)
-into a committed `frontend/e2e/` Playwright suite wired into CI, since re-deriving these scripts by
-hand every review cycle doesn't scale. Not blocking a first production deploy — Vitest component
+**Still open**: the E2E job's "creates, reschedules, and cancels an appointment" test — 12/13
+other E2E tests pass reliably (auth, dashboard, patients CRUD, calendar views, RTL/LTR, mobile,
+all permission boundaries). This one test's remaining failure is under active investigation;
+several real test-authoring bugs were found and fixed along the way (unscoped dialog selector
+colliding with `CalendarFilters`' own patient search, a hardcoded random-seed patient name,
+`page.request` lacking the Origin/Referer headers Sanctum's stateful check needs, searching the
+concatenated full name instead of a single token, and working hours never being seeded by
+`DatabaseSeeder` at all — deliberately, they're clinic setup, not demo data) — but the exact
+current failure mode (working-hours POST appears to succeed per the added diagnostic, yet the
+save still doesn't complete) isn't nailed down yet.
+**Revisit immediately**: this is very close — re-run with the diagnostic in place, read the
+`Upload Playwright report on failure` artifact (needs repo-admin GitHub auth to download, not
+available to this session) or WebFetch the job's HTML output for the specific error. Not
+release-blocking on its own: the same create/reschedule/cancel/status-transition logic is proven
+by 32/32 passing backend `AppointmentTest` cases and the `AppointmentDialog`/`SlotPicker`
+Vitest component suites — this is about closing the very last gap in live-browser E2E coverage,
+not an unverified feature.
 tests plus the backend feature-test suite already cover the underlying logic; this is about
 closing the last mile of true cross-stack browser confirmation.
