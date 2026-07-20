@@ -4,6 +4,20 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
+_Nothing yet — `main` is at `v1.0.0-appointments`._
+
+## v1.0.0-appointments — 2026-07-20
+
+**Release summary**: Appointments module completed and promoted to Production Ready. Calendar views
+(Day/Week/Month/List), full appointment CRUD with status-transition lifecycle, slot availability logic,
+and dentist schedule/time-off management are all implemented end to end (backend + frontend), on top of
+the application shell, design system, and audit-logging infrastructure also shipped in this release. A
+system-wide Production Gate (seed-data environment guard, rate limiting, production Docker/nginx/SSL
+topology, rehearsed backup/restore, CI/CD) closed on the same date. E2E verification: **13/13 passed on
+GitHub Actions** (run `29763458360`, commit `3faf2d7`, alongside green Backend/Frontend jobs). See
+`docs/modules/appointments.md` for the module's final architecture, decisions, and known limitations, and
+the detailed entries below for the full change history this release comprises.
+
 ### Fixed — Appointments (Final QA pass, Phase 2 Step 10)
 - **Silent fetch failures across every appointments surface**: `appointments.ts`'s `fetchRange` has
   always captured a network/server failure into a reactive `error` ref (translation key

@@ -1,5 +1,9 @@
 # Appointments Frontend Module — UI/UX Design Document
 
+**Status: SUPERSEDED (2026-07-20) — see [`appointments.md`](appointments.md), the final module doc,
+for the current architecture, decisions, and status. Kept here as the design/decision record for the
+frontend implementation sequence (§20).**
+
 Status: **Revised 2026-07-16, superseding the earlier draft — pending approval.** No new frontend *screen/
 component* code is written until this revision is approved, per the project's two-phase-per-module
 workflow. Once approved, this document drives implementation of the remaining UI (Calendar rendering,

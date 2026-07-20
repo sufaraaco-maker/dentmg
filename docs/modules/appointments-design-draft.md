@@ -1,5 +1,8 @@
 # Appointments Module — Design Document (DRAFT, pending approval)
 
+**Status: SUPERSEDED (2026-07-20) — see [`appointments.md`](appointments.md), the final module doc,
+for the current architecture, decisions, and status. Kept here as the original design/decision record.**
+
 Status: **Design approved (2026-07-15).** Implementation in progress, layer by layer, each with its own
 sign-off. This file becomes the basis for `docs/modules/appointments.md` (implementation doc) once the
 module is fully complete, the same way `patients.md` was produced — not before.
