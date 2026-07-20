@@ -34,7 +34,7 @@ async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Pro
           ?.split('=')[1] ?? '',
       )
 
-      await fetch(`${apiUrl}/dentists/${dentist.id}/working-hours`, {
+      const createRes = await fetch(`${apiUrl}/dentists/${dentist.id}/working-hours`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken },
@@ -44,6 +44,11 @@ async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Pro
           end_time: '20:00',
         }),
       })
+      if (!createRes.ok) {
+        throw new Error(
+          `POST working-hours failed: ${createRes.status} ${await createRes.text()}`,
+        )
+      }
 
       const pad = (n: number) => String(n).padStart(2, '0')
       return `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())} ${pad(target.getHours())}:${pad(target.getMinutes())}`
