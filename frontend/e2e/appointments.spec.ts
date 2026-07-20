@@ -1,18 +1,21 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Page, type Locator } from '@playwright/test'
 import { API_BASE_URL, loginAsEnglish } from './fixtures'
 
 /**
  * Working hours are never seeded by DatabaseSeeder — deliberately (see docs/demo-guide.md: they
  * "become meaningful once the Appointments frontend exists to book against them," i.e. they're
- * clinic-configured setup, not demo data). A fresh CI seed genuinely has none for any dentist,
- * so `GET /dentists/{id}/working-hours` returns `[]` and any hardcoded date/time — or one
- * inferred from a shift that doesn't exist — fails with OutsideWorkingHoursException (confirmed
- * directly against backend/storage/logs/laravel.log while debugging this suite; a local dev
- * database that happens to have working hours left over from earlier manual testing masked this
- * for a while). Create a real shift via the API first, so the test is self-contained and doesn't
- * assume anything about what's already configured.
+ * clinic-configured setup, not demo data). A fresh CI seed genuinely has none for any dentist, so
+ * `GET /dentists/{id}/working-hours` returns `[]` and the app's own SlotPicker would show "No
+ * available slots" for any day. Create a real shift via the API first, so the test is
+ * self-contained and doesn't assume anything about what's already configured.
+ *
+ * Returns a placeholder "yyyy-mm-dd HH:mm" string for the target day only — the *time* half is
+ * never meant to be booked as-is; it just needs to be a syntactically valid value so the
+ * DatePicker parses it into `form.start_at` and the SlotPicker (bound to that date) can fetch
+ * real availability for the right day. See `pickFirstAvailableSlot` for why the actual time
+ * always comes from the backend instead.
  */
-async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Promise<string> {
+async function ensureWorkingHours(page: Page, weeksAhead = 1): Promise<string> {
   return page.evaluate(
     async ({ apiUrl, weeksAhead }) => {
       const usersRes = await fetch(`${apiUrl}/users?per_page=50`, { credentials: 'include' })
@@ -22,7 +25,7 @@ async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Pro
       const target = new Date()
       const daysAhead = 1 + (weeksAhead - 1) * 7 // tomorrow, or +weeksAhead weeks — never today
       target.setDate(target.getDate() + daysAhead)
-      target.setHours(9, 0, 0, 0)
+      target.setHours(8, 0, 0, 0)
 
       // axios's withXSRFToken (frontend/src/lib/api.ts) reads the XSRF-TOKEN cookie and attaches
       // it automatically for state-changing requests — a raw fetch() has to do that by hand, or
@@ -69,6 +72,29 @@ async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Pro
  */
 async function dismissDatePickerPopover(page: Page) {
   await page.mouse.click(5, 5)
+}
+
+/**
+ * Pick a real, backend-confirmed free slot instead of guessing a time — via the app's own
+ * "Show available slots" toggle (`SlotPicker.vue`), which calls the same `GET /available-slots`
+ * endpoint a real user's browser would. This suite used to compute a fixed "tomorrow 9am"-style
+ * slot by hand, which is exactly what made it flaky in CI: Playwright's automatic retry
+ * (`playwright.config.ts`'s `retries: 1` in CI) re-runs the whole test from scratch after a
+ * failure, so when attempt 1 successfully booked the hardcoded slot and then failed *later* for
+ * an unrelated reason, the retry's own fresh attempt tried to book that identical hardcoded slot
+ * again and collided with attempt 1's own leftover appointment — a `DentistConflictException`
+ * that had nothing to do with the backend's conflict/availability logic (verified correct by
+ * reading `AppointmentService::availableSlots`/`busyRangesForDentist`) and everything to do with
+ * this test never asking the backend what was actually free. Querying real availability makes
+ * every attempt — first run or retry — pick whatever slot is free *right now*, so this class of
+ * self-collision can't happen again.
+ */
+async function pickFirstAvailableSlot(dialog: Locator) {
+  await dialog.getByRole('switch', { name: 'Show available slots' }).click()
+  // Only slot chips carry `aria-pressed` (see SlotPicker.vue); unavailable ones are `disabled`.
+  const availableSlot = dialog.locator('button[aria-pressed]:not([disabled])').first()
+  await expect(availableSlot).toBeVisible({ timeout: 15_000 })
+  await availableSlot.click()
 }
 
 test.describe('appointments', () => {
@@ -136,11 +162,12 @@ test.describe('appointments', () => {
     await page.locator('div:has(> label:text-is("Appointment Type")) .p-select').click()
     await page.locator('li.p-select-option').first().click()
 
-    const validSlot = await ensureWorkingHoursAndComputeSlot(page)
+    const placeholderDate = await ensureWorkingHours(page)
     const createStartAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await createStartAtInput.click()
-    await createStartAtInput.pressSequentially(validSlot, { delay: 20 })
+    await createStartAtInput.pressSequentially(placeholderDate, { delay: 20 })
     await dismissDatePickerPopover(page)
+    await pickFirstAvailableSlot(dialog)
 
     await page.getByRole('button', { name: 'Save' }).click()
     // `Locator.isVisible()` doesn't wait/retry — it checks once and returns immediately, so it
@@ -163,12 +190,20 @@ test.describe('appointments', () => {
     await firstRow.click()
 
     await page.getByRole('button', { name: 'Edit' }).click()
-    const rescheduleSlot = await ensureWorkingHoursAndComputeSlot(page, 2) // a different week than the created slot
+    // The dialog always opens on the Patient tab (`AppointmentDialog.vue`'s `visible` watcher
+    // resets `activeTab` unconditionally, edit mode included) — without this click, the Date &
+    // Time field lives in a TabPanel that isn't even rendered yet, and CI's own logs show exactly
+    // that: a 45s timeout with "element is not visible" on `startAtInput`, not a DatePicker issue.
+    await page.getByRole('tab', { name: 'Appointment' }).click()
+
+    const reschedulePlaceholderDate = await ensureWorkingHours(page, 2) // a different week than the created slot
     const startAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await startAtInput.click()
     await page.keyboard.press('Control+A')
-    await startAtInput.pressSequentially(rescheduleSlot, { delay: 20 })
+    await startAtInput.pressSequentially(reschedulePlaceholderDate, { delay: 20 })
     await dismissDatePickerPopover(page)
+    await pickFirstAvailableSlot(dialog)
+
     await page.getByRole('button', { name: 'Save' }).click()
     const rescheduleToast = page.getByText('Appointment saved successfully')
     try {
@@ -178,9 +213,14 @@ test.describe('appointments', () => {
       throw new Error(`Reschedule save did not succeed. Dialog contents:\n${dialogText}`)
     }
 
+    // The Edit dialog's own DOM node (and its own "Cancel" footer button) can still be present
+    // right after a successful save — `Dialog`'s close isn't instant — and would otherwise
+    // strict-mode-collide with the detail page's real Cancel button below.
+    await expect(dialog).toBeHidden({ timeout: 10_000 })
+
     // Cancel from the same detail page.
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
     await page.getByRole('button', { name: 'Cancel Appointment' }).click()
-    await expect(page.getByText('Cancelled')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Cancelled')).toBeVisible({ timeout: 15_000 })
   })
 })
