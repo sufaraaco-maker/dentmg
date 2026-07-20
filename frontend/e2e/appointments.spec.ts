@@ -57,6 +57,20 @@ async function ensureWorkingHoursAndComputeSlot(page: Page, weeksAhead = 1): Pro
   )
 }
 
+/**
+ * Dismiss the DatePicker's own overlay popover without touching the outer PrimeVue Dialog.
+ * Escape bubbles past the popover (it doesn't stop propagation) and triggers the Dialog's own
+ * closeOnEscape, discarding the whole form. Clicking the dialog title doesn't work either — when
+ * the time-picker view pushes the popover tall enough to flip and render *above* the input, it
+ * overlaps the title and swallows the click meant for it. The one thing guaranteed clear of both
+ * the popover (always positioned near the date input, inside the dialog) and the dialog panel
+ * itself is the modal mask — `Dialog` here has no `dismissable-mask`, so a mask click can't close
+ * it, but it's still a real "outside click" for the popover's own document-level listener.
+ */
+async function dismissDatePickerPopover(page: Page) {
+  await page.mouse.click(5, 5)
+}
+
 test.describe('appointments', () => {
   test('Calendar Board loads and switches between Day/Week/Month/List views', async ({ page }) => {
     await loginAsEnglish(page, 'admin')
@@ -126,17 +140,17 @@ test.describe('appointments', () => {
     const createStartAtInput = page.locator('div:has(> label:text-is("Date & Time")) input')
     await createStartAtInput.click()
     await createStartAtInput.pressSequentially(validSlot, { delay: 20 })
-    // Click the dialog title, not Escape, to dismiss the DatePicker's own popover — Escape can
-    // bubble past a popover that doesn't stop propagation and trigger the outer PrimeVue
-    // Dialog's own closeOnEscape, discarding everything just filled in.
-    await dialog.getByText('New Appointment').click()
+    await dismissDatePickerPopover(page)
 
     await page.getByRole('button', { name: 'Save' }).click()
-    // If the save didn't go through, surface whatever the dialog actually shows instead of a
-    // generic "text not found" timeout — a validation/conflict message here is far more useful
-    // for the CI annotation than "waited 10s, nothing happened."
+    // `Locator.isVisible()` doesn't wait/retry — it checks once and returns immediately, so it
+    // was racing the save request and reporting failure before the toast had a chance to render.
+    // `expect(...).toBeVisible()` actually polls, and on a genuine failure we still want the
+    // dialog's contents (a validation/conflict message) instead of a bare "not found" timeout.
     const successToast = page.getByText('Appointment saved successfully')
-    if (!(await successToast.isVisible({ timeout: 10_000 }).catch(() => false))) {
+    try {
+      await expect(successToast).toBeVisible({ timeout: 15_000 })
+    } catch {
       const dialogText = await dialog.innerText().catch(() => '(dialog not found)')
       throw new Error(`Save did not succeed. Dialog contents:\n${dialogText}`)
     }
@@ -154,10 +168,12 @@ test.describe('appointments', () => {
     await startAtInput.click()
     await page.keyboard.press('Control+A')
     await startAtInput.pressSequentially(rescheduleSlot, { delay: 20 })
-    await dialog.getByText('Edit Appointment').click() // dismiss the popover, not Escape — see above
+    await dismissDatePickerPopover(page)
     await page.getByRole('button', { name: 'Save' }).click()
     const rescheduleToast = page.getByText('Appointment saved successfully')
-    if (!(await rescheduleToast.isVisible({ timeout: 10_000 }).catch(() => false))) {
+    try {
+      await expect(rescheduleToast).toBeVisible({ timeout: 15_000 })
+    } catch {
       const dialogText = await dialog.innerText().catch(() => '(dialog not found)')
       throw new Error(`Reschedule save did not succeed. Dialog contents:\n${dialogText}`)
     }
