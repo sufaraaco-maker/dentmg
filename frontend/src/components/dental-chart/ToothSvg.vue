@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ToothSurface from './ToothSurface.vue'
 import { isAnteriorTooth, isUpperArch, mesialSide, toothDisplayName } from '@/lib/teeth'
-import { resolveIconGlyph, type DentalIconGlyph } from '@/lib/dentalIcons'
+import { DASHARRAY_BY_STATUS, OPACITY_BY_STATUS, resolveIconGlyph, type DentalIconGlyph } from '@/lib/dentalIcons'
 import type { DentalChartEntry, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
 
 /**
@@ -124,22 +124,6 @@ interface RegionVisual {
 }
 
 const EMPTY_FILL = 'var(--p-surface-100)'
-
-// Status tone modifier applied on top of the condition's base color (rendering design doc §4).
-const OPACITY_BY_STATUS: Record<DentalChartEntry['status'], number> = {
-  existing: 1,
-  completed: 1,
-  active: 0.55,
-  planned: 0.55,
-  cancelled: 0.15,
-}
-const DASHARRAY_BY_STATUS: Record<DentalChartEntry['status'], string | undefined> = {
-  existing: undefined,
-  completed: undefined,
-  active: '4 2',
-  planned: '4 2',
-  cancelled: '1 2',
-}
 
 function visualFor(entry: DentalChartEntry | null): RegionVisual {
   if (!entry) {

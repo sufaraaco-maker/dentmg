@@ -458,6 +458,27 @@
       "entriesSummary": "{count} kayıtlı durum: {details}",
       "toothAriaLabel": "Diş {code}, {name}. {detail}",
       "surfaceAriaLabel": "{surface} yüzeyi, diş {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "Şema",
+      "viewList": "Liste",
+      "viewToggle": "Şema veya liste görünümü",
+      "dentitionAll": "Tümü",
+      "dentitionPermanent": "Daimi",
+      "dentitionPrimary": "Süt Dişi",
+      "dentitionFilter": "Diş tipine göre filtrele",
+      "allStatuses": "Tüm Durumlar",
+      "allCategories": "Tüm Kategoriler",
+      "allTeeth": "Tüm Dişler",
+      "statusFilter": "Duruma göre filtrele",
+      "categoryFilter": "Kategoriye göre filtrele",
+      "toothFilter": "Dişe göre filtrele",
+      "addEntry": "Kayıt Ekle"
+    },
+    "legend": {
+      "title": "Gösterge",
+      "statusTone": "Durum",
+      "empty": "Aktif durum yok"
     }
   }
 }

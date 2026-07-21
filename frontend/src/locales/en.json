@@ -458,6 +458,27 @@
       "entriesSummary": "{count} entries recorded: {details}",
       "toothAriaLabel": "Tooth {code}, {name}. {detail}",
       "surfaceAriaLabel": "{surface} surface, tooth {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "Chart",
+      "viewList": "List",
+      "viewToggle": "Chart or list view",
+      "dentitionAll": "All",
+      "dentitionPermanent": "Permanent",
+      "dentitionPrimary": "Primary",
+      "dentitionFilter": "Filter by dentition",
+      "allStatuses": "All Statuses",
+      "allCategories": "All Categories",
+      "allTeeth": "All Teeth",
+      "statusFilter": "Filter by status",
+      "categoryFilter": "Filter by category",
+      "toothFilter": "Filter by tooth",
+      "addEntry": "Add Entry"
+    },
+    "legend": {
+      "title": "Legend",
+      "statusTone": "Status",
+      "empty": "No active conditions"
     }
   }
 }

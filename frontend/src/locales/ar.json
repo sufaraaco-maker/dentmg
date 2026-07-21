@@ -458,6 +458,27 @@
       "entriesSummary": "{count} حالات مسجلة: {details}",
       "toothAriaLabel": "السن {code}، {name}. {detail}",
       "surfaceAriaLabel": "سطح {surface}، السن {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "المخطط",
+      "viewList": "القائمة",
+      "viewToggle": "عرض المخطط أو القائمة",
+      "dentitionAll": "الكل",
+      "dentitionPermanent": "دائم",
+      "dentitionPrimary": "لبني",
+      "dentitionFilter": "تصفية حسب نوع الأسنان",
+      "allStatuses": "كل الحالات",
+      "allCategories": "كل الفئات",
+      "allTeeth": "كل الأسنان",
+      "statusFilter": "تصفية حسب الحالة",
+      "categoryFilter": "تصفية حسب الفئة",
+      "toothFilter": "تصفية حسب السن",
+      "addEntry": "إضافة حالة"
+    },
+    "legend": {
+      "title": "المفتاح",
+      "statusTone": "الحالة",
+      "empty": "لا توجد حالات نشطة"
     }
   }
 }

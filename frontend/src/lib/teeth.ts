@@ -126,3 +126,8 @@ export function mesialSide(code: string): 'left' | 'right' {
   const q = quadrant(code)
   return q === 1 || q === 4 || q === 5 || q === 8 ? 'right' : 'left'
 }
+
+/** All codes in one quadrant, position ascending (e.g. quadrant 1 → ['11','12',...,'18']). */
+export function quadrantCodes(quadrantNumber: number): string[] {
+  return TOOTH_CODES.filter((code) => quadrant(code) === quadrantNumber)
+}
