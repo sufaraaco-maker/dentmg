@@ -55,7 +55,9 @@
     "delete": "Delete",
     "notifications": "Notifications",
     "noNotifications": "No notifications yet",
-    "account": "Account"
+    "account": "Account",
+    "yes": "Yes",
+    "no": "No"
   },
   "errors": {
     "forbidden": {
@@ -392,6 +394,70 @@
         "endAfterStart": "End must be after start",
         "reasonMax": "Reason must be 255 characters or fewer"
       }
+    }
+  },
+  "dentalChart": {
+    "title": "Dental Chart",
+    "status": {
+      "existing": "Existing",
+      "active": "Active",
+      "planned": "Planned",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "category": {
+      "finding": "Finding",
+      "procedure": "Procedure"
+    },
+    "loadError": "Failed to load dental chart entries",
+    "nav": {
+      "conditions": "Dental Conditions"
+    },
+    "conditions": {
+      "title": "Dental Conditions",
+      "new": "New Condition",
+      "search": "Search conditions",
+      "showInactive": "Show inactive",
+      "name": "Name",
+      "category": "Category",
+      "appliesToSurface": "Applies to a surface",
+      "color": "Color",
+      "iconKey": "Icon Key",
+      "iconKeyPlaceholder": "e.g. caries, filling, crown",
+      "sortOrder": "Sort Order",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "empty": "No dental conditions found",
+      "loadError": "Failed to load dental conditions",
+      "createTitle": "New Dental Condition",
+      "editTitle": "Edit Dental Condition",
+      "namePlaceholder": "e.g. Caries, Composite Filling, Crown",
+      "fieldRequired": "This field is required",
+      "colorInvalid": "Color must be a valid hex code, e.g. #3B82F6",
+      "saved": "Dental condition saved successfully",
+      "saveError": "Failed to save dental condition",
+      "deleted": "Dental condition deleted successfully",
+      "deleteError": "Failed to delete dental condition",
+      "deleteConfirmMessage": "Are you sure you want to delete \"{name}\"?",
+      "deleteConfirmHeader": "Delete Dental Condition"
+    },
+    "chart": {
+      "surface": {
+        "M": "Mesial",
+        "D": "Distal",
+        "F": "Facial",
+        "L": "Lingual",
+        "O": "Occlusal",
+        "I": "Incisal"
+      },
+      "noEntries": "No conditions recorded",
+      "entryLine": "{status} {condition}",
+      "onSurfaces": "on {surfaces}",
+      "entriesSummary": "{count} entries recorded: {details}",
+      "toothAriaLabel": "Tooth {code}, {name}. {detail}",
+      "surfaceAriaLabel": "{surface} surface, tooth {code}. {detail}"
     }
   }
 }

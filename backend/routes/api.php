@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DentalChartEntryController;
+use App\Http\Controllers\Api\DentalConditionController;
 use App\Http\Controllers\Api\DentistTimeOffController;
 use App\Http\Controllers\Api\DentistWorkingHourController;
 use App\Http\Controllers\Api\PatientController;
@@ -36,6 +38,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('appointments', AppointmentController::class);
 
     Route::apiResource('appointment-types', AppointmentTypeController::class);
+
+    Route::apiResource('dental-conditions', DentalConditionController::class);
+
+    Route::get('patients/{patient}/dental-chart-entries', [DentalChartEntryController::class, 'index']);
+    Route::post('patients/{patient}/dental-chart-entries', [DentalChartEntryController::class, 'store']);
+    Route::post('dental-chart-entries/{dental_chart_entry}/complete', [DentalChartEntryController::class, 'complete']);
+    Route::post('dental-chart-entries/{dental_chart_entry}/cancel', [DentalChartEntryController::class, 'cancel']);
+    Route::put('dental-chart-entries/{dental_chart_entry}', [DentalChartEntryController::class, 'update']);
+    Route::delete('dental-chart-entries/{dental_chart_entry}', [DentalChartEntryController::class, 'destroy']);
 
     Route::get('dentists/{user}/working-hours', [DentistWorkingHourController::class, 'index']);
     Route::post('dentists/{user}/working-hours', [DentistWorkingHourController::class, 'store']);

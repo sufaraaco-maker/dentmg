@@ -55,7 +55,9 @@
     "delete": "Sil",
     "notifications": "Bildirimler",
     "noNotifications": "Henüz bildirim yok",
-    "account": "Hesap"
+    "account": "Hesap",
+    "yes": "Evet",
+    "no": "Hayır"
   },
   "errors": {
     "forbidden": {
@@ -392,6 +394,70 @@
         "endAfterStart": "Bitiş, başlangıçtan sonra olmalıdır",
         "reasonMax": "Sebep 255 karakteri geçemez"
       }
+    }
+  },
+  "dentalChart": {
+    "title": "Diş Şeması",
+    "status": {
+      "existing": "Mevcut",
+      "active": "Aktif",
+      "planned": "Planlandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "category": {
+      "finding": "Bulgu",
+      "procedure": "İşlem"
+    },
+    "loadError": "Diş şeması kayıtları yüklenemedi",
+    "nav": {
+      "conditions": "Diş Durumları"
+    },
+    "conditions": {
+      "title": "Diş Durumları",
+      "new": "Yeni Durum",
+      "search": "Durumlarda ara",
+      "showInactive": "Pasifleri göster",
+      "name": "Ad",
+      "category": "Kategori",
+      "appliesToSurface": "Yüzeye uygulanır",
+      "color": "Renk",
+      "iconKey": "Simge Anahtarı",
+      "iconKeyPlaceholder": "ör. caries, filling, crown",
+      "sortOrder": "Sıralama",
+      "status": "Durum",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "actions": "İşlemler",
+      "empty": "Diş durumu bulunamadı",
+      "loadError": "Diş durumları yüklenemedi",
+      "createTitle": "Yeni Diş Durumu",
+      "editTitle": "Diş Durumunu Düzenle",
+      "namePlaceholder": "ör. Çürük, Kompozit Dolgu, Kron",
+      "fieldRequired": "Bu alan zorunludur",
+      "colorInvalid": "Renk geçerli bir hex kodu olmalıdır, ör. #3B82F6",
+      "saved": "Diş durumu başarıyla kaydedildi",
+      "saveError": "Diş durumu kaydedilemedi",
+      "deleted": "Diş durumu başarıyla silindi",
+      "deleteError": "Diş durumu silinemedi",
+      "deleteConfirmMessage": "\"{name}\" öğesini silmek istediğinizden emin misiniz?",
+      "deleteConfirmHeader": "Diş Durumunu Sil"
+    },
+    "chart": {
+      "surface": {
+        "M": "Meziyal",
+        "D": "Distal",
+        "F": "Fasiyal",
+        "L": "Lingual/Palatal",
+        "O": "Oklüzal",
+        "I": "İnsizal"
+      },
+      "noEntries": "Kayıtlı durum yok",
+      "entryLine": "{status} {condition}",
+      "onSurfaces": "{surfaces} üzerinde",
+      "entriesSummary": "{count} kayıtlı durum: {details}",
+      "toothAriaLabel": "Diş {code}, {name}. {detail}",
+      "surfaceAriaLabel": "{surface} yüzeyi, diş {code}. {detail}"
     }
   }
 }

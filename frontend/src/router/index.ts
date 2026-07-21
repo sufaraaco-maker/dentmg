@@ -70,6 +70,12 @@ export const router = createRouter({
           component: () => import('@/views/AppointmentDetailView.vue'),
         },
         {
+          path: 'dental-chart/conditions',
+          name: 'dental-conditions',
+          component: () => import('@/views/DentalConditionsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
           path: 'forbidden',
           name: 'forbidden',
           component: () => import('@/views/ForbiddenView.vue'),

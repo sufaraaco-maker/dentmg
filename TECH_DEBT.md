@@ -133,6 +133,12 @@ Windows↔WSL2↔container boundary for bind mounts), not an application bug.
 further (e.g. switching to polling-based file watching in `vite.config.ts`) if it starts noticeably slowing
 down day-to-day frontend development.
 
+## Open (new from Dental Chart frontend infrastructure, 2026-07-20)
+
+### `DentalChartEntry` mutation endpoints don't eager-load relations
+Same shape as the Appointments item above: `DentalChartEntryResource` responses from `store`/`update`/`complete`/`cancel` don't eager-load `dentalCondition`/`dentist`/`createdBy`/`updatedBy` (only `index` does, via `DentalChartService::listForPatient()`). Unlike Appointments, there is no `GET /api/dental-chart-entries/{id}` endpoint to re-fetch a single entry (deliberate — see backend plan §1.9), so `stores/dentalChartEntries.ts` re-fetches the *whole* patient list after every mutation instead of a single-record rehydration.
+**Revisit**: if these controller actions eager-load the same four relations before returning their `DentalChartEntryResource` (mirroring what `index` already does), the frontend's extra full-list re-fetch after every mutation can be replaced with an in-place cache update. Small, low-risk backend change; not blocking — a per-patient chart is a small, bounded list, so the extra round-trip is cheap.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)
