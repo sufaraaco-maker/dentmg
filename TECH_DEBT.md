@@ -166,6 +166,24 @@ run's reliability is in question, not the coverage itself.
 overhead (confirmed for Appointments' equivalent suite, run `29763458360`). CI verification is required
 for final confirmation before this item can be marked resolved.
 
+### `ConfirmDialog`'s accept/reject buttons are never translated (always "Yes"/"No" in English)
+Found while root-causing a real CI failure in `dental-chart.spec.ts` (its delete-confirmation step,
+expecting a button labeled with the dialog's own header text, actually needed to target PrimeVue's
+default accept button instead). `App.vue`'s global `<ConfirmDialog />` and every `confirm.require()`
+call across the app (Patients, Appointment Types, Time Off, Dental Conditions, and now Dental Chart
+entries) — except `StatusActionButton.vue`, which explicitly sets `acceptLabel`/`rejectLabel` — rely on
+PrimeVue's own built-in locale defaults (`accept: 'Yes'`, `reject: 'No'`, `@primevue/core/config`).
+Neither `main.ts`'s `app.use(PrimeVue, ...)` nor `locales/index.ts`'s `setLocale()` (vue-i18n only) ever
+sets PrimeVue's own `config.locale`, so these two buttons stay hardcoded English regardless of the
+active ar/en/tr locale — a real, systemic i18n gap, not specific to Dental Chart.
+**Revisit**: either call PrimeVue's `usePrimeVue().config.locale = {...}` (or pass `locale` to
+`app.use(PrimeVue, ...)`) with translated `accept`/`reject` strings synced to `setLocale()`, or set
+explicit `acceptLabel`/`rejectLabel` on every `confirm.require()` call as `StatusActionButton.vue`
+already does. Not blocking Dental Chart's closure (matches existing app-wide behavior, not a
+regression this module introduced), but worth a dedicated pass before an Arabic/Turkish production
+rollout — see also the i18n parity note in `docs/modules/dental-chart-*` and the Step 11 review's
+98/98 en/ar/tr parity confirmation, which evidently didn't cover PrimeVue's own internal strings.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)

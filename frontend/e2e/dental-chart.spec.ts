@@ -162,7 +162,12 @@ test.describe('dental chart', () => {
     // --- Delete the whole-tooth finding (admin-only) and confirm it's gone.
     const missingRow = page.locator('tr', { has: page.getByText('Missing Tooth') })
     await missingRow.getByRole('button', { name: 'Delete' }).click()
-    await page.getByRole('button', { name: 'Delete Chart Entry' }).click()
+    // 'Delete Chart Entry' is the confirm dialog's *header* (confirmDelete()'s `header` option in
+    // ChartEntryListTable.vue), not any button label. `App.vue`'s global `<ConfirmDialog />` is
+    // mounted with no `locale` override, so its accept button falls back to PrimeVue's own
+    // built-in default string, 'Yes' — confirmed in `@primevue/core/config`'s `defaultOptions`,
+    // since neither this app's `setLocale()` (vue-i18n only) nor main.ts touch PrimeVue's config.
+    await page.getByRole('button', { name: 'Yes' }).click()
     await expect(page.getByText('Chart entry deleted successfully')).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('tr', { has: page.getByText('Missing Tooth') })).toHaveCount(0)
   })
