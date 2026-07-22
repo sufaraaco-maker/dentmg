@@ -173,11 +173,15 @@ test.describe('dental chart', () => {
   })
 
   test('receptionist has read-only access to the Dental Chart tab', async ({ page }) => {
-    await loginAsEnglish(page, 'admin')
+    // A single login, like every other test in this suite — `/login` has `meta: { guestOnly: true }`
+    // (`router/index.ts`), so navigating back to it while already authenticated (e.g. a second
+    // `loginAsEnglish` call on the same page/session) gets redirected away before the form ever
+    // renders, hanging forever on `#email`. Receptionists have patient-create access too (Patients
+    // module: admin/receptionist write, dentist read-only), so there's no need to create the patient
+    // as admin first — logging in once as receptionist covers both steps.
+    await loginAsEnglish(page, 'receptionist')
     await page.goto('/patients')
     const patient = await createPatient(page)
-
-    await loginAsEnglish(page, 'receptionist')
     await gotoDentalChartTab(page, patient.id)
 
     await expect(page.getByRole('button', { name: 'Add Entry' })).not.toBeVisible()
