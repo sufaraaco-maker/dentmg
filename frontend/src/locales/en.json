@@ -479,6 +479,43 @@
       "title": "Legend",
       "statusTone": "Status",
       "empty": "No active conditions"
+    },
+    "dialog": {
+      "createTitle": "New Chart Entry",
+      "editTitle": "Edit Chart Entry",
+      "fieldRequired": "This field is required",
+      "tooth": "Tooth",
+      "selectTooth": "Select a tooth",
+      "toothLockedNote": "The tooth can't be changed after the entry is created.",
+      "dentist": "Dentist",
+      "selectCondition": "Select a condition",
+      "tabs": {
+        "diagnosis": "Diagnosis",
+        "procedure": "Procedure"
+      },
+      "surfaces": "Surfaces",
+      "surfacesRequired": "Select at least one surface for this condition",
+      "surfacesNotAllowed": "This condition applies to the whole tooth, not specific surfaces",
+      "noSurfacesSelected": "No surfaces selected",
+      "wholeTooth": "Whole tooth",
+      "status": "Status",
+      "recordedAt": "Recorded At",
+      "notes": "Notes",
+      "charactersRemaining": "{n} characters remaining",
+      "saved": "Chart entry saved successfully",
+      "saveError": "Failed to save chart entry",
+      "completeEntry": "Complete",
+      "cancelEntry": "Cancel Entry"
+    },
+    "list": {
+      "empty": "No dental chart entries found",
+      "condition": "Condition",
+      "status": "Status",
+      "recordedAt": "Recorded At",
+      "deleteConfirmMessage": "Are you sure you want to delete this chart entry?",
+      "deleteConfirmHeader": "Delete Chart Entry",
+      "deleted": "Chart entry deleted successfully",
+      "deleteError": "Failed to delete chart entry"
     }
   }
 }

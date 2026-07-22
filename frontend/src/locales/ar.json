@@ -479,6 +479,43 @@
       "title": "المفتاح",
       "statusTone": "الحالة",
       "empty": "لا توجد حالات نشطة"
+    },
+    "dialog": {
+      "createTitle": "حالة جديدة في المخطط",
+      "editTitle": "تعديل حالة المخطط",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "tooth": "السن",
+      "selectTooth": "اختر سنًا",
+      "toothLockedNote": "لا يمكن تغيير السن بعد إنشاء الحالة.",
+      "dentist": "طبيب الأسنان",
+      "selectCondition": "اختر حالة",
+      "tabs": {
+        "diagnosis": "تشخيص",
+        "procedure": "إجراء"
+      },
+      "surfaces": "الأسطح",
+      "surfacesRequired": "اختر سطحًا واحدًا على الأقل لهذه الحالة",
+      "surfacesNotAllowed": "هذه الحالة تنطبق على كامل السن، وليس على أسطح محددة",
+      "noSurfacesSelected": "لم يتم اختيار أي سطح",
+      "wholeTooth": "كامل السن",
+      "status": "الحالة",
+      "recordedAt": "تاريخ التسجيل",
+      "notes": "ملاحظات",
+      "charactersRemaining": "{n} حرفًا متبقيًا",
+      "saved": "تم حفظ حالة المخطط بنجاح",
+      "saveError": "تعذّر حفظ حالة المخطط",
+      "completeEntry": "إكمال",
+      "cancelEntry": "إلغاء الحالة"
+    },
+    "list": {
+      "empty": "لا توجد حالات في مخطط الأسنان",
+      "condition": "الحالة",
+      "status": "الوضع",
+      "recordedAt": "تاريخ التسجيل",
+      "deleteConfirmMessage": "هل أنت متأكد من حذف هذه الحالة من المخطط؟",
+      "deleteConfirmHeader": "حذف حالة المخطط",
+      "deleted": "تم حذف حالة المخطط بنجاح",
+      "deleteError": "تعذّر حذف حالة المخطط"
     }
   }
 }

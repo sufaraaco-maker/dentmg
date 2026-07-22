@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ToothSurface from './ToothSurface.vue'
-import { isAnteriorTooth, isUpperArch, mesialSide, toothDisplayName } from '@/lib/teeth'
+import { toothDisplayName } from '@/lib/teeth'
 import { DASHARRAY_BY_STATUS, OPACITY_BY_STATUS, resolveIconGlyph, type DentalIconGlyph } from '@/lib/dentalIcons'
+import { WHOLE_TOOTH_PATH, surfaceRegionsFor } from '@/lib/toothGeometry'
 import type { DentalChartEntry, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
 
 /**
@@ -52,35 +53,6 @@ const wholeRegionMode = computed(() => wholeToothWinner.value !== null)
 
 function entriesForSurface(surface: ToothSurfaceCode): DentalChartEntry[] {
   return surfaceEntries.value.filter((e) => e.surfaces?.includes(surface))
-}
-
-const upperArch = computed(() => isUpperArch(props.tooth))
-const anterior = computed(() => isAnteriorTooth(props.tooth))
-const mesial = computed(() => mesialSide(props.tooth))
-
-const centerSurface = computed<ToothSurfaceCode>(() => (anterior.value ? 'I' : 'O'))
-const topSurface = computed<ToothSurfaceCode>(() => (upperArch.value ? 'F' : 'L'))
-const bottomSurface = computed<ToothSurfaceCode>(() => (upperArch.value ? 'L' : 'F'))
-const leftSurface = computed<ToothSurfaceCode>(() => (mesial.value === 'left' ? 'M' : 'D'))
-const rightSurface = computed<ToothSurfaceCode>(() => (mesial.value === 'right' ? 'M' : 'D'))
-
-// Rendering design doc §3 — outer square + inner square, 4 trapezoids + center.
-const PATHS: Record<'whole' | 'center' | 'top' | 'right' | 'bottom' | 'left', string> = {
-  whole: 'M0,0 L100,0 L100,100 L0,100 Z',
-  center: 'M30,30 L70,30 L70,70 L30,70 Z',
-  top: 'M0,0 L100,0 L70,30 L30,30 Z',
-  right: 'M100,0 L100,100 L70,70 L70,30 Z',
-  bottom: 'M100,100 L0,100 L30,70 L70,70 Z',
-  left: 'M0,100 L0,0 L30,30 L30,70 Z',
-}
-
-const CENTERS: Record<keyof typeof PATHS, { x: number; y: number }> = {
-  whole: { x: 50, y: 50 },
-  center: { x: 50, y: 50 },
-  top: { x: 50, y: 15 },
-  right: { x: 85, y: 50 },
-  bottom: { x: 50, y: 85 },
-  left: { x: 15, y: 50 },
 }
 
 function statusLabel(status: DentalChartEntry['status']) {
@@ -162,8 +134,8 @@ const regions = computed<RenderedRegion[]>(() => {
     return [
       {
         key: 'whole',
-        path: PATHS.whole,
-        glyphCenter: CENTERS.whole,
+        path: WHOLE_TOOTH_PATH,
+        glyphCenter: { x: 50, y: 50 },
         visual: visualFor(wholeToothWinner.value),
         label: rootLabel.value,
         selectedKey: 'whole',
@@ -172,21 +144,13 @@ const regions = computed<RenderedRegion[]>(() => {
     ]
   }
 
-  const specs: { key: 'center' | 'top' | 'right' | 'bottom' | 'left'; surface: ToothSurfaceCode }[] = [
-    { key: 'center', surface: centerSurface.value },
-    { key: 'top', surface: topSurface.value },
-    { key: 'right', surface: rightSurface.value },
-    { key: 'bottom', surface: bottomSurface.value },
-    { key: 'left', surface: leftSurface.value },
-  ]
-
-  return specs.map(({ key, surface }) => {
+  return surfaceRegionsFor(props.tooth).map(({ key, path, center, surface }) => {
     const winner = pickWinner(entriesForSurface(surface))
     const detail = winner ? entryDescription(winner, false) : t('dentalChart.chart.noEntries')
     return {
       key,
-      path: PATHS[key],
-      glyphCenter: CENTERS[key],
+      path,
+      glyphCenter: center,
       visual: visualFor(winner),
       label: t('dentalChart.chart.surfaceAriaLabel', { surface: surfaceLabel(surface), code: props.tooth, detail }),
       selectedKey: surface,

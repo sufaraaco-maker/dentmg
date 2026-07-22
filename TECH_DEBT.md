@@ -139,6 +139,19 @@ down day-to-day frontend development.
 Same shape as the Appointments item above: `DentalChartEntryResource` responses from `store`/`update`/`complete`/`cancel` don't eager-load `dentalCondition`/`dentist`/`createdBy`/`updatedBy` (only `index` does, via `DentalChartService::listForPatient()`). Unlike Appointments, there is no `GET /api/dental-chart-entries/{id}` endpoint to re-fetch a single entry (deliberate — see backend plan §1.9), so `stores/dentalChartEntries.ts` re-fetches the *whole* patient list after every mutation instead of a single-record rehydration.
 **Revisit**: if these controller actions eager-load the same four relations before returning their `DentalChartEntryResource` (mirroring what `index` already does), the frontend's extra full-list re-fetch after every mutation can be replaced with an in-place cache update. Small, low-risk backend change; not blocking — a per-patient chart is a small, bounded list, so the extra round-trip is cheap.
 
+## Open (new from Dental Chart Step 9 — ChartEntryDialog / ChartEntryListTable, 2026-07-22)
+
+### No UI path for the backend-allowed `active → planned` transition
+The backend's status-transition matrix (`docs/modules/dental-chart-implementation-plan.md` §1.10) allows
+`active → planned`, and `DentalChartEntryTest` covers it. `ChartEntryDialog.vue` only renders
+transition actions (Cancel/Complete) when `entry.status === 'planned'` (`ChartEntryDialog.vue:389`) — an
+`active` entry has no button to move it to `planned`. Deliberately out of scope for Step 9, which focused
+on the dialog/list table themselves, not on closing every gap in the transition surface.
+**Revisit**: decide, with the user, whether `active → planned` is a real clinical workflow (e.g. "started
+work, now deferring to a future visit") worth a UI affordance, or whether it should be dropped from the
+backend's allowed matrix instead if it turns out to be unused. Small, low-risk addition either way — one
+more conditional action button in `ChartEntryDialog.vue`, mirroring the existing Cancel/Complete pattern.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)

@@ -479,6 +479,43 @@
       "title": "Gösterge",
       "statusTone": "Durum",
       "empty": "Aktif durum yok"
+    },
+    "dialog": {
+      "createTitle": "Yeni Şema Kaydı",
+      "editTitle": "Şema Kaydını Düzenle",
+      "fieldRequired": "Bu alan zorunludur",
+      "tooth": "Diş",
+      "selectTooth": "Bir diş seçin",
+      "toothLockedNote": "Kayıt oluşturulduktan sonra diş değiştirilemez.",
+      "dentist": "Diş Hekimi",
+      "selectCondition": "Bir durum seçin",
+      "tabs": {
+        "diagnosis": "Tanı",
+        "procedure": "İşlem"
+      },
+      "surfaces": "Yüzeyler",
+      "surfacesRequired": "Bu durum için en az bir yüzey seçin",
+      "surfacesNotAllowed": "Bu durum belirli yüzeylere değil, tüm dişe uygulanır",
+      "noSurfacesSelected": "Yüzey seçilmedi",
+      "wholeTooth": "Tüm diş",
+      "status": "Durum",
+      "recordedAt": "Kayıt Tarihi",
+      "notes": "Notlar",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Şema kaydı başarıyla kaydedildi",
+      "saveError": "Şema kaydı kaydedilemedi",
+      "completeEntry": "Tamamla",
+      "cancelEntry": "Kaydı İptal Et"
+    },
+    "list": {
+      "empty": "Diş şeması kaydı bulunamadı",
+      "condition": "Durum",
+      "status": "Durum",
+      "recordedAt": "Kayıt Tarihi",
+      "deleteConfirmMessage": "Bu şema kaydını silmek istediğinizden emin misiniz?",
+      "deleteConfirmHeader": "Şema Kaydını Sil",
+      "deleted": "Şema kaydı başarıyla silindi",
+      "deleteError": "Şema kaydı silinemedi"
     }
   }
 }
