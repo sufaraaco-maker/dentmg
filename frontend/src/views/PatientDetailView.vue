@@ -218,7 +218,9 @@ onMounted(() => {
                     </template>
                   </Column>
                   <Column :header="t('patients.history.by')">
-                    <template #body="{ data }">{{ data.user?.name ?? t('patients.history.system') }}</template>
+                    <template #body="{ data }">{{
+                      data.user?.name ?? t('patients.history.system')
+                    }}</template>
                   </Column>
                   <Column :header="t('patients.history.when')">
                     <template #body="{ data }">{{ formatDateTime(data.created_at) }}</template>

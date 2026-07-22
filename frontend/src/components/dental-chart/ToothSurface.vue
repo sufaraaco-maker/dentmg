@@ -68,10 +68,7 @@ const linesPoints = computed(() => {
     :tabindex="interactive ? 0 : undefined"
     :role="interactive ? 'button' : undefined"
     :aria-label="interactive ? label : undefined"
-    :class="[
-      'transition-opacity',
-      interactive ? 'cursor-pointer outline-none focus-visible:opacity-80' : '',
-    ]"
+    :class="['transition-opacity', interactive ? 'cursor-pointer outline-none focus-visible:opacity-80' : '']"
     @click="interactive && emit('activate')"
     @keydown="interactive && onKeydown($event)"
   >
@@ -93,12 +90,24 @@ const linesPoints = computed(() => {
       vector-effect="non-scaling-stroke"
     />
 
-    <g v-if="glyph === 'x'" data-glyph="x" stroke="var(--p-surface-600)" stroke-width="3" stroke-linecap="round">
+    <g
+      v-if="glyph === 'x'"
+      data-glyph="x"
+      stroke="var(--p-surface-600)"
+      stroke-width="3"
+      stroke-linecap="round"
+    >
       <line :x1="xPoints.x1a" :y1="xPoints.y1a" :x2="xPoints.x2a" :y2="xPoints.y2a" />
       <line :x1="xPoints.x1b" :y1="xPoints.y1b" :x2="xPoints.x2b" :y2="xPoints.y2b" />
     </g>
 
-    <g v-else-if="glyph === 'lines'" data-glyph="lines" stroke="var(--p-surface-600)" stroke-width="2.5" stroke-linecap="round">
+    <g
+      v-else-if="glyph === 'lines'"
+      data-glyph="lines"
+      stroke="var(--p-surface-600)"
+      stroke-width="2.5"
+      stroke-linecap="round"
+    >
       <line v-for="(l, i) in linesPoints" :key="i" :x1="l.x1" :y1="l.y1" :x2="l.x2" :y2="l.y2" />
     </g>
 

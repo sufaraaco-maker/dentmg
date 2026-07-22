@@ -50,7 +50,7 @@ describe('ToothLegend', () => {
     expect(wrapper.text()).toContain('Procedure')
   })
 
-  it('renders a whole-region ToothSurface swatch using each condition\'s own color/glyph', async () => {
+  it("renders a whole-region ToothSurface swatch using each condition's own color/glyph", async () => {
     mockedApi.list.mockResolvedValue([
       makeCondition({ id: '1', name: 'Missing Tooth', default_color: '#6B7280', icon_key: 'missing' }),
     ])

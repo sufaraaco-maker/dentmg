@@ -9,7 +9,11 @@ import Button from 'primevue/button'
 import { useDentalChartEntriesStore } from '@/stores/dentalChartEntries'
 import { useAuthStore } from '@/stores/auth'
 import { parseServerDateTime } from '@/lib/date'
-import type { DentalChartEntry, DentalChartEntryStatus, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
+import type {
+  DentalChartEntry,
+  DentalChartEntryStatus,
+  ToothSurface as ToothSurfaceCode,
+} from '@/types/dentalChart'
 
 /**
  * Accessible non-visual-equivalent to the odontogram (design draft §18) — every fact the chart
@@ -50,7 +54,9 @@ function surfacesText(entry: DentalChartEntry): string {
 }
 
 function formatDate(recordedAt: string): string {
-  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(parseServerDateTime(recordedAt))
+  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(
+    parseServerDateTime(recordedAt),
+  )
 }
 
 // Mirrors AppointmentActionsBar's "visibility approximates the backend, backend is still the real
@@ -96,7 +102,15 @@ function confirmDelete(entry: DentalChartEntry) {
 </script>
 
 <template>
-  <DataTable :value="entries" :loading="loading" data-key="id" paginator :rows="20" sort-field="tooth_number" :sort-order="1">
+  <DataTable
+    :value="entries"
+    :loading="loading"
+    data-key="id"
+    paginator
+    :rows="20"
+    sort-field="tooth_number"
+    :sort-order="1"
+  >
     <template #empty>{{ t('dentalChart.list.empty') }}</template>
 
     <Column field="tooth_number" :header="t('dentalChart.dialog.tooth')" sortable />
@@ -111,7 +125,10 @@ function confirmDelete(entry: DentalChartEntry) {
 
     <Column field="status" :header="t('dentalChart.list.status')" sortable>
       <template #body="{ data }">
-        <Tag :value="t(`dentalChart.status.${data.status}`)" :severity="STATUS_SEVERITY[data.status as DentalChartEntryStatus]" />
+        <Tag
+          :value="t(`dentalChart.status.${data.status}`)"
+          :severity="STATUS_SEVERITY[data.status as DentalChartEntryStatus]"
+        />
       </template>
     </Column>
 

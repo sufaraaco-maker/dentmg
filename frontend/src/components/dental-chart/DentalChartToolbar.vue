@@ -57,12 +57,18 @@ const dentitionOptions = computed(() => [
 
 const statusOptions = computed(() => [
   { label: t('dentalChart.toolbar.allStatuses'), value: null },
-  ...DENTAL_CHART_ENTRY_STATUSES.map((status) => ({ label: t(`dentalChart.status.${status}`), value: status })),
+  ...DENTAL_CHART_ENTRY_STATUSES.map((status) => ({
+    label: t(`dentalChart.status.${status}`),
+    value: status,
+  })),
 ])
 
 const categoryOptions = computed(() => [
   { label: t('dentalChart.toolbar.allCategories'), value: null },
-  ...DENTAL_CONDITION_CATEGORIES.map((category) => ({ label: t(`dentalChart.category.${category}`), value: category })),
+  ...DENTAL_CONDITION_CATEGORIES.map((category) => ({
+    label: t(`dentalChart.category.${category}`),
+    value: category,
+  })),
 ])
 
 // Scoped to the active dentition filter so the tooth dropdown only ever lists relevant codes.
@@ -131,7 +137,12 @@ const toothOptions = computed(() => {
         class="w-56"
         @update:model-value="emit('update:toothFilter', $event)"
       />
-      <Button v-if="canWrite" :label="t('dentalChart.toolbar.addEntry')" icon="pi pi-plus" @click="emit('add-entry')" />
+      <Button
+        v-if="canWrite"
+        :label="t('dentalChart.toolbar.addEntry')"
+        icon="pi pi-plus"
+        @click="emit('add-entry')"
+      />
     </div>
   </div>
 </template>

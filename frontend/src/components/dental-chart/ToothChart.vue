@@ -6,8 +6,14 @@ import ToothLegend from './ToothLegend.vue'
 import DentalChartToolbar from './DentalChartToolbar.vue'
 import ChartEntryListTable from './ChartEntryListTable.vue'
 import type { DentalChartViewMode, DentitionFilter } from './DentalChartToolbar.vue'
+import { useToothChartKeyboardNav } from '@/composables/useToothChartKeyboardNav'
 import { isPermanentTooth, quadrantCodes } from '@/lib/teeth'
-import type { DentalChartEntry, DentalChartEntryStatus, DentalConditionCategory, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
+import type {
+  DentalChartEntry,
+  DentalChartEntryStatus,
+  DentalConditionCategory,
+  ToothSurface as ToothSurfaceCode,
+} from '@/types/dentalChart'
 
 /**
  * Layout/orchestration only (implementation plan §2.1) — arranges the permanent/primary arches,
@@ -101,6 +107,21 @@ const primaryRows: ArchHalves[] = [
 const showPermanent = computed(() => dentitionFilter.value !== 'primary')
 const showPrimary = computed(() => dentitionFilter.value !== 'permanent')
 
+// One entry per visual row, left-to-right exactly as rendered below — the data source for
+// arrow-key tooth navigation (§18), kept in sync with whichever arches are currently shown.
+const chartContainer = ref<HTMLElement | null>(null)
+const navRows = computed<string[][]>(() => {
+  const rows: string[][] = []
+  if (showPermanent.value) {
+    for (const [left, right] of permanentRows) rows.push([...left, ...right])
+  }
+  if (showPrimary.value) {
+    for (const [left, right] of primaryRows) rows.push([...left, ...right])
+  }
+  return rows
+})
+useToothChartKeyboardNav(chartContainer, navRows)
+
 const filteredEntries = computed(() =>
   props.entries.filter((entry) => {
     if (statusFilter.value && entry.status !== statusFilter.value) return false
@@ -130,7 +151,7 @@ const TOOTH_SIZE = 56
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start">
       <ToothLegend class="lg:w-72 lg:shrink-0" />
 
-      <div v-if="viewMode === 'chart'" dir="ltr" class="min-w-0 flex-1 overflow-x-auto">
+      <div v-if="viewMode === 'chart'" ref="chartContainer" dir="ltr" class="min-w-0 flex-1 overflow-x-auto">
         <div class="flex w-max flex-col gap-8 p-2">
           <section v-if="showPermanent" class="flex flex-col gap-2">
             <h3 class="text-sm font-medium text-surface-500 dark:text-surface-400">

@@ -152,6 +152,20 @@ work, now deferring to a future visit") worth a UI affordance, or whether it sho
 backend's allowed matrix instead if it turns out to be unused. Small, low-risk addition either way — one
 more conditional action button in `ChartEntryDialog.vue`, mirroring the existing Cancel/Complete pattern.
 
+## Open (new from Dental Chart Step 11 — Accessibility/Keyboard-Nav + Final QA + E2E, 2026-07-22)
+
+### Known limitation: local Playwright CRUD E2E verification blocked by Windows Docker Desktop networking latency
+`frontend/e2e/dental-chart.spec.ts`'s Create → Edit → Complete → Cancel → Delete flow could not be fully
+confirmed green from this dev machine — the same Windows Docker Desktop networking pathology already
+documented above (see the Appointments E2E entry's "Lesson captured", `permissions.spec.ts` hit the
+identical symptom) inflates tiny localhost request latency enough to produce non-deterministic local
+timeouts unrelated to the application code. Odontogram view, Accessible List view, receptionist
+permission checks, and real-browser keyboard navigation are all covered by the spec; only the local
+run's reliability is in question, not the coverage itself.
+**Revisit**: not a regression and not blocking — CI's native runner has none of this host's networking
+overhead (confirmed for Appointments' equivalent suite, run `29763458360`). CI verification is required
+for final confirmation before this item can be marked resolved.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)

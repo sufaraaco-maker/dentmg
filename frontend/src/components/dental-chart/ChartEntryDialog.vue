@@ -59,14 +59,18 @@ const conditionsStore = useDentalConditionsStore()
 const isEditMode = computed(() => Boolean(props.entry))
 // Terminal entries stay visible but locked (notes excepted) — backend rejects any other field edit
 // on a completed/cancelled entry (implementation plan §1.6/§3.3).
-const isLocked = computed(() => isEditMode.value && (props.entry!.status === 'completed' || props.entry!.status === 'cancelled'))
+const isLocked = computed(
+  () => isEditMode.value && (props.entry!.status === 'completed' || props.entry!.status === 'cancelled'),
+)
 
 const activeCategory = ref<DentalConditionCategory>('finding')
 const saving = ref(false)
 const transitioning = ref(false)
 const errors = ref<Record<string, string[]>>({})
 
-const toothOptions = computed(() => TOOTH_CODES.map((code) => ({ label: `${code} — ${toothDisplayName(code)}`, value: code })))
+const toothOptions = computed(() =>
+  TOOTH_CODES.map((code) => ({ label: `${code} — ${toothDisplayName(code)}`, value: code })),
+)
 
 function conditionsFor(category: DentalConditionCategory) {
   return conditionsStore.items
@@ -212,7 +216,8 @@ async function submit() {
     if (isDentalChartEntryError(err)) {
       toast.add({ severity: 'error', summary: err.message, life: 4000 })
     } else if ((err as { response?: { status?: number } })?.response?.status === 422) {
-      errors.value = (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
+      errors.value =
+        (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
     } else {
       toast.add({ severity: 'error', summary: t('dentalChart.dialog.saveError'), life: 3000 })
     }
@@ -242,7 +247,10 @@ async function transition(action: 'complete' | 'cancel') {
   transitioning.value = true
 
   try {
-    const updated = action === 'complete' ? await entriesStore.complete(props.entry.id) : await entriesStore.cancel(props.entry.id)
+    const updated =
+      action === 'complete'
+        ? await entriesStore.complete(props.entry.id)
+        : await entriesStore.cancel(props.entry.id)
     toast.add({ severity: 'success', summary: t('dentalChart.dialog.saved'), life: 3000 })
     emit('saved', updated)
     emit('update:visible', false)
@@ -264,7 +272,9 @@ async function transition(action: 'complete' | 'cancel') {
   >
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.tooth') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.tooth')
+        }}</label>
         <Select
           v-model="form.tooth_number"
           :options="toothOptions"
@@ -276,14 +286,18 @@ async function transition(action: 'complete' | 'cancel') {
           :invalid="!!errors.tooth_number"
           fluid
         />
-        <Message v-if="errors.tooth_number" severity="error" size="small">{{ errors.tooth_number[0] }}</Message>
+        <Message v-if="errors.tooth_number" severity="error" size="small">{{
+          errors.tooth_number[0]
+        }}</Message>
         <p v-if="isEditMode" class="text-sm text-surface-500 dark:text-surface-400">
           {{ t('dentalChart.dialog.toothLockedNote') }}
         </p>
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.dentist') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.dentist')
+        }}</label>
         <DentistSelect v-model="form.dentist_id" :disabled="isLocked" :invalid="!!errors.dentist_id" />
         <Message v-if="errors.dentist_id" severity="error" size="small">{{ errors.dentist_id[0] }}</Message>
       </div>
@@ -331,7 +345,9 @@ async function transition(action: 'complete' | 'cancel') {
       </Message>
 
       <div v-if="requiresSurfaces && form.tooth_number" class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.surfaces') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.surfaces')
+        }}</label>
         <svg width="140" height="140" viewBox="0 0 100 100" dir="ltr" class="overflow-visible">
           <ToothSurface
             v-for="region in surfaceRegions"
@@ -346,19 +362,33 @@ async function transition(action: 'complete' | 'cancel') {
           />
         </svg>
         <p class="text-sm text-surface-500 dark:text-surface-400">
-          {{ form.surfaces.length ? form.surfaces.map(surfaceLabel).join(', ') : t('dentalChart.dialog.noSurfacesSelected') }}
+          {{
+            form.surfaces.length
+              ? form.surfaces.map(surfaceLabel).join(', ')
+              : t('dentalChart.dialog.noSurfacesSelected')
+          }}
         </p>
         <Message v-if="errors.surfaces" severity="error" size="small">{{ errors.surfaces[0] }}</Message>
       </div>
-      <div v-else-if="form.dental_condition_id && form.tooth_number" class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <div
+        v-else-if="form.dental_condition_id && form.tooth_number"
+        class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400"
+      >
         <svg width="28" height="28" viewBox="0 0 100 100" class="shrink-0">
-          <ToothSurface :path="WHOLE_TOOTH_PATH" fill="var(--p-surface-200)" :interactive="false" :label="t('dentalChart.dialog.wholeTooth')" />
+          <ToothSurface
+            :path="WHOLE_TOOTH_PATH"
+            fill="var(--p-surface-200)"
+            :interactive="false"
+            :label="t('dentalChart.dialog.wholeTooth')"
+          />
         </svg>
         {{ t('dentalChart.dialog.wholeTooth') }}
       </div>
 
       <div v-if="!isEditMode" class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.status') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.status')
+        }}</label>
         <Select
           v-model="form.status"
           :options="CREATABLE_STATUSES.map((s) => ({ label: t(`dentalChart.status.${s}`), value: s }))"
@@ -368,17 +398,31 @@ async function transition(action: 'complete' | 'cancel') {
         />
       </div>
       <div v-else class="flex items-center gap-2">
-        <span class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.status') }}</span>
+        <span class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.status')
+        }}</span>
         <Tag :value="t(`dentalChart.status.${entry!.status}`)" />
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.recordedAt') }}</label>
-        <DatePicker v-model="form.recorded_at" show-time hour-format="24" date-format="yy-mm-dd" show-icon fluid :disabled="isLocked" />
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.recordedAt')
+        }}</label>
+        <DatePicker
+          v-model="form.recorded_at"
+          show-time
+          hour-format="24"
+          date-format="yy-mm-dd"
+          show-icon
+          fluid
+          :disabled="isLocked"
+        />
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('dentalChart.dialog.notes') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('dentalChart.dialog.notes')
+        }}</label>
         <Textarea v-model="form.notes" rows="3" auto-resize maxlength="2000" />
         <span v-if="showNotesCounter" class="text-xs text-surface-400">
           {{ t('dentalChart.dialog.charactersRemaining', { n: notesRemaining }) }}

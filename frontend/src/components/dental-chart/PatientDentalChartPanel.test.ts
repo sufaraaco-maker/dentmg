@@ -13,7 +13,14 @@ import type { UserRole } from '@/types/user'
 vi.mock('@/services/dentalChart', async () => {
   const actual = await vi.importActual<typeof import('@/services/dentalChart')>('@/services/dentalChart')
   return {
-    dentalChartEntriesApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+    dentalChartEntriesApi: {
+      list: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      complete: vi.fn(),
+      cancel: vi.fn(),
+      remove: vi.fn(),
+    },
     dentalConditionsApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
     isDentalChartEntryError: actual.isDentalChartEntryError,
     rethrowDentalChartEntryError: actual.rethrowDentalChartEntryError,
@@ -40,7 +47,13 @@ function makeEntry(overrides: Partial<DentalChartEntry> = {}): DentalChartEntry 
     cancelled_at: null,
     created_at: '2026-07-20T09:00:00+00:00',
     updated_at: '2026-07-20T09:00:00+00:00',
-    dental_condition: { id: 'condition-1', name: 'Caries', category: 'finding', default_color: '#DC2626', icon_key: null },
+    dental_condition: {
+      id: 'condition-1',
+      name: 'Caries',
+      category: 'finding',
+      default_color: '#DC2626',
+      icon_key: null,
+    },
     dentist: { id: 'dentist-1', name: 'Dr. Layla Hassan' },
     ...overrides,
   }
@@ -60,7 +73,7 @@ beforeEach(() => {
 })
 
 describe('PatientDentalChartPanel — data loading', () => {
-  it('fetches this patient\'s entries and the conditions catalog on mount', async () => {
+  it("fetches this patient's entries and the conditions catalog on mount", async () => {
     setRole('dentist')
     mount(PatientDentalChartPanel, { props: { patientId: 'patient-1' } })
     await flushPromises()
@@ -129,7 +142,7 @@ describe('PatientDentalChartPanel — dialog wiring', () => {
     expect(wrapper.findComponent(ChartEntryDialog).props('prefill')).toEqual({ toothNumber: '18' })
   })
 
-  it('opens the create dialog with no prefill from the toolbar\'s Add Entry button', async () => {
+  it("opens the create dialog with no prefill from the toolbar's Add Entry button", async () => {
     setRole('dentist')
     const wrapper = mount(PatientDentalChartPanel, { props: { patientId: 'patient-1' } })
     await flushPromises()

@@ -8,7 +8,14 @@ import { useAuthStore } from '@/stores/auth'
 import type { DentalChartEntry } from '@/types/dentalChart'
 
 vi.mock('@/services/dentalChart', () => ({
-  dentalChartEntriesApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+  dentalChartEntriesApi: {
+    list: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    complete: vi.fn(),
+    cancel: vi.fn(),
+    remove: vi.fn(),
+  },
 }))
 
 vi.mock('primevue/useconfirm', () => ({ useConfirm: vi.fn() }))
@@ -29,7 +36,13 @@ function makeEntry(overrides: Partial<DentalChartEntry> = {}): DentalChartEntry 
     cancelled_at: null,
     created_at: '2026-07-20T09:00:00+00:00',
     updated_at: '2026-07-20T09:00:00+00:00',
-    dental_condition: { id: 'c1', name: 'Caries', category: 'finding', default_color: '#DC2626', icon_key: null },
+    dental_condition: {
+      id: 'c1',
+      name: 'Caries',
+      category: 'finding',
+      default_color: '#DC2626',
+      icon_key: null,
+    },
     dentist: { id: 'd1', name: 'Dr. Layla Hassan' },
     ...overrides,
   }
@@ -59,7 +72,9 @@ describe('ChartEntryListTable — rendering', () => {
 
   it('shows "Whole tooth" when the entry has no surfaces', () => {
     setRole('admin')
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ surfaces: null })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ surfaces: null })], loading: false },
+    })
     expect(wrapper.text()).toContain('Whole tooth')
   })
 
@@ -73,7 +88,9 @@ describe('ChartEntryListTable — rendering', () => {
 describe('ChartEntryListTable — role-gated actions', () => {
   it('shows edit/complete/cancel/delete for an admin on a planned entry', () => {
     setRole('admin')
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ status: 'planned' })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ status: 'planned' })], loading: false },
+    })
     const labels = wrapper.findAll('button').map((b) => b.attributes('aria-label'))
     expect(labels).toContain('Edit')
     expect(labels).toContain('Complete')
@@ -83,7 +100,9 @@ describe('ChartEntryListTable — role-gated actions', () => {
 
   it('hides delete for a dentist (admin-only) but keeps edit/complete/cancel', () => {
     setRole('dentist')
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ status: 'planned' })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ status: 'planned' })], loading: false },
+    })
     const labels = wrapper.findAll('button').map((b) => b.attributes('aria-label'))
     expect(labels).toContain('Edit')
     expect(labels).not.toContain('Delete')
@@ -91,7 +110,9 @@ describe('ChartEntryListTable — role-gated actions', () => {
 
   it('hides all write actions for a receptionist (read-only)', () => {
     setRole('receptionist')
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ status: 'planned' })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ status: 'planned' })], loading: false },
+    })
     const labels = wrapper.findAll('button').map((b) => b.attributes('aria-label'))
     expect(labels).not.toContain('Edit')
     expect(labels).not.toContain('Complete')
@@ -101,7 +122,9 @@ describe('ChartEntryListTable — role-gated actions', () => {
 
   it('hides complete/cancel for a non-planned entry even for an admin', () => {
     setRole('admin')
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ status: 'existing' })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ status: 'existing' })], loading: false },
+    })
     const labels = wrapper.findAll('button').map((b) => b.attributes('aria-label'))
     expect(labels).toContain('Edit')
     expect(labels).not.toContain('Complete')
@@ -124,7 +147,9 @@ describe('ChartEntryListTable — actions', () => {
   it('calls complete() when the Complete button is clicked', async () => {
     setRole('admin')
     mockedApi.complete.mockResolvedValue(makeEntry({ status: 'completed' }))
-    const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry({ status: 'planned' })], loading: false } })
+    const wrapper = mount(ChartEntryListTable, {
+      props: { entries: [makeEntry({ status: 'planned' })], loading: false },
+    })
 
     const button = wrapper.findAll('button').find((b) => b.attributes('aria-label') === 'Complete')
     await button?.trigger('click')
@@ -136,7 +161,9 @@ describe('ChartEntryListTable — actions', () => {
   it('deletes an entry once the confirm popup is accepted', async () => {
     setRole('admin')
     const requireMock = vi.fn()
-    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<typeof useConfirm>)
+    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<
+      typeof useConfirm
+    >)
     mockedApi.remove.mockResolvedValue(undefined)
 
     const wrapper = mount(ChartEntryListTable, { props: { entries: [makeEntry()], loading: false } })

@@ -102,8 +102,18 @@ describe('ToothSvg — entry rendering', () => {
 
   it('picks the most clinically relevant entry when two share a surface (active over cancelled)', () => {
     const entries = [
-      makeEntry({ id: 'old', status: 'cancelled', surfaces: ['O'], dental_condition: { ...makeEntry().dental_condition!, default_color: '#000000' } }),
-      makeEntry({ id: 'new', status: 'active', surfaces: ['O'], dental_condition: { ...makeEntry().dental_condition!, default_color: '#DC2626' } }),
+      makeEntry({
+        id: 'old',
+        status: 'cancelled',
+        surfaces: ['O'],
+        dental_condition: { ...makeEntry().dental_condition!, default_color: '#000000' },
+      }),
+      makeEntry({
+        id: 'new',
+        status: 'active',
+        surfaces: ['O'],
+        dental_condition: { ...makeEntry().dental_condition!, default_color: '#DC2626' },
+      }),
     ]
     const wrapper = mount(ToothSvg, { props: { tooth: '16', entries } })
     const centerRegion = wrapper.findAllComponents(ToothSurface)[0]
@@ -116,7 +126,13 @@ describe('ToothSvg — entry rendering', () => {
       makeEntry({
         surfaces: null,
         status: 'existing',
-        dental_condition: { id: 'c2', name: 'Missing Tooth', category: 'finding', default_color: '#6B7280', icon_key: 'missing' },
+        dental_condition: {
+          id: 'c2',
+          name: 'Missing Tooth',
+          category: 'finding',
+          default_color: '#6B7280',
+          icon_key: 'missing',
+        },
       }),
     ]
     const wrapper = mount(ToothSvg, { props: { tooth: '16', entries } })
@@ -131,7 +147,13 @@ describe('ToothSvg — entry rendering', () => {
       makeEntry({
         surfaces: null,
         status: 'active',
-        dental_condition: { id: 'c3', name: 'Fracture', category: 'finding', default_color: '#F97316', icon_key: 'fracture' },
+        dental_condition: {
+          id: 'c3',
+          name: 'Fracture',
+          category: 'finding',
+          default_color: '#F97316',
+          icon_key: 'fracture',
+        },
       }),
     ]
     const wrapper = mount(ToothSvg, { props: { tooth: '16', entries } })
@@ -184,7 +206,13 @@ describe('ToothSvg — accessibility', () => {
         id: 'b',
         status: 'completed',
         surfaces: ['M'],
-        dental_condition: { id: 'c4', name: 'Composite Filling', category: 'procedure', default_color: '#2563EB', icon_key: 'filling' },
+        dental_condition: {
+          id: 'c4',
+          name: 'Composite Filling',
+          category: 'procedure',
+          default_color: '#2563EB',
+          icon_key: 'filling',
+        },
       }),
     ]
     const wrapper = mount(ToothSvg, { props: { tooth: '16', entries } })

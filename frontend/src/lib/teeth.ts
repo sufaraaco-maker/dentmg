@@ -101,7 +101,9 @@ export function toothDisplayName(code: string): string {
   }
 
   const permanent = isPermanentTooth(code)
-  const positionName = permanent ? PERMANENT_POSITION_NAMES[position(code)] : PRIMARY_POSITION_NAMES[position(code)]
+  const positionName = permanent
+    ? PERMANENT_POSITION_NAMES[position(code)]
+    : PRIMARY_POSITION_NAMES[position(code)]
   const name = `${QUADRANT_NAMES[quadrant(code)]} ${positionName}`
 
   return permanent ? name : `${name} (Primary)`

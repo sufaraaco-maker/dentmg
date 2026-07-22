@@ -3,7 +3,12 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ToothSurface from './ToothSurface.vue'
 import { toothDisplayName } from '@/lib/teeth'
-import { DASHARRAY_BY_STATUS, OPACITY_BY_STATUS, resolveIconGlyph, type DentalIconGlyph } from '@/lib/dentalIcons'
+import {
+  DASHARRAY_BY_STATUS,
+  OPACITY_BY_STATUS,
+  resolveIconGlyph,
+  type DentalIconGlyph,
+} from '@/lib/dentalIcons'
 import { WHOLE_TOOTH_PATH, surfaceRegionsFor } from '@/lib/toothGeometry'
 import type { DentalChartEntry, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
 
@@ -84,7 +89,11 @@ const groupDetail = computed(() => {
 })
 
 const rootLabel = computed(() =>
-  t('dentalChart.chart.toothAriaLabel', { code: props.tooth, name: toothName.value, detail: groupDetail.value }),
+  t('dentalChart.chart.toothAriaLabel', {
+    code: props.tooth,
+    name: toothName.value,
+    detail: groupDetail.value,
+  }),
 )
 
 interface RegionVisual {
@@ -152,7 +161,11 @@ const regions = computed<RenderedRegion[]>(() => {
       path,
       glyphCenter: center,
       visual: visualFor(winner),
-      label: t('dentalChart.chart.surfaceAriaLabel', { surface: surfaceLabel(surface), code: props.tooth, detail }),
+      label: t('dentalChart.chart.surfaceAriaLabel', {
+        surface: surfaceLabel(surface),
+        code: props.tooth,
+        detail,
+      }),
       selectedKey: surface,
       onActivate: () => emit('surface-click', { tooth: props.tooth, surface }),
     }
@@ -168,6 +181,7 @@ const regions = computed<RenderedRegion[]>(() => {
     dir="ltr"
     role="group"
     :aria-label="rootLabel"
+    :data-tooth="tooth"
     class="overflow-visible"
   >
     <ToothSurface

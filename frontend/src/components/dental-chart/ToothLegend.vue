@@ -93,7 +93,9 @@ onMounted(async () => {
               :interactive="false"
             />
           </svg>
-          <span class="text-sm text-surface-700 dark:text-surface-200">{{ t(`dentalChart.status.${status}`) }}</span>
+          <span class="text-sm text-surface-700 dark:text-surface-200">{{
+            t(`dentalChart.status.${status}`)
+          }}</span>
         </div>
       </div>
     </div>

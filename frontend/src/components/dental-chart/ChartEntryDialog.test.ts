@@ -13,7 +13,14 @@ import type { AuthUser } from '@/types/user'
 vi.mock('@/services/dentalChart', async () => {
   const actual = await vi.importActual<typeof import('@/services/dentalChart')>('@/services/dentalChart')
   return {
-    dentalChartEntriesApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+    dentalChartEntriesApi: {
+      list: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      complete: vi.fn(),
+      cancel: vi.fn(),
+      remove: vi.fn(),
+    },
     dentalConditionsApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
     isDentalChartEntryError: actual.isDentalChartEntryError,
     rethrowDentalChartEntryError: actual.rethrowDentalChartEntryError,
@@ -26,7 +33,12 @@ const mockedEntriesApi = vi.mocked(dentalChartEntriesApi)
 const mockedConditionsApi = vi.mocked(dentalConditionsApi)
 const mockedProvidersApi = vi.mocked(providersApi)
 
-const DENTIST: AuthUser = { id: 'dentist-1', name: 'Dr. Layla Hassan', email: 'layla@example.com', role: 'dentist' }
+const DENTIST: AuthUser = {
+  id: 'dentist-1',
+  name: 'Dr. Layla Hassan',
+  email: 'layla@example.com',
+  role: 'dentist',
+}
 
 function makeCondition(overrides: Partial<DentalCondition> = {}): DentalCondition {
   return {
@@ -58,7 +70,13 @@ function makeEntry(overrides: Partial<DentalChartEntry> = {}): DentalChartEntry 
     cancelled_at: null,
     created_at: '2026-07-20T09:00:00+00:00',
     updated_at: '2026-07-20T09:00:00+00:00',
-    dental_condition: { id: 'condition-1', name: 'Caries', category: 'finding', default_color: '#DC2626', icon_key: null },
+    dental_condition: {
+      id: 'condition-1',
+      name: 'Caries',
+      category: 'finding',
+      default_color: '#DC2626',
+      icon_key: null,
+    },
     dentist: { id: 'dentist-1', name: 'Dr. Layla Hassan' },
     ...overrides,
   }
@@ -109,7 +127,9 @@ describe('ChartEntryDialog — validation', () => {
 
 describe('ChartEntryDialog — create', () => {
   it('creates a whole-tooth entry (condition without applies_to_surface) with the entered fields', async () => {
-    await primeConditions([makeCondition({ id: 'condition-2', name: 'Missing Tooth', applies_to_surface: false })])
+    await primeConditions([
+      makeCondition({ id: 'condition-2', name: 'Missing Tooth', applies_to_surface: false }),
+    ])
     mockedEntriesApi.create.mockResolvedValue(makeEntry())
 
     const wrapper = mount(ChartEntryDialog, { props: { visible: true, patientId: 'patient-1' } })
@@ -167,7 +187,9 @@ describe('ChartEntryDialog — create', () => {
 
     // A fresh Select instance now backs the "procedure" panel — its model must be null, not the
     // finding tab's leftover id.
-    const procedureSelect = wrapper.findAllComponents(Select).find((s) => s.props('options')?.some((o: { value: string }) => o.value === 'procedure-1'))
+    const procedureSelect = wrapper
+      .findAllComponents(Select)
+      .find((s) => s.props('options')?.some((o: { value: string }) => o.value === 'procedure-1'))
     expect(procedureSelect?.props('modelValue')).toBe(null)
   })
 })
@@ -217,7 +239,11 @@ describe('ChartEntryDialog — edit', () => {
 
     expect(mockedEntriesApi.update).toHaveBeenCalledWith(
       'entry-1',
-      expect.objectContaining({ dental_condition_id: 'condition-1', dentist_id: 'dentist-1', tooth_number: '16' }),
+      expect.objectContaining({
+        dental_condition_id: 'condition-1',
+        dentist_id: 'dentist-1',
+        tooth_number: '16',
+      }),
     )
   })
 
@@ -238,12 +264,16 @@ describe('ChartEntryDialog — edit', () => {
   it('shows Complete/Cancel actions only when the entry is planned', async () => {
     await primeConditions([makeCondition()])
 
-    const planned = mount(ChartEntryDialog, { props: { visible: true, patientId: 'patient-1', entry: makeEntry({ status: 'planned' }) } })
+    const planned = mount(ChartEntryDialog, {
+      props: { visible: true, patientId: 'patient-1', entry: makeEntry({ status: 'planned' }) },
+    })
     await flushPromises()
     expect(planned.text()).toContain('Complete')
     expect(planned.text()).toContain('Cancel Entry')
 
-    const existing = mount(ChartEntryDialog, { props: { visible: true, patientId: 'patient-1', entry: makeEntry({ status: 'existing' }) } })
+    const existing = mount(ChartEntryDialog, {
+      props: { visible: true, patientId: 'patient-1', entry: makeEntry({ status: 'existing' }) },
+    })
     await flushPromises()
     expect(existing.text()).not.toContain('Cancel Entry')
   })

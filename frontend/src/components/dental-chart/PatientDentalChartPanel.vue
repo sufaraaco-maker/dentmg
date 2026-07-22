@@ -78,5 +78,10 @@ watch(() => props.patientId, load, { immediate: true })
     @add-entry="() => openCreate()"
   />
 
-  <ChartEntryDialog v-model:visible="dialogVisible" :patient-id="patientId" :entry="editingEntry" :prefill="prefill" />
+  <ChartEntryDialog
+    v-model:visible="dialogVisible"
+    :patient-id="patientId"
+    :entry="editingEntry"
+    :prefill="prefill"
+  />
 </template>

@@ -10,7 +10,14 @@ import type { DentalChartEntry } from '@/types/dentalChart'
 
 vi.mock('@/services/dentalChart', () => ({
   dentalConditionsApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
-  dentalChartEntriesApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+  dentalChartEntriesApi: {
+    list: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    complete: vi.fn(),
+    cancel: vi.fn(),
+    remove: vi.fn(),
+  },
 }))
 
 const mockedApi = vi.mocked(dentalConditionsApi)
@@ -29,7 +36,13 @@ function makeEntry(overrides: Partial<DentalChartEntry> = {}): DentalChartEntry 
     cancelled_at: null,
     created_at: '2026-07-20T09:00:00+00:00',
     updated_at: '2026-07-20T09:00:00+00:00',
-    dental_condition: { id: 'c1', name: 'Caries', category: 'finding', default_color: '#DC2626', icon_key: null },
+    dental_condition: {
+      id: 'c1',
+      name: 'Caries',
+      category: 'finding',
+      default_color: '#DC2626',
+      icon_key: null,
+    },
     ...overrides,
   }
 }
@@ -129,7 +142,7 @@ describe('ToothChart — RTL isolation', () => {
 })
 
 describe('ToothChart — entry grouping', () => {
-  it('passes only the matching tooth\'s entries down to its ToothSvg', async () => {
+  it("passes only the matching tooth's entries down to its ToothSvg", async () => {
     const entries = [makeEntry({ id: 'a', tooth_number: '16' }), makeEntry({ id: 'b', tooth_number: '21' })]
     const wrapper = mount(ToothChart, { props: { entries } })
     await flushPromises()
@@ -181,5 +194,49 @@ describe('ToothChart — selection and events', () => {
 
     expect(wrapper.findComponent(DentalChartToolbar).props('canWrite')).toBe(false)
     expect(wrapper.findAllComponents(ToothSvg).every((t) => t.props('interactive') === false)).toBe(true)
+  })
+})
+
+describe('ToothChart — keyboard navigation', () => {
+  function pressKey(key: string) {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+  }
+
+  it('moves focus to the adjacent tooth on ArrowLeft/ArrowRight', async () => {
+    const wrapper = mount(ToothChart, { props: { entries: [] }, attachTo: document.body })
+    await flushPromises()
+
+    const tooth17 = wrapper.get('[data-tooth="17"] [tabindex]').element as HTMLElement
+    tooth17.focus()
+
+    pressKey('ArrowRight')
+    expect(document.activeElement).toBe(wrapper.get('[data-tooth="16"] [tabindex]').element)
+
+    wrapper.unmount()
+  })
+
+  it('moves focus to the corresponding tooth in the other quadrant row on ArrowDown', async () => {
+    const wrapper = mount(ToothChart, { props: { entries: [] }, attachTo: document.body })
+    await flushPromises()
+
+    const tooth21 = wrapper.get('[data-tooth="21"] [tabindex]').element as HTMLElement
+    tooth21.focus()
+
+    pressKey('ArrowDown')
+    expect(document.activeElement).toBe(wrapper.get('[data-tooth="31"] [tabindex]').element)
+
+    wrapper.unmount()
+  })
+
+  it('does not move focus when a non-tooth element (e.g. the toolbar) is focused', async () => {
+    const wrapper = mount(ToothChart, { props: { entries: [] }, attachTo: document.body })
+    await flushPromises()
+
+    document.body.focus()
+    pressKey('ArrowRight')
+
+    expect(document.activeElement).not.toBe(wrapper.get('[data-tooth="17"] [tabindex]').element)
+
+    wrapper.unmount()
   })
 })
