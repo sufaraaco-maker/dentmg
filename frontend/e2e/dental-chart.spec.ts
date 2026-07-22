@@ -102,8 +102,11 @@ test.describe('dental chart', () => {
     await expect(dialog).toBeHidden({ timeout: 10_000 })
 
     // The odontogram itself reflects it — tooth 26's aria-label now names the condition, not
-    // "No conditions recorded".
-    await expect(page.getByLabel(/Tooth 26,.*Missing Tooth/)).toBeVisible({ timeout: 10_000 })
+    // "No conditions recorded". In whole-tooth mode (`ToothSvg.vue`), the single region's label
+    // equals the outer `<svg role="group">`'s own `aria-label` (both describe the same one entry),
+    // so a bare `getByLabel` matches both the group and its interactive child — scope to the
+    // actual interactive element by role.
+    await expect(page.getByRole('button', { name: /Tooth 26,.*Missing Tooth/ })).toBeVisible({ timeout: 10_000 })
 
     // --- Create a surface-specific procedure by clicking straight into tooth 16's occlusal
     // region on the chart itself (the real click-to-create path, not just the toolbar button).
