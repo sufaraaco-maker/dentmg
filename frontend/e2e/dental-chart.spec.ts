@@ -87,11 +87,13 @@ test.describe('dental chart', () => {
     await waitForSelectOverlayClosed(page)
 
     await page.getByRole('tab', { name: 'Diagnosis' }).click()
-    // PrimeVue keeps both tab panels mounted (`v-show`, not `v-if`) — a plain placeholder locator
-    // would match the Procedure tab's identical, currently-hidden "Select a condition" field too.
+    // PrimeVue keeps both tab panels mounted (`v-show`, not `v-if`) — a plain locator would match
+    // the Procedure tab's identical, currently-hidden "Select a condition" field too.
     // `getByRole('tabpanel')` excludes hidden elements by default, so it resolves to only the
-    // active one.
-    await dialog.getByRole('tabpanel').getByPlaceholder('Select a condition').click()
+    // active one. A non-filterable `Select`'s placeholder is rendered as the text/`aria-label` of
+    // its closed trigger `<span role="combobox">`, never as an `<input placeholder>` attribute —
+    // `getByPlaceholder` can never match it; `getByRole('combobox', { name })` targets that span.
+    await dialog.getByRole('tabpanel').getByRole('combobox', { name: 'Select a condition' }).click()
     await page.getByRole('option', { name: 'Missing Tooth' }).click()
     await waitForSelectOverlayClosed(page)
 
@@ -119,7 +121,7 @@ test.describe('dental chart', () => {
     await waitForSelectOverlayClosed(page)
 
     await page.getByRole('tab', { name: 'Procedure' }).click()
-    await dialog.getByRole('tabpanel').getByPlaceholder('Select a condition').click()
+    await dialog.getByRole('tabpanel').getByRole('combobox', { name: 'Select a condition' }).click()
     await page.getByRole('option', { name: 'Composite Filling' }).click()
     await waitForSelectOverlayClosed(page)
 
