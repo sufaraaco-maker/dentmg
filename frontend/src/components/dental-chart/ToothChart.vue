@@ -4,29 +4,39 @@ import { useI18n } from 'vue-i18n'
 import ToothSvg from './ToothSvg.vue'
 import ToothLegend from './ToothLegend.vue'
 import DentalChartToolbar from './DentalChartToolbar.vue'
+import ChartEntryListTable from './ChartEntryListTable.vue'
 import type { DentalChartViewMode, DentitionFilter } from './DentalChartToolbar.vue'
-import { quadrantCodes } from '@/lib/teeth'
+import { isPermanentTooth, quadrantCodes } from '@/lib/teeth'
 import type { DentalChartEntry, DentalChartEntryStatus, DentalConditionCategory, ToothSurface as ToothSurfaceCode } from '@/types/dentalChart'
 
 /**
  * Layout/orchestration only (implementation plan §2.1) — arranges the permanent/primary arches,
  * owns the selected-tooth/surface state and the toolbar's filter state, and renders `ToothSvg.vue`
- * per tooth plus `ToothLegend.vue`/`DentalChartToolbar.vue`. No SVG geometry and no entry-status
- * color logic of its own — both stay delegated to `ToothSvg.vue`/`ToothSurface.vue` untouched.
+ * per tooth plus `ToothLegend.vue`/`DentalChartToolbar.vue`/`ChartEntryListTable.vue`. No SVG
+ * geometry and no entry-status color logic of its own — both stay delegated to
+ * `ToothSvg.vue`/`ToothSurface.vue` untouched.
  *
  * `viewMode`/filter state lives here rather than in a page (unlike Appointments' Board/List, whose
- * page owns `viewMode` — see `AppointmentsView.vue`) because there is no host page yet:
- * `PatientDetailView.vue` integration is Step 10. `ChartEntryListTable.vue` itself is Step 9, so
- * switching to `viewMode: 'list'` here simply renders nothing in the body — the toolbar control and
- * the state plumbing already exist so Step 9 only has to add the list component, not touch this file.
+ * page owns `viewMode` — see `AppointmentsView.vue`) because there is no other host for it: this
+ * component *is* the "Dental Chart" tab's body. The status/category/tooth/dentition filters apply
+ * only to the list view (`filteredEntries`) — the chart view already scopes itself to one tooth at
+ * a time visually, so filtering it the same way would just hide teeth rather than clarify anything.
  */
-const props = defineProps<{
-  entries: DentalChartEntry[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    entries: DentalChartEntry[]
+    loading?: boolean
+    /** Passed straight through to `DentalChartToolbar` (hides "Add Entry") and disables
+     *  click-to-create on every tooth — receptionists get read access, not charting rights. */
+    canWrite?: boolean
+  }>(),
+  { canWrite: true },
+)
 
 const emit = defineEmits<{
   'surface-click': [payload: { tooth: string; surface: ToothSurfaceCode }]
   'tooth-click': [payload: { tooth: string }]
+  'edit-entry': [entry: DentalChartEntry]
   'add-entry': []
 }>()
 
@@ -91,6 +101,17 @@ const primaryRows: ArchHalves[] = [
 const showPermanent = computed(() => dentitionFilter.value !== 'primary')
 const showPrimary = computed(() => dentitionFilter.value !== 'permanent')
 
+const filteredEntries = computed(() =>
+  props.entries.filter((entry) => {
+    if (statusFilter.value && entry.status !== statusFilter.value) return false
+    if (categoryFilter.value && entry.dental_condition?.category !== categoryFilter.value) return false
+    if (toothFilter.value && entry.tooth_number !== toothFilter.value) return false
+    if (dentitionFilter.value === 'permanent' && !isPermanentTooth(entry.tooth_number)) return false
+    if (dentitionFilter.value === 'primary' && isPermanentTooth(entry.tooth_number)) return false
+    return true
+  }),
+)
+
 const TOOTH_SIZE = 56
 </script>
 
@@ -102,6 +123,7 @@ const TOOTH_SIZE = 56
       v-model:status-filter="statusFilter"
       v-model:category-filter="categoryFilter"
       v-model:tooth-filter="toothFilter"
+      :can-write="canWrite"
       @add-entry="emit('add-entry')"
     />
 
@@ -121,6 +143,7 @@ const TOOTH_SIZE = 56
                     :tooth="code"
                     :entries="entriesFor(code)"
                     :size="TOOTH_SIZE"
+                    :interactive="canWrite"
                     :selected-surface="selectedSurfaceFor(code)"
                     @surface-click="onSurfaceClick"
                     @tooth-click="onToothClick"
@@ -142,6 +165,7 @@ const TOOTH_SIZE = 56
                     :tooth="code"
                     :entries="entriesFor(code)"
                     :size="TOOTH_SIZE"
+                    :interactive="canWrite"
                     :selected-surface="selectedSurfaceFor(code)"
                     @surface-click="onSurfaceClick"
                     @tooth-click="onToothClick"
@@ -153,6 +177,14 @@ const TOOTH_SIZE = 56
           </section>
         </div>
       </div>
+
+      <ChartEntryListTable
+        v-else
+        class="min-w-0 flex-1"
+        :entries="filteredEntries"
+        :loading="loading ?? false"
+        @edit-entry="emit('edit-entry', $event)"
+      />
     </div>
   </div>
 </template>

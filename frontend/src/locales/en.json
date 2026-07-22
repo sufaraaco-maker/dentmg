@@ -140,6 +140,11 @@
     "deleteError": "Failed to delete patient",
     "deleteHeader": "Delete Patient",
     "confirmDelete": "Are you sure you want to delete {name}?",
+    "tabs": {
+      "overview": "Overview",
+      "appointments": "Appointments",
+      "dentalChart": "Dental Chart"
+    },
     "sections": {
       "demographics": "Demographics",
       "contact": "Contact",

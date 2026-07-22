@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ToothChart from './ToothChart.vue'
 import ToothSvg from './ToothSvg.vue'
 import DentalChartToolbar from './DentalChartToolbar.vue'
+import ChartEntryListTable from './ChartEntryListTable.vue'
 import { dentalConditionsApi } from '@/services/dentalChart'
 import type { DentalChartEntry } from '@/types/dentalChart'
 
 vi.mock('@/services/dentalChart', () => ({
   dentalConditionsApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  dentalChartEntriesApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
 }))
 
 const mockedApi = vi.mocked(dentalConditionsApi)
@@ -75,6 +77,49 @@ describe('ToothChart — arch rendering', () => {
   })
 })
 
+describe('ToothChart — list view', () => {
+  it('renders ChartEntryListTable with the full entry set when no filters are active', async () => {
+    const entries = [makeEntry({ id: 'a', tooth_number: '16' }), makeEntry({ id: 'b', tooth_number: '55' })]
+    const wrapper = mount(ToothChart, { props: { entries, loading: true } })
+    await flushPromises()
+    await wrapper.findComponent(DentalChartToolbar).vm.$emit('update:viewMode', 'list')
+    await flushPromises()
+
+    const table = wrapper.findComponent(ChartEntryListTable)
+    expect(table.exists()).toBe(true)
+    expect(table.props('loading')).toBe(true)
+    // Default dentitionFilter is 'permanent' (matches the chart view's own default), so the
+    // primary tooth '55' is excluded until the filter is widened.
+    expect(table.props('entries')).toEqual([entries[0]])
+  })
+
+  it('applies the status/category/tooth filters to the list, independently of the chart view', async () => {
+    const entries = [
+      makeEntry({ id: 'a', tooth_number: '16', status: 'active' }),
+      makeEntry({ id: 'b', tooth_number: '17', status: 'planned' }),
+    ]
+    const wrapper = mount(ToothChart, { props: { entries } })
+    await flushPromises()
+    const toolbar = wrapper.findComponent(DentalChartToolbar)
+    await toolbar.vm.$emit('update:viewMode', 'list')
+    await toolbar.vm.$emit('update:statusFilter', 'planned')
+    await flushPromises()
+
+    expect(wrapper.findComponent(ChartEntryListTable).props('entries')).toEqual([entries[1]])
+  })
+
+  it('bubbles edit-entry from the list table', async () => {
+    const entries = [makeEntry({ id: 'a', tooth_number: '16' })]
+    const wrapper = mount(ToothChart, { props: { entries } })
+    await flushPromises()
+    await wrapper.findComponent(DentalChartToolbar).vm.$emit('update:viewMode', 'list')
+    await flushPromises()
+
+    await wrapper.findComponent(ChartEntryListTable).vm.$emit('edit-entry', entries[0])
+    expect(wrapper.emitted('edit-entry')).toEqual([[entries[0]]])
+  })
+})
+
 describe('ToothChart — RTL isolation', () => {
   it('forces dir="ltr" on the chart body regardless of locale', async () => {
     const wrapper = mount(ToothChart, { props: { entries: [] } })
@@ -128,5 +173,13 @@ describe('ToothChart — selection and events', () => {
     await flushPromises()
     await wrapper.findComponent(DentalChartToolbar).vm.$emit('add-entry')
     expect(wrapper.emitted('add-entry')).toHaveLength(1)
+  })
+
+  it('passes canWrite through to the toolbar and disables tooth interactivity when false', async () => {
+    const wrapper = mount(ToothChart, { props: { entries: [], canWrite: false } })
+    await flushPromises()
+
+    expect(wrapper.findComponent(DentalChartToolbar).props('canWrite')).toBe(false)
+    expect(wrapper.findAllComponents(ToothSvg).every((t) => t.props('interactive') === false)).toBe(true)
   })
 })

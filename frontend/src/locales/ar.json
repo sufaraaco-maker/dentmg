@@ -140,6 +140,11 @@
     "deleteError": "تعذّر حذف المريض",
     "deleteHeader": "حذف المريض",
     "confirmDelete": "هل أنت متأكد من حذف {name}؟",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "appointments": "المواعيد",
+      "dentalChart": "مخطط الأسنان"
+    },
     "sections": {
       "demographics": "البيانات الشخصية",
       "contact": "معلومات الاتصال",

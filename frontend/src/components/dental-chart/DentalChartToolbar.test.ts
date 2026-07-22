@@ -50,6 +50,11 @@ describe('DentalChartToolbar — controlled props', () => {
     await addButton?.trigger('click')
     expect(wrapper.emitted('add-entry')).toHaveLength(1)
   })
+
+  it('hides the Add Entry button when canWrite is false', () => {
+    const wrapper = mountToolbar({ canWrite: false })
+    expect(wrapper.findAll('button').find((b) => b.text().includes('Add Entry'))).toBeUndefined()
+  })
 })
 
 describe('DentalChartToolbar — tooth options scoped by dentition', () => {

@@ -140,6 +140,11 @@
     "deleteError": "Hasta silinemedi",
     "deleteHeader": "Hastayı Sil",
     "confirmDelete": "{name} adlı hastayı silmek istediğinizden emin misiniz?",
+    "tabs": {
+      "overview": "Genel Bakış",
+      "appointments": "Randevular",
+      "dentalChart": "Diş Şeması"
+    },
     "sections": {
       "demographics": "Demografi",
       "contact": "İletişim",

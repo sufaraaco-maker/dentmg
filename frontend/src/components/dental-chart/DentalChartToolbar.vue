@@ -18,13 +18,20 @@ export type DentitionFilter = 'all' | 'permanent' | 'primary'
  * — wiring them up now means Step 9 plugs straight into an already-complete toolbar instead of
  * reopening this component.
  */
-const props = defineProps<{
-  viewMode: DentalChartViewMode
-  dentitionFilter: DentitionFilter
-  statusFilter: DentalChartEntryStatus | null
-  categoryFilter: DentalConditionCategory | null
-  toothFilter: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    viewMode: DentalChartViewMode
+    dentitionFilter: DentitionFilter
+    statusFilter: DentalChartEntryStatus | null
+    categoryFilter: DentalConditionCategory | null
+    toothFilter: string | null
+    /** Receptionists get clinic-wide read access (design draft §19) but no charting rights
+     *  (`DentalChartEntryPolicy::create`, admin/dentist only) — hides the button that would
+     *  otherwise open a create dialog only to 403 on submit. */
+    canWrite?: boolean
+  }>(),
+  { canWrite: true },
+)
 
 const emit = defineEmits<{
   'update:viewMode': [DentalChartViewMode]
@@ -124,7 +131,7 @@ const toothOptions = computed(() => {
         class="w-56"
         @update:model-value="emit('update:toothFilter', $event)"
       />
-      <Button :label="t('dentalChart.toolbar.addEntry')" icon="pi pi-plus" @click="emit('add-entry')" />
+      <Button v-if="canWrite" :label="t('dentalChart.toolbar.addEntry')" icon="pi pi-plus" @click="emit('add-entry')" />
     </div>
   </div>
 </template>
