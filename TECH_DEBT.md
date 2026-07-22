@@ -133,6 +133,57 @@ Windows↔WSL2↔container boundary for bind mounts), not an application bug.
 further (e.g. switching to polling-based file watching in `vite.config.ts`) if it starts noticeably slowing
 down day-to-day frontend development.
 
+## Open (new from Dental Chart frontend infrastructure, 2026-07-20)
+
+### `DentalChartEntry` mutation endpoints don't eager-load relations
+Same shape as the Appointments item above: `DentalChartEntryResource` responses from `store`/`update`/`complete`/`cancel` don't eager-load `dentalCondition`/`dentist`/`createdBy`/`updatedBy` (only `index` does, via `DentalChartService::listForPatient()`). Unlike Appointments, there is no `GET /api/dental-chart-entries/{id}` endpoint to re-fetch a single entry (deliberate — see backend plan §1.9), so `stores/dentalChartEntries.ts` re-fetches the *whole* patient list after every mutation instead of a single-record rehydration.
+**Revisit**: if these controller actions eager-load the same four relations before returning their `DentalChartEntryResource` (mirroring what `index` already does), the frontend's extra full-list re-fetch after every mutation can be replaced with an in-place cache update. Small, low-risk backend change; not blocking — a per-patient chart is a small, bounded list, so the extra round-trip is cheap.
+
+## Open (new from Dental Chart Step 9 — ChartEntryDialog / ChartEntryListTable, 2026-07-22)
+
+### No UI path for the backend-allowed `active → planned` transition
+The backend's status-transition matrix (`docs/modules/dental-chart-implementation-plan.md` §1.10) allows
+`active → planned`, and `DentalChartEntryTest` covers it. `ChartEntryDialog.vue` only renders
+transition actions (Cancel/Complete) when `entry.status === 'planned'` (`ChartEntryDialog.vue:389`) — an
+`active` entry has no button to move it to `planned`. Deliberately out of scope for Step 9, which focused
+on the dialog/list table themselves, not on closing every gap in the transition surface.
+**Revisit**: decide, with the user, whether `active → planned` is a real clinical workflow (e.g. "started
+work, now deferring to a future visit") worth a UI affordance, or whether it should be dropped from the
+backend's allowed matrix instead if it turns out to be unused. Small, low-risk addition either way — one
+more conditional action button in `ChartEntryDialog.vue`, mirroring the existing Cancel/Complete pattern.
+
+## Open (new from Dental Chart Step 11 — Accessibility/Keyboard-Nav + Final QA + E2E, 2026-07-22)
+
+### Known limitation: local Playwright CRUD E2E verification blocked by Windows Docker Desktop networking latency
+`frontend/e2e/dental-chart.spec.ts`'s Create → Edit → Complete → Cancel → Delete flow could not be fully
+confirmed green from this dev machine — the same Windows Docker Desktop networking pathology already
+documented above (see the Appointments E2E entry's "Lesson captured", `permissions.spec.ts` hit the
+identical symptom) inflates tiny localhost request latency enough to produce non-deterministic local
+timeouts unrelated to the application code. Odontogram view, Accessible List view, receptionist
+permission checks, and real-browser keyboard navigation are all covered by the spec; only the local
+run's reliability is in question, not the coverage itself.
+**Revisit**: not a regression and not blocking — CI's native runner has none of this host's networking
+overhead (confirmed for Appointments' equivalent suite, run `29763458360`). CI verification is required
+for final confirmation before this item can be marked resolved.
+
+### `ConfirmDialog`'s accept/reject buttons are never translated (always "Yes"/"No" in English)
+Found while root-causing a real CI failure in `dental-chart.spec.ts` (its delete-confirmation step,
+expecting a button labeled with the dialog's own header text, actually needed to target PrimeVue's
+default accept button instead). `App.vue`'s global `<ConfirmDialog />` and every `confirm.require()`
+call across the app (Patients, Appointment Types, Time Off, Dental Conditions, and now Dental Chart
+entries) — except `StatusActionButton.vue`, which explicitly sets `acceptLabel`/`rejectLabel` — rely on
+PrimeVue's own built-in locale defaults (`accept: 'Yes'`, `reject: 'No'`, `@primevue/core/config`).
+Neither `main.ts`'s `app.use(PrimeVue, ...)` nor `locales/index.ts`'s `setLocale()` (vue-i18n only) ever
+sets PrimeVue's own `config.locale`, so these two buttons stay hardcoded English regardless of the
+active ar/en/tr locale — a real, systemic i18n gap, not specific to Dental Chart.
+**Revisit**: either call PrimeVue's `usePrimeVue().config.locale = {...}` (or pass `locale` to
+`app.use(PrimeVue, ...)`) with translated `accept`/`reject` strings synced to `setLocale()`, or set
+explicit `acceptLabel`/`rejectLabel` on every `confirm.require()` call as `StatusActionButton.vue`
+already does. Not blocking Dental Chart's closure (matches existing app-wide behavior, not a
+regression this module introduced), but worth a dedicated pass before an Arabic/Turkish production
+rollout — see also the i18n parity note in `docs/modules/dental-chart-*` and the Step 11 review's
+98/98 en/ar/tr parity confirmation, which evidently didn't cover PrimeVue's own internal strings.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)

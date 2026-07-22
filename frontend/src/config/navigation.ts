@@ -54,7 +54,17 @@ export const navigation: NavItem[] = [
   {
     labelKey: 'nav.dentalChart',
     icon: 'pi pi-sitemap',
-    comingSoon: true,
+    // No overview route of its own yet — the chart itself lives on PatientDetailView's Dental
+    // Chart tab (implementation plan §2.3), not a dedicated screen. The catalog admin screen is
+    // real, so this is a real expandable group, not a `comingSoon` placeholder.
+    children: [
+      {
+        labelKey: 'dentalChart.nav.conditions',
+        icon: 'pi pi-palette',
+        routeName: 'dental-conditions',
+        roles: ['admin'],
+      },
+    ],
   },
   {
     labelKey: 'nav.treatmentPlans',

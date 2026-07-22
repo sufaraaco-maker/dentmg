@@ -55,7 +55,9 @@
     "delete": "Sil",
     "notifications": "Bildirimler",
     "noNotifications": "Henüz bildirim yok",
-    "account": "Hesap"
+    "account": "Hesap",
+    "yes": "Evet",
+    "no": "Hayır"
   },
   "errors": {
     "forbidden": {
@@ -138,6 +140,11 @@
     "deleteError": "Hasta silinemedi",
     "deleteHeader": "Hastayı Sil",
     "confirmDelete": "{name} adlı hastayı silmek istediğinizden emin misiniz?",
+    "tabs": {
+      "overview": "Genel Bakış",
+      "appointments": "Randevular",
+      "dentalChart": "Diş Şeması"
+    },
     "sections": {
       "demographics": "Demografi",
       "contact": "İletişim",
@@ -392,6 +399,128 @@
         "endAfterStart": "Bitiş, başlangıçtan sonra olmalıdır",
         "reasonMax": "Sebep 255 karakteri geçemez"
       }
+    }
+  },
+  "dentalChart": {
+    "title": "Diş Şeması",
+    "status": {
+      "existing": "Mevcut",
+      "active": "Aktif",
+      "planned": "Planlandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "category": {
+      "finding": "Bulgu",
+      "procedure": "İşlem"
+    },
+    "loadError": "Diş şeması kayıtları yüklenemedi",
+    "nav": {
+      "conditions": "Diş Durumları"
+    },
+    "conditions": {
+      "title": "Diş Durumları",
+      "new": "Yeni Durum",
+      "search": "Durumlarda ara",
+      "showInactive": "Pasifleri göster",
+      "name": "Ad",
+      "category": "Kategori",
+      "appliesToSurface": "Yüzeye uygulanır",
+      "color": "Renk",
+      "iconKey": "Simge Anahtarı",
+      "iconKeyPlaceholder": "ör. caries, filling, crown",
+      "sortOrder": "Sıralama",
+      "status": "Durum",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "actions": "İşlemler",
+      "empty": "Diş durumu bulunamadı",
+      "loadError": "Diş durumları yüklenemedi",
+      "createTitle": "Yeni Diş Durumu",
+      "editTitle": "Diş Durumunu Düzenle",
+      "namePlaceholder": "ör. Çürük, Kompozit Dolgu, Kron",
+      "fieldRequired": "Bu alan zorunludur",
+      "colorInvalid": "Renk geçerli bir hex kodu olmalıdır, ör. #3B82F6",
+      "saved": "Diş durumu başarıyla kaydedildi",
+      "saveError": "Diş durumu kaydedilemedi",
+      "deleted": "Diş durumu başarıyla silindi",
+      "deleteError": "Diş durumu silinemedi",
+      "deleteConfirmMessage": "\"{name}\" öğesini silmek istediğinizden emin misiniz?",
+      "deleteConfirmHeader": "Diş Durumunu Sil"
+    },
+    "chart": {
+      "surface": {
+        "M": "Meziyal",
+        "D": "Distal",
+        "F": "Fasiyal",
+        "L": "Lingual/Palatal",
+        "O": "Oklüzal",
+        "I": "İnsizal"
+      },
+      "noEntries": "Kayıtlı durum yok",
+      "entryLine": "{status} {condition}",
+      "onSurfaces": "{surfaces} üzerinde",
+      "entriesSummary": "{count} kayıtlı durum: {details}",
+      "toothAriaLabel": "Diş {code}, {name}. {detail}",
+      "surfaceAriaLabel": "{surface} yüzeyi, diş {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "Şema",
+      "viewList": "Liste",
+      "viewToggle": "Şema veya liste görünümü",
+      "dentitionAll": "Tümü",
+      "dentitionPermanent": "Daimi",
+      "dentitionPrimary": "Süt Dişi",
+      "dentitionFilter": "Diş tipine göre filtrele",
+      "allStatuses": "Tüm Durumlar",
+      "allCategories": "Tüm Kategoriler",
+      "allTeeth": "Tüm Dişler",
+      "statusFilter": "Duruma göre filtrele",
+      "categoryFilter": "Kategoriye göre filtrele",
+      "toothFilter": "Dişe göre filtrele",
+      "addEntry": "Kayıt Ekle"
+    },
+    "legend": {
+      "title": "Gösterge",
+      "statusTone": "Durum",
+      "empty": "Aktif durum yok"
+    },
+    "dialog": {
+      "createTitle": "Yeni Şema Kaydı",
+      "editTitle": "Şema Kaydını Düzenle",
+      "fieldRequired": "Bu alan zorunludur",
+      "tooth": "Diş",
+      "selectTooth": "Bir diş seçin",
+      "toothLockedNote": "Kayıt oluşturulduktan sonra diş değiştirilemez.",
+      "dentist": "Diş Hekimi",
+      "selectCondition": "Bir durum seçin",
+      "tabs": {
+        "diagnosis": "Tanı",
+        "procedure": "İşlem"
+      },
+      "surfaces": "Yüzeyler",
+      "surfacesRequired": "Bu durum için en az bir yüzey seçin",
+      "surfacesNotAllowed": "Bu durum belirli yüzeylere değil, tüm dişe uygulanır",
+      "noSurfacesSelected": "Yüzey seçilmedi",
+      "wholeTooth": "Tüm diş",
+      "status": "Durum",
+      "recordedAt": "Kayıt Tarihi",
+      "notes": "Notlar",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Şema kaydı başarıyla kaydedildi",
+      "saveError": "Şema kaydı kaydedilemedi",
+      "completeEntry": "Tamamla",
+      "cancelEntry": "Kaydı İptal Et"
+    },
+    "list": {
+      "empty": "Diş şeması kaydı bulunamadı",
+      "condition": "Durum",
+      "status": "Durum",
+      "recordedAt": "Kayıt Tarihi",
+      "deleteConfirmMessage": "Bu şema kaydını silmek istediğinizden emin misiniz?",
+      "deleteConfirmHeader": "Şema Kaydını Sil",
+      "deleted": "Şema kaydı başarıyla silindi",
+      "deleteError": "Şema kaydı silinemedi"
     }
   }
 }

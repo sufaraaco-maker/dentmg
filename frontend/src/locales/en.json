@@ -55,7 +55,9 @@
     "delete": "Delete",
     "notifications": "Notifications",
     "noNotifications": "No notifications yet",
-    "account": "Account"
+    "account": "Account",
+    "yes": "Yes",
+    "no": "No"
   },
   "errors": {
     "forbidden": {
@@ -138,6 +140,11 @@
     "deleteError": "Failed to delete patient",
     "deleteHeader": "Delete Patient",
     "confirmDelete": "Are you sure you want to delete {name}?",
+    "tabs": {
+      "overview": "Overview",
+      "appointments": "Appointments",
+      "dentalChart": "Dental Chart"
+    },
     "sections": {
       "demographics": "Demographics",
       "contact": "Contact",
@@ -392,6 +399,128 @@
         "endAfterStart": "End must be after start",
         "reasonMax": "Reason must be 255 characters or fewer"
       }
+    }
+  },
+  "dentalChart": {
+    "title": "Dental Chart",
+    "status": {
+      "existing": "Existing",
+      "active": "Active",
+      "planned": "Planned",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "category": {
+      "finding": "Finding",
+      "procedure": "Procedure"
+    },
+    "loadError": "Failed to load dental chart entries",
+    "nav": {
+      "conditions": "Dental Conditions"
+    },
+    "conditions": {
+      "title": "Dental Conditions",
+      "new": "New Condition",
+      "search": "Search conditions",
+      "showInactive": "Show inactive",
+      "name": "Name",
+      "category": "Category",
+      "appliesToSurface": "Applies to a surface",
+      "color": "Color",
+      "iconKey": "Icon Key",
+      "iconKeyPlaceholder": "e.g. caries, filling, crown",
+      "sortOrder": "Sort Order",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "empty": "No dental conditions found",
+      "loadError": "Failed to load dental conditions",
+      "createTitle": "New Dental Condition",
+      "editTitle": "Edit Dental Condition",
+      "namePlaceholder": "e.g. Caries, Composite Filling, Crown",
+      "fieldRequired": "This field is required",
+      "colorInvalid": "Color must be a valid hex code, e.g. #3B82F6",
+      "saved": "Dental condition saved successfully",
+      "saveError": "Failed to save dental condition",
+      "deleted": "Dental condition deleted successfully",
+      "deleteError": "Failed to delete dental condition",
+      "deleteConfirmMessage": "Are you sure you want to delete \"{name}\"?",
+      "deleteConfirmHeader": "Delete Dental Condition"
+    },
+    "chart": {
+      "surface": {
+        "M": "Mesial",
+        "D": "Distal",
+        "F": "Facial",
+        "L": "Lingual",
+        "O": "Occlusal",
+        "I": "Incisal"
+      },
+      "noEntries": "No conditions recorded",
+      "entryLine": "{status} {condition}",
+      "onSurfaces": "on {surfaces}",
+      "entriesSummary": "{count} entries recorded: {details}",
+      "toothAriaLabel": "Tooth {code}, {name}. {detail}",
+      "surfaceAriaLabel": "{surface} surface, tooth {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "Chart",
+      "viewList": "List",
+      "viewToggle": "Chart or list view",
+      "dentitionAll": "All",
+      "dentitionPermanent": "Permanent",
+      "dentitionPrimary": "Primary",
+      "dentitionFilter": "Filter by dentition",
+      "allStatuses": "All Statuses",
+      "allCategories": "All Categories",
+      "allTeeth": "All Teeth",
+      "statusFilter": "Filter by status",
+      "categoryFilter": "Filter by category",
+      "toothFilter": "Filter by tooth",
+      "addEntry": "Add Entry"
+    },
+    "legend": {
+      "title": "Legend",
+      "statusTone": "Status",
+      "empty": "No active conditions"
+    },
+    "dialog": {
+      "createTitle": "New Chart Entry",
+      "editTitle": "Edit Chart Entry",
+      "fieldRequired": "This field is required",
+      "tooth": "Tooth",
+      "selectTooth": "Select a tooth",
+      "toothLockedNote": "The tooth can't be changed after the entry is created.",
+      "dentist": "Dentist",
+      "selectCondition": "Select a condition",
+      "tabs": {
+        "diagnosis": "Diagnosis",
+        "procedure": "Procedure"
+      },
+      "surfaces": "Surfaces",
+      "surfacesRequired": "Select at least one surface for this condition",
+      "surfacesNotAllowed": "This condition applies to the whole tooth, not specific surfaces",
+      "noSurfacesSelected": "No surfaces selected",
+      "wholeTooth": "Whole tooth",
+      "status": "Status",
+      "recordedAt": "Recorded At",
+      "notes": "Notes",
+      "charactersRemaining": "{n} characters remaining",
+      "saved": "Chart entry saved successfully",
+      "saveError": "Failed to save chart entry",
+      "completeEntry": "Complete",
+      "cancelEntry": "Cancel Entry"
+    },
+    "list": {
+      "empty": "No dental chart entries found",
+      "condition": "Condition",
+      "status": "Status",
+      "recordedAt": "Recorded At",
+      "deleteConfirmMessage": "Are you sure you want to delete this chart entry?",
+      "deleteConfirmHeader": "Delete Chart Entry",
+      "deleted": "Chart entry deleted successfully",
+      "deleteError": "Failed to delete chart entry"
     }
   }
 }

@@ -55,7 +55,9 @@
     "delete": "حذف",
     "notifications": "الإشعارات",
     "noNotifications": "لا توجد إشعارات بعد",
-    "account": "الحساب"
+    "account": "الحساب",
+    "yes": "نعم",
+    "no": "لا"
   },
   "errors": {
     "forbidden": {
@@ -138,6 +140,11 @@
     "deleteError": "تعذّر حذف المريض",
     "deleteHeader": "حذف المريض",
     "confirmDelete": "هل أنت متأكد من حذف {name}؟",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "appointments": "المواعيد",
+      "dentalChart": "مخطط الأسنان"
+    },
     "sections": {
       "demographics": "البيانات الشخصية",
       "contact": "معلومات الاتصال",
@@ -392,6 +399,128 @@
         "endAfterStart": "يجب أن تكون النهاية بعد البداية",
         "reasonMax": "يجب ألا يتجاوز السبب 255 حرفًا"
       }
+    }
+  },
+  "dentalChart": {
+    "title": "مخطط الأسنان",
+    "status": {
+      "existing": "موجودة مسبقًا",
+      "active": "نشطة",
+      "planned": "مخطط لها",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    },
+    "category": {
+      "finding": "تشخيص",
+      "procedure": "إجراء"
+    },
+    "loadError": "تعذّر تحميل بيانات مخطط الأسنان",
+    "nav": {
+      "conditions": "حالات الأسنان"
+    },
+    "conditions": {
+      "title": "حالات الأسنان",
+      "new": "حالة جديدة",
+      "search": "البحث عن الحالات",
+      "showInactive": "إظهار غير النشطة",
+      "name": "الاسم",
+      "category": "الفئة",
+      "appliesToSurface": "تنطبق على سطح السن",
+      "color": "اللون",
+      "iconKey": "مفتاح الأيقونة",
+      "iconKeyPlaceholder": "مثال: caries، filling، crown",
+      "sortOrder": "ترتيب العرض",
+      "status": "الحالة",
+      "active": "نشطة",
+      "inactive": "غير نشطة",
+      "actions": "إجراءات",
+      "empty": "لا توجد حالات أسنان",
+      "loadError": "تعذّر تحميل حالات الأسنان",
+      "createTitle": "حالة أسنان جديدة",
+      "editTitle": "تعديل حالة الأسنان",
+      "namePlaceholder": "مثال: تسوس، حشوة تجميلية، تاج",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "colorInvalid": "يجب أن يكون اللون رمز هيكس صالحًا، مثل #3B82F6",
+      "saved": "تم حفظ حالة الأسنان بنجاح",
+      "saveError": "تعذّر حفظ حالة الأسنان",
+      "deleted": "تم حذف حالة الأسنان بنجاح",
+      "deleteError": "تعذّر حذف حالة الأسنان",
+      "deleteConfirmMessage": "هل أنت متأكد من حذف \"{name}\"؟",
+      "deleteConfirmHeader": "حذف حالة الأسنان"
+    },
+    "chart": {
+      "surface": {
+        "M": "قريب من الوسط",
+        "D": "بعيد عن الوسط",
+        "F": "دهليزي",
+        "L": "لساني/حنكي",
+        "O": "إطباقي",
+        "I": "قاطع"
+      },
+      "noEntries": "لا توجد حالات مسجلة",
+      "entryLine": "{status} {condition}",
+      "onSurfaces": "على {surfaces}",
+      "entriesSummary": "{count} حالات مسجلة: {details}",
+      "toothAriaLabel": "السن {code}، {name}. {detail}",
+      "surfaceAriaLabel": "سطح {surface}، السن {code}. {detail}"
+    },
+    "toolbar": {
+      "viewChart": "المخطط",
+      "viewList": "القائمة",
+      "viewToggle": "عرض المخطط أو القائمة",
+      "dentitionAll": "الكل",
+      "dentitionPermanent": "دائم",
+      "dentitionPrimary": "لبني",
+      "dentitionFilter": "تصفية حسب نوع الأسنان",
+      "allStatuses": "كل الحالات",
+      "allCategories": "كل الفئات",
+      "allTeeth": "كل الأسنان",
+      "statusFilter": "تصفية حسب الحالة",
+      "categoryFilter": "تصفية حسب الفئة",
+      "toothFilter": "تصفية حسب السن",
+      "addEntry": "إضافة حالة"
+    },
+    "legend": {
+      "title": "المفتاح",
+      "statusTone": "الحالة",
+      "empty": "لا توجد حالات نشطة"
+    },
+    "dialog": {
+      "createTitle": "حالة جديدة في المخطط",
+      "editTitle": "تعديل حالة المخطط",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "tooth": "السن",
+      "selectTooth": "اختر سنًا",
+      "toothLockedNote": "لا يمكن تغيير السن بعد إنشاء الحالة.",
+      "dentist": "طبيب الأسنان",
+      "selectCondition": "اختر حالة",
+      "tabs": {
+        "diagnosis": "تشخيص",
+        "procedure": "إجراء"
+      },
+      "surfaces": "الأسطح",
+      "surfacesRequired": "اختر سطحًا واحدًا على الأقل لهذه الحالة",
+      "surfacesNotAllowed": "هذه الحالة تنطبق على كامل السن، وليس على أسطح محددة",
+      "noSurfacesSelected": "لم يتم اختيار أي سطح",
+      "wholeTooth": "كامل السن",
+      "status": "الحالة",
+      "recordedAt": "تاريخ التسجيل",
+      "notes": "ملاحظات",
+      "charactersRemaining": "{n} حرفًا متبقيًا",
+      "saved": "تم حفظ حالة المخطط بنجاح",
+      "saveError": "تعذّر حفظ حالة المخطط",
+      "completeEntry": "إكمال",
+      "cancelEntry": "إلغاء الحالة"
+    },
+    "list": {
+      "empty": "لا توجد حالات في مخطط الأسنان",
+      "condition": "الحالة",
+      "status": "الوضع",
+      "recordedAt": "تاريخ التسجيل",
+      "deleteConfirmMessage": "هل أنت متأكد من حذف هذه الحالة من المخطط؟",
+      "deleteConfirmHeader": "حذف حالة المخطط",
+      "deleted": "تم حذف حالة المخطط بنجاح",
+      "deleteError": "تعذّر حذف حالة المخطط"
     }
   }
 }
