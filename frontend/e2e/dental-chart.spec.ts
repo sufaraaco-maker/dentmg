@@ -41,6 +41,20 @@ async function gotoDentalChartTab(page: Page, patientId: string) {
   await page.getByRole('tab', { name: 'Dental Chart' }).click()
 }
 
+/**
+ * A `.p-select`'s overlay closes via a CSS leave-transition, not instantly on selection — the
+ * option's `click()` resolving (and even the select's own label text updating) only means Vue's
+ * model committed, not that the overlay panel has actually left the DOM/become non-visible.
+ * Clicking straight into the *next* field while it's still fading out gets absorbed by PrimeVue as
+ * an outside-click dismissal of that lingering overlay instead of registering on the intended
+ * target (a tab, a different select's trigger, etc.), which then never opens/switches at all.
+ * Awaiting this after every option selection avoids that race deterministically instead of hoping
+ * the next action happens to land after the transition finishes.
+ */
+async function waitForSelectOverlayClosed(page: Page) {
+  await expect(page.locator('.p-select-overlay')).toBeHidden()
+}
+
 test.describe('dental chart', () => {
   test('creates, edits, completes, cancels, and deletes chart entries through the odontogram and list view', async ({
     page,
@@ -63,12 +77,14 @@ test.describe('dental chart', () => {
     // state commit/close-transition, so the next select's overlay could otherwise open while
     // this one's options are technically still present/visible.
     await expect(dialog.locator('div:has(> label:text-is("Tooth")) .p-select')).toContainText('26')
+    await waitForSelectOverlayClosed(page)
 
     await dialog.locator('div:has(> label:text-is("Dentist")) .p-select').click()
     // The Tooth select opened just before this one — its overlay panel can still be lingering
     // (unmounting) in the DOM, so an unscoped `li.p-select-option` risks matching its now-stale
     // options instead of the Dentist dropdown's. `:visible` keeps this to the panel actually open.
     await page.locator('li.p-select-option:visible').first().click()
+    await waitForSelectOverlayClosed(page)
 
     await page.getByRole('tab', { name: 'Diagnosis' }).click()
     // PrimeVue keeps both tab panels mounted (`v-show`, not `v-if`) — a plain placeholder locator
@@ -77,6 +93,7 @@ test.describe('dental chart', () => {
     // active one.
     await dialog.getByRole('tabpanel').getByPlaceholder('Select a condition').click()
     await page.getByRole('option', { name: 'Missing Tooth' }).click()
+    await waitForSelectOverlayClosed(page)
 
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Chart entry saved successfully')).toBeVisible({ timeout: 10_000 })
@@ -99,10 +116,12 @@ test.describe('dental chart', () => {
     // (unmounting) in the DOM, so an unscoped `li.p-select-option` risks matching its now-stale
     // options instead of the Dentist dropdown's. `:visible` keeps this to the panel actually open.
     await page.locator('li.p-select-option:visible').first().click()
+    await waitForSelectOverlayClosed(page)
 
     await page.getByRole('tab', { name: 'Procedure' }).click()
     await dialog.getByRole('tabpanel').getByPlaceholder('Select a condition').click()
     await page.getByRole('option', { name: 'Composite Filling' }).click()
+    await waitForSelectOverlayClosed(page)
 
     // The click-to-create prefill carried the occlusal surface straight into the dialog's own
     // single-tooth surface picker.
@@ -110,6 +129,7 @@ test.describe('dental chart', () => {
 
     await dialog.locator('div:has(> label:text-is("Status")) .p-select').click()
     await page.getByRole('option', { name: 'Planned', exact: true }).click()
+    await waitForSelectOverlayClosed(page)
 
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Chart entry saved successfully')).toBeVisible({ timeout: 10_000 })
