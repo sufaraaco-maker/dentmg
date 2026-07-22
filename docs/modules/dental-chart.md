@@ -195,6 +195,83 @@ Full detail and revisit conditions for each live in `TECH_DEBT.md`; summarized h
 None of the above block production use of the module as scoped; each has an explicit revisit condition in
 `TECH_DEBT.md`.
 
+## SaaS Readiness (architecture checkpoint, 2026-07-22)
+
+Reviewed before merging `feature/dental-chart` into `main`, per explicit request, ahead of DentalSuite's
+future evolution into a multi-tenant SaaS platform. **No implementation changes were made** — this section
+documents the current state, confirmed directly against the code (migrations, models, policies,
+controllers, resources, Pinia stores), not assumed.
+
+### Current state
+
+DentalSuite V1 is explicitly single-organization (`PROJECT_CONTEXT.md`'s Database section: "Single
+Organization (No Multi Tenant in Version 1)"), confirmed as a deliberate, already-tracked decision
+(`TECH_DEBT.md`'s "Multi-branch" entry: "No table is branch-scoped"). Dental Chart was built to be
+**architecturally identical to every existing module** (Patients, Appointments) in this respect — it
+introduces no new tenancy gap and no new tenancy readiness beyond what already exists system-wide:
+
+- **Tenant readiness**: `dental_conditions` and `dental_chart_entries` have no `tenant_id`/`clinic_id`
+  column, matching `patients`, `users`, `appointments`, and every other table (confirmed: no table in the
+  schema is tenant/branch-scoped, grep-confirmed for `tenant_id`/`clinic_id`/`TenantScope` across
+  `backend/`). Policies (`DentalChartEntryPolicy`, `DentalConditionPolicy`) authorize purely on
+  `$actor->role` (a backed enum: admin/dentist/receptionist), with no clinic-membership check, because
+  there is currently only one clinic per deployment — there is no cross-clinic boundary to cross. Routes use
+  standard Eloquent route-model binding (`{patient}`, `{dental_chart_entry}`) with no scoping clause.
+- **Data scalability**: `dental_chart_entries` is indexed on `(patient_id)`, `(patient_id, tooth_number)`,
+  `(patient_id, status)`, and `(dental_condition_id)`. Every query path (`DentalChartService::listForPatient`)
+  is `patient_id`-scoped, so query cost stays flat as total patient count grows into the thousands — it
+  scales with one patient's chart size (naturally bounded, tens of entries), not clinic-wide row count. The
+  list endpoint is deliberately unpaginated for exactly this reason (see API section above). Audit logging
+  (`Auditable` trait, generic `audit_logs` table) is indexed on `(auditable_type, auditable_id)` and writes
+  one row per create/update/delete — no N+1 or unbounded-growth risk specific to this module.
+- **SaaS permissions model**: the three-role enum (`UserRole::Admin/Dentist/Receptionist`) maps cleanly to a
+  future "clinic-level role" concept — policies check `$actor->role` as a simple, swappable predicate, not
+  hard-coded logic tied to a single clinic's identity. Introducing a clinic-admin/owner layer later is
+  additive (a new enum case or a clinic-scoped role pivot), not a rewrite of `DentalChartEntryPolicy`'s or
+  `DentalConditionPolicy`'s structure.
+- **API and frontend isolation**: `DentalChartEntryResource`/`DentalConditionResource` responses carry no
+  tenant/clinic context field (none exists to carry). Frontend stores (`stores/dentalChartEntries.ts`,
+  `stores/dentalConditions.ts`) are Pinia singletons scoped only by `patient_id` (chart entries) or globally
+  cached indefinitely (conditions catalog, mirroring `appointmentTypes.ts`) — this is safe under the current
+  one-clinic-per-deployment model, but neither store (nor any of the other 6 stores across the app with a
+  `$reset()` method — confirmed: `auth.ts`'s `logout()` clears only `user`, calling no store's `$reset()`)
+  is cleared on login/logout today. This is a pre-existing, systemic pattern across the whole frontend, not
+  something this module introduced.
+
+### Known limitations (of the current single-tenant architecture, not this module specifically)
+
+- No `tenant_id`/`clinic_id` isolation exists anywhere in the schema yet — by design, per V1 scope.
+- No tenant-context resolution (subdomain, header, or session-based) exists in the request pipeline.
+- Frontend Pinia store cache is never cleared on login/logout, relying on one browser session mapping to
+  one clinic for the lifetime of the app today.
+
+### Migration requirements when enabling multi-tenancy (future work, not scheduled)
+
+1. Add a `clinic_id` (or `tenant_id`) column to `patients`, `dental_conditions`, `dental_chart_entries`, and
+   every other clinical table, backfilled from a new `clinics` table.
+2. Add a global Eloquent scope (e.g. a `BelongsToTenant` trait applied to `Patient`, `DentalCondition`,
+   `DentalChartEntry`, …) that auto-applies `where('clinic_id', currentTenantId())`, so no service/controller
+   query needs to remember to scope itself manually.
+3. Extend `patient_id`-based indexes to lead with `clinic_id` (e.g. `(clinic_id, patient_id, tooth_number)`)
+   so scoped queries stay index-backed at multi-tenant scale.
+4. Add tenant-context resolution middleware (subdomain, header, or session-based) that binds the current
+   tenant before any controller/policy runs.
+5. Extend policies to additionally check the actor's `clinic_id` matches the resource's `clinic_id` — a
+   defense-in-depth check on top of the global scope, not a replacement for it.
+6. Reset (or tenant-namespace) frontend Pinia stores on login/logout/tenant switch — `dentalConditions.ts`,
+   `dentalChartEntries.ts`, and the other stores with an existing but never-invoked `$reset()` — so cached
+   data from one tenant's session can never render for another.
+7. Re-scope any DB-level uniqueness constraints that currently assume single-org (e.g. `patients.national_id`)
+   to be unique per-`clinic_id`, not globally.
+
+### Verdict
+
+**No blockers found.** Dental Chart introduces no tenancy regression relative to the rest of the codebase
+and requires no implementation change to merge safely. All multi-tenancy work above applies to the whole
+platform, not to this module specifically, and should be undertaken as its own dedicated cross-cutting
+initiative when a real second-clinic/SaaS requirement is scheduled — consistent with `TECH_DEBT.md`'s
+existing "Multi-branch" entry ("do not build speculatively").
+
 ## Completion
 
 Migration, Model, Validation, Service, Policy, API, Vue Pages, Tests, Documentation — all present.
