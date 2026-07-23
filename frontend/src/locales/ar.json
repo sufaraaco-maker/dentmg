@@ -143,7 +143,8 @@
     "tabs": {
       "overview": "نظرة عامة",
       "appointments": "المواعيد",
-      "dentalChart": "مخطط الأسنان"
+      "dentalChart": "مخطط الأسنان",
+      "treatmentPlans": "خطط العلاج"
     },
     "sections": {
       "demographics": "البيانات الشخصية",
@@ -167,6 +168,11 @@
       "title": "المواعيد",
       "new": "موعد جديد",
       "empty": "لا توجد مواعيد لهذا المريض بعد."
+    },
+    "treatmentPlansPanel": {
+      "title": "خطط العلاج",
+      "new": "خطة علاج جديدة",
+      "empty": "لا توجد خطط علاج لهذا المريض بعد."
     }
   },
   "appointments": {
@@ -521,6 +527,110 @@
       "deleteConfirmHeader": "حذف حالة المخطط",
       "deleted": "تم حذف حالة المخطط بنجاح",
       "deleteError": "تعذّر حذف حالة المخطط"
+    }
+  },
+  "treatmentPlans": {
+    "title": "خطط العلاج",
+    "status": {
+      "draft": "مسودة",
+      "presented": "معروضة",
+      "accepted": "مقبولة",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "rejected": "مرفوضة",
+      "cancelled": "ملغاة"
+    },
+    "itemStatus": {
+      "planned": "مخطط له",
+      "completed": "مكتمل",
+      "cancelled": "ملغى"
+    },
+    "loadError": "تعذّر تحميل خطط العلاج",
+    "notFound": "خطة العلاج غير موجودة",
+    "forbidden": "ليس لديك صلاحية القيام بذلك",
+    "list": {
+      "plan": "الخطة",
+      "untitled": "خطة بلا عنوان",
+      "status": "الحالة",
+      "dentist": "طبيب الأسنان",
+      "createdAt": "تاريخ الإنشاء",
+      "items": "العناصر",
+      "estimatedCost": "التكلفة التقديرية",
+      "empty": "لا توجد خطط علاج"
+    },
+    "dialog": {
+      "createTitle": "خطة علاج جديدة",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "dentist": "طبيب الأسنان",
+      "title": "العنوان",
+      "titlePlaceholder": "مثال: الخيار أ — زراعة",
+      "notes": "ملاحظات",
+      "charactersRemaining": "{n} حرف متبقٍ",
+      "saved": "تم حفظ خطة العلاج",
+      "saveError": "تعذّر حفظ خطة العلاج"
+    },
+    "detail": {
+      "overview": "نظرة عامة",
+      "createdBy": "أنشأها",
+      "startedAt": "بدأت",
+      "costSummary": "ملخص التكلفة",
+      "estimateOnly": "تقدير فقط — وليس فاتورة.",
+      "items": "عناصر خطة العلاج",
+      "supersededBy": "تم استبدال هذه الخطة بـ \"{title}\".",
+      "supersedes": "تحل هذه الخطة محل \"{title}\".",
+      "viewPlan": "عرض الخطة",
+      "actions": {
+        "present": "عرض على المريض",
+        "accept": "قبول",
+        "reject": "رفض",
+        "start": "بدء",
+        "complete": "إكمال",
+        "cancel": "إلغاء الخطة"
+      },
+      "confirm": {
+        "rejectMessage": "هل أنت متأكد أنك تريد رفض خطة العلاج هذه؟",
+        "cancelMessage": "هل أنت متأكد أنك تريد إلغاء خطة العلاج هذه؟ سيتم أيضًا إلغاء كل عنصر لا يزال مخططًا له."
+      },
+      "actionSuccess": "تم تحديث خطة العلاج",
+      "actionError": "تعذّر تحديث خطة العلاج",
+      "openItemsError": "أكمل أو ألغِ كل عنصر مخطط له قبل إكمال هذه الخطة."
+    },
+    "items": {
+      "empty": "لا توجد عناصر في هذه الخطة بعد.",
+      "procedure": "الإجراء",
+      "tooth": "السن",
+      "surfaces": "الأسطح",
+      "quantity": "الكمية",
+      "unitCost": "تكلفة الوحدة",
+      "subtotal": "الإجمالي الفرعي",
+      "status": "الحالة",
+      "linked": "الروابط",
+      "diagnosisLink": "التشخيص: السن {tooth} ({status})",
+      "actions": "الإجراءات",
+      "add": "إضافة عنصر",
+      "completeItem": "إكمال العنصر",
+      "cancelItem": "إلغاء العنصر",
+      "deleteConfirmHeader": "حذف العنصر",
+      "deleteConfirmMessage": "هل أنت متأكد أنك تريد حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleted": "تم حذف العنصر",
+      "deleteError": "تعذّر حذف العنصر",
+      "dialog": {
+        "createTitle": "إضافة عنصر",
+        "editTitle": "تعديل العنصر",
+        "procedure": "الإجراء",
+        "selectProcedure": "اختر إجراءً",
+        "tooth": "السن",
+        "selectTooth": "اختر سنًا (اختياري)",
+        "surfaces": "الأسطح",
+        "phase": "المرحلة",
+        "notes": "ملاحظات",
+        "fieldRequired": "هذا الحقل مطلوب",
+        "surfacesRequired": "سطح واحد على الأقل مطلوب لهذا الإجراء",
+        "toothRequiredWithSurfaces": "السن مطلوب عند تحديد الأسطح",
+        "saved": "تم حفظ العنصر",
+        "saveError": "تعذّر حفظ العنصر",
+        "offerLockedNote": "لم تعد هذه الخطة مسودة — لا يمكن تغيير الإجراء أو السن أو الأسطح أو الكمية أو التكلفة. تبقى المرحلة والملاحظات قابلة للتعديل فقط."
+      }
     }
   }
 }

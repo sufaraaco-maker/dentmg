@@ -4,6 +4,35 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### `dental_conditions` reused as the Treatment Plans pricing catalog (V1 only)
+Treatment Plans' design review (2026-07-22, Decision 5) approved reusing the existing `dental_conditions`
+table (extended with `default_cost`/`description`) as the procedure/pricing catalog rather than building a
+dedicated one — explicitly "approved with caution," not a permanent architectural decision. A single global
+`default_cost`/`description` per procedure cannot support: clinic-specific pricing (once multi-tenant, the
+same procedure priced differently per clinic), regional pricing (currency/market variation), insurance
+pricing (contracted-rate schedules per payer), dentist-level price overrides, or historical pricing (what a
+procedure cost as of a given past date, independent of any one treatment plan's own frozen snapshot — see
+`docs/modules/treatment-plans-design.md` §15 Q2/§16 item 4 for why plan *items* already snapshot their own
+price and don't depend on this).
+**Revisit**: when a real multi-clinic/multi-tenant requirement appears, or when insurance/regional pricing
+is actually requested — design a dedicated procedure-pricing catalog then (likely a `clinic_id`-scoped
+pricing table referencing a tenant-shared procedure list), rather than continuing to extend
+`dental_conditions`. Do not build speculatively before then, per the same "don't build ahead of a real need"
+principle already applied to Multi-Branch below.
+
+### Sidebar "Treatment Plans" item is still `comingSoon` (no patient-agnostic index page)
+`config/navigation.ts`'s top-level "Treatment Plans" nav entry (`labelKey: 'nav.treatmentPlans'`) is
+marked `comingSoon: true` even though the module itself is implemented and reachable — Treatment
+Plans lives on `PatientDetailView`'s own tab (`PatientTreatmentPlansPanel.vue`, routed via
+`treatment-plan-detail`), the same pattern Dental Chart uses for its chart view. There is no
+patient-agnostic Treatment Plans list/reporting screen for the sidebar item to point to, so it stays
+a placeholder rather than linking to a route that doesn't exist.
+**Revisit**: once there's a defined need for a clinic-wide Treatment Plans list (e.g. "all pending
+plans awaiting patient decision" or a reporting view spanning patients), design and build a
+dedicated index page and flip this entry from `comingSoon: true` to a real `routeName`, mirroring
+how Dental Conditions' catalog screen was added under Dental Chart. Not implemented speculatively
+now — no such cross-patient view has been requested yet.
+
 ### Header notifications is inert UI (no notification backend)
 `AppHeader.vue`'s bell icon opens a popover that always reads "No notifications yet" — there is no
 notification system in the backend. Scaffolded deliberately as inert UI (per the layout architecture design,

@@ -143,7 +143,8 @@
     "tabs": {
       "overview": "Genel Bakış",
       "appointments": "Randevular",
-      "dentalChart": "Diş Şeması"
+      "dentalChart": "Diş Şeması",
+      "treatmentPlans": "Tedavi Planları"
     },
     "sections": {
       "demographics": "Demografi",
@@ -167,6 +168,11 @@
       "title": "Randevular",
       "new": "Yeni Randevu",
       "empty": "Bu hasta için henüz randevu yok."
+    },
+    "treatmentPlansPanel": {
+      "title": "Tedavi Planları",
+      "new": "Yeni Tedavi Planı",
+      "empty": "Bu hasta için henüz tedavi planı yok."
     }
   },
   "appointments": {
@@ -521,6 +527,110 @@
       "deleteConfirmHeader": "Şema Kaydını Sil",
       "deleted": "Şema kaydı başarıyla silindi",
       "deleteError": "Şema kaydı silinemedi"
+    }
+  },
+  "treatmentPlans": {
+    "title": "Tedavi Planları",
+    "status": {
+      "draft": "Taslak",
+      "presented": "Sunuldu",
+      "accepted": "Kabul Edildi",
+      "in_progress": "Devam Ediyor",
+      "completed": "Tamamlandı",
+      "rejected": "Reddedildi",
+      "cancelled": "İptal Edildi"
+    },
+    "itemStatus": {
+      "planned": "Planlandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "loadError": "Tedavi planları yüklenemedi",
+    "notFound": "Tedavi planı bulunamadı",
+    "forbidden": "Bunu yapma izniniz yok",
+    "list": {
+      "plan": "Plan",
+      "untitled": "Başlıksız Plan",
+      "status": "Durum",
+      "dentist": "Diş Hekimi",
+      "createdAt": "Oluşturulma",
+      "items": "Kalemler",
+      "estimatedCost": "Tahmini Maliyet",
+      "empty": "Tedavi planı bulunamadı"
+    },
+    "dialog": {
+      "createTitle": "Yeni Tedavi Planı",
+      "fieldRequired": "Bu alan zorunludur",
+      "dentist": "Diş Hekimi",
+      "title": "Başlık",
+      "titlePlaceholder": "örn. Seçenek A — İmplant",
+      "notes": "Notlar",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Tedavi planı kaydedildi",
+      "saveError": "Tedavi planı kaydedilemedi"
+    },
+    "detail": {
+      "overview": "Genel Bakış",
+      "createdBy": "Oluşturan",
+      "startedAt": "Başladı",
+      "costSummary": "Maliyet Özeti",
+      "estimateOnly": "Yalnızca tahmindir — fatura değildir.",
+      "items": "Tedavi Planı Kalemleri",
+      "supersededBy": "Bu plan \"{title}\" ile değiştirildi.",
+      "supersedes": "Bu plan \"{title}\" planının yerini alır.",
+      "viewPlan": "Planı Görüntüle",
+      "actions": {
+        "present": "Sun",
+        "accept": "Kabul Et",
+        "reject": "Reddet",
+        "start": "Başlat",
+        "complete": "Tamamla",
+        "cancel": "Planı İptal Et"
+      },
+      "confirm": {
+        "rejectMessage": "Bu tedavi planını reddetmek istediğinizden emin misiniz?",
+        "cancelMessage": "Bu tedavi planını iptal etmek istediğinizden emin misiniz? Hâlâ planlı durumdaki her kalem de iptal edilecek."
+      },
+      "actionSuccess": "Tedavi planı güncellendi",
+      "actionError": "Tedavi planı güncellenemedi",
+      "openItemsError": "Bu planı tamamlamadan önce planlı durumdaki her kalemi tamamlayın veya iptal edin."
+    },
+    "items": {
+      "empty": "Bu planda henüz kalem yok.",
+      "procedure": "İşlem",
+      "tooth": "Diş",
+      "surfaces": "Yüzeyler",
+      "quantity": "Adet",
+      "unitCost": "Birim Maliyet",
+      "subtotal": "Ara Toplam",
+      "status": "Durum",
+      "linked": "Bağlantılar",
+      "diagnosisLink": "Tanı: Diş {tooth} ({status})",
+      "actions": "İşlemler",
+      "add": "Kalem Ekle",
+      "completeItem": "Kalemi Tamamla",
+      "cancelItem": "Kalemi İptal Et",
+      "deleteConfirmHeader": "Kalemi Sil",
+      "deleteConfirmMessage": "Bu kalemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleted": "Kalem silindi",
+      "deleteError": "Kalem silinemedi",
+      "dialog": {
+        "createTitle": "Kalem Ekle",
+        "editTitle": "Kalemi Düzenle",
+        "procedure": "İşlem",
+        "selectProcedure": "Bir işlem seçin",
+        "tooth": "Diş",
+        "selectTooth": "Bir diş seçin (isteğe bağlı)",
+        "surfaces": "Yüzeyler",
+        "phase": "Aşama",
+        "notes": "Notlar",
+        "fieldRequired": "Bu alan zorunludur",
+        "surfacesRequired": "Bu işlem için en az bir yüzey gereklidir",
+        "toothRequiredWithSurfaces": "Yüzey seçildiğinde diş gereklidir",
+        "saved": "Kalem kaydedildi",
+        "saveError": "Kalem kaydedilemedi",
+        "offerLockedNote": "Bu plan artık taslak değil — işlem, diş, yüzeyler, adet ve maliyet artık değiştirilemez. Yalnızca aşama ve notlar düzenlenebilir."
+      }
     }
   }
 }

@@ -12,8 +12,8 @@ Modules are implemented one at a time, each fully complete (migration → model 
 | Roles & Permissions | Done |
 | Patients | Done |
 | **Appointments** | **Done — Production Ready ✅** (tagged `v1.0.0-appointments`, 2026-07-20) — full backend + frontend (Calendar Board, Appointment CRUD/lifecycle, Types, Dentist Working Hours/Time Off, Dashboard widgets), 13/13 E2E green on GitHub Actions; see `modules/appointments.md` |
-| Dental Chart | Not started — next module, on `feature/dental-chart` |
-| Treatment Plans | Not started |
+| Dental Chart | **Done — Production Ready ✅**, merged to `main` 2026-07-22; see `modules/dental-chart.md` |
+| **Treatment Plans** | Design approved 2026-07-22 (`modules/treatment-plans-design.md`) — implementation starting, one checkpointed step at a time |
 | Clinical Notes | Not started |
 | Billing | Not started |
 | Payments | Not started |

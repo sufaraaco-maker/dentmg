@@ -48,6 +48,8 @@ function makeCondition(overrides: Partial<DentalCondition> = {}): DentalConditio
     applies_to_surface: true,
     default_color: '#DC2626',
     icon_key: null,
+    default_cost: null,
+    description: null,
     is_active: true,
     sort_order: 1,
     created_at: '2026-07-15T00:00:00+00:00',

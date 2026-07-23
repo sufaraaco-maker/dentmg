@@ -143,7 +143,8 @@
     "tabs": {
       "overview": "Overview",
       "appointments": "Appointments",
-      "dentalChart": "Dental Chart"
+      "dentalChart": "Dental Chart",
+      "treatmentPlans": "Treatment Plans"
     },
     "sections": {
       "demographics": "Demographics",
@@ -167,6 +168,11 @@
       "title": "Appointments",
       "new": "New Appointment",
       "empty": "No appointments for this patient yet."
+    },
+    "treatmentPlansPanel": {
+      "title": "Treatment Plans",
+      "new": "New Treatment Plan",
+      "empty": "No treatment plans for this patient yet."
     }
   },
   "appointments": {
@@ -521,6 +527,110 @@
       "deleteConfirmHeader": "Delete Chart Entry",
       "deleted": "Chart entry deleted successfully",
       "deleteError": "Failed to delete chart entry"
+    }
+  },
+  "treatmentPlans": {
+    "title": "Treatment Plans",
+    "status": {
+      "draft": "Draft",
+      "presented": "Presented",
+      "accepted": "Accepted",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "itemStatus": {
+      "planned": "Planned",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "loadError": "Failed to load treatment plans",
+    "notFound": "Treatment plan not found",
+    "forbidden": "You don't have permission to do that",
+    "list": {
+      "plan": "Plan",
+      "untitled": "Untitled Plan",
+      "status": "Status",
+      "dentist": "Dentist",
+      "createdAt": "Created",
+      "items": "Items",
+      "estimatedCost": "Estimated Cost",
+      "empty": "No treatment plans found"
+    },
+    "dialog": {
+      "createTitle": "New Treatment Plan",
+      "fieldRequired": "This field is required",
+      "dentist": "Dentist",
+      "title": "Title",
+      "titlePlaceholder": "e.g. Option A — Implant",
+      "notes": "Notes",
+      "charactersRemaining": "{n} characters left",
+      "saved": "Treatment plan saved",
+      "saveError": "Failed to save treatment plan"
+    },
+    "detail": {
+      "overview": "Overview",
+      "createdBy": "Created By",
+      "startedAt": "Started",
+      "costSummary": "Cost Summary",
+      "estimateOnly": "Estimate only — not an invoice.",
+      "items": "Treatment Plan Items",
+      "supersededBy": "This plan has been replaced by \"{title}\".",
+      "supersedes": "This plan replaces \"{title}\".",
+      "viewPlan": "View Plan",
+      "actions": {
+        "present": "Present",
+        "accept": "Accept",
+        "reject": "Reject",
+        "start": "Start",
+        "complete": "Complete",
+        "cancel": "Cancel Plan"
+      },
+      "confirm": {
+        "rejectMessage": "Are you sure you want to reject this treatment plan?",
+        "cancelMessage": "Are you sure you want to cancel this treatment plan? Every still-planned item will also be cancelled."
+      },
+      "actionSuccess": "Treatment plan updated",
+      "actionError": "Failed to update treatment plan",
+      "openItemsError": "Complete or cancel every planned item before completing this plan."
+    },
+    "items": {
+      "empty": "No items in this plan yet.",
+      "procedure": "Procedure",
+      "tooth": "Tooth",
+      "surfaces": "Surfaces",
+      "quantity": "Qty",
+      "unitCost": "Unit Cost",
+      "subtotal": "Subtotal",
+      "status": "Status",
+      "linked": "Linked",
+      "diagnosisLink": "Diagnosis: Tooth {tooth} ({status})",
+      "actions": "Actions",
+      "add": "Add Item",
+      "completeItem": "Complete Item",
+      "cancelItem": "Cancel Item",
+      "deleteConfirmHeader": "Delete Item",
+      "deleteConfirmMessage": "Are you sure you want to delete this item? This cannot be undone.",
+      "deleted": "Item deleted",
+      "deleteError": "Failed to delete item",
+      "dialog": {
+        "createTitle": "Add Item",
+        "editTitle": "Edit Item",
+        "procedure": "Procedure",
+        "selectProcedure": "Select a procedure",
+        "tooth": "Tooth",
+        "selectTooth": "Select a tooth (optional)",
+        "surfaces": "Surfaces",
+        "phase": "Phase",
+        "notes": "Notes",
+        "fieldRequired": "This field is required",
+        "surfacesRequired": "At least one surface is required for this procedure",
+        "toothRequiredWithSurfaces": "A tooth is required when surfaces are selected",
+        "saved": "Item saved",
+        "saveError": "Failed to save item",
+        "offerLockedNote": "This plan is no longer a draft — procedure, tooth, surfaces, quantity, and cost can no longer be changed. Only phase and notes remain editable."
+      }
     }
   }
 }

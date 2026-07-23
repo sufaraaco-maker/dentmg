@@ -114,6 +114,32 @@ class DentalConditionTest extends TestCase
         $this->assertDatabaseHas('dental_conditions', ['id' => $condition->id, 'name' => 'Old Name']);
     }
 
+    public function test_view_exposes_default_cost_and_description(): void
+    {
+        $actor = User::factory()->create(['role' => 'receptionist']);
+        $condition = DentalCondition::factory()->procedure()->create([
+            'default_cost' => 150.00,
+            'description' => 'A tooth-colored resin filling.',
+        ]);
+
+        $response = $this->actingAs($actor)->getJson("/api/dental-conditions/{$condition->id}");
+
+        $response->assertOk()->assertJson([
+            'default_cost' => '150.00',
+            'description' => 'A tooth-colored resin filling.',
+        ]);
+    }
+
+    public function test_view_exposes_a_null_default_cost_when_unset(): void
+    {
+        $actor = User::factory()->create(['role' => 'receptionist']);
+        $condition = DentalCondition::factory()->create(['default_cost' => null, 'description' => null]);
+
+        $response = $this->actingAs($actor)->getJson("/api/dental-conditions/{$condition->id}");
+
+        $response->assertOk()->assertJson(['default_cost' => null, 'description' => null]);
+    }
+
     public function test_admin_can_deactivate_a_dental_condition(): void
     {
         $actor = User::factory()->admin()->create();
