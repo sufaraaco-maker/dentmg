@@ -4,10 +4,50 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
-_`main` is at `v1.0.0-appointments`. Dental Chart and Treatment Plans are both implementation-complete but
-not yet merged/tagged; Billing and Payments are both implementation-complete on `feature/treatment-plans`
-with a permanent E2E suite and final module docs still pending — see `docs/roadmap.md` for current
-per-module status._
+_`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
+and Payments are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/Payments 2026-07-25
+via PR #1, plus a same-day concurrency fix via PR #2) but not yet re-tagged. Billing and Payments still lack
+a permanent E2E suite (Billing also lacks a backend Feature-test suite and its final `modules/billing.md`
+doc) before either meets the same "Production Ready" bar as Appointments/Dental Chart — see `docs/roadmap.md`
+and `TECH_DEBT.md` for current per-module status._
+
+### Fixed — Payments migration: self-referencing FK on `refunded_payment_id` failed on real PostgreSQL (2026-07-26)
+- `2026_07_25_000001_create_payments_table.php` declared the `refunded_payment_id` foreign key via
+  `->constrained('payments')` inside the *same* `Schema::create()` as the table's own primary key. Laravel's
+  `Blueprint` always appends the primary-key command after every explicit index/foreign-key command in the
+  same blueprint (`addFluentIndexes()`, run once at compile time after the whole closure), so the
+  self-referencing FK was always compiled *before* this table's own primary key existed yet — Postgres
+  rejects that ("no unique constraint matching given keys for referenced table"). Found while working on the
+  unrelated Clinical Notes migrations, when a fresh `migrate` against the real Postgres container was run for
+  the first time in a while and failed on this migration.
+- **Root cause this went unnoticed for a full day (2026-07-25 → 2026-07-26) despite 643 passing backend
+  tests**: `backend/phpunit.xml` forces `DB_CONNECTION=sqlite`/`DB_DATABASE=:memory:` for the entire test
+  suite, and SQLite does not enforce the same FK-vs-primary-key compile ordering Postgres does — every
+  `RefreshDatabase` test run silently passed against a schema that could never actually be created on the
+  real production database engine. Confirmed by direct reproduction: `php artisan migrate:fresh` against the
+  real `dentalsuite_postgres` container failed on this exact migration before the fix, and completes cleanly
+  (all migrations + all seeders) after it.
+- Fixed by splitting the foreign key into its own follow-up migration,
+  `2026_07_26_000001_add_refunded_payment_id_foreign_to_payments_table.php`, added against the already-fully-created
+  `payments` table — the column itself (`$table->uuid('refunded_payment_id')->nullable()`) stays in the
+  original migration; only the `->foreign()` constraint moves. No data migration needed: no environment had
+  successfully completed the original migration against Postgres, so there is no pre-existing data to
+  reconcile.
+- Verified: `php artisan migrate:fresh --seed` against the real Postgres container now runs all 26 migrations
+  and every seeder cleanly end-to-end; full backend test suite re-confirmed green after the change. Logged in
+  `TECH_DEBT.md` as a broader gap — the test suite has no real-PostgreSQL migration verification step at all.
+
+### Fixed — Payments concurrency race (PR #2, commit `7ac502e`, 2026-07-25)
+- `PaymentService::apply()`/`refund()` performed a read-check-then-write on `Payment` with no row lock:
+  concurrent refund (or apply) requests against the same payment could both read the same
+  remaining-refundable amount before either committed, together over-refunding it. Found during PR #1's
+  final review.
+- Fixed with `DB::transaction()` + `Payment::lockForUpdate()`, mirroring `InvoiceService::issue()`/`void()`'s
+  existing pattern for the same class of problem; `refund()` now re-fetches `withTrashed()` so the intended
+  `InvalidPaymentOperationException` for an already-deleted payment still fires instead of being masked by
+  `SoftDeletingScope` into an unrelated `ModelNotFoundException`.
+- Verified: 27/27 `PaymentServiceTest` cases (2 new regression tests) and the full 643-test backend suite
+  pass; `pint`/`phpstan analyse` clean.
 
 ### Added — Payments (`feature/treatment-plans`, 2026-07-25, backend + frontend implementation-complete same day as design approval)
 - **Payment recording**: applied directly to an `issued` `Invoice` or left **unapplied** as an

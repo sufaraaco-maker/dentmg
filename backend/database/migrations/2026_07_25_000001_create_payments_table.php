@@ -20,8 +20,20 @@ return new class extends Migration
             $table->foreignUuid('invoice_id')->nullable()->constrained('invoices')->nullOnDelete();
 
             // Set only on a refund row; points back at the payment it reverses (design doc §4/§6).
-            // Self-referencing FK, so no circular-dependency ordering issue within this migration.
-            $table->foreignUuid('refunded_payment_id')->nullable()->constrained('payments')->nullOnDelete();
+            // Column only here — the foreign key itself is added by a separate, later migration
+            // (`2026_07_26_000001_add_refunded_payment_id_foreign_to_payments_table.php`). A
+            // same-migration self-referencing FK (whether via `->constrained()` or an explicit
+            // `->foreign()` call in this same `Schema::create()`) fails on Postgres here: Laravel's
+            // Blueprint defers the `.primary()` column modifier into an `alter table add primary
+            // key` statement appended after every explicit index/foreign-key command in the same
+            // blueprint (`addFluentIndexes()`, called once at compile time, after the whole closure
+            // has already run) — so the self-referencing FK is always compiled *before* this table's
+            // own primary key exists yet, and Postgres rejects it ("no unique constraint matching
+            // given keys for referenced table"). Confirmed by direct reproduction against a fresh
+            // Postgres database (`migrate --pretend`/a real fresh `migrate` both showed this). A
+            // separate follow-up migration sidesteps it entirely: by the time it runs, this
+            // migration's `CREATE TABLE` (primary key included) is already fully committed.
+            $table->uuid('refunded_payment_id')->nullable();
 
             // Cast to App\Enums\PaymentMethod. Recording only — no processor integration (design doc §2).
             $table->string('method');

@@ -4,6 +4,23 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### Backend test suite never exercises real PostgreSQL — migrations can silently be un-runnable in production
+`backend/phpunit.xml` forces `DB_CONNECTION=sqlite`/`DB_DATABASE=:memory:` for every test run (`RefreshDatabase`
+included). Found 2026-07-26: `2026_07_25_000001_create_payments_table.php` declared a self-referencing foreign
+key (`refunded_payment_id`) inside the same `Schema::create()` as its own primary key — a shape Postgres
+rejects ("no unique constraint matching given keys for referenced table") because Laravel's `Blueprint` always
+compiles the primary-key command after every explicit FK/index command in the same blueprint. SQLite doesn't
+enforce that same ordering constraint, so 643 backend tests passed for a full day (2026-07-25 → 2026-07-26)
+against a migration that had never actually succeeded on the real `dentalsuite_postgres` container — confirmed
+directly: `php artisan migrate:fresh` against real Postgres failed before the fix, and now completes cleanly.
+See CHANGELOG's "Payments migration" fix entry for the full root-cause writeup and the fix itself
+(`2026_07_26_000001_add_refunded_payment_id_foreign_to_payments_table.php`).
+**Revisit**: add a CI job (or a documented pre-merge step) that runs `php artisan migrate:fresh` against a
+real Postgres service container — not just the SQLite-backed Feature/Unit suite — so a migration-ordering bug
+like this one fails fast instead of only surfacing whenever someone happens to run a fresh migrate against a
+real Postgres database by hand. Doesn't need to run the full test suite against Postgres (SQLite is fine and
+faster for the Unit/Feature suite itself), just the migration path.
+
 ### `router/index.test.ts` flaky under full-suite parallel load (Windows Docker)
 Running the complete frontend Vitest suite (561 tests, 2026-07-25, verifying the Payments module) showed 2
 failures confined to `src/router/index.test.ts` (including `allows a dentist to reach their own Dentist
