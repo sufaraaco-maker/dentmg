@@ -22,6 +22,9 @@ import type { Patient, PatientAuditLog } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
+import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
+import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
+import PatientPaymentsPanel from '@/components/payments/PatientPaymentsPanel.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -141,6 +144,9 @@ onMounted(() => {
         <Tab value="overview">{{ t('patients.tabs.overview') }}</Tab>
         <Tab value="appointments">{{ t('patients.tabs.appointments') }}</Tab>
         <Tab value="dentalChart">{{ t('patients.tabs.dentalChart') }}</Tab>
+        <Tab value="treatmentPlans">{{ t('patients.tabs.treatmentPlans') }}</Tab>
+        <Tab value="invoices">{{ t('patients.tabs.invoices') }}</Tab>
+        <Tab value="payments">{{ t('patients.tabs.payments') }}</Tab>
       </TabList>
       <TabPanels>
         <TabPanel value="overview">
@@ -240,6 +246,24 @@ onMounted(() => {
         <TabPanel value="dentalChart">
           <div class="pt-2">
             <PatientDentalChartPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="treatmentPlans">
+          <div class="pt-2">
+            <PatientTreatmentPlansPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="invoices">
+          <div class="pt-2">
+            <PatientInvoicesPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="payments">
+          <div class="pt-2">
+            <PatientPaymentsPanel :patient-id="patientId" />
           </div>
         </TabPanel>
       </TabPanels>

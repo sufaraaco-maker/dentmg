@@ -143,7 +143,10 @@
     "tabs": {
       "overview": "Genel Bakış",
       "appointments": "Randevular",
-      "dentalChart": "Diş Şeması"
+      "dentalChart": "Diş Şeması",
+      "treatmentPlans": "Tedavi Planları",
+      "invoices": "Faturalar",
+      "payments": "Ödemeler"
     },
     "sections": {
       "demographics": "Demografi",
@@ -167,6 +170,21 @@
       "title": "Randevular",
       "new": "Yeni Randevu",
       "empty": "Bu hasta için henüz randevu yok."
+    },
+    "treatmentPlansPanel": {
+      "title": "Tedavi Planları",
+      "new": "Yeni Tedavi Planı",
+      "empty": "Bu hasta için henüz tedavi planı yok."
+    },
+    "invoicesPanel": {
+      "title": "Faturalar",
+      "new": "Yeni Fatura",
+      "empty": "Bu hasta için henüz fatura yok."
+    },
+    "paymentsPanel": {
+      "title": "Ödemeler",
+      "new": "Ödeme Kaydet",
+      "empty": "Bu hasta için henüz ödeme kaydedilmedi."
     }
   },
   "appointments": {
@@ -521,6 +539,269 @@
       "deleteConfirmHeader": "Şema Kaydını Sil",
       "deleted": "Şema kaydı başarıyla silindi",
       "deleteError": "Şema kaydı silinemedi"
+    }
+  },
+  "treatmentPlans": {
+    "title": "Tedavi Planları",
+    "status": {
+      "draft": "Taslak",
+      "presented": "Sunuldu",
+      "accepted": "Kabul Edildi",
+      "in_progress": "Devam Ediyor",
+      "completed": "Tamamlandı",
+      "rejected": "Reddedildi",
+      "cancelled": "İptal Edildi"
+    },
+    "itemStatus": {
+      "planned": "Planlandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "loadError": "Tedavi planları yüklenemedi",
+    "notFound": "Tedavi planı bulunamadı",
+    "forbidden": "Bunu yapma izniniz yok",
+    "list": {
+      "plan": "Plan",
+      "untitled": "Başlıksız Plan",
+      "status": "Durum",
+      "dentist": "Diş Hekimi",
+      "createdAt": "Oluşturulma",
+      "items": "Kalemler",
+      "estimatedCost": "Tahmini Maliyet",
+      "empty": "Tedavi planı bulunamadı"
+    },
+    "dialog": {
+      "createTitle": "Yeni Tedavi Planı",
+      "fieldRequired": "Bu alan zorunludur",
+      "dentist": "Diş Hekimi",
+      "title": "Başlık",
+      "titlePlaceholder": "örn. Seçenek A — İmplant",
+      "notes": "Notlar",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Tedavi planı kaydedildi",
+      "saveError": "Tedavi planı kaydedilemedi"
+    },
+    "detail": {
+      "overview": "Genel Bakış",
+      "createdBy": "Oluşturan",
+      "startedAt": "Başladı",
+      "costSummary": "Maliyet Özeti",
+      "estimateOnly": "Yalnızca tahmindir — fatura değildir.",
+      "items": "Tedavi Planı Kalemleri",
+      "supersededBy": "Bu plan \"{title}\" ile değiştirildi.",
+      "supersedes": "Bu plan \"{title}\" planının yerini alır.",
+      "viewPlan": "Planı Görüntüle",
+      "actions": {
+        "present": "Sun",
+        "accept": "Kabul Et",
+        "reject": "Reddet",
+        "start": "Başlat",
+        "complete": "Tamamla",
+        "cancel": "Planı İptal Et"
+      },
+      "confirm": {
+        "rejectMessage": "Bu tedavi planını reddetmek istediğinizden emin misiniz?",
+        "cancelMessage": "Bu tedavi planını iptal etmek istediğinizden emin misiniz? Hâlâ planlı durumdaki her kalem de iptal edilecek."
+      },
+      "actionSuccess": "Tedavi planı güncellendi",
+      "actionError": "Tedavi planı güncellenemedi",
+      "openItemsError": "Bu planı tamamlamadan önce planlı durumdaki her kalemi tamamlayın veya iptal edin."
+    },
+    "items": {
+      "empty": "Bu planda henüz kalem yok.",
+      "procedure": "İşlem",
+      "tooth": "Diş",
+      "surfaces": "Yüzeyler",
+      "quantity": "Adet",
+      "unitCost": "Birim Maliyet",
+      "subtotal": "Ara Toplam",
+      "status": "Durum",
+      "linked": "Bağlantılar",
+      "diagnosisLink": "Tanı: Diş {tooth} ({status})",
+      "actions": "İşlemler",
+      "add": "Kalem Ekle",
+      "completeItem": "Kalemi Tamamla",
+      "cancelItem": "Kalemi İptal Et",
+      "deleteConfirmHeader": "Kalemi Sil",
+      "deleteConfirmMessage": "Bu kalemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleted": "Kalem silindi",
+      "deleteError": "Kalem silinemedi",
+      "dialog": {
+        "createTitle": "Kalem Ekle",
+        "editTitle": "Kalemi Düzenle",
+        "procedure": "İşlem",
+        "selectProcedure": "Bir işlem seçin",
+        "tooth": "Diş",
+        "selectTooth": "Bir diş seçin (isteğe bağlı)",
+        "surfaces": "Yüzeyler",
+        "phase": "Aşama",
+        "notes": "Notlar",
+        "fieldRequired": "Bu alan zorunludur",
+        "surfacesRequired": "Bu işlem için en az bir yüzey gereklidir",
+        "toothRequiredWithSurfaces": "Yüzey seçildiğinde diş gereklidir",
+        "saved": "Kalem kaydedildi",
+        "saveError": "Kalem kaydedilemedi",
+        "offerLockedNote": "Bu plan artık taslak değil — işlem, diş, yüzeyler, adet ve maliyet artık değiştirilemez. Yalnızca aşama ve notlar düzenlenebilir."
+      }
+    }
+  },
+  "invoices": {
+    "status": {
+      "draft": "Taslak",
+      "issued": "Kesildi",
+      "void": "İptal Edildi"
+    },
+    "loadError": "Faturalar yüklenemedi",
+    "createError": "Fatura oluşturulamadı",
+    "forbidden": "Bunu yapma izniniz yok",
+    "list": {
+      "number": "Fatura No",
+      "draftLabel": "Taslak",
+      "status": "Durum",
+      "createdAt": "Oluşturulma",
+      "items": "Kalemler",
+      "total": "Toplam",
+      "empty": "Fatura bulunamadı"
+    },
+    "dialog": {
+      "editTitle": "Faturayı Düzenle",
+      "issueDate": "Düzenleme Tarihi",
+      "dueDate": "Son Ödeme Tarihi",
+      "notes": "Notlar",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Fatura kaydedildi",
+      "saveError": "Fatura kaydedilemedi"
+    },
+    "detail": {
+      "draftTitle": "Taslak Fatura",
+      "notFound": "Fatura bulunamadı",
+      "overview": "Genel Bakış",
+      "createdBy": "Oluşturan",
+      "issueDate": "Düzenleme Tarihi",
+      "dueDate": "Son Ödeme Tarihi",
+      "total": "Toplam",
+      "items": "Fatura Kalemleri",
+      "payments": "Ödemeler",
+      "amountPaid": "Ödenen Tutar",
+      "balanceDue": "Kalan Bakiye",
+      "paymentStatus": "Ödeme Durumu",
+      "actions": {
+        "issue": "Kes",
+        "void": "İptal Et"
+      },
+      "confirm": {
+        "issueMessage": "Bu faturayı kesmek istediğinizden emin misiniz? Her kalem dondurulacak ve kalıcı bir fatura numarası atanacaktır.",
+        "voidMessage": "Bu faturayı iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz — gerekirse ayrı olarak düzeltilmiş yeni bir fatura oluşturun."
+      },
+      "actionSuccess": "Fatura güncellendi",
+      "actionError": "Fatura güncellenemedi",
+      "confirmDeleteHeader": "Faturayı Sil",
+      "confirmDeleteMessage": "Bu taslak faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleted": "Fatura silindi",
+      "deleteError": "Fatura silinemedi"
+    },
+    "items": {
+      "empty": "Bu faturada henüz kalem yok.",
+      "kindLabel": "Tür",
+      "kind": {
+        "charge": "Ücret",
+        "discount": "İndirim",
+        "tax": "Vergi"
+      },
+      "description": "Açıklama",
+      "quantity": "Adet",
+      "unitAmount": "Birim Tutar",
+      "amount": "Tutar",
+      "actions": "İşlemler",
+      "add": "Ücret Ekle",
+      "addFromPlan": "Tedavi Planından Ekle",
+      "linkedFromPlan": "Tedavi planından",
+      "deleteConfirmHeader": "Kalemi Sil",
+      "deleteConfirmMessage": "Bu kalemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleted": "Kalem silindi",
+      "deleteError": "Kalem silinemedi",
+      "dialog": {
+        "createTitle": "Ücret Ekle",
+        "editTitle": "Kalemi Düzenle",
+        "kind": "Tür",
+        "description": "Açıklama",
+        "notes": "Notlar",
+        "linkedProcedure": "Bağlı İşlem",
+        "fieldRequired": "Bu alan zorunludur",
+        "saved": "Kalem kaydedildi",
+        "saveError": "Kalem kaydedilemedi"
+      },
+      "picker": {
+        "title": "Tedavi Planından Ekle",
+        "empty": "Faturalandırılabilecek tamamlanmış tedavi planı kalemi yok.",
+        "procedure": "İşlem",
+        "tooth": "Diş",
+        "quantity": "Adet",
+        "cost": "Tahmini Maliyet",
+        "selectedCount": "{n} seçildi",
+        "add": "Seçilenleri Ekle",
+        "added": "Kalemler eklendi",
+        "partialError": "Bazı kalemler eklenemedi",
+        "addError": "Kalemler eklenemedi",
+        "loadError": "Faturalandırılabilir kalemler yüklenemedi"
+      }
+    }
+  },
+  "payments": {
+    "method": {
+      "cash": "Nakit",
+      "card": "Kart",
+      "bank_transfer": "Banka Havalesi",
+      "other": "Diğer"
+    },
+    "status": {
+      "unpaid": "Ödenmedi",
+      "partially_paid": "Kısmen Ödendi",
+      "paid": "Ödendi"
+    },
+    "unapplied": "Uygulanmamış",
+    "loadError": "Ödemeler yüklenemedi",
+    "empty": "Ödeme bulunamadı",
+    "deleted": "Ödeme silindi",
+    "deleteError": "Ödeme silinemedi",
+    "deleteConfirmHeader": "Ödemeyi Sil",
+    "deleteConfirmMessage": "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "list": {
+      "receivedAt": "Alındı",
+      "method": "Yöntem",
+      "invoice": "Fatura",
+      "reference": "Referans",
+      "amount": "Tutar",
+      "actions": "İşlemler"
+    },
+    "actions": {
+      "apply": "Faturaya Uygula",
+      "refund": "İade Et"
+    },
+    "dialog": {
+      "recordTitle": "Ödeme Kaydet",
+      "editTitle": "Ödemeyi Düzenle",
+      "amount": "Tutar",
+      "reference": "Referans",
+      "notes": "Notlar",
+      "receivedAt": "Alınma Tarihi",
+      "fieldRequired": "Bu alan zorunludur",
+      "saved": "Ödeme kaydedildi",
+      "saveError": "Ödeme kaydedilemedi"
+    },
+    "refundDialog": {
+      "title": "Ödemeyi İade Et",
+      "remaining": "Kalan iade edilebilir bakiye: {amount} {currency}",
+      "amountInvalid": "{max} tutarına kadar bir değer girin",
+      "saved": "İade kaydedildi",
+      "saveError": "İade kaydedilemedi"
+    },
+    "applyDialog": {
+      "title": "Faturaya Uygula",
+      "invoice": "Fatura",
+      "empty": "Bu hasta için kesilmiş fatura yok.",
+      "saved": "Ödeme uygulandı",
+      "saveError": "Ödeme uygulanamadı"
     }
   }
 }

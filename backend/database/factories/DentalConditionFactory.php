@@ -19,6 +19,8 @@ class DentalConditionFactory extends Factory
             'applies_to_surface' => fake()->boolean(),
             'default_color' => fake()->hexColor(),
             'icon_key' => fake()->randomElement(['filling', 'crown', 'missing', 'root_canal', null]),
+            'default_cost' => fake()->randomFloat(2, 50, 800),
+            'description' => fake()->optional()->sentence(),
             'is_active' => true,
             'sort_order' => fake()->numberBetween(1, 20),
         ];

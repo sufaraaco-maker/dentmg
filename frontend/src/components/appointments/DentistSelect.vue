@@ -9,6 +9,9 @@ defineProps<{
   modelValue: string | null
   disabled?: boolean
   invalid?: boolean
+  /** Real HTML `autofocus`, matching `PatientSearchSelect`'s identical opt-in prop — PrimeVue
+   *  `Dialog`'s `onAfterEnter` handler looks for `[autofocus]` first. */
+  autofocus?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
@@ -28,6 +31,7 @@ onMounted(() => providers.fetchAll())
     :loading="providers.loading"
     :disabled="disabled"
     :invalid="invalid"
+    :autofocus="autofocus"
     :placeholder="t('appointments.dialog.selectDentist')"
     fluid
     @update:model-value="emit('update:modelValue', $event)"

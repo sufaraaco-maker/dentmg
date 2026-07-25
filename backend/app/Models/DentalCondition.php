@@ -21,6 +21,8 @@ class DentalCondition extends Model
         'applies_to_surface',
         'default_color',
         'icon_key',
+        'default_cost',
+        'description',
         'is_active',
         'sort_order',
     ];
@@ -30,6 +32,7 @@ class DentalCondition extends Model
         return [
             'category' => DentalConditionCategory::class,
             'applies_to_surface' => 'boolean',
+            'default_cost' => 'decimal:2',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -41,6 +44,14 @@ class DentalCondition extends Model
     public function dentalChartEntries(): HasMany
     {
         return $this->hasMany(DentalChartEntry::class);
+    }
+
+    /**
+     * @return HasMany<TreatmentPlanItem, $this>
+     */
+    public function treatmentPlanItems(): HasMany
+    {
+        return $this->hasMany(TreatmentPlanItem::class);
     }
 
     public function scopeActive(Builder $query): Builder

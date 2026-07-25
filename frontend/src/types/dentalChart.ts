@@ -27,6 +27,10 @@ export interface DentalCondition {
   applies_to_surface: boolean
   default_color: string
   icon_key: string | null
+  /** Procedures only (`null` for findings) — prefills a new Treatment Plan item's `unit_cost`
+   *  (design doc §6/§11). Decimal cast, serialized as a string, e.g. `"150.00"`. */
+  default_cost: string | null
+  description: string | null
   is_active: boolean
   sort_order: number
   created_at: string
