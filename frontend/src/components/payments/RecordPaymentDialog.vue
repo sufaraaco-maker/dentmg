@@ -40,7 +40,9 @@ const toast = useToast()
 const paymentsStore = usePaymentsStore()
 const invoicesStore = useInvoicesStore()
 
-const methodOptions = computed(() => PAYMENT_METHODS.map((method) => ({ label: t(`payments.method.${method}`), value: method })))
+const methodOptions = computed(() =>
+  PAYMENT_METHODS.map((method) => ({ label: t(`payments.method.${method}`), value: method })),
+)
 
 const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
@@ -129,12 +131,22 @@ async function submit() {
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.list.method') }}</label>
-          <Select v-model="form.method" :options="methodOptions" option-label="label" option-value="value" fluid />
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.list.method')
+          }}</label>
+          <Select
+            v-model="form.method"
+            :options="methodOptions"
+            option-label="label"
+            option-value="value"
+            fluid
+          />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.amount') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.dialog.amount')
+          }}</label>
           <InputNumber
             v-model="form.amount"
             :min="0"
@@ -150,12 +162,16 @@ async function submit() {
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.reference') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.dialog.reference')
+          }}</label>
           <InputText v-model="form.reference" fluid />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.receivedAt') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.dialog.receivedAt')
+          }}</label>
           <DatePicker v-model="form.received_at" date-format="yy-mm-dd" show-icon fluid />
         </div>
       </div>

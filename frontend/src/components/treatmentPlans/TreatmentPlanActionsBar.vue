@@ -50,10 +50,22 @@ const NON_TERMINAL: TreatmentPlanStatus[] = ['draft', 'presented', 'accepted', '
 const RULES: ActionRule[] = [
   { action: 'present', visibleStatuses: ['draft'], icon: 'pi pi-send', severity: 'info' },
   { action: 'accept', visibleStatuses: ['presented'], icon: 'pi pi-check', severity: 'success' },
-  { action: 'reject', visibleStatuses: ['presented'], icon: 'pi pi-times-circle', severity: 'danger', requiresConfirm: true },
+  {
+    action: 'reject',
+    visibleStatuses: ['presented'],
+    icon: 'pi pi-times-circle',
+    severity: 'danger',
+    requiresConfirm: true,
+  },
   { action: 'start', visibleStatuses: ['accepted'], icon: 'pi pi-play', severity: undefined },
   { action: 'complete', visibleStatuses: ['in_progress'], icon: 'pi pi-check-circle', severity: 'success' },
-  { action: 'cancel', visibleStatuses: NON_TERMINAL, icon: 'pi pi-ban', severity: 'danger', requiresConfirm: true },
+  {
+    action: 'cancel',
+    visibleStatuses: NON_TERMINAL,
+    icon: 'pi pi-ban',
+    severity: 'danger',
+    requiresConfirm: true,
+  },
 ]
 
 const visibleRules = computed(() =>

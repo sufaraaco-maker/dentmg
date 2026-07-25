@@ -61,7 +61,11 @@ async function createInvoice() {
   }
 }
 
-watch(() => props.patientId, (patientId) => invoicesStore.fetchForPatient(patientId), { immediate: true })
+watch(
+  () => props.patientId,
+  (patientId) => invoicesStore.fetchForPatient(patientId),
+  { immediate: true },
+)
 </script>
 
 <template>

@@ -92,7 +92,10 @@ function formatDateTime(value: string): string {
  *  loads the patient's full plan history); never triggers an extra fetch just for this banner. */
 const predecessor = computed(() => {
   if (!plan.value) return null
-  return Array.from(treatmentPlansStore.cache.values()).find((p) => p.superseded_by_plan_id === plan.value!.id) ?? null
+  return (
+    Array.from(treatmentPlansStore.cache.values()).find((p) => p.superseded_by_plan_id === plan.value!.id) ??
+    null
+  )
 })
 
 function goToPatient() {
@@ -126,7 +129,11 @@ function goToPlan(id: string) {
 
     <template v-else-if="plan">
       <Message v-if="plan.superseded_by_plan" severity="warn" :closable="false">
-        {{ t('treatmentPlans.detail.supersededBy', { title: plan.superseded_by_plan.title ?? t('treatmentPlans.list.untitled') }) }}
+        {{
+          t('treatmentPlans.detail.supersededBy', {
+            title: plan.superseded_by_plan.title ?? t('treatmentPlans.list.untitled'),
+          })
+        }}
         <Button
           :label="t('treatmentPlans.detail.viewPlan')"
           text
@@ -137,7 +144,11 @@ function goToPlan(id: string) {
       </Message>
 
       <Message v-if="predecessor" severity="info" :closable="false">
-        {{ t('treatmentPlans.detail.supersedes', { title: predecessor.title ?? t('treatmentPlans.list.untitled') }) }}
+        {{
+          t('treatmentPlans.detail.supersedes', {
+            title: predecessor.title ?? t('treatmentPlans.list.untitled'),
+          })
+        }}
         <Button
           :label="t('treatmentPlans.detail.viewPlan')"
           text
@@ -186,7 +197,9 @@ function goToPlan(id: string) {
                 <dd dir="ltr" class="text-start">{{ formatDateTime(plan.cancelled_at) }}</dd>
               </template>
             </dl>
-            <p v-if="plan.notes" class="mt-3 text-sm text-surface-600 dark:text-surface-300">{{ plan.notes }}</p>
+            <p v-if="plan.notes" class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+              {{ plan.notes }}
+            </p>
           </template>
         </Card>
 
@@ -224,10 +237,5 @@ function goToPlan(id: string) {
     </template>
   </div>
 
-  <TreatmentPlanItemDialog
-    v-if="plan"
-    v-model:visible="itemDialogVisible"
-    :plan="plan"
-    :item="editingItem"
-  />
+  <TreatmentPlanItemDialog v-if="plan" v-model:visible="itemDialogVisible" :plan="plan" :item="editingItem" />
 </template>

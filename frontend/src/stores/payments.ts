@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
 import { paymentsApi } from '@/services/payments'
-import type { ApplyPaymentPayload, Payment, RecordPaymentPayload, RefundPaymentPayload, UpdatePaymentPayload } from '@/types/payment'
+import type {
+  ApplyPaymentPayload,
+  Payment,
+  RecordPaymentPayload,
+  RefundPaymentPayload,
+  UpdatePaymentPayload,
+} from '@/types/payment'
 
 /**
  * A single id-keyed cache serving both the Patient Payments tab's list and the per-invoice

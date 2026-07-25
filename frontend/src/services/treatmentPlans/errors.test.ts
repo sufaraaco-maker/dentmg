@@ -3,7 +3,9 @@ import { isTreatmentPlanError, rethrowTreatmentPlanError } from './errors'
 
 describe('isTreatmentPlanError', () => {
   it('recognizes a valid plan-transition-error shape', () => {
-    expect(isTreatmentPlanError({ message: 'x', code: 'invalid_treatment_plan_status_transition' })).toBe(true)
+    expect(isTreatmentPlanError({ message: 'x', code: 'invalid_treatment_plan_status_transition' })).toBe(
+      true,
+    )
   })
 
   it('recognizes a valid item-transition-error shape', () => {

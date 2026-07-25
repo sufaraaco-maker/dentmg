@@ -15,7 +15,8 @@ vi.mock('primevue/useconfirm', () => ({ useConfirm: vi.fn() }))
 vi.mock('primevue/usetoast', () => ({ useToast: vi.fn() }))
 
 vi.mock('@/services/treatmentPlans', async () => {
-  const actual = await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
+  const actual =
+    await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
   return {
     treatmentPlansApi: {
       list: vi.fn(),
@@ -31,7 +32,13 @@ vi.mock('@/services/treatmentPlans', async () => {
       createRevision: vi.fn(),
       remove: vi.fn(),
     },
-    treatmentPlanItemsApi: { create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+    treatmentPlanItemsApi: {
+      create: vi.fn(),
+      update: vi.fn(),
+      complete: vi.fn(),
+      cancel: vi.fn(),
+      remove: vi.fn(),
+    },
     isTreatmentPlanError: actual.isTreatmentPlanError,
     rethrowTreatmentPlanError: actual.rethrowTreatmentPlanError,
   }
@@ -94,9 +101,9 @@ describe('TreatmentPlanActionsBar — visibility', () => {
 
   it('shows Start for an accepted plan and Complete for an in-progress plan', () => {
     useAuthStore().user = { id: 'u1', name: 'Dr. Smith', email: 'd@example.com', role: 'dentist' }
-    expect(actionLabels(mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'accepted' }) } }))).toEqual(
-      expect.arrayContaining(['Start', 'Cancel Plan']),
-    )
+    expect(
+      actionLabels(mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'accepted' }) } })),
+    ).toEqual(expect.arrayContaining(['Start', 'Cancel Plan']))
     expect(
       actionLabels(mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'in_progress' }) } })),
     ).toEqual(expect.arrayContaining(['Complete', 'Cancel Plan']))
@@ -123,7 +130,10 @@ describe('TreatmentPlanActionsBar — non-destructive actions run immediately', 
     mockedPlansApi.present.mockResolvedValue(makePlan({ status: 'presented' }))
 
     const wrapper = mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'draft' }) } })
-    await wrapper.findAll('button').find((b) => b.text() === 'Present')!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Present')!
+      .trigger('click')
     await flushPromises()
 
     expect(mockedPlansApi.present).toHaveBeenCalledWith('plan-1')
@@ -136,11 +146,16 @@ describe('TreatmentPlanActionsBar — destructive actions require confirmation',
   it('only cancels the plan once the confirm dialog is accepted', async () => {
     useAuthStore().user = { id: 'u1', name: 'Dr. Smith', email: 'd@example.com', role: 'dentist' }
     const requireMock = vi.fn()
-    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<typeof useConfirm>)
+    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<
+      typeof useConfirm
+    >)
     mockedPlansApi.cancel.mockResolvedValue(makePlan({ status: 'cancelled' }))
 
     const wrapper = mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'draft' }) } })
-    await wrapper.findAll('button').find((b) => b.text() === 'Cancel Plan')!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Cancel Plan')!
+      .trigger('click')
 
     expect(requireMock).toHaveBeenCalledTimes(1)
     expect(mockedPlansApi.cancel).not.toHaveBeenCalled()
@@ -164,11 +179,17 @@ describe('TreatmentPlanActionsBar — error handling', () => {
     })
 
     const wrapper = mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'in_progress' }) } })
-    await wrapper.findAll('button').find((b) => b.text() === 'Complete')!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Complete')!
+      .trigger('click')
     await flushPromises()
 
     expect(toastAddMock).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'error', summary: expect.stringContaining('Complete or cancel every planned item') }),
+      expect.objectContaining({
+        severity: 'error',
+        summary: expect.stringContaining('Complete or cancel every planned item'),
+      }),
     )
   })
 
@@ -181,7 +202,10 @@ describe('TreatmentPlanActionsBar — error handling', () => {
     mockedPlansApi.get.mockResolvedValue(makePlan({ status: 'presented' }))
 
     const wrapper = mount(TreatmentPlanActionsBar, { props: { plan: makePlan({ status: 'draft' }) } })
-    await wrapper.findAll('button').find((b) => b.text() === 'Present')!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Present')!
+      .trigger('click')
     await flushPromises()
 
     expect(mockedPlansApi.get).toHaveBeenCalledWith('plan-1')

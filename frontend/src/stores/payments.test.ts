@@ -149,7 +149,9 @@ describe('usePaymentsStore mutations', () => {
     mockedApi.refund.mockResolvedValueOnce(
       makePayment({ id: 'payment-2', amount: '-40.00', refunded_payment_id: 'payment-1', is_refund: true }),
     )
-    mockedApi.get.mockResolvedValueOnce(makePayment({ id: 'payment-1', remaining_refundable_amount: '60.00' }))
+    mockedApi.get.mockResolvedValueOnce(
+      makePayment({ id: 'payment-1', remaining_refundable_amount: '60.00' }),
+    )
     const store = usePaymentsStore()
 
     const refund = await store.refund('payment-1', { amount: 40 })

@@ -38,8 +38,20 @@ interface ActionRule {
 }
 
 const RULES: ActionRule[] = [
-  { action: 'issue', visibleStatuses: ['draft'], icon: 'pi pi-send', severity: 'success', requiresConfirm: true },
-  { action: 'void', visibleStatuses: ['issued'], icon: 'pi pi-ban', severity: 'danger', requiresConfirm: true },
+  {
+    action: 'issue',
+    visibleStatuses: ['draft'],
+    icon: 'pi pi-send',
+    severity: 'success',
+    requiresConfirm: true,
+  },
+  {
+    action: 'void',
+    visibleStatuses: ['issued'],
+    icon: 'pi pi-ban',
+    severity: 'danger',
+    requiresConfirm: true,
+  },
 ]
 
 const busy = ref(false)

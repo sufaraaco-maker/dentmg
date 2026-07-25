@@ -95,12 +95,16 @@ async function submit() {
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.reference') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.dialog.reference')
+          }}</label>
           <InputText v-model="form.reference" autofocus fluid />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.receivedAt') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('payments.dialog.receivedAt')
+          }}</label>
           <DatePicker v-model="form.received_at" date-format="yy-mm-dd" show-icon fluid />
         </div>
       </div>

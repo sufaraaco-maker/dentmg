@@ -124,7 +124,9 @@ function confirmDelete(item: TreatmentPlanItem) {
 
     <Column :header="t('treatmentPlans.items.tooth')">
       <template #body="{ data }">
-        <span v-if="data.tooth_number">{{ data.tooth_number }} — {{ toothDisplayName(data.tooth_number) }}</span>
+        <span v-if="data.tooth_number"
+          >{{ data.tooth_number }} — {{ toothDisplayName(data.tooth_number) }}</span
+        >
         <span v-else>—</span>
       </template>
     </Column>
@@ -141,16 +143,23 @@ function confirmDelete(item: TreatmentPlanItem) {
     </Column>
 
     <Column :header="t('treatmentPlans.items.unitCost')">
-      <template #body="{ data }"><span dir="ltr">{{ data.unit_cost }}</span></template>
+      <template #body="{ data }"
+        ><span dir="ltr">{{ data.unit_cost }}</span></template
+      >
     </Column>
 
     <Column :header="t('treatmentPlans.items.subtotal')">
-      <template #body="{ data }"><span dir="ltr">{{ data.estimated_cost }}</span></template>
+      <template #body="{ data }"
+        ><span dir="ltr">{{ data.estimated_cost }}</span></template
+      >
     </Column>
 
     <Column :header="t('treatmentPlans.items.status')">
       <template #body="{ data }">
-        <Tag :value="t(`treatmentPlans.itemStatus.${data.status}`)" :severity="ITEM_STATUS_SEVERITY[data.status as TreatmentPlanItemStatus]" />
+        <Tag
+          :value="t(`treatmentPlans.itemStatus.${data.status}`)"
+          :severity="ITEM_STATUS_SEVERITY[data.status as TreatmentPlanItemStatus]"
+        />
       </template>
     </Column>
 

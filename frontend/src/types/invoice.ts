@@ -93,7 +93,8 @@ export interface CreateInvoiceItemPayload {
 
 export type UpdateInvoiceItemPayload = Partial<CreateInvoiceItemPayload>
 
-export type InvoiceErrorCode = 'invalid_invoice_status_transition' | 'invoice_item_locked' | 'invalid_invoice_item'
+export type InvoiceErrorCode =
+  'invalid_invoice_status_transition' | 'invoice_item_locked' | 'invalid_invoice_item'
 
 /** The `{message, code}` shape every Invoice domain exception renders as (backend design doc §9/§12). */
 export interface InvoiceError {

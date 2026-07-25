@@ -142,7 +142,9 @@ async function submit() {
       </Column>
 
       <Column :header="t('invoices.items.picker.cost')">
-        <template #body="{ data }"><span dir="ltr">{{ (data as TreatmentPlanItem).estimated_cost }}</span></template>
+        <template #body="{ data }"
+          ><span dir="ltr">{{ (data as TreatmentPlanItem).estimated_cost }}</span></template
+        >
       </Column>
     </DataTable>
 

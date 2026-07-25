@@ -53,7 +53,11 @@ function onSaved() {
   dialogVisible.value = false
 }
 
-watch(() => props.patientId, (patientId) => treatmentPlansStore.fetchForPatient(patientId), { immediate: true })
+watch(
+  () => props.patientId,
+  (patientId) => treatmentPlansStore.fetchForPatient(patientId),
+  { immediate: true },
+)
 </script>
 
 <template>

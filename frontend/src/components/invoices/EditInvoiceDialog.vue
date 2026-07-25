@@ -113,7 +113,9 @@ async function submit() {
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.dialog.issueDate') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('invoices.dialog.issueDate')
+          }}</label>
           <DatePicker
             v-model="form.issue_date"
             date-format="yy-mm-dd"
@@ -127,7 +129,9 @@ async function submit() {
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.dialog.dueDate') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('invoices.dialog.dueDate')
+          }}</label>
           <DatePicker
             v-model="form.due_date"
             date-format="yy-mm-dd"

@@ -150,13 +150,18 @@ async function submit() {
     @update:visible="(v) => emit('update:visible', v)"
   >
     <form class="flex flex-col gap-4" @submit.prevent="submit">
-      <div v-if="isLinkedToTreatmentPlan" class="flex flex-col gap-1 text-sm text-surface-600 dark:text-surface-300">
+      <div
+        v-if="isLinkedToTreatmentPlan"
+        class="flex flex-col gap-1 text-sm text-surface-600 dark:text-surface-300"
+      >
         <span class="font-medium">{{ t('invoices.items.dialog.linkedProcedure') }}</span>
         <span>{{ item?.treatment_plan_item?.procedure_name }}</span>
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.items.dialog.kind') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('invoices.items.dialog.kind')
+        }}</label>
         <Select
           v-model="form.kind"
           :options="kindOptions"
@@ -179,13 +184,17 @@ async function submit() {
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.items.quantity') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('invoices.items.quantity')
+          }}</label>
           <InputNumber v-model="form.quantity" :min="1" show-buttons :invalid="!!errors.quantity" fluid />
           <Message v-if="errors.quantity" severity="error" size="small">{{ errors.quantity[0] }}</Message>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.items.unitAmount') }}</label>
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{
+            t('invoices.items.unitAmount')
+          }}</label>
           <InputNumber
             v-model="form.unit_amount"
             :min="0"
@@ -194,12 +203,16 @@ async function submit() {
             :invalid="!!errors.unit_amount"
             fluid
           />
-          <Message v-if="errors.unit_amount" severity="error" size="small">{{ errors.unit_amount[0] }}</Message>
+          <Message v-if="errors.unit_amount" severity="error" size="small">{{
+            errors.unit_amount[0]
+          }}</Message>
         </div>
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('invoices.items.dialog.notes') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('invoices.items.dialog.notes')
+        }}</label>
         <Textarea v-model="form.notes" rows="3" auto-resize maxlength="2000" />
         <span v-if="showNotesCounter" class="text-xs text-surface-400">
           {{ t('invoices.dialog.charactersRemaining', { n: notesRemaining }) }}

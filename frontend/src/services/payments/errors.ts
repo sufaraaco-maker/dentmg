@@ -1,6 +1,9 @@
 import type { PaymentError } from '@/types/payment'
 
-const ERROR_CODES: PaymentError['code'][] = ['invalid_payment_operation', 'payment_refund_exceeds_remaining_balance']
+const ERROR_CODES: PaymentError['code'][] = [
+  'invalid_payment_operation',
+  'payment_refund_exceeds_remaining_balance',
+]
 
 export function isPaymentError(data: unknown): data is PaymentError {
   if (typeof data !== 'object' || data === null || !('code' in data)) return false

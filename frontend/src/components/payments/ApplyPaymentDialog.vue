@@ -100,7 +100,9 @@ async function submit() {
         {{ t('payments.applyDialog.empty') }}
       </p>
       <div v-else class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.applyDialog.invoice') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('payments.applyDialog.invoice')
+        }}</label>
         <Select
           v-model="selectedInvoiceId"
           :options="invoiceOptions"

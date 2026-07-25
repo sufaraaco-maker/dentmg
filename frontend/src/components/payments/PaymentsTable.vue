@@ -93,11 +93,15 @@ function confirmDelete(payment: Payment) {
     <template #empty>{{ t('payments.empty') }}</template>
 
     <Column field="received_at" :header="t('payments.list.receivedAt')" sortable>
-      <template #body="{ data }"><span dir="ltr">{{ formatDate((data as Payment).received_at) }}</span></template>
+      <template #body="{ data }"
+        ><span dir="ltr">{{ formatDate((data as Payment).received_at) }}</span></template
+      >
     </Column>
 
     <Column :header="t('payments.list.method')">
-      <template #body="{ data }"><PaymentMethodTag :method="(data as Payment).method" size="small" /></template>
+      <template #body="{ data }"
+        ><PaymentMethodTag :method="(data as Payment).method" size="small"
+      /></template>
     </Column>
 
     <Column v-if="showInvoiceColumn" :header="t('payments.list.invoice')">
@@ -118,10 +122,7 @@ function confirmDelete(payment: Payment) {
 
     <Column :header="t('payments.list.amount')">
       <template #body="{ data }">
-        <span
-          dir="ltr"
-          :class="(data as Payment).is_refund ? 'text-red-600 dark:text-red-400' : undefined"
-        >
+        <span dir="ltr" :class="(data as Payment).is_refund ? 'text-red-600 dark:text-red-400' : undefined">
           {{ (data as Payment).amount }} {{ (data as Payment).currency_code }}
         </span>
       </template>

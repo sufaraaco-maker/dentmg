@@ -22,7 +22,10 @@ import type { Invoice, InvoiceItem } from '@/types/invoice'
 
 // Mirrors InvoiceStatusChip.vue's Tag+severity convention (backend design doc §4/§11): `unpaid`
 // reads as neutral (not yet a problem on an issued invoice), `paid` as success.
-const PAYMENT_STATUS_SEVERITY: Record<NonNullable<Invoice['payment_status']>, 'secondary' | 'warn' | 'success'> = {
+const PAYMENT_STATUS_SEVERITY: Record<
+  NonNullable<Invoice['payment_status']>,
+  'secondary' | 'warn' | 'success'
+> = {
   unpaid: 'secondary',
   partially_paid: 'warn',
   paid: 'success',
@@ -189,10 +192,14 @@ function confirmDelete() {
               <dd dir="ltr" class="text-start">{{ formatDateTime(invoice.created_at) }}</dd>
 
               <dt class="text-surface-500">{{ t('invoices.detail.issueDate') }}</dt>
-              <dd dir="ltr" class="text-start">{{ invoice.issue_date ? formatDate(invoice.issue_date) : '—' }}</dd>
+              <dd dir="ltr" class="text-start">
+                {{ invoice.issue_date ? formatDate(invoice.issue_date) : '—' }}
+              </dd>
 
               <dt class="text-surface-500">{{ t('invoices.detail.dueDate') }}</dt>
-              <dd dir="ltr" class="text-start">{{ invoice.due_date ? formatDate(invoice.due_date) : '—' }}</dd>
+              <dd dir="ltr" class="text-start">
+                {{ invoice.due_date ? formatDate(invoice.due_date) : '—' }}
+              </dd>
 
               <template v-if="invoice.issued_at">
                 <dt class="text-surface-500">{{ t('invoices.status.issued') }}</dt>
@@ -203,14 +210,18 @@ function confirmDelete() {
                 <dd dir="ltr" class="text-start">{{ formatDateTime(invoice.voided_at) }}</dd>
               </template>
             </dl>
-            <p v-if="invoice.notes" class="mt-3 text-sm text-surface-600 dark:text-surface-300">{{ invoice.notes }}</p>
+            <p v-if="invoice.notes" class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+              {{ invoice.notes }}
+            </p>
           </template>
         </Card>
 
         <Card>
           <template #title>{{ t('invoices.detail.total') }}</template>
           <template #content>
-            <p class="text-2xl font-semibold" dir="ltr">{{ invoice.total ?? '0.00' }} {{ invoice.currency_code }}</p>
+            <p class="text-2xl font-semibold" dir="ltr">
+              {{ invoice.total ?? '0.00' }} {{ invoice.currency_code }}
+            </p>
             <dl v-if="invoice.payment_status" class="mt-3 grid grid-cols-2 gap-y-2 text-sm">
               <dt class="text-surface-500">{{ t('invoices.detail.amountPaid') }}</dt>
               <dd dir="ltr" class="text-start">{{ invoice.amount_paid }} {{ invoice.currency_code }}</dd>
@@ -219,7 +230,12 @@ function confirmDelete() {
               <dd dir="ltr" class="text-start">{{ invoice.balance_due }} {{ invoice.currency_code }}</dd>
 
               <dt class="text-surface-500">{{ t('invoices.detail.paymentStatus') }}</dt>
-              <dd><Tag :value="t(`payments.status.${invoice.payment_status}`)" :severity="PAYMENT_STATUS_SEVERITY[invoice.payment_status]" /></dd>
+              <dd>
+                <Tag
+                  :value="t(`payments.status.${invoice.payment_status}`)"
+                  :severity="PAYMENT_STATUS_SEVERITY[invoice.payment_status]"
+                />
+              </dd>
             </dl>
           </template>
         </Card>
@@ -237,12 +253,7 @@ function confirmDelete() {
                 outlined
                 @click="pickerVisible = true"
               />
-              <Button
-                :label="t('invoices.items.add')"
-                icon="pi pi-plus"
-                size="small"
-                @click="openAddItem"
-              />
+              <Button :label="t('invoices.items.add')" icon="pi pi-plus" size="small" @click="openAddItem" />
             </div>
           </div>
         </template>

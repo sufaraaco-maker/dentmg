@@ -192,7 +192,9 @@ describe('useTreatmentPlansStore plan mutations', () => {
 
   it('createRevision upserts the new plan and refreshes the original to pick up superseded_by_plan_id', async () => {
     mockedPlansApi.createRevision.mockResolvedValueOnce(makePlan({ id: 'plan-2', status: 'draft' }))
-    mockedPlansApi.get.mockResolvedValueOnce(makePlan({ id: 'plan-1', status: 'rejected', superseded_by_plan_id: 'plan-2' }))
+    mockedPlansApi.get.mockResolvedValueOnce(
+      makePlan({ id: 'plan-1', status: 'rejected', superseded_by_plan_id: 'plan-2' }),
+    )
     const store = useTreatmentPlansStore()
 
     const revision = await store.createRevision('plan-1', { title: 'Revised' })

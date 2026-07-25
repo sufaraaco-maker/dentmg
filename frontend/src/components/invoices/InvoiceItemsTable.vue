@@ -77,7 +77,10 @@ function confirmDelete(item: InvoiceItem) {
 
     <Column :header="t('invoices.items.kindLabel')" style="width: 8rem">
       <template #body="{ data }">
-        <Tag :value="t(`invoices.items.kind.${data.kind}`)" :severity="KIND_SEVERITY[data.kind as InvoiceItemKind]" />
+        <Tag
+          :value="t(`invoices.items.kind.${data.kind}`)"
+          :severity="KIND_SEVERITY[data.kind as InvoiceItemKind]"
+        />
       </template>
     </Column>
 
@@ -97,7 +100,9 @@ function confirmDelete(item: InvoiceItem) {
     </Column>
 
     <Column :header="t('invoices.items.unitAmount')">
-      <template #body="{ data }"><span dir="ltr">{{ data.unit_amount }}</span></template>
+      <template #body="{ data }"
+        ><span dir="ltr">{{ data.unit_amount }}</span></template
+      >
     </Column>
 
     <Column :header="t('invoices.items.amount')">

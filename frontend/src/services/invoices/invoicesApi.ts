@@ -62,7 +62,9 @@ export const invoicesApi = {
    *  (§7). Returns the same `TreatmentPlanItem` shape the Treatment Plans module already types,
    *  since the backend echoes the identical `TreatmentPlanItemResource`. */
   async billableTreatmentPlanItems(patientId: string): Promise<TreatmentPlanItem[]> {
-    const { data } = await api.get<TreatmentPlanItem[]>(`/patients/${patientId}/treatment-plan-items/billable`)
+    const { data } = await api.get<TreatmentPlanItem[]>(
+      `/patients/${patientId}/treatment-plan-items/billable`,
+    )
     return data
   },
 }

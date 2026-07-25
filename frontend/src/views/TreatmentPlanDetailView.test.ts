@@ -24,7 +24,13 @@ vi.mock('@/services/treatmentPlans', () => ({
     createRevision: vi.fn(),
     remove: vi.fn(),
   },
-  treatmentPlanItemsApi: { create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+  treatmentPlanItemsApi: {
+    create: vi.fn(),
+    update: vi.fn(),
+    complete: vi.fn(),
+    cancel: vi.fn(),
+    remove: vi.fn(),
+  },
   isTreatmentPlanError: () => false,
   rethrowTreatmentPlanError: (error: unknown) => {
     throw error
@@ -95,7 +101,11 @@ function makeRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/patients/:id', name: 'patient-detail', component: { template: '<div />' } },
-      { path: '/patients/:id/treatment-plans/:planId', name: 'treatment-plan-detail', component: TreatmentPlanDetailView },
+      {
+        path: '/patients/:id/treatment-plans/:planId',
+        name: 'treatment-plan-detail',
+        component: TreatmentPlanDetailView,
+      },
     ],
   })
 }
@@ -148,7 +158,9 @@ describe('TreatmentPlanDetailView — hydration', () => {
 
 describe('TreatmentPlanDetailView — overview', () => {
   it('renders plan metadata, status, and cost summary', async () => {
-    mockedPlansApi.get.mockResolvedValue(makePlan({ status: 'presented', presented_at: '2026-07-21T10:00:00+00:00' }))
+    mockedPlansApi.get.mockResolvedValue(
+      makePlan({ status: 'presented', presented_at: '2026-07-21T10:00:00+00:00' }),
+    )
 
     const wrapper = await mountAt('plan-1')
 
@@ -223,7 +235,7 @@ describe('TreatmentPlanDetailView — items', () => {
 
     const wrapper = await mountAt('plan-1')
 
-    expect(wrapper.text()).toContain('Diagnosis: Tooth 16');
+    expect(wrapper.text()).toContain('Diagnosis: Tooth 16')
   })
 })
 
@@ -235,7 +247,10 @@ describe('TreatmentPlanDetailView — status actions', () => {
     const wrapper = await mountAt('plan-1')
     expect(wrapper.findAll('button').some((b) => b.text() === 'Present')).toBe(true)
 
-    await wrapper.findAll('button').find((b) => b.text() === 'Present')!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Present')!
+      .trigger('click')
     await flushPromises()
 
     expect(mockedPlansApi.present).toHaveBeenCalledWith('plan-1')

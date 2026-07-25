@@ -29,7 +29,11 @@ const canRecord = computed(() => canWrite.value && props.invoice.status === 'iss
 
 const payments = computed(() => paymentsStore.paymentsForInvoice(props.invoice.id))
 
-watch(() => props.invoice.patient_id, (patientId) => paymentsStore.fetchForPatient(patientId), { immediate: true })
+watch(
+  () => props.invoice.patient_id,
+  (patientId) => paymentsStore.fetchForPatient(patientId),
+  { immediate: true },
+)
 
 const recordVisible = ref(false)
 const refundVisible = ref(false)

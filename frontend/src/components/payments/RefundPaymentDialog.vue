@@ -104,11 +104,18 @@ async function submit() {
   >
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <p class="text-sm text-surface-600 dark:text-surface-300">
-        {{ t('payments.refundDialog.remaining', { amount: payment.remaining_refundable_amount, currency: payment.currency_code }) }}
+        {{
+          t('payments.refundDialog.remaining', {
+            amount: payment.remaining_refundable_amount,
+            currency: payment.currency_code,
+          })
+        }}
       </p>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('payments.dialog.amount') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('payments.dialog.amount')
+        }}</label>
         <InputNumber
           v-model="form.amount"
           :min="0"
@@ -129,12 +136,7 @@ async function submit() {
 
       <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
         <Button type="button" :label="t('common.cancel')" text @click="emit('update:visible', false)" />
-        <Button
-          type="submit"
-          :label="t('payments.actions.refund')"
-          severity="danger"
-          :loading="saving"
-        />
+        <Button type="submit" :label="t('payments.actions.refund')" severity="danger" :loading="saving" />
       </div>
     </form>
   </Dialog>

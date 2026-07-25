@@ -25,7 +25,13 @@ vi.mock('@/services/treatmentPlans', () => ({
     createRevision: vi.fn(),
     remove: vi.fn(),
   },
-  treatmentPlanItemsApi: { create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+  treatmentPlanItemsApi: {
+    create: vi.fn(),
+    update: vi.fn(),
+    complete: vi.fn(),
+    cancel: vi.fn(),
+    remove: vi.fn(),
+  },
   isTreatmentPlanError: () => false,
   rethrowTreatmentPlanError: (error: unknown) => {
     throw error

@@ -37,7 +37,11 @@ watch(
   },
 )
 
-watch(() => props.patientId, (patientId) => paymentsStore.fetchForPatient(patientId), { immediate: true })
+watch(
+  () => props.patientId,
+  (patientId) => paymentsStore.fetchForPatient(patientId),
+  { immediate: true },
+)
 
 const recordVisible = ref(false)
 const refundVisible = ref(false)

@@ -154,7 +154,8 @@ const showNotesCounter = computed(() => form.notes.length > NOTES_MAX * 0.8)
 function validate(): boolean {
   const nextErrors: Record<string, string[]> = {}
 
-  if (!form.dental_condition_id) nextErrors.dental_condition_id = [t('treatmentPlans.items.dialog.fieldRequired')]
+  if (!form.dental_condition_id)
+    nextErrors.dental_condition_id = [t('treatmentPlans.items.dialog.fieldRequired')]
   if (requiresSurfaces.value && !form.tooth_number) {
     // A surface-applicable procedure needs a tooth before the surface picker (and its own
     // `errors.surfaces` message) can even render (`v-if="requiresSurfaces && form.tooth_number"`
@@ -259,7 +260,8 @@ function handleSaveError(err: unknown): void {
   if (isTreatmentPlanError(err)) {
     toast.add({ severity: 'error', summary: err.message, life: 4000 })
   } else if ((err as { response?: { status?: number } })?.response?.status === 422) {
-    errors.value = (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
+    errors.value =
+      (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
   } else {
     toast.add({ severity: 'error', summary: t('treatmentPlans.items.dialog.saveError'), life: 3000 })
   }
@@ -270,7 +272,9 @@ function handleSaveError(err: unknown): void {
   <Dialog
     :visible="visible"
     modal
-    :header="isEditMode ? t('treatmentPlans.items.dialog.editTitle') : t('treatmentPlans.items.dialog.createTitle')"
+    :header="
+      isEditMode ? t('treatmentPlans.items.dialog.editTitle') : t('treatmentPlans.items.dialog.createTitle')
+    "
     class="w-full max-w-2xl"
     @update:visible="(v) => emit('update:visible', v)"
   >
@@ -312,7 +316,9 @@ function handleSaveError(err: unknown): void {
           :invalid="!!errors.tooth_number"
           fluid
         />
-        <Message v-if="errors.tooth_number" severity="error" size="small">{{ errors.tooth_number[0] }}</Message>
+        <Message v-if="errors.tooth_number" severity="error" size="small">{{
+          errors.tooth_number[0]
+        }}</Message>
       </div>
 
       <div v-if="requiresSurfaces && form.tooth_number" class="flex flex-col gap-2">

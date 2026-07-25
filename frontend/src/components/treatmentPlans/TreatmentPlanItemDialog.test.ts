@@ -11,7 +11,8 @@ import type { TreatmentPlan, TreatmentPlanItem } from '@/types/treatmentPlan'
 import type { DentalCondition } from '@/types/dentalChart'
 
 vi.mock('@/services/treatmentPlans', async () => {
-  const actual = await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
+  const actual =
+    await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
   return {
     treatmentPlansApi: {
       list: vi.fn(),
@@ -27,7 +28,13 @@ vi.mock('@/services/treatmentPlans', async () => {
       createRevision: vi.fn(),
       remove: vi.fn(),
     },
-    treatmentPlanItemsApi: { create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+    treatmentPlanItemsApi: {
+      create: vi.fn(),
+      update: vi.fn(),
+      complete: vi.fn(),
+      cancel: vi.fn(),
+      remove: vi.fn(),
+    },
     isTreatmentPlanError: actual.isTreatmentPlanError,
     rethrowTreatmentPlanError: actual.rethrowTreatmentPlanError,
   }

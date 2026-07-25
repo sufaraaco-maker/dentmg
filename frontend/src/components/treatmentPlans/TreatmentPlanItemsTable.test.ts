@@ -10,7 +10,8 @@ import type { TreatmentPlanItem } from '@/types/treatmentPlan'
 vi.mock('primevue/useconfirm', () => ({ useConfirm: vi.fn() }))
 
 vi.mock('@/services/treatmentPlans', async () => {
-  const actual = await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
+  const actual =
+    await vi.importActual<typeof import('@/services/treatmentPlans')>('@/services/treatmentPlans')
   return {
     treatmentPlansApi: {
       list: vi.fn(),
@@ -26,7 +27,13 @@ vi.mock('@/services/treatmentPlans', async () => {
       createRevision: vi.fn(),
       remove: vi.fn(),
     },
-    treatmentPlanItemsApi: { create: vi.fn(), update: vi.fn(), complete: vi.fn(), cancel: vi.fn(), remove: vi.fn() },
+    treatmentPlanItemsApi: {
+      create: vi.fn(),
+      update: vi.fn(),
+      complete: vi.fn(),
+      cancel: vi.fn(),
+      remove: vi.fn(),
+    },
     isTreatmentPlanError: actual.isTreatmentPlanError,
     rethrowTreatmentPlanError: actual.rethrowTreatmentPlanError,
   }
@@ -105,7 +112,7 @@ describe('TreatmentPlanItemsTable — rendering', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Diagnosis: Tooth 16');
+    expect(wrapper.text()).toContain('Diagnosis: Tooth 16')
   })
 
   it('shows an appointment indicator when the item is linked to one', () => {
@@ -201,7 +208,9 @@ describe('TreatmentPlanItemsTable — row actions', () => {
   it('deletes an item once the confirm popup is accepted', async () => {
     setRole('admin')
     const requireMock = vi.fn()
-    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<typeof useConfirm>)
+    vi.mocked(useConfirm).mockReturnValue({ require: requireMock } as unknown as ReturnType<
+      typeof useConfirm
+    >)
     mockedItemsApi.remove.mockResolvedValue(undefined)
     mockedPlansApi.get.mockResolvedValue({ id: 'plan-1', items: [] } as never)
 
