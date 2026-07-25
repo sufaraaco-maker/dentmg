@@ -177,7 +177,7 @@ The technology stack has been approved.
 The initial blueprint has been approved.
 Repository structure: Monorepo (backend/, frontend/, docker/).
 
-Completed modules: Dashboard, Authentication (Sanctum SPA cookie auth; users/sessions tables use UUID primary keys), Users (CRUD + search, soft deletes, self-delete blocked), Roles & Permissions (simple backed enum: admin/dentist/receptionist; user management restricted to admin), Patients (standard clinical intake, patient_code, admin/receptionist write access, dentist read-only, generic audit log infrastructure — see docs/modules/patients.md), **Appointments — Production Ready ✅ (tagged `v1.0.0-appointments`, 2026-07-20)**: Calendar Board with Day/Week/Month/List views, full appointment CRUD + status-transition lifecycle, slot availability logic, Appointment Types, Dentist Working Hours/Time Off, Dashboard widgets, keyboard shortcuts + full a11y/RTL/responsive pass, 13/13 E2E confirmed green on GitHub Actions — see docs/modules/appointments.md (final module doc) and TECH_DEBT.md for open (non-blocking) items, **Dental Chart — Production Ready ✅ (merged to `main` 2026-07-22 following the SaaS architecture checkpoint)**: per-patient odontogram (52-tooth FDI schematic, whole-tooth and surface-specific findings/procedures), status lifecycle, admin-managed `dental_conditions` catalog, Accessible List view, keyboard tooth navigation, full a11y/RTL/i18n pass (98/98 en/ar/tr parity), 347/347 backend + 428/428 frontend tests, 16/16 E2E confirmed green via `workflow_dispatch` on GitHub Actions (run `29937143710`) — see docs/modules/dental-chart.md (final module doc) and TECH_DEBT.md for open (non-blocking) items.
+Completed modules: Dashboard, Authentication (Sanctum SPA cookie auth; users/sessions tables use UUID primary keys), Users (CRUD + search, soft deletes, self-delete blocked), Roles & Permissions (simple backed enum: admin/dentist/receptionist; user management restricted to admin), Patients (standard clinical intake, patient_code, admin/receptionist write access, dentist read-only, generic audit log infrastructure — see docs/modules/patients.md), **Appointments — Production Ready ✅ (tagged `v1.0.0-appointments`, 2026-07-20)**: Calendar Board with Day/Week/Month/List views, full appointment CRUD + status-transition lifecycle, slot availability logic, Appointment Types, Dentist Working Hours/Time Off, Dashboard widgets, keyboard shortcuts + full a11y/RTL/responsive pass, 13/13 E2E confirmed green on GitHub Actions — see docs/modules/appointments.md (final module doc) and TECH_DEBT.md for open (non-blocking) items, **Dental Chart — Production Ready ✅ (merged to `main` 2026-07-22 following the SaaS architecture checkpoint)**: per-patient odontogram (52-tooth FDI schematic, whole-tooth and surface-specific findings/procedures), status lifecycle, admin-managed `dental_conditions` catalog, Accessible List view, keyboard tooth navigation, full a11y/RTL/i18n pass (98/98 en/ar/tr parity), 347/347 backend + 428/428 frontend tests, 16/16 E2E confirmed green via `workflow_dispatch` on GitHub Actions (run `29937143710`) — see docs/modules/dental-chart.md (final module doc) and TECH_DEBT.md for open (non-blocking) items, **Treatment Plans — Implementation Complete ✅ (`feature/treatment-plans`, commit `0677128`, 2026-07-23, not yet merged to `main`/tagged)**: multi-plan-per-patient treatment recommendation workflow with plan-level and item-level status lifecycles, cost snapshot/freeze at `presented`, `dental_conditions` reused as the V1 pricing catalog, one-way read-only links to Dental Chart/Appointments, 505/505 backend + 541/541 frontend tests — see docs/modules/treatment-plans.md (final module doc) and TECH_DEBT.md for open (non-blocking) items, including the one gap relative to this project's usual bar: no permanent E2E suite yet.
 
 System-Wide Production Gate (started 2026-07-18, per explicit user request, before starting the next module; closed 2026-07-20): DatabaseSeeder demo-account environment gate + `app:create-admin` command, general API rate limiting, production Docker/nginx/SSL topology (`docker-compose.prod.yml`), backup/restore scripts (rehearsed end-to-end, not just written — see TECH_DEBT.md), S3 offsite backup made config-only-activation-ready, CI/CD quality gate (`.github/workflows/ci.yml`) — Backend, Frontend, and E2E (permanent `frontend/e2e/` Playwright suite) jobs all **confirmed green on `main`** via the GitHub Actions API (run `29763458360`, commit `3faf2d7`: 13/13 E2E tests passed in 36.2s, alongside Backend/Frontend). See TECH_DEBT.md's CI entry for the full debugging trail — the last failure took four rounds of real root-causing (a DatePicker popover z-order issue, a non-retrying Playwright assertion, a guessed/non-deterministic time slot that self-collided across Playwright's automatic retry, a missing tab click on Edit, and a strict-mode-ambiguous post-cancel selector) before landing clean.
 
@@ -191,7 +191,35 @@ for this module); full findings and the future multi-tenancy migration path are 
 `docs/modules/dental-chart.md`'s "SaaS Readiness" section. `feature/dental-chart` merged to `main` following
 this checkpoint.
 
-Next module: Treatment Plans.
+**Billing — Implementation in progress (2026-07-23–2026-07-25)**: design approved; backend (migrations,
+`Invoice`/`InvoiceItem`/`BillingSetting` models, `InvoiceService`, `InvoicePolicy`/`InvoiceItemPolicy`, Form
+Requests, `InvoiceController`/`InvoiceItemController`, routes) and frontend (Patient Invoices tab, Invoice
+Detail view, status-transition actions, manual/from-treatment-plan item entry, full en/ar/tr i18n) complete;
+`vue-tsc`/ESLint clean, 541/541 frontend Vitest tests green. Backend/frontend automated tests, a permanent
+E2E suite, and the final `modules/billing.md` doc are still pending before this module is marked Done — see
+`docs/modules/billing-design.md` and `TECH_DEBT.md`.
+
+**Payments — Implementation complete (2026-07-25, same day as design approval, `feature/treatment-plans`)**:
+design approved with all six open decisions resolved (no paysplit fan-out, capped partial refunds, no
+time-based void window, `PaymentMethod` = `cash`/`card`/`bank_transfer`/`other`, a dedicated Payments tab
+on Patient Detail, no V1 outstanding-balance widget). Backend: `payments` table (nullable `invoice_id` for
+unapplied/advance credits, self-referencing `refunded_payment_id` for refund rows, signed `amount`),
+`PaymentService` (record/apply/refund/updateMetadata/delete), `PaymentPolicy` (admin+receptionist write,
+dentist read-only, admin-only delete — mirrors `InvoicePolicy`), `InvoiceResource` gains additive
+`amount_paid`/`balance_due`/`payment_status`. Frontend: `stores/payments.ts`, Patient Detail's new Payments
+tab, Invoice Detail's new Payments panel + balance readout, Record/Refund/Edit/Apply dialogs, full en/ar/tr
+i18n. Verification: backend `pint`/`phpstan analyse` clean, 619/619 backend Unit tests green plus 22/22 new
+`PaymentTest` Feature tests (closing the Feature-test gap Billing itself still has); frontend `vue-tsc`/
+`eslint` clean; the new `stores/payments.test.ts`/`services/payments/errors.test.ts` (20 tests) pass
+cleanly in every run. A full-suite run (561 tests total) showed 2 failures confined to the pre-existing
+`router/index.test.ts` — confirmed unrelated to Payments (that file imports nothing from `payments`) and
+confirmed passing 11/11 in isolation; consistent with resource-contention flakiness under heavy parallel
+load, not a code defect — logged as its own `TECH_DEBT.md` entry rather than silently ignored. A permanent
+Playwright E2E spec for Payments (and for Billing) is still open — see `TECH_DEBT.md`. See
+`docs/modules/payments-design.md` for the full design + Decision Log.
+
+Next module: not yet selected — Payments closes out the Billing → Payments financial-module pair per the
+roadmap; see `docs/roadmap.md` for what's next.
 
 Full documentation set: see docs/ (architecture, database-design, api-guidelines, coding-standards, decisions, roadmap, deployment, modules/), plus CHANGELOG.md and TECH_DEBT.md at the repo root.
 

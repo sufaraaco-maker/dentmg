@@ -53,6 +53,11 @@ export const router = createRouter({
           component: () => import('@/views/TreatmentPlanDetailView.vue'),
         },
         {
+          path: 'patients/:id/invoices/:invoiceId',
+          name: 'invoice-detail',
+          component: () => import('@/views/InvoiceDetailView.vue'),
+        },
+        {
           path: 'appointments',
           name: 'appointments',
           component: () => import('@/views/AppointmentsView.vue'),

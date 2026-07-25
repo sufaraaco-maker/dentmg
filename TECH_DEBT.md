@@ -4,6 +4,51 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### `router/index.test.ts` flaky under full-suite parallel load (Windows Docker)
+Running the complete frontend Vitest suite (561 tests, 2026-07-25, verifying the Payments module) showed 2
+failures confined to `src/router/index.test.ts` (including `allows a dentist to reach their own Dentist
+Schedule route`), with a stack trace pointing at a `useAuthStore()`/`auth.initialized` timing race. The same
+file passes 11/11 cleanly when run in isolation immediately after. The full run's own Vitest timing
+breakdown showed `environment: 3274.60s` exceeding the run's total `Duration: 1715.12s` — clear evidence of
+heavy resource contention during the full parallel run, not a logic defect. Matches the same class of local
+Windows Docker Desktop networking/resource pathology already logged in `PROJECT_CONTEXT.md`'s CI-gate
+history. Confirmed unrelated to the Payments module: `router/index.test.ts` imports nothing from
+`stores/payments.ts`/`services/payments/*`.
+**Revisit**: if this recurs consistently (not just under full-suite parallel load) or starts failing in CI
+(which runs on native, non-Windows-Docker runners and has not shown this), investigate
+`useAuthStore()`'s initialization ordering in that test directly. Not blocking — the file is correct and
+passes reliably in isolation.
+
+### No permanent E2E suite for Billing or Payments
+Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright
+spec. Billing and Payments (`feature/treatment-plans`, both implementation-complete 2026-07-25) shipped
+with backend Unit test coverage — Payments additionally with Feature-test coverage (`PaymentTest`, 22
+tests) Billing itself still lacks — and frontend Vitest coverage (stores/services only; no per-component
+tests exist for either module's Vue components yet, matching the level Billing itself shipped at), but no
+`frontend/e2e/billing.spec.ts` or `frontend/e2e/payments.spec.ts` — confirmed absent directly, not assumed.
+Payments' own design doc (`docs/modules/payments-design.md` §16) named the scenarios in advance: record
+payment against an invoice → verify `payment_status` updates → partial refund → verify balance recalculates
+→ record unapplied credit → apply it to a different invoice → delete-blocked-once-refunded verification →
+receptionist-write/dentist-read-only check → RTL/dark-mode/currency-formatting smoke check. A Billing E2E
+spec would similarly need: draft → add items (manual + from-plan) → issue → verify frozen snapshot → void →
+receptionist/dentist permission check → RTL/dark-mode smoke check.
+**Revisit**: write and CI-verify `frontend/e2e/billing.spec.ts` and `frontend/e2e/payments.spec.ts` before
+either module is considered to meet the project's usual "Production Ready" bar as closely as
+Appointments/Dental Chart do. Not blocking V1 use — both modules are otherwise fully functional and tested
+at the Unit/Feature/store level.
+
+### No permanent E2E suite for Treatment Plans
+Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright
+spec (`frontend/e2e/appointments.spec.ts`, `dental-chart.spec.ts`). Treatment Plans (`feature/treatment-plans`,
+commit `0677128`) shipped with full backend (505/505) and frontend (541/541) unit/feature test coverage but
+no `frontend/e2e/treatment-plans.spec.ts` — confirmed absent directly, not assumed. The design doc
+(`docs/modules/treatment-plans-design.md` §19) specified one: golden path (create → add items → present →
+accept → link appointment → complete items → complete plan), reject path, multi-plan sibling-auto-reject
+scenario, cancel-cascade scenario, receptionist read-only verification, RTL/dark-mode smoke check.
+**Revisit**: write and CI-verify `frontend/e2e/treatment-plans.spec.ts` covering the scenarios above,
+mirroring `dental-chart.spec.ts`'s structure, before this module is considered to meet the project's usual
+"Production Ready" bar as closely as Appointments/Dental Chart do. Not blocking V1 use.
+
 ### `dental_conditions` reused as the Treatment Plans pricing catalog (V1 only)
 Treatment Plans' design review (2026-07-22, Decision 5) approved reusing the existing `dental_conditions`
 table (extended with `default_cost`/`description`) as the procedure/pricing catalog rather than building a
@@ -212,6 +257,24 @@ already does. Not blocking Dental Chart's closure (matches existing app-wide beh
 regression this module introduced), but worth a dedicated pass before an Arabic/Turkish production
 rollout — see also the i18n parity note in `docs/modules/dental-chart-*` and the Step 11 review's
 98/98 en/ar/tr parity confirmation, which evidently didn't cover PrimeVue's own internal strings.
+
+## Open (new from Billing Step 4 — Frontend Invoice UI, 2026-07-25)
+
+### Pre-existing missing Arabic i18n keys under `dentalChart.chart.*`/`dentalChart.status.*`
+Surfaced by the Billing frontend's full Vitest regression run (unrelated to the Invoice UI work itself —
+confirmed by reading the failing assertions' source files, all under `dental-chart` component tests): several
+`dentalChart.chart.*` keys (`noEntries`, `toothAriaLabel`, `surface.{M,D,F,L,O,I}`, `surfaceAriaLabel`,
+`onSurfaces`, `entriesSummary`, `entryLine`) and `dentalChart.status.*` keys (`active`, `existing`, `planned`,
+`cancelled`) exist in `locales/en.json` but are missing from `locales/ar.json`, so `vue-i18n` silently falls
+back to English for an Arabic-locale user viewing the Dental Chart — a real, if narrow, gap in the "98/98
+en/ar/tr parity" figure `docs/modules/dental-chart.md` reported at that module's own closure. Predates this
+session's Billing work; not introduced by it, and not blocking Billing's own Step 4 closure per explicit user
+direction.
+**Revisit**: audit `locales/ar.json` against `locales/en.json` for every `dentalChart.chart.*`/
+`dentalChart.status.*` key, add the missing Arabic translations (mirroring the terminology already
+established elsewhere in `ar.json`'s own `dentalChart.*` namespace), and re-run the Dental Chart Vitest
+suite to confirm the `[intlify] Not found` warnings are gone. Small, low-risk, translation-only change — not
+blocking; worth doing before an Arabic-locale production rollout.
 
 ## Resolved
 

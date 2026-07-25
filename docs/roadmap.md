@@ -13,10 +13,10 @@ Modules are implemented one at a time, each fully complete (migration → model 
 | Patients | Done |
 | **Appointments** | **Done — Production Ready ✅** (tagged `v1.0.0-appointments`, 2026-07-20) — full backend + frontend (Calendar Board, Appointment CRUD/lifecycle, Types, Dentist Working Hours/Time Off, Dashboard widgets), 13/13 E2E green on GitHub Actions; see `modules/appointments.md` |
 | Dental Chart | **Done — Production Ready ✅**, merged to `main` 2026-07-22; see `modules/dental-chart.md` |
-| **Treatment Plans** | Design approved 2026-07-22 (`modules/treatment-plans-design.md`) — implementation starting, one checkpointed step at a time |
+| **Treatment Plans** | **Done — Implementation Complete ✅**, commit `0677128` (2026-07-23), not yet merged to `main`/tagged; see `modules/treatment-plans.md` |
+| **Billing** | Implementation in progress (2026-07-23–2026-07-25) — design approved, backend (migrations/models/services/policies/Form Requests/Controllers/routes) and frontend (Invoice UI & workflow) complete; backend/frontend automated tests, E2E suite, and final module doc still pending before this row moves to Done; see `modules/billing-design.md` |
 | Clinical Notes | Not started |
-| Billing | Not started |
-| Payments | Not started |
+| **Payments** | Implementation complete (2026-07-25, same day as design approval) — backend (migrations/model/service/policy/Form Requests/Controller/routes, additive `InvoiceResource` fields) and frontend (Payments tab, Invoice Payments panel, dialogs, i18n) complete; backend Unit+Feature tests and frontend Vitest tests green; permanent E2E suite still pending (same open item as Billing) before this row is fully "Done"; see `modules/payments-design.md` |
 | Inventory | Not started |
 | Laboratory | Not started |
 | Imaging | Not started |

@@ -4,7 +4,94 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
-_Nothing yet — `main` is at `v1.0.0-appointments`._
+_`main` is at `v1.0.0-appointments`. Dental Chart and Treatment Plans are both implementation-complete but
+not yet merged/tagged; Billing and Payments are both implementation-complete on `feature/treatment-plans`
+with a permanent E2E suite and final module docs still pending — see `docs/roadmap.md` for current
+per-module status._
+
+### Added — Payments (`feature/treatment-plans`, 2026-07-25, backend + frontend implementation-complete same day as design approval)
+- **Payment recording**: applied directly to an `issued` `Invoice` or left **unapplied** as an
+  advance/patient-account credit (`invoice_id` nullable) — an unapplied payment can be **applied** to a
+  specific issued invoice later, exactly once, full-amount only.
+- **Refunds**: full or partial, capped at a payment's own remaining un-refunded balance
+  (`original.amount + SUM(existing refunds) - requested >= 0`, enforced server-side). Modeled as a new
+  linked `Payment` row with a negative `amount` and `refunded_payment_id` pointing at the original — the
+  original is never edited. No time-based void window; refund is the only correction mechanism regardless
+  of the payment's age.
+- **`PaymentMethod`**: `cash`/`card`/`bank_transfer`/`other` — recording only, no processor integration.
+- **`Invoice` gains real balance fields**: `amount_paid`/`balance_due`/`payment_status`
+  (`unpaid`/`partially_paid`/`paid`) — purely additive on `InvoiceResource`, computed from the (now
+  eager-loaded) `payments` relation, no new column, no reshape of the existing response envelope.
+- **Role-based access**: `PaymentPolicy` mirrors `InvoicePolicy` exactly — admin/receptionist write
+  (record/update-metadata/apply/refund), dentist read-only; delete (soft, data-entry-error correction only,
+  blocked once any refund exists against the payment) is admin-only.
+- **Frontend**: new dedicated **Payments** tab on `PatientDetailView.vue` (`PatientPaymentsPanel.vue`,
+  sibling to the Invoices tab, not folded into it) plus a **Payments** panel on `InvoiceDetailView.vue`
+  (`InvoicePaymentsPanel.vue`) with a balance readout next to Total. Record/Refund/Edit/Apply dialogs,
+  `payments.*` i18n namespace — full en/ar/tr parity (verified: zero missing/extra keys across all three
+  locale files).
+- **Verification**: backend `pint`/`phpstan analyse` clean, 619/619 backend Unit tests green (Models,
+  Policies, Service, the new `InvoiceResourceTest` covering `amount_paid`/`balance_due`/`payment_status`)
+  plus 22/22 new `PaymentTest` Feature tests (HTTP-level: auth, permissions, validation, status-transition
+  edge cases) — closing the Feature-test gap Billing itself is still carrying. Frontend `vue-tsc`/`eslint`
+  clean; the 20 new tests (`stores/payments.test.ts`/`services/payments/errors.test.ts`) pass cleanly. A
+  full-suite run (561 tests) showed 2 failures confined to the pre-existing `router/index.test.ts` —
+  unrelated to Payments (imports nothing from this module) and confirmed passing 11/11 in isolation;
+  logged separately in `TECH_DEBT.md` as environment flakiness, not attributed to this module. A permanent
+  Playwright E2E spec is still open — see `TECH_DEBT.md`.
+
+### Added — Billing (`feature/treatment-plans`, 2026-07-23–2026-07-25, backend + frontend implementation-complete)
+- **Invoice lifecycle**: `draft` → `issued` → `void`, plus soft-delete (admin-only, draft-only) as a
+  separate data-correction action. Issuing an invoice freezes every item's `description`/`unit_amount` and
+  assigns a permanent, sequential `invoice_number` (`INV-000001`, concurrency-safe reservation mirroring
+  `PatientService`'s existing pattern) — no field on an issued/void invoice or its items is ever mutated
+  again outside `void` itself.
+- **Invoice item CRUD**: `charge`/`discount`/`tax` kinds, each with its own snapshotted description/amount;
+  charge items may optionally trace back to a completed `TreatmentPlanItem` (nullable FK, traceability only,
+  never re-read once written) via a "not yet invoiced, completed" picker endpoint
+  (`GET /patients/{patient}/treatment-plan-items/billable`, a derived read anti-joined against
+  `invoice_items`, never a stored flag).
+- **Role-based access**: `InvoicePolicy`/`InvoiceItemPolicy` — admin/receptionist can create, edit
+  (draft-only), and issue/void; dentist is strictly read-only (billing is front-desk work, the inverse split
+  from Treatment Plans/Dental Chart); delete (soft, data-correction) is admin-only.
+- **Frontend**: new "Invoices" tab on `PatientDetailView.vue` (`PatientInvoicesPanel.vue`) plus a dedicated
+  `InvoiceDetailView.vue` route (`/patients/:id/invoices/:invoiceId`) with itemized line table
+  (charge/discount/tax visually distinguished), status-action buttons, manual "Add Charge" and "Add from
+  Treatment Plan" (multi-select picker) item entry, and a notes/dates edit dialog. `invoices.*` i18n
+  namespace — full en/ar/tr parity. Every mutation (invoice- and item-level, including item delete) returns
+  the full updated `Invoice` so the frontend never re-fetches after a write.
+- **Verification**: backend `vendor/bin/pint`/`phpstan analyse` clean, 65/65 backend unit tests (Models,
+  Policies, Service) green; frontend `vue-tsc -b`/`eslint` clean, 541/541 frontend Vitest tests green (no
+  regressions). Automated Feature/Request tests for the new Form Requests/Controllers, a permanent E2E
+  suite, and the final `modules/billing.md` doc are still open — see `TECH_DEBT.md` and
+  `docs/modules/billing-design.md`.
+
+### Added — Treatment Plans (`feature/treatment-plans`, commit `0677128`, 2026-07-23)
+- **Treatment plan lifecycle**: `draft` → `presented` → `accepted`/`rejected` → `in_progress` →
+  `completed`, plus `cancelled` from any non-terminal status. Accepting a `presented` plan auto-rejects
+  every other `presented` plan for the same patient; cancelling a plan cascades to cancel its non-terminal
+  items. Revisions of a rejected plan are modeled as a new plan row linked via `superseded_by_plan_id`
+  (`POST /api/treatment-plans/{plan}/revisions`), not a versioning subsystem.
+- **Treatment plan item CRUD**: procedure, optional tooth/surfaces, quantity, cost — sourced from
+  `dental_conditions` (extended with new `default_cost`/`description` columns), with cost/name/description
+  snapshotted onto the item and frozen the moment the parent plan leaves `draft`
+  (`TreatmentPlanItemLockedException`). Item-level lifecycle: `planned` → `completed`/`cancelled`.
+  Optional read-only links to a `DentalChartEntry` (diagnosis traceability) and an `Appointment`
+  (scheduling) — one-way references, no sync in either direction.
+- **Role-based access**: `TreatmentPlanPolicy`/`TreatmentPlanItemPolicy` — admin/dentist can create, edit
+  (draft only), and drive every status transition; receptionist is strictly read-only; delete (soft,
+  data-correction) is admin-only, distinct from cancel.
+- **Frontend**: new "Treatment Plans" tab on `PatientDetailView.vue` (`PatientTreatmentPlansPanel.vue`) plus
+  a dedicated `TreatmentPlanDetailView.vue` route (`/patients/:id/treatment-plans/:planId`) with item
+  list/timeline, status-action buttons, and add/edit item dialogs. `treatmentPlans.*` i18n namespace —
+  84/84 keys, en/ar/tr parity confirmed.
+- **Tests**: 505/505 backend (Pest), 541/541 frontend (Vitest) — full Feature/Unit/Policy/Request/Service
+  coverage matching the design doc's testing strategy.
+
+See `docs/modules/treatment-plans.md` for the full final module doc (architecture, database, API,
+permissions, known limitations — including the one open gap relative to this project's usual bar: no
+permanent Playwright E2E suite yet, see `TECH_DEBT.md`) and `docs/modules/treatment-plans-design.md` for the
+original approved design and competitive research.
 
 ## v1.0.0-appointments — 2026-07-20
 

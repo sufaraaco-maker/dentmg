@@ -144,7 +144,9 @@
       "overview": "Overview",
       "appointments": "Appointments",
       "dentalChart": "Dental Chart",
-      "treatmentPlans": "Treatment Plans"
+      "treatmentPlans": "Treatment Plans",
+      "invoices": "Invoices",
+      "payments": "Payments"
     },
     "sections": {
       "demographics": "Demographics",
@@ -173,6 +175,16 @@
       "title": "Treatment Plans",
       "new": "New Treatment Plan",
       "empty": "No treatment plans for this patient yet."
+    },
+    "invoicesPanel": {
+      "title": "Invoices",
+      "new": "New Invoice",
+      "empty": "No invoices for this patient yet."
+    },
+    "paymentsPanel": {
+      "title": "Payments",
+      "new": "Record Payment",
+      "empty": "No payments recorded for this patient yet."
     }
   },
   "appointments": {
@@ -631,6 +643,165 @@
         "saveError": "Failed to save item",
         "offerLockedNote": "This plan is no longer a draft — procedure, tooth, surfaces, quantity, and cost can no longer be changed. Only phase and notes remain editable."
       }
+    }
+  },
+  "invoices": {
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "void": "Void"
+    },
+    "loadError": "Failed to load invoices",
+    "createError": "Failed to create invoice",
+    "forbidden": "You don't have permission to do that",
+    "list": {
+      "number": "Invoice #",
+      "draftLabel": "Draft",
+      "status": "Status",
+      "createdAt": "Created",
+      "items": "Items",
+      "total": "Total",
+      "empty": "No invoices found"
+    },
+    "dialog": {
+      "editTitle": "Edit Invoice",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "notes": "Notes",
+      "charactersRemaining": "{n} characters left",
+      "saved": "Invoice saved",
+      "saveError": "Failed to save invoice"
+    },
+    "detail": {
+      "draftTitle": "Draft Invoice",
+      "notFound": "Invoice not found",
+      "overview": "Overview",
+      "createdBy": "Created By",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "total": "Total",
+      "items": "Invoice Items",
+      "payments": "Payments",
+      "amountPaid": "Amount Paid",
+      "balanceDue": "Balance Due",
+      "paymentStatus": "Payment Status",
+      "actions": {
+        "issue": "Issue",
+        "void": "Void"
+      },
+      "confirm": {
+        "issueMessage": "Are you sure you want to issue this invoice? Every item will be frozen and a permanent invoice number will be assigned.",
+        "voidMessage": "Are you sure you want to void this invoice? This cannot be undone — create a new corrected invoice separately if needed."
+      },
+      "actionSuccess": "Invoice updated",
+      "actionError": "Failed to update invoice",
+      "confirmDeleteHeader": "Delete Invoice",
+      "confirmDeleteMessage": "Are you sure you want to delete this draft invoice? This cannot be undone.",
+      "deleted": "Invoice deleted",
+      "deleteError": "Failed to delete invoice"
+    },
+    "items": {
+      "empty": "No items on this invoice yet.",
+      "kindLabel": "Type",
+      "kind": {
+        "charge": "Charge",
+        "discount": "Discount",
+        "tax": "Tax"
+      },
+      "description": "Description",
+      "quantity": "Qty",
+      "unitAmount": "Unit Amount",
+      "amount": "Amount",
+      "actions": "Actions",
+      "add": "Add Charge",
+      "addFromPlan": "Add from Treatment Plan",
+      "linkedFromPlan": "From treatment plan",
+      "deleteConfirmHeader": "Delete Item",
+      "deleteConfirmMessage": "Are you sure you want to delete this item? This cannot be undone.",
+      "deleted": "Item deleted",
+      "deleteError": "Failed to delete item",
+      "dialog": {
+        "createTitle": "Add Charge",
+        "editTitle": "Edit Item",
+        "kind": "Type",
+        "description": "Description",
+        "notes": "Notes",
+        "linkedProcedure": "Linked Procedure",
+        "fieldRequired": "This field is required",
+        "saved": "Item saved",
+        "saveError": "Failed to save item"
+      },
+      "picker": {
+        "title": "Add from Treatment Plan",
+        "empty": "No completed treatment plan items are available to bill.",
+        "procedure": "Procedure",
+        "tooth": "Tooth",
+        "quantity": "Qty",
+        "cost": "Estimated Cost",
+        "selectedCount": "{n} selected",
+        "add": "Add Selected",
+        "added": "Items added",
+        "partialError": "Some items could not be added",
+        "addError": "Failed to add items",
+        "loadError": "Failed to load billable items"
+      }
+    }
+  },
+  "payments": {
+    "method": {
+      "cash": "Cash",
+      "card": "Card",
+      "bank_transfer": "Bank Transfer",
+      "other": "Other"
+    },
+    "status": {
+      "unpaid": "Unpaid",
+      "partially_paid": "Partially Paid",
+      "paid": "Paid"
+    },
+    "unapplied": "Unapplied",
+    "loadError": "Failed to load payments",
+    "empty": "No payments found",
+    "deleted": "Payment deleted",
+    "deleteError": "Failed to delete payment",
+    "deleteConfirmHeader": "Delete Payment",
+    "deleteConfirmMessage": "Are you sure you want to delete this payment? This cannot be undone.",
+    "list": {
+      "receivedAt": "Received",
+      "method": "Method",
+      "invoice": "Invoice",
+      "reference": "Reference",
+      "amount": "Amount",
+      "actions": "Actions"
+    },
+    "actions": {
+      "apply": "Apply to Invoice",
+      "refund": "Refund"
+    },
+    "dialog": {
+      "recordTitle": "Record Payment",
+      "editTitle": "Edit Payment",
+      "amount": "Amount",
+      "reference": "Reference",
+      "notes": "Notes",
+      "receivedAt": "Received On",
+      "fieldRequired": "This field is required",
+      "saved": "Payment saved",
+      "saveError": "Failed to save payment"
+    },
+    "refundDialog": {
+      "title": "Refund Payment",
+      "remaining": "Remaining refundable balance: {amount} {currency}",
+      "amountInvalid": "Enter an amount up to {max}",
+      "saved": "Refund recorded",
+      "saveError": "Failed to record refund"
+    },
+    "applyDialog": {
+      "title": "Apply to Invoice",
+      "invoice": "Invoice",
+      "empty": "No issued invoices available for this patient.",
+      "saved": "Payment applied",
+      "saveError": "Failed to apply payment"
     }
   }
 }

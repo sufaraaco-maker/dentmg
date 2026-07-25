@@ -8,7 +8,10 @@ use App\Http\Controllers\Api\DentalChartEntryController;
 use App\Http\Controllers\Api\DentalConditionController;
 use App\Http\Controllers\Api\DentistTimeOffController;
 use App\Http\Controllers\Api\DentistWorkingHourController;
+use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TreatmentPlanController;
 use App\Http\Controllers\Api\TreatmentPlanItemController;
 use App\Http\Controllers\Api\UserController;
@@ -76,4 +79,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('treatment-plan-items/{treatment_plan_item}/complete', [TreatmentPlanItemController::class, 'complete']);
     Route::post('treatment-plan-items/{treatment_plan_item}/cancel', [TreatmentPlanItemController::class, 'cancel']);
     Route::delete('treatment-plan-items/{treatment_plan_item}', [TreatmentPlanItemController::class, 'destroy']);
+
+    Route::get('patients/{patient}/treatment-plan-items/billable', [InvoiceController::class, 'billableTreatmentPlanItems']);
+
+    Route::get('patients/{patient}/invoices', [InvoiceController::class, 'index']);
+    Route::post('patients/{patient}/invoices', [InvoiceController::class, 'store']);
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::put('invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue']);
+    Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
+    Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy']);
+
+    Route::post('invoices/{invoice}/items', [InvoiceItemController::class, 'store']);
+    Route::put('invoice-items/{invoice_item}', [InvoiceItemController::class, 'update']);
+    Route::delete('invoice-items/{invoice_item}', [InvoiceItemController::class, 'destroy']);
+
+    Route::get('patients/{patient}/payments', [PaymentController::class, 'index']);
+    Route::post('patients/{patient}/payments', [PaymentController::class, 'store']);
+    Route::get('payments/{payment}', [PaymentController::class, 'show']);
+    Route::put('payments/{payment}', [PaymentController::class, 'update']);
+    Route::post('payments/{payment}/apply', [PaymentController::class, 'apply']);
+    Route::post('payments/{payment}/refund', [PaymentController::class, 'refund']);
+    Route::delete('payments/{payment}', [PaymentController::class, 'destroy']);
 });
