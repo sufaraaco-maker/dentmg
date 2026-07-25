@@ -321,6 +321,41 @@ class PaymentServiceTest extends TestCase
         $this->service->refund($refund, '10', null, $actor);
     }
 
+    /**
+     * Sequential correctness of the row-locking added to apply()/refund() (mirrors
+     * InvoiceServiceTest's identical documented limitation for reserveNextSequenceNumber()):
+     * PHPUnit's RefreshDatabase runs each test on a single DB connection in a single process, so
+     * this cannot literally exercise two transactions blocking on the same locked payment row the
+     * way real concurrent requests would. What it does verify: repeated sequential apply()/refund()
+     * calls against the same payment still produce correct results now that both are wrapped in
+     * DB::transaction() + lockForUpdate() — the locking change didn't silently break the normal,
+     * non-concurrent path.
+     */
+    public function test_apply_still_works_correctly_now_that_it_is_transactional_and_row_locked(): void
+    {
+        $patient = Patient::factory()->create();
+        $invoice = Invoice::factory()->issued()->create(['patient_id' => $patient->id]);
+        $payment = Payment::factory()->create(['patient_id' => $patient->id, 'invoice_id' => null]);
+
+        $applied = $this->service->apply($payment, $invoice->id);
+
+        $this->assertSame($invoice->id, $applied->invoice_id);
+        $this->assertSame($invoice->id, $payment->fresh()->invoice_id);
+    }
+
+    public function test_repeated_sequential_refunds_still_serialize_correctly_now_that_refund_is_row_locked(): void
+    {
+        $original = Payment::factory()->create(['amount' => 100]);
+        $actor = User::factory()->admin()->create();
+
+        $this->service->refund($original, '30', null, $actor);
+        $this->service->refund($original->fresh(), '30', null, $actor);
+        $this->service->refund($original->fresh(), '40', null, $actor);
+
+        $this->assertSame('0.00', $original->fresh()->remaining_refundable_amount);
+        $this->assertCount(3, $original->fresh()->refunds);
+    }
+
     // --- delete -------------------------------------------------------------------------------------
 
     public function test_delete_soft_deletes_a_payment_with_no_refunds(): void

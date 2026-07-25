@@ -10,6 +10,7 @@ use App\Models\BillingSetting;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
@@ -67,52 +68,77 @@ class PaymentService
     /**
      * Sets `invoice_id` on a currently-unapplied payment (design doc §3/§8) — allowed exactly once,
      * full-amount only, and only onto an `issued` invoice belonging to the same patient.
+     *
+     * Row-locked and transactional, mirroring InvoiceService::issue()'s identical reasoning: without
+     * locking, two concurrent `apply()` calls against the same unapplied payment could both read
+     * `invoice_id === null` before either commits, both pass validation, and race to a lost-update
+     * outcome for an invariant this method's own docs promise holds "exactly once."
      */
     public function apply(Payment $payment, string $invoiceId): Payment
     {
-        if ($payment->invoice_id !== null) {
-            throw new InvalidPaymentOperationException('This payment has already been applied to an invoice.');
-        }
+        return DB::transaction(function () use ($payment, $invoiceId) {
+            $locked = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-        if ($payment->is_refund) {
-            throw new InvalidPaymentOperationException('A refund cannot be applied to an invoice.');
-        }
+            if ($locked->invoice_id !== null) {
+                throw new InvalidPaymentOperationException('This payment has already been applied to an invoice.');
+            }
 
-        $this->assertIssuedInvoiceBelongsToPatient($invoiceId, $payment->patient_id);
+            if ($locked->is_refund) {
+                throw new InvalidPaymentOperationException('A refund cannot be applied to an invoice.');
+            }
 
-        $payment->update(['invoice_id' => $invoiceId]);
+            $this->assertIssuedInvoiceBelongsToPatient($invoiceId, $locked->patient_id);
 
-        return $payment;
+            $locked->update(['invoice_id' => $invoiceId]);
+
+            return $locked;
+        });
     }
 
     /**
      * Creates the linked negative Payment row (design doc §4/§8) — the original is never edited.
      * `$amount` is the positive amount staff entered; negated here before storing.
+     *
+     * Row-locked and transactional, mirroring InvoiceService::issue()'s identical reasoning: the
+     * remaining-balance check is otherwise a read-check-then-write race — two concurrent refund
+     * requests against the same payment could both read the same `remaining_refundable_amount`
+     * before either commits, both pass validation, and together over-refund it. Locking this row
+     * makes a second concurrent caller block until the first transaction commits, then re-read the
+     * already-updated remaining balance once unblocked — genuine serialization, not a race caught
+     * only by luck.
      */
     public function refund(Payment $payment, string $amount, ?string $notes, User $actor): Payment
     {
-        if ($payment->trashed()) {
-            throw new InvalidPaymentOperationException('A deleted payment cannot be refunded.');
-        }
+        return DB::transaction(function () use ($payment, $amount, $notes, $actor) {
+            // withTrashed(): a soft-deleted payment must still be fetched here so the trashed()
+            // check below can throw the intended, friendly InvalidPaymentOperationException —
+            // Payment::query()'s default SoftDeletingScope would otherwise make firstOrFail()
+            // throw an unrelated ModelNotFoundException for this exact case instead.
+            $locked = Payment::withTrashed()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-        $remaining = $payment->remaining_refundable_amount;
+            if ($locked->trashed()) {
+                throw new InvalidPaymentOperationException('A deleted payment cannot be refunded.');
+            }
 
-        if (bccomp($amount, '0', 2) <= 0 || bccomp($amount, $remaining, 2) > 0) {
-            throw new PaymentRefundExceedsRemainingBalanceException($remaining);
-        }
+            $remaining = $locked->remaining_refundable_amount;
 
-        return Payment::create([
-            'patient_id' => $payment->patient_id,
-            'invoice_id' => $payment->invoice_id,
-            'refunded_payment_id' => $payment->id,
-            'method' => $payment->method,
-            'amount' => bcmul($amount, '-1', 2),
-            'currency_code' => $payment->currency_code,
-            'reference' => $payment->reference,
-            'notes' => $notes,
-            'received_at' => now()->toDateString(),
-            'created_by_id' => $actor->id,
-        ]);
+            if (bccomp($amount, '0', 2) <= 0 || bccomp($amount, $remaining, 2) > 0) {
+                throw new PaymentRefundExceedsRemainingBalanceException($remaining);
+            }
+
+            return Payment::create([
+                'patient_id' => $locked->patient_id,
+                'invoice_id' => $locked->invoice_id,
+                'refunded_payment_id' => $locked->id,
+                'method' => $locked->method,
+                'amount' => bcmul($amount, '-1', 2),
+                'currency_code' => $locked->currency_code,
+                'reference' => $locked->reference,
+                'notes' => $notes,
+                'received_at' => now()->toDateString(),
+                'created_by_id' => $actor->id,
+            ]);
+        });
     }
 
     /**
