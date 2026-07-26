@@ -13,6 +13,12 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\PurchaseOrderItemController;
+use App\Http\Controllers\Api\StockMovementController;
+use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\SupplyCategoryController;
+use App\Http\Controllers\Api\SupplyController;
 use App\Http\Controllers\Api\TreatmentPlanController;
 use App\Http\Controllers\Api\TreatmentPlanItemController;
 use App\Http\Controllers\Api\UserController;
@@ -110,4 +116,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('clinical-notes/{clinical_note}/sign', [ClinicalNoteController::class, 'sign']);
     Route::post('clinical-notes/{clinical_note}/addendums', [ClinicalNoteController::class, 'addAddendum']);
     Route::delete('clinical-notes/{clinical_note}', [ClinicalNoteController::class, 'destroy']);
+
+    Route::apiResource('suppliers', SupplierController::class);
+    Route::apiResource('supply-categories', SupplyCategoryController::class);
+
+    // Must precede the apiResource below — otherwise "low-stock" is captured by {supply}.
+    Route::get('supplies/low-stock', [SupplyController::class, 'lowStock']);
+    Route::apiResource('supplies', SupplyController::class);
+
+    Route::get('supplies/{supply}/stock-movements', [StockMovementController::class, 'index']);
+    Route::post('supplies/{supply}/stock-movements', [StockMovementController::class, 'store']);
+
+    Route::post('purchase-orders/{purchase_order}/items', [PurchaseOrderItemController::class, 'store']);
+    Route::put('purchase-order-items/{purchase_order_item}', [PurchaseOrderItemController::class, 'update']);
+    Route::delete('purchase-order-items/{purchase_order_item}', [PurchaseOrderItemController::class, 'destroy']);
+    Route::post('purchase-order-items/{purchase_order_item}/receive', [PurchaseOrderItemController::class, 'receive']);
+
+    Route::post('purchase-orders/{purchase_order}/place', [PurchaseOrderController::class, 'place']);
+    Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel']);
+    Route::apiResource('purchase-orders', PurchaseOrderController::class);
 });

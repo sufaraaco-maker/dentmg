@@ -570,3 +570,30 @@ differ in speed or topology.
 Confirmed via the GitHub Actions API (not just workflow-level "success" — the individual E2E job
 and its own Playwright summary annotation): run `29763458360` on commit `3faf2d7`, all three jobs
 (Backend, Frontend, E2E) green, **13 passed (36.2s)**.
+
+## Open (new from Inventory module, 2026-07-26)
+
+### Local `phpstan analyse` (level 5) is broken in this dev container independent of the Inventory module — pre-existing, not a regression
+While verifying Inventory, `./vendor/bin/phpstan analyse` inside `dentalsuite_app` reported errors
+on pre-existing, already-shipped models (`TreatmentPlan`/`TreatmentPlanItem` — e.g. "Access to an
+undefined property `App\Models\TreatmentPlan::$status`") with **zero** Inventory code present.
+Confirmed by `git stash -u` (removing every Inventory file, back to the exact `main` state) and
+re-running: **410 errors**, all in pre-Inventory files this project's own CHANGELOG previously
+recorded as PHPStan-clean. Re-applying the stash reproduces the same failure plus a handful more
+in the new Inventory files, all of the identical "undefined property" shape. Root cause not fully
+isolated (Larastan's model-property resolution appears to depend on some warmed state — a
+bootstrap cache or a live, successfully-migrated DB connection at analysis time — that this
+container's `phpstan analyse` invocation isn't reliably getting; clearing `storage/phpstan`'s
+result cache made it *worse*, not better, ruling out a stale-cache explanation). One genuinely
+real, unrelated-to-this-flake finding was fixed regardless while investigating:
+`Supply::scopeLowStock()` called `Supply::scopeWithQuantityOnHand()` via `$query->
+withQuantityOnHand()` — PHPStan/Larastan cannot statically resolve one magic `scope*` method
+calling another through the generic `Illuminate\Database\Eloquent\Builder` return type. Fixed by
+factoring the shared join into a plain `public static function applyQuantityOnHandJoin()` that
+both scopes call directly (`app/Models/Supply.php`).
+**Revisit**: this is a local/environment issue, not a code defect — the same "local ≠ CI" caution
+already logged above for E2E/Docker-networking timing. CI's own `phpstan analyse` step (run by a
+container that's presumably warmed/configured differently than this ad hoc `docker exec`) is the
+verification authority for whether Inventory's own new code is actually PHPStan-clean; this
+couldn't be locally confirmed one way or the other for the *existing* codebase either, so it isn't
+a new gap Inventory introduced.
