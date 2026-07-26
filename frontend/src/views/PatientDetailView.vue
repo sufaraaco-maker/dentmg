@@ -23,6 +23,7 @@ import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
+import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
 import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
 import PatientPaymentsPanel from '@/components/payments/PatientPaymentsPanel.vue'
 
@@ -32,6 +33,11 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const auth = useAuthStore()
+
+// Design doc §10/§15 Decision D: receptionists have NO access to Clinical Notes at all — the tab
+// itself must not render for them, not just its write actions, matching `ClinicalNotePolicy`'s
+// `viewAny` exactly (defense in depth: the backend still enforces this regardless of this check).
+const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
 
 function formatDate(value: string) {
   return parseLocalDate(value).toLocaleDateString(locale.value)
@@ -145,6 +151,7 @@ onMounted(() => {
         <Tab value="appointments">{{ t('patients.tabs.appointments') }}</Tab>
         <Tab value="dentalChart">{{ t('patients.tabs.dentalChart') }}</Tab>
         <Tab value="treatmentPlans">{{ t('patients.tabs.treatmentPlans') }}</Tab>
+        <Tab v-if="canAccessClinicalNotes" value="clinicalNotes">{{ t('patients.tabs.clinicalNotes') }}</Tab>
         <Tab value="invoices">{{ t('patients.tabs.invoices') }}</Tab>
         <Tab value="payments">{{ t('patients.tabs.payments') }}</Tab>
       </TabList>
@@ -252,6 +259,12 @@ onMounted(() => {
         <TabPanel value="treatmentPlans">
           <div class="pt-2">
             <PatientTreatmentPlansPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel v-if="canAccessClinicalNotes" value="clinicalNotes">
+          <div class="pt-2">
+            <PatientClinicalNotesPanel :patient-id="patientId" />
           </div>
         </TabPanel>
 

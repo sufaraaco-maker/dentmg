@@ -53,6 +53,15 @@ export const router = createRouter({
           component: () => import('@/views/TreatmentPlanDetailView.vue'),
         },
         {
+          path: 'patients/:id/clinical-notes/:noteId',
+          name: 'clinical-note-detail',
+          component: () => import('@/views/ClinicalNoteDetailView.vue'),
+          // Design doc §10/§15 Decision D: receptionists have no access to Clinical Notes at all —
+          // enforced here too (not just the hidden tab), same "backend/route both guard, not just
+          // the UI" bar as every other role-restricted route in this file.
+          meta: { roles: ['admin', 'dentist'] },
+        },
+        {
           path: 'patients/:id/invoices/:invoiceId',
           name: 'invoice-detail',
           component: () => import('@/views/InvoiceDetailView.vue'),

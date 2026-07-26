@@ -145,6 +145,7 @@
       "appointments": "Appointments",
       "dentalChart": "Dental Chart",
       "treatmentPlans": "Treatment Plans",
+      "clinicalNotes": "Clinical Notes",
       "invoices": "Invoices",
       "payments": "Payments"
     },
@@ -175,6 +176,11 @@
       "title": "Treatment Plans",
       "new": "New Treatment Plan",
       "empty": "No treatment plans for this patient yet."
+    },
+    "clinicalNotesPanel": {
+      "title": "Clinical Notes",
+      "new": "New Clinical Note",
+      "empty": "No clinical notes for this patient yet."
     },
     "invoicesPanel": {
       "title": "Invoices",
@@ -643,6 +649,69 @@
         "saveError": "Failed to save item",
         "offerLockedNote": "This plan is no longer a draft — procedure, tooth, surfaces, quantity, and cost can no longer be changed. Only phase and notes remain editable."
       }
+    }
+  },
+  "clinicalNotes": {
+    "title": "Clinical Note",
+    "status": {
+      "draft": "Draft",
+      "signed": "Signed"
+    },
+    "type": {
+      "progress": "Progress Note",
+      "consultation": "Consultation",
+      "phone": "Phone Call",
+      "referral": "Referral",
+      "other": "Other"
+    },
+    "loadError": "Failed to load clinical notes",
+    "notFound": "Clinical note not found",
+    "list": {
+      "date": "Date",
+      "type": "Type",
+      "status": "Status",
+      "dentist": "Dentist",
+      "chiefComplaint": "Chief Complaint",
+      "empty": "No clinical notes found"
+    },
+    "dialog": {
+      "createTitle": "New Clinical Note",
+      "fieldRequired": "This field is required",
+      "dentist": "Dentist",
+      "noteType": "Note Type",
+      "selectNoteType": "Select a note type",
+      "charactersRemaining": "{n} characters left",
+      "saved": "Clinical note created",
+      "saveError": "Failed to create clinical note"
+    },
+    "detail": {
+      "overview": "Overview",
+      "createdBy": "Created By",
+      "signedBy": "Signed By",
+      "signedAt": "Signed",
+      "chiefComplaint": "Chief Complaint",
+      "subjective": "Subjective",
+      "objective": "Objective",
+      "assessment": "Assessment",
+      "plan": "Plan",
+      "lockedNote": "This note is signed and can no longer be edited. Add an addendum instead.",
+      "sign": "Sign Note",
+      "confirmSignHeader": "Sign Clinical Note",
+      "confirmSignMessage": "Once signed, this note becomes a permanent record and can no longer be edited. Continue?",
+      "signSuccess": "Clinical note signed",
+      "signError": "Failed to sign clinical note",
+      "blankNoteError": "Cannot sign an empty note — complete at least one section first.",
+      "saveDraft": "Save Draft",
+      "savedDraft": "Draft saved",
+      "saveDraftError": "Failed to save draft",
+      "lockedEditAttemptError": "This note is already signed and can no longer be edited.",
+      "addendums": "Addendums",
+      "addAddendum": "Add Addendum",
+      "addendumPlaceholder": "Add a follow-up note...",
+      "addendumSaved": "Addendum added",
+      "addendumSaveError": "Failed to add addendum",
+      "addendumDraftError": "Addendums can only be added to a signed note.",
+      "noAddendums": "No addendums yet."
     }
   },
   "invoices": {

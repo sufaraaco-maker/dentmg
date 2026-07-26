@@ -293,6 +293,34 @@ established elsewhere in `ar.json`'s own `dentalChart.*` namespace), and re-run 
 suite to confirm the `[intlify] Not found` warnings are gone. Small, low-risk, translation-only change — not
 blocking; worth doing before an Arabic-locale production rollout.
 
+## Open (new from Clinical Notes Step 5 — Playwright E2E Suite, 2026-07-26)
+
+### Known limitation: local Playwright verification for Clinical Notes blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart
+`frontend/e2e/clinical-notes.spec.ts` (golden path: create draft → edit → save → sign → verify locked state →
+add addendums → verify append-only; plus a blank-note sign-rejection test and a receptionist-exclusion test)
+could not be confirmed green from this dev machine — same pathology as the Dental Chart E2E entry above, not
+a new issue. Diagnosed directly rather than assumed: a bare `curl` to a trivial endpoint
+(`GET /api/up`/`GET /api/users`, both effectively instant server-side) took ~4.7–5.0s round-trip through this
+host's Docker networking path while `docker stats` showed every container under 2% CPU — i.e. genuine
+host↔container network latency, not resource contention or a slow backend. Every run reached a different
+step before timing out (login itself, or `DentistSelect`'s single `GET /api/users` call in the "New Clinical
+Note" dialog never populating options in time), consistent with latency that varies run-to-run rather than a
+deterministic logic bug — the same "non-deterministic local timeouts unrelated to the application code"
+symptom already described for `dental-chart.spec.ts`. One real, unrelated issue *was* found and fixed along
+the way: the frontend dev container had been running 10+ hours since the Clinical Notes frontend files were
+added, and Vite was serving a stale bundle missing the Clinical Notes tab entirely (even for admin) — resolved
+by `docker compose restart node` (see the Vite/Docker staleness note already known from prior sessions), not
+a code change. After the restart, a screenshot confirmed the tab, dialog, and form fields all render exactly
+as designed; only the option-list-population timing under load remained unreliable.
+**Revisit**: not a regression and not blocking — CI's native runner has none of this host's networking
+overhead (already confirmed for Appointments' and Dental Chart's equivalent suites). CI verification is
+required for final confirmation before this item can be marked resolved. If `DentistSelect`/`providers.ts`'s
+silent (uncaught) `fetchAll()` failure mode (see `providers.ts`: no `.catch()` at the `onMounted` call site,
+so a failed fetch leaves the picker permanently empty with no visible error or retry affordance) proves to be
+a real, not just latency-induced, gap in practice, it's a pre-existing issue shared by every consumer
+(Appointments, Dental Chart, Treatment Plans, Clinical Notes), not specific to this module — worth its own
+follow-up if it recurs outside this networking-latency context.
+
 ## Resolved
 
 ### System-Wide Production Gate (resolved 2026-07-18)

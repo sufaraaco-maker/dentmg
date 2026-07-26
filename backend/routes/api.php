@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClinicalNoteController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DentalChartEntryController;
 use App\Http\Controllers\Api\DentalConditionController;
@@ -101,4 +102,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('payments/{payment}/apply', [PaymentController::class, 'apply']);
     Route::post('payments/{payment}/refund', [PaymentController::class, 'refund']);
     Route::delete('payments/{payment}', [PaymentController::class, 'destroy']);
+
+    Route::get('patients/{patient}/clinical-notes', [ClinicalNoteController::class, 'index']);
+    Route::post('patients/{patient}/clinical-notes', [ClinicalNoteController::class, 'store']);
+    Route::get('clinical-notes/{clinical_note}', [ClinicalNoteController::class, 'show']);
+    Route::put('clinical-notes/{clinical_note}', [ClinicalNoteController::class, 'update']);
+    Route::post('clinical-notes/{clinical_note}/sign', [ClinicalNoteController::class, 'sign']);
+    Route::post('clinical-notes/{clinical_note}/addendums', [ClinicalNoteController::class, 'addAddendum']);
+    Route::delete('clinical-notes/{clinical_note}', [ClinicalNoteController::class, 'destroy']);
 });

@@ -147,3 +147,20 @@ describe('PatientDetailView — permissions (unchanged by the tab refactor)', ()
     expect(wrapper.findAll('button').some((b) => b.text() === 'Delete')).toBe(false)
   })
 })
+
+describe('PatientDetailView — Clinical Notes tab visibility (design doc §10/§15 Decision D)', () => {
+  it('shows the Clinical Notes tab to an admin', async () => {
+    const wrapper = await mountView('admin')
+    expect(wrapper.findAll('[role="tab"]').some((n) => n.text() === 'Clinical Notes')).toBe(true)
+  })
+
+  it('shows the Clinical Notes tab to a dentist', async () => {
+    const wrapper = await mountView('dentist')
+    expect(wrapper.findAll('[role="tab"]').some((n) => n.text() === 'Clinical Notes')).toBe(true)
+  })
+
+  it('hides the Clinical Notes tab from a receptionist entirely — not just its write actions', async () => {
+    const wrapper = await mountView('receptionist')
+    expect(wrapper.findAll('[role="tab"]').some((n) => n.text() === 'Clinical Notes')).toBe(false)
+  })
+})
