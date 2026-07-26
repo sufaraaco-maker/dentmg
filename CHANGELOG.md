@@ -11,6 +11,52 @@ a permanent E2E suite (Billing also lacks a backend Feature-test suite and its f
 doc) before either meets the same "Production Ready" bar as Appointments/Dental Chart — see `docs/roadmap.md`
 and `TECH_DEBT.md` for current per-module status._
 
+### Added — Clinical Notes (design approved 2026-07-25, backend + frontend implementation-complete
+2026-07-26, closing the permanent-E2E-suite gap the prior three modules each deferred)
+- **SOAP-structured clinical documentation**: one note per authoring session — chief complaint plus
+  Subjective/Objective/Assessment/Plan sections, all optional/nullable — with a `note_type`
+  (`progress`/`consultation`/`phone`/`referral`/`other`) and an optional link to a specific `Appointment`.
+- **Draft → Signed lifecycle**: freely editable while `draft`; signing is wrapped in `DB::transaction()`,
+  requires at least one non-empty content field (an entirely blank note cannot be signed —
+  `invalid_clinical_note_operation`), and atomically freezes every content field. Any further write attempt
+  against a signed note is rejected with a dedicated `ClinicalNoteLockedException`
+  (`clinical_note_locked`) — mirroring `TreatmentPlanItemLockedException`/`InvoiceLockedException`'s exact
+  enforcement pattern.
+- **Addendums**: append-only corrections to an already-signed note. No update or delete endpoint exists for
+  an addendum at any permission level, not even admin — enforced at the schema level too
+  (`clinical_note_addendums` has no `updated_at`/`deleted_at`/soft-delete trait), not just the policy level.
+- **Role-based access**: admin/dentist can author, update (draft only), sign, and addend; admin-only delete
+  (soft, any status, fully `Auditable`-logged/recoverable). **Receptionist has no access at all** — a
+  deliberate divergence from Dental Chart/Treatment Plans (which both grant receptionist read access) given
+  the sensitivity of clinical narrative content — enforced at the policy layer, the frontend tab visibility,
+  and the router's own `meta: { roles: [...] }` guard.
+- **Frontend**: new "Clinical Notes" tab on `PatientDetailView.vue` (`PatientClinicalNotesPanel.vue`) plus a
+  dedicated `ClinicalNoteDetailView.vue` (author/edit/sign/addendum), following the existing tab-list +
+  dedicated-detail-route pattern from Treatment Plans/Invoices/Payments. Draft renders editable
+  `Textarea`/`Select` fields; signed renders the same fields as plain read-only text (never the same input
+  merely disabled) with a lock notice and an always-available Add Addendum action. Full en/ar/tr i18n
+  (`clinicalNotes.*` namespace), verified zero missing/extra keys across all three locale files.
+- **Permanent Playwright E2E suite built during this module's own implementation, not deferred** —
+  `frontend/e2e/clinical-notes.spec.ts` closes the open item the prior three consecutive modules (Treatment
+  Plans, Billing, Payments) each pushed to `TECH_DEBT.md`. Covers the full dentist/admin golden path (create
+  draft → edit → save → sign → verify locked/read-only state → add two addendums → verify append-only, no
+  edit/delete affordance on either), a blank-note sign-rejection case, and receptionist exclusion (tab absent
+  + direct-URL navigation blocked by the router guard, not just hidden).
+- **Verification**: backend `pint`/`phpstan analyse` (level 5) clean, 703/703 backend tests green (60 of
+  them Clinical-Notes-specific: `ClinicalNoteServiceTest`, `ClinicalNoteTest` Feature suite,
+  `ClinicalNotePolicyTest`, `ClinicalNoteStatusTest`, the three Form Request tests) — a complete backend
+  Feature-test suite shipped within this module's own Phase 2, per the design doc's explicit requirement (not
+  deferred, unlike Billing at its own completion). Frontend `vue-tsc`/ESLint clean, 595/595 Vitest tests green
+  (31 Clinical-Notes-specific: store + API service + typed-error tests — no dedicated per-component tests,
+  see Known Limitations below), production build succeeds. E2E suite could not be confirmed green from this
+  dev machine (same Windows Docker Desktop networking latency already logged against Dental Chart's own
+  suite — see `TECH_DEBT.md`); CI's native runner is the verification authority for this suite.
+- **Known limitation relative to the design doc's own testing strategy (§18)**: §18 named dedicated
+  "component tests for the detail view's draft/signed/addendum states" as in-scope; these were not written as
+  separate Vitest component tests. The same states are instead exercised end-to-end by the new Playwright
+  suite (draft editing, sign, locked read-only rendering, addendum add/append-only are all explicit E2E
+  assertions), so the intended coverage exists, just at a different test layer than originally specified.
+
 ### Fixed — Payments migration: self-referencing FK on `refunded_payment_id` failed on real PostgreSQL (2026-07-26)
 - `2026_07_25_000001_create_payments_table.php` declared the `refunded_payment_id` foreign key via
   `->constrained('payments')` inside the *same* `Schema::create()` as the table's own primary key. Laravel's

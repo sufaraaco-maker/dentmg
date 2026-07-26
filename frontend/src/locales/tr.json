@@ -145,6 +145,7 @@
       "appointments": "Randevular",
       "dentalChart": "Diş Şeması",
       "treatmentPlans": "Tedavi Planları",
+      "clinicalNotes": "Klinik Notlar",
       "invoices": "Faturalar",
       "payments": "Ödemeler"
     },
@@ -175,6 +176,11 @@
       "title": "Tedavi Planları",
       "new": "Yeni Tedavi Planı",
       "empty": "Bu hasta için henüz tedavi planı yok."
+    },
+    "clinicalNotesPanel": {
+      "title": "Klinik Notlar",
+      "new": "Yeni Klinik Not",
+      "empty": "Bu hasta için henüz klinik not yok."
     },
     "invoicesPanel": {
       "title": "Faturalar",
@@ -643,6 +649,69 @@
         "saveError": "Kalem kaydedilemedi",
         "offerLockedNote": "Bu plan artık taslak değil — işlem, diş, yüzeyler, adet ve maliyet artık değiştirilemez. Yalnızca aşama ve notlar düzenlenebilir."
       }
+    }
+  },
+  "clinicalNotes": {
+    "title": "Klinik Not",
+    "status": {
+      "draft": "Taslak",
+      "signed": "İmzalandı"
+    },
+    "type": {
+      "progress": "İzlem Notu",
+      "consultation": "Konsültasyon",
+      "phone": "Telefon Görüşmesi",
+      "referral": "Sevk",
+      "other": "Diğer"
+    },
+    "loadError": "Klinik notlar yüklenemedi",
+    "notFound": "Klinik not bulunamadı",
+    "list": {
+      "date": "Tarih",
+      "type": "Tür",
+      "status": "Durum",
+      "dentist": "Diş Hekimi",
+      "chiefComplaint": "Ana Şikayet",
+      "empty": "Klinik not bulunamadı"
+    },
+    "dialog": {
+      "createTitle": "Yeni Klinik Not",
+      "fieldRequired": "Bu alan zorunludur",
+      "dentist": "Diş Hekimi",
+      "noteType": "Not Türü",
+      "selectNoteType": "Bir not türü seçin",
+      "charactersRemaining": "{n} karakter kaldı",
+      "saved": "Klinik not oluşturuldu",
+      "saveError": "Klinik not oluşturulamadı"
+    },
+    "detail": {
+      "overview": "Genel Bakış",
+      "createdBy": "Oluşturan",
+      "signedBy": "İmzalayan",
+      "signedAt": "İmza Tarihi",
+      "chiefComplaint": "Ana Şikayet",
+      "subjective": "Subjektif",
+      "objective": "Objektif",
+      "assessment": "Değerlendirme",
+      "plan": "Plan",
+      "lockedNote": "Bu not imzalandı ve artık düzenlenemez. Bunun yerine bir ek not ekleyin.",
+      "sign": "Notu İmzala",
+      "confirmSignHeader": "Klinik Notu İmzala",
+      "confirmSignMessage": "İmzalandıktan sonra bu not kalıcı bir kayıt haline gelir ve artık düzenlenemez. Devam edilsin mi?",
+      "signSuccess": "Klinik not imzalandı",
+      "signError": "Klinik not imzalanamadı",
+      "blankNoteError": "Boş bir not imzalanamaz — önce en az bir bölümü tamamlayın.",
+      "saveDraft": "Taslağı Kaydet",
+      "savedDraft": "Taslak kaydedildi",
+      "saveDraftError": "Taslak kaydedilemedi",
+      "lockedEditAttemptError": "Bu not zaten imzalandı ve artık düzenlenemez.",
+      "addendums": "Ek Notlar",
+      "addAddendum": "Ek Not Ekle",
+      "addendumPlaceholder": "Bir izlem notu ekleyin...",
+      "addendumSaved": "Ek not eklendi",
+      "addendumSaveError": "Ek not eklenemedi",
+      "addendumDraftError": "Ek notlar yalnızca imzalanmış bir nota eklenebilir.",
+      "noAddendums": "Henüz ek not yok."
     }
   },
   "invoices": {
