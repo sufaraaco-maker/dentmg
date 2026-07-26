@@ -295,7 +295,7 @@ blocking; worth doing before an Arabic-locale production rollout.
 
 ## Open (new from Clinical Notes Step 5 — Playwright E2E Suite, 2026-07-26)
 
-### Known limitation: local Playwright verification for Clinical Notes blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart
+### Known limitation: local Playwright verification for Clinical Notes blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart — RESOLVED 2026-07-26 (CI confirmed 19/19)
 `frontend/e2e/clinical-notes.spec.ts` (golden path: create draft → edit → save → sign → verify locked state →
 add addendums → verify append-only; plus a blank-note sign-rejection test and a receptionist-exclusion test)
 could not be confirmed green from this dev machine — same pathology as the Dental Chart E2E entry above, not
@@ -320,6 +320,23 @@ so a failed fetch leaves the picker permanently empty with no visible error or r
 a real, not just latency-induced, gap in practice, it's a pre-existing issue shared by every consumer
 (Appointments, Dental Chart, Treatment Plans, Clinical Notes), not specific to this module — worth its own
 follow-up if it recurs outside this networking-latency context.
+
+**RESOLVED 2026-07-26**: PR #3 (`feature/clinical-notes` → `main`) confirmed via the GitHub Actions API —
+`workflow_dispatch` run `30188850793` on commit `74ed97b` (Backend success, Frontend success) surfaced one
+real, CI-native (not environment-flake) E2E failure: the golden-path test logged in as `dentist` and then
+called `POST /patients` directly to set up its fixture patient, but Patients is admin/receptionist-write,
+dentist-read-only (same matrix as Dental Chart/Appointments) — a genuine bug in the test's own setup, not a
+Clinical Notes application bug, not an environment issue. Fixed in commit `31b20f3` by switching that test to
+log in as `admin` instead (mirroring `dental-chart.spec.ts`'s identical choice for the identical reason —
+admin can still exercise the full note lifecycle, since `ClinicalNotePolicy` grants admin the same
+create/update/sign/addendum abilities as dentist). Re-run via `workflow_dispatch` on the fixed commit
+(run `30189070147`): **Backend success, Frontend success, E2E success — 19/19 E2E tests green**, including
+`clinical-notes.spec.ts`'s three tests with no retries needed. One unrelated, pre-existing flake was observed
+on the same run — `dental-chart.spec.ts`'s own golden-path test failed once on the exact same
+`li.p-select-option:visible` timeout symptom described above, then passed on Playwright's automatic retry
+(marked "flaky," not "failure," in the job's annotations) — confirming this class of transient timing issue
+is real (if rare) even on CI's native runner, not unique to the local Windows Docker environment, and entirely
+pre-existing/unrelated to this module.
 
 ## Resolved
 
