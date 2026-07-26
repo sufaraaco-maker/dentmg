@@ -89,7 +89,12 @@ test.describe('clinical notes', () => {
   test('dentist creates a draft, edits it, signs it, and adds addendums through the full lifecycle', async ({
     page,
   }) => {
-    await loginAsEnglish(page, 'dentist')
+    // Logged in as admin, not dentist: Patients is admin/receptionist-write, dentist-read-only
+    // (same matrix as Dental Chart/Appointments — see `dental-chart.spec.ts`'s identical choice),
+    // so a dentist session can't POST /patients to set up this test's fixture patient. Admin can
+    // still exercise the full note lifecycle below — `ClinicalNotePolicy` grants admin the same
+    // create/update/sign/addendum abilities as dentist (design doc §10).
+    await loginAsEnglish(page, 'admin')
     await page.goto('/patients')
     const patient = await createPatient(page)
 
