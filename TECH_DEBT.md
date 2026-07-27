@@ -597,3 +597,50 @@ container that's presumably warmed/configured differently than this ad hoc `dock
 verification authority for whether Inventory's own new code is actually PHPStan-clean; this
 couldn't be locally confirmed one way or the other for the *existing* codebase either, so it isn't
 a new gap Inventory introduced.
+
+### Known limitation: local Playwright verification for Inventory blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes — not yet CI-confirmed
+`frontend/e2e/inventory.spec.ts` (admin golden path: create Category → Supplier → Supply → record
+initial stock → record usage down to below reorder level → confirm Low Stock flag and Dashboard
+widget → create/place/receive a Purchase Order fully through `received` → confirm final on-hand;
+plus a draft-cancel test and a dentist-permission-boundary test) could not be confirmed fully green
+from this dev machine — same pathology as the Dental Chart/Clinical Notes entries above, not a new
+issue, and diagnosed directly rather than assumed:
+- **First, a real self-inflicted issue, found and fixed**: an earlier `php artisan migrate:fresh
+  --force` run against this session's *real* dev Postgres (missing `--env=testing`, meant only to
+  sanity-check the new migrations) wiped every table, including `users` — silently deleting the
+  demo admin/dentist/receptionist accounts every E2E spec logs in as. Diagnosed by tracing a 422 on
+  `POST /api/login` back to `User::count() === 0`, not assumed. Fixed by re-running
+  `php artisan db:seed --force`, restoring the three demo accounts. Worth naming explicitly as a
+  lesson: never run a bare (non-`--env=testing`) `migrate:fresh` against a shared dev database
+  without immediately reseeding it, even for a "just checking the migration runs" sanity check.
+- **Two real bugs in the E2E spec itself, found and fixed**: `dialog.getByLabel('Name')` for the
+  Supplier form matched *two* elements (Playwright's `getByLabel` does substring matching by
+  default, and "Name" is a substring of "Contact Name") — fixed with `{ exact: true }`, mirroring
+  the Supply form field's own already-`exact: true` field. A handful of post-mutation assertions
+  used Playwright's 5s default `expect` timeout instead of an explicit longer one, too tight under
+  this host's latency — widened to `{ timeout: 10_000 }` to match the pattern already used
+  elsewhere in this same spec.
+- **The remaining flakiness is 100% the pre-existing networking-latency class, confirmed by
+  reproducing the identical symptom on `auth.spec.ts`** — a completely unrelated, unmodified,
+  previously-passing spec — run in isolation on this same machine: `page.waitForFunction` timing
+  out waiting for the post-login redirect in `fixtures.ts`'s shared `login()` helper, intermittently,
+  with no code path anywhere near Inventory involved. This conclusively rules out an
+  Inventory-specific defect as the cause of the remaining flakiness.
+- **Direct manual verification, not just automated-test evidence**: a standalone Playwright script
+  (login → hard-navigate to `/inventory/suppliers`) confirmed the full page renders correctly —
+  sidebar "Inventory" nav group (Supplies/Purchase Orders/Suppliers/Categories), the Suppliers
+  DataTable, "New Supplier" button, and all form fields — once given `waitUntil: 'networkidle'`
+  instead of the default, consistent with a first-visit Vite dev-server cold-compile delay
+  (every Inventory route/component is being requested for the first time all session) compounding
+  with the already-documented host networking latency, not a rendering defect.
+- Once past login, the *dentist permission-boundary* test (no data mutations, the fastest of the
+  three) passed reliably on every one of several consecutive runs. The two data-mutation tests
+  reached progressively further on each retry (culminating in a run that got all the way through
+  category/supplier/supply creation, initial-stock recording, and into the Purchase Order flow)
+  without hitting a single Inventory-specific assertion failure — only the shared login step's
+  timing remained unreliable.
+**Revisit**: not a regression and not blocking, matching the Dental Chart/Clinical Notes precedent
+exactly — CI's native runner has none of this host's networking overhead. Unlike Clinical Notes,
+this has **not yet been confirmed via an actual CI run** (this branch has not been pushed to a PR
+yet) — do that before marking this resolved, following the exact same `workflow_dispatch` /
+GitHub Actions API confirmation process used for every prior module.
