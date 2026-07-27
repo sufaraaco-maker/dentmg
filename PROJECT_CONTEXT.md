@@ -276,9 +276,24 @@ See `docs/modules/laboratory-design.md` and TECH_DEBT.md for the full diagnostic
 attachments, Appointment/Calendar badge integration, and remake/redo case chaining are deliberately
 deferred to V2 (design doc §2/§7).
 
+**Correction (2026-07-27)**: Treatment Plans, Billing, and Payments — described above as "not yet merged"
+/ "in progress" — were actually merged to `main` via PR #1 on 2026-07-25 (merge commit `f41cda5`), plus a
+payments concurrency-race fix via PR #2 (`58ebfa9`, same day). This paragraph was never updated after
+those merges; `docs/roadmap.md` now reflects the correct status. All three still lack a permanent
+Playwright E2E suite (see `TECH_DEBT.md`), so none has reached the "Production Ready" bar Appointments/
+Dental Chart/Clinical Notes/Inventory/Laboratory meet.
+
 Next module: not yet selected — remaining not-started modules are Imaging, Reports, Settings, AI
 Assistant.
 See `docs/roadmap.md` for current per-module status.
+
+**Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
+1. **SaaS multi-tenant readiness** — every new schema/service/API decision must stay compatible with a
+   future multi-clinic model; V1 stays single-organization, but no design should assume it in a way that
+   would force a real rewrite later. See `TECH_DEBT.md`'s Multi-branch item and the Treatment-Plans-pricing
+   item for two examples already flagged as relevant here.
+2. **PWA & mobile-first UI** — every new screen must be responsive, touch-friendly, and PWA-installable
+   from first implementation, not retrofitted later.
 
 Full documentation set: see docs/ (architecture, database-design, api-guidelines, coding-standards, decisions, roadmap, deployment, modules/), plus CHANGELOG.md and TECH_DEBT.md at the repo root.
 
