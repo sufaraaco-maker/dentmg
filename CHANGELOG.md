@@ -8,11 +8,54 @@ _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, 
 Payments, Clinical Notes, and Inventory are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/
 Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26
 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`) but not yet re-tagged. Clinical Notes and
-Inventory each shipped their own permanent E2E suite and are confirmed Production Ready.
+Inventory each shipped their own permanent E2E suite and are confirmed Production Ready. Laboratory
+(`feature/laboratory`, below) is CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run
+`30294033562`, 2026-07-27) but not yet merged to `main`.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
-bar as Appointments/Dental Chart/Clinical Notes/Inventory — see `docs/roadmap.md` and `TECH_DEBT.md` for
-current per-module status._
+bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory — see `docs/roadmap.md` and
+`TECH_DEBT.md` for current per-module status._
+
+### Added — Laboratory (design approved and implemented same-day, 2026-07-27)
+- **Admin-managed `Lab` vendor catalog**: contact info, notes, `default_turnaround_days` (drives the
+  due-date auto-suggestion below), same `is_active` soft-disable convention as `Supplier`/`AppointmentType`
+  — a deliberately separate model from `Supplier` rather than reused, since the two have unrelated relations
+  (design doc §0/§3, competitive research point 6).
+- **`LabCase`**: one record per case sent to a lab (no header+items split, unlike Purchase Orders — a lab
+  case is a single prescription even when it spans multiple teeth). Fields: patient, lab, responsible
+  dentist, `tooth_numbers` (JSON array of FDI codes), case type (free text), shade, material, fee
+  (tracking-only, never wired into Billing/Payments), tracking number, instructions.
+- **`LabCaseStatus` lifecycle**: `draft` → `sent` → `received` → `quality_checked`, plus `cancelled`
+  (reachable only from `draft`/`sent`, blocked once `received_at` is set — mirrors
+  `PurchaseOrder::cancel()`'s identical "blocked once anything is real" guard). `send()` auto-suggests
+  `due_at` from the lab's `default_turnaround_days` unless already manually set, matching Open Dental's own
+  turnaround-time-driven due date.
+- **Traceability links**: `treatment_plan_item_id`/`appointment_id` are optional, one-way FKs — a case can
+  be traced back to the plan item that prescribed it and the appointment it's meant to be ready for, without
+  either of those modules knowing Laboratory exists (exact convention as
+  `TreatmentPlanItem.diagnosis_entry_id`).
+- **Permissions**: dentists (and admin) create/update/cancel a case — choosing lab/tooth/shade/material is a
+  clinical prescription decision; admin+receptionist send/receive/quality-check — front-desk logistics once
+  prescribed; Lab vendor catalog CRUD and Lab Case delete remain admin-only.
+- **Frontend**: `LabsView.vue` (admin-only catalog CRUD, mirrors `SuppliersView.vue`), `LabCasesView.vue`
+  (paginated list, mirrors `PurchaseOrdersView.vue`) + `LabCaseDetailView.vue` (overview card, status-action
+  buttons, and a browser-printable slip — CSS print only, no new PDF dependency). New top-level
+  **Laboratory** sidebar group and a `DueLabCasesWidget.vue` Dashboard card (cases due today/overdue). Full
+  en/ar/tr i18n, zero missing/extra keys verified across all three locale files.
+- **Verification**: backend `pint`/`phpstan analyse` clean, 815/815 backend tests green (58
+  Laboratory-specific: Feature + Unit). Frontend `vue-tsc`/ESLint/Prettier clean, 626/627 Vitest tests green
+  (13 Laboratory-specific; the one unrelated failure — a pre-existing, untouched `PatientDetailView.test.ts`
+  file — confirmed flaky under that run's environment load, passes cleanly in isolation), production build
+  green. A permanent Playwright E2E suite (`frontend/e2e/laboratory.spec.ts`) was written during this
+  module's own implementation and **confirmed via the GitHub Actions API across two `workflow_dispatch`
+  runs** on `feature/laboratory` (`30293175321` → `30294033562`) — the first surfaced one real bug (a
+  duplicate-worded toast left visible from two rapid back-to-back status transitions, since all four
+  actions shared one generic message), fixed by giving each action its own distinct toast text. The second
+  run's remaining E2E failures/flakiness (`dental-chart.spec.ts`'s rate-limit collision,
+  `inventory.spec.ts`/`patients.spec.ts`'s first-load timeouts) were proven — via Playwright's own
+  sequential execution order, not assumed — to be pre-existing and unrelated to Laboratory. Final run
+  (`30294033562`): **Backend success, Frontend success, all three `laboratory.spec.ts` tests green with no
+  retries needed**. See `TECH_DEBT.md` for the full diagnostic trail.
 
 ### Added — Inventory (design approved and implemented same-day, 2026-07-26)
 - **Admin-managed catalogs**: `Supplier` (contact info) and `Supply Category` (a real table, not a fixed

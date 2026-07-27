@@ -1,9 +1,50 @@
-# Laboratory — Module Design (Approved 2026-07-27 — Final Review Pending Before Implementation)
+# Laboratory — Module Design (Production Ready, 2026-07-27)
 
-**Status: Design approved.** All eight open items from §7 were resolved in a single approval pass (see
-Approval & Decision Log below); finalized schema, enum, and policy details have been added (§3a/§4/§5).
-Per the standing Two-Phase Module Workflow, one last full read-through of this final version is pending
-before implementation (Database → Backend → Frontend → Tests → CI → Merge) begins.
+**Status: Design approved and implemented same-day (2026-07-27); CI-confirmed Production Ready the
+same day.** Labs/Lab Cases catalogs, the `LabCaseStatus` lifecycle (draft→sent→received→
+quality_checked, plus cancelled), and the full frontend (LabsView/LabCasesView/LabCaseDetailView,
+Dashboard widget, printable slip) are all in place, backend and frontend. Backend: Pint/PHPStan
+clean, 815/815 backend tests green (58 Laboratory-specific: Feature + Unit). Frontend:
+`vue-tsc`/ESLint/Prettier clean, 626/627 Vitest tests green (13 new Laboratory-specific; the one
+unrelated failure — `PatientDetailView.test.ts`, an untouched pre-existing file — confirmed flaky
+under that run's environment load, passes cleanly in isolation), production build green. A
+permanent Playwright E2E suite (`frontend/e2e/laboratory.spec.ts`) is **confirmed via the GitHub
+Actions API** across two `workflow_dispatch` runs on `feature/laboratory` — the first surfaced one
+real bug (a duplicate-worded toast on rapid back-to-back status transitions), fixed and
+re-verified. Final run (`30294033562`): **Backend success, Frontend success, all three
+`laboratory.spec.ts` tests green with no retries.** See `TECH_DEBT.md` for the full diagnostic
+trail, including two pre-existing, proven-unrelated E2E issues (a suite-wide rate-limit capacity
+issue affecting `dental-chart.spec.ts`, and the recurring local-only PHPStan container quirk
+already logged against Inventory) surfaced but not caused by this module.
+
+## Implementation Summary (added at Final Review, 2026-07-27)
+
+**Backend**: `Lab` (admin-managed vendor catalog, mirrors `Supplier` exactly — `is_active`
+soft-disable, no `Auditable`/`SoftDeletes`) and `LabCase` (`Auditable`, `HasUuids`, `SoftDeletes` —
+mirrors `PurchaseOrder`'s transactional shape, one record per case). `LabCaseStatus` backed enum
+(draft/sent/received/quality_checked/cancelled) with the same `transitionsFrom`/`canTransitionTo`/
+`isTerminal` shape as `PurchaseOrderStatus`. `LabCaseService` enforces transitions, auto-calculates
+`due_at` from the lab's `default_turnaround_days` on `send()` unless already manually set, blocks
+`cancel()` once `received_at` is set. Permissions exactly as approved: `admin`+`dentist`
+create/update/cancel (clinical), `admin`+`receptionist` send/receive/qualityCheck (logistics),
+admin-only delete (draft-only). `tooth_numbers` stored as a JSON array of FDI codes;
+`treatment_plan_item_id`/`appointment_id` are one-way traceability FKs, exact convention as
+`TreatmentPlanItem.diagnosis_entry_id`.
+
+**Frontend**: `useLabsStore` mirrors `stores/suppliers.ts` line-for-line. `LabsView.vue`
+(admin-only catalog CRUD, mirrors `SuppliersView.vue`), `LabCasesView.vue` (paginated list, no
+store, mirrors `PurchaseOrdersView.vue`) + `LabCaseDetailView.vue` (overview card +
+`LabCaseActionsBar.vue` + a browser-print slip via `print:hidden`/`window.print()`, no PDF
+dependency) + `CreateLabCaseDialog.vue` (reuses `appointments/PatientSearchSelect.vue` and
+`appointments/DentistSelect.vue` cross-module — the same precedent `CreateTreatmentPlanDialog.vue`
+already set reusing `DentistSelect.vue`, since both are genuinely generic, not Appointments-specific
+domain logic). New top-level **Laboratory** sidebar group (Decision 8) and a
+`DueLabCasesWidget.vue` Dashboard card. Full en/ar/tr i18n, 938/938/938 key-parity verified.
+
+**Deviation from a design-doc field, noted for the record**: §5's `LabCasePolicy` table lists
+`cancel()` under `admin`+`dentist` (clinical, reversing a prescription decision) — implemented
+exactly as designed, distinct from `send`/`receive`/`qualityCheck`'s `admin`+`receptionist` set.
+No other deviations from the approved design.
 
 ## Approval & Decision Log (2026-07-27)
 

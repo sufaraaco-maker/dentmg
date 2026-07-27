@@ -253,8 +253,31 @@ label, two duplicate-toast bugs, and one real E2E selector ambiguity — all fix
 (`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
 `docs/modules/inventory-design.md` and TECH_DEBT.md for the full diagnostic trail.
 
-Next module: not yet selected — remaining not-started modules per the list above are Laboratory, Imaging,
-Reports, Settings, AI Assistant.
+**Laboratory — Production Ready ✅ (2026-07-27, `feature/laboratory`, CI-confirmed)**: admin-managed
+`Lab` vendor catalog (own model, not reused from `Supplier` — the two have unrelated relations) and
+`LabCase` (patient/lab/dentist/tooth-numbers/shade/material/fee/tracking-number, one record per case
+— no header+items split, unlike Purchase Orders). `LabCaseStatus` lifecycle: `draft` → `sent` →
+`received` → `quality_checked`, plus `cancelled` (blocked once `received_at` is set). `send()`
+auto-suggests `due_at` from the lab's `default_turnaround_days` unless already manually set.
+Permissions: `admin`+`dentist` create/update/cancel (clinical prescription decision),
+`admin`+`receptionist` send/receive/qualityCheck (front-desk logistics), admin-only delete
+(draft-only). `treatment_plan_item_id`/`appointment_id` are one-way traceability FKs (case never
+mutates either module), same convention as `TreatmentPlanItem.diagnosis_entry_id`. New top-level
+**Laboratory** sidebar group, a Dashboard "Lab Cases Due" widget, and a browser-printable Lab Case
+slip (CSS print only, no PDF dependency). 815/815 backend tests (58 Laboratory-specific) + 626/627
+frontend Vitest tests green (13 Laboratory-specific; the one unrelated failure confirmed flaky,
+untouched file), `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright E2E suite
+(`frontend/e2e/laboratory.spec.ts`) confirmed via the GitHub Actions API across two
+`workflow_dispatch` runs — the first surfaced one real bug (a duplicate-worded toast on rapid
+back-to-back status transitions), fixed and re-verified; the second run's remaining E2E
+failures/flakiness (`dental-chart.spec.ts`, `inventory.spec.ts`, `patients.spec.ts`) were proven —
+via Playwright's own sequential execution order — to be pre-existing and unrelated to Laboratory.
+See `docs/modules/laboratory-design.md` and TECH_DEBT.md for the full diagnostic trail. File/photo
+attachments, Appointment/Calendar badge integration, and remake/redo case chaining are deliberately
+deferred to V2 (design doc §2/§7).
+
+Next module: not yet selected — remaining not-started modules are Imaging, Reports, Settings, AI
+Assistant.
 See `docs/roadmap.md` for current per-module status.
 
 Full documentation set: see docs/ (architecture, database-design, api-guidelines, coding-standards, decisions, roadmap, deployment, modules/), plus CHANGELOG.md and TECH_DEBT.md at the repo root.
