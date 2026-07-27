@@ -113,8 +113,9 @@ function onSaved(updated: Supply) {
   supply.value = updated
 }
 
+// RecordStockMovementDialog.vue already shows its own "recorded" toast on success — this just
+// refreshes the ledger and the Supply's own on-hand/low-stock state.
 function onRecorded() {
-  toast.add({ severity: 'success', summary: t('inventory.movements.recorded'), life: 3000 })
   movementsPage.value = 1
   loadMovements()
   loadSupply()
