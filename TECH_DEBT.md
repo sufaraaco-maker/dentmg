@@ -729,6 +729,16 @@ stops intermittently tripping `dental-chart.spec.ts`. Not blocking Laboratory: i
 tests passed cleanly with no retries in the second run (see RESOLVED note below), and this is a
 suite-wide capacity issue predating Laboratory, not a defect in it.
 
+**Fixed 2026-07-27 (same day, before opening the Laboratory PR)**: rather than leave this for a
+future module to trip over again, made the limit configurable — `RateLimiter::for('api', ...)` in
+`AppServiceProvider` now reads `config('api.throttle_per_minute')` (new `backend/config/api.php`,
+`env('API_THROTTLE_PER_MINUTE', 120)`) instead of a hardcoded `120`. Production behavior is
+unchanged (default stays 120; `.env.example` documents the var at its existing default). Only
+`.github/workflows/ci.yml`'s E2E job env now sets `API_THROTTLE_PER_MINUTE=1000`, so the full
+Playwright suite (single-worker, sequential, one demo admin) has enough headroom regardless of how
+many more specs future modules add. Re-verification via `workflow_dispatch` pending — see the
+Laboratory RESOLVED note below for the outcome once confirmed.
+
 ### Real bug found and fixed via CI: duplicate-worded toast on rapid back-to-back Lab Case status transitions
 First `workflow_dispatch` run (`30293175321`) caught a genuine strict-mode violation, not
 flakiness: `LabCaseActionsBar.vue` used one generic toast message ("Lab case updated") for all four

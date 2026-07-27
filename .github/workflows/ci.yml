@@ -138,6 +138,12 @@ jobs:
           # which serializes and stalls badly under a single worker. See the commented hint
           # already in .env.example for exactly this setting.
           echo "PHP_CLI_SERVER_WORKERS=4" >> .env
+          # The full Playwright suite runs single-worker, sequentially, all as the same demo
+          # admin user, well within one throttle window — every added spec (e.g. laboratory.spec.ts)
+          # pushes the total request count further past the production-matching 120/min default
+          # (see AppServiceProvider's RateLimiter::for('api', ...)), causing unrelated later specs
+          # to fail with 429. CI-only; production keeps the real 120/min default from .env.example.
+          echo "API_THROTTLE_PER_MINUTE=1000" >> .env
 
       - name: Migrate and seed (demo accounts — APP_ENV=local, matches docs/demo-guide.md)
         working-directory: backend
