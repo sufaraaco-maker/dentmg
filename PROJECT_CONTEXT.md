@@ -232,7 +232,7 @@ Treatment Plans/Billing/Payments each deferred), confirmed 19/19 green via the G
 (`workflow_dispatch` run `30189070147`) — see `docs/modules/clinical-notes-design.md` and TECH_DEBT.md for
 open (non-blocking) items.
 
-**Inventory — Production Ready ✅ (2026-07-27, `feature/inventory`, CI-confirmed, not yet merged to `main`)**:
+**Inventory — Production Ready ✅ (2026-07-27, merged to `main` via PR #4, merge commit `bf2592f`)**:
 admin-managed Supplier/Supply Category/Supply catalogs (`is_active` soft-disable, mirroring
 `AppointmentType`/`DentalCondition`'s convention), an immutable append-only `stock_movements` ledger
 (`quantity_on_hand`/`is_low_stock` always computed live via `SUM(quantity_delta)`, never stored — a

@@ -5,15 +5,14 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 ## Unreleased
 
 _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
-Payments, and Clinical Notes are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/
-Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR
-#3) but not yet re-tagged. Clinical Notes shipped its own permanent E2E suite and is confirmed
-Production Ready. Inventory (`feature/inventory`, below) is CI-confirmed Production Ready
-(GitHub Actions `workflow_dispatch` run `30282195677`, 2026-07-27) but not yet merged to `main`.
+Payments, Clinical Notes, and Inventory are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/
+Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26
+via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`) but not yet re-tagged. Clinical Notes and
+Inventory each shipped their own permanent E2E suite and are confirmed Production Ready.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
-bar as Appointments/Dental Chart/Clinical Notes — see `docs/roadmap.md` and `TECH_DEBT.md` for current
-per-module status._
+bar as Appointments/Dental Chart/Clinical Notes/Inventory — see `docs/roadmap.md` and `TECH_DEBT.md` for
+current per-module status._
 
 ### Added — Inventory (design approved and implemented same-day, 2026-07-26)
 - **Admin-managed catalogs**: `Supplier` (contact info) and `Supply Category` (a real table, not a fixed
