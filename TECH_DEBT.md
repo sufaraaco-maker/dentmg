@@ -736,8 +736,13 @@ future module to trip over again, made the limit configurable — `RateLimiter::
 unchanged (default stays 120; `.env.example` documents the var at its existing default). Only
 `.github/workflows/ci.yml`'s E2E job env now sets `API_THROTTLE_PER_MINUTE=1000`, so the full
 Playwright suite (single-worker, sequential, one demo admin) has enough headroom regardless of how
-many more specs future modules add. Re-verification via `workflow_dispatch` pending — see the
-Laboratory RESOLVED note below for the outcome once confirmed.
+many more specs future modules add.
+
+**RESOLVED 2026-07-27**: confirmed via `workflow_dispatch` run `30295881535` on commit `33de932` —
+**Backend success (815/815 tests), Frontend success (627/627 Vitest tests), E2E success: 25/25
+passed, 0 failed, 0 flaky** (previously-flaky `inventory.spec.ts`/`patients.spec.ts` also passed
+clean this run, with no retries needed). `dental-chart.spec.ts` and `laboratory.spec.ts` both
+green, closing this item for good rather than leaving it to trip the next module too.
 
 ### Real bug found and fixed via CI: duplicate-worded toast on rapid back-to-back Lab Case status transitions
 First `workflow_dispatch` run (`30293175321`) caught a genuine strict-mode violation, not
@@ -755,3 +760,8 @@ first surfaced (the duplicate-toast issue above). Final run (`30294033562`): **B
 Frontend success**; E2E: all three `laboratory.spec.ts` tests passed with no retries needed (the
 run's only remaining failures/flakiness — `dental-chart.spec.ts`, `inventory.spec.ts`,
 `patients.spec.ts` — are the pre-existing, proven-unrelated issues documented above).
+
+**Fully green 2026-07-27**: the suite-wide 429 rate-limit item above was then fixed (not just
+documented) before opening the PR. Re-run via `workflow_dispatch` (`30295881535`, commit `33de932`)
+confirms the whole CI pipeline clean: **Backend 815/815, Frontend 627/627, E2E 25/25 — zero
+failures, zero flakes.**
