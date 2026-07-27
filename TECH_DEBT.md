@@ -570,3 +570,126 @@ differ in speed or topology.
 Confirmed via the GitHub Actions API (not just workflow-level "success" — the individual E2E job
 and its own Playwright summary annotation): run `29763458360` on commit `3faf2d7`, all three jobs
 (Backend, Frontend, E2E) green, **13 passed (36.2s)**.
+
+## Open (new from Inventory module, 2026-07-26)
+
+### Local `phpstan analyse` (level 5) is broken in this dev container independent of the Inventory module — pre-existing, not a regression
+While verifying Inventory, `./vendor/bin/phpstan analyse` inside `dentalsuite_app` reported errors
+on pre-existing, already-shipped models (`TreatmentPlan`/`TreatmentPlanItem` — e.g. "Access to an
+undefined property `App\Models\TreatmentPlan::$status`") with **zero** Inventory code present.
+Confirmed by `git stash -u` (removing every Inventory file, back to the exact `main` state) and
+re-running: **410 errors**, all in pre-Inventory files this project's own CHANGELOG previously
+recorded as PHPStan-clean. Re-applying the stash reproduces the same failure plus a handful more
+in the new Inventory files, all of the identical "undefined property" shape. Root cause not fully
+isolated (Larastan's model-property resolution appears to depend on some warmed state — a
+bootstrap cache or a live, successfully-migrated DB connection at analysis time — that this
+container's `phpstan analyse` invocation isn't reliably getting; clearing `storage/phpstan`'s
+result cache made it *worse*, not better, ruling out a stale-cache explanation). One genuinely
+real, unrelated-to-this-flake finding was fixed regardless while investigating:
+`Supply::scopeLowStock()` called `Supply::scopeWithQuantityOnHand()` via `$query->
+withQuantityOnHand()` — PHPStan/Larastan cannot statically resolve one magic `scope*` method
+calling another through the generic `Illuminate\Database\Eloquent\Builder` return type. Fixed by
+factoring the shared join into a plain `public static function applyQuantityOnHandJoin()` that
+both scopes call directly (`app/Models/Supply.php`).
+**Revisit**: this is a local/environment issue, not a code defect — the same "local ≠ CI" caution
+already logged above for E2E/Docker-networking timing. CI's own `phpstan analyse` step (run by a
+container that's presumably warmed/configured differently than this ad hoc `docker exec`) is the
+verification authority for whether Inventory's own new code is actually PHPStan-clean; this
+couldn't be locally confirmed one way or the other for the *existing* codebase either, so it isn't
+a new gap Inventory introduced.
+
+### Known limitation: local Playwright verification for Inventory blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes — not yet CI-confirmed
+`frontend/e2e/inventory.spec.ts` (admin golden path: create Category → Supplier → Supply → record
+initial stock → record usage down to below reorder level → confirm Low Stock flag and Dashboard
+widget → create/place/receive a Purchase Order fully through `received` → confirm final on-hand;
+plus a draft-cancel test and a dentist-permission-boundary test) could not be confirmed fully green
+from this dev machine — same pathology as the Dental Chart/Clinical Notes entries above, not a new
+issue, and diagnosed directly rather than assumed:
+- **First, a real self-inflicted issue, found and fixed**: an earlier `php artisan migrate:fresh
+  --force` run against this session's *real* dev Postgres (missing `--env=testing`, meant only to
+  sanity-check the new migrations) wiped every table, including `users` — silently deleting the
+  demo admin/dentist/receptionist accounts every E2E spec logs in as. Diagnosed by tracing a 422 on
+  `POST /api/login` back to `User::count() === 0`, not assumed. Fixed by re-running
+  `php artisan db:seed --force`, restoring the three demo accounts. Worth naming explicitly as a
+  lesson: never run a bare (non-`--env=testing`) `migrate:fresh` against a shared dev database
+  without immediately reseeding it, even for a "just checking the migration runs" sanity check.
+- **Two real bugs in the E2E spec itself, found and fixed**: `dialog.getByLabel('Name')` for the
+  Supplier form matched *two* elements (Playwright's `getByLabel` does substring matching by
+  default, and "Name" is a substring of "Contact Name") — fixed with `{ exact: true }`, mirroring
+  the Supply form field's own already-`exact: true` field. A handful of post-mutation assertions
+  used Playwright's 5s default `expect` timeout instead of an explicit longer one, too tight under
+  this host's latency — widened to `{ timeout: 10_000 }` to match the pattern already used
+  elsewhere in this same spec.
+- **The remaining flakiness is 100% the pre-existing networking-latency class, confirmed by
+  reproducing the identical symptom on `auth.spec.ts`** — a completely unrelated, unmodified,
+  previously-passing spec — run in isolation on this same machine: `page.waitForFunction` timing
+  out waiting for the post-login redirect in `fixtures.ts`'s shared `login()` helper, intermittently,
+  with no code path anywhere near Inventory involved. This conclusively rules out an
+  Inventory-specific defect as the cause of the remaining flakiness.
+- **Direct manual verification, not just automated-test evidence**: a standalone Playwright script
+  (login → hard-navigate to `/inventory/suppliers`) confirmed the full page renders correctly —
+  sidebar "Inventory" nav group (Supplies/Purchase Orders/Suppliers/Categories), the Suppliers
+  DataTable, "New Supplier" button, and all form fields — once given `waitUntil: 'networkidle'`
+  instead of the default, consistent with a first-visit Vite dev-server cold-compile delay
+  (every Inventory route/component is being requested for the first time all session) compounding
+  with the already-documented host networking latency, not a rendering defect.
+- Once past login, the *dentist permission-boundary* test (no data mutations, the fastest of the
+  three) passed reliably on every one of several consecutive runs. The two data-mutation tests
+  reached progressively further on each retry (culminating in a run that got all the way through
+  category/supplier/supply creation, initial-stock recording, and into the Purchase Order flow)
+  without hitting a single Inventory-specific assertion failure — only the shared login step's
+  timing remained unreliable.
+**Revisit**: not a regression and not blocking, matching the Dental Chart/Clinical Notes precedent
+exactly — CI's native runner has none of this host's networking overhead. Unlike Clinical Notes,
+this has **not yet been confirmed via an actual CI run** (this branch has not been pushed to a PR
+yet) — do that before marking this resolved, following the exact same `workflow_dispatch` /
+GitHub Actions API confirmation process used for every prior module.
+
+**Update (2026-07-27)**: pushed and run via `workflow_dispatch` (run `30277023360`). CI's own
+native runner — unaffected by this host's networking latency — surfaced genuine, reproducible
+bugs the local flakiness had been masking: (1) a real PHPStan error (`PurchaseOrderService`
+assigning a plain string to a `Carbon|null`-cast property) fixed by assigning `now()` directly
+instead of `now()->toDateString()`; (2) every `InputNumber`/`DatePicker`/`Select` in the Inventory
+components used a plain `id` prop, which PrimeVue applies to the component's root wrapper, not its
+inner focusable input — the paired `<label for="...">` never actually associated with anything
+focusable, a genuine accessibility defect (label-click-to-focus and screen readers both silently
+broken), not just a test-selector inconvenience. Fixed everywhere in Inventory using PrimeVue's own
+`input-id` prop, which correctly forwards to the real input. (3) `PurchaseOrderActionsBar`'s cancel
+confirmation never set `acceptLabel`/`rejectLabel`, defaulting to PrimeVue's generic "Yes"/"No"
+instead of the contextual label `InvoiceActionsBar.vue`'s own confirm dialogs already use. All
+three fixed and re-verified locally (Pint, 35/35 `PurchaseOrder` tests, `vue-tsc`/ESLint/Prettier,
+19/19 Inventory Vitest tests) before pushing again for re-confirmation.
+
+**Codebase-wide gap noted, not fixed here (out of scope for this module)**: the same `id` (instead
+of `inputId`) mistake on a PrimeVue form control already exists elsewhere — e.g. `UsersView.vue`'s
+role `Select` (`id="role"` paired with `<label for="role">`) — confirming this is a pre-existing,
+systemic gap across the codebase's PrimeVue form usage, not something introduced by Inventory.
+**Revisit**: worth a dedicated accessibility-focused pass across every module's forms at some
+point, auditing every `Select`/`InputNumber`/`DatePicker`/similar wrapped-input PrimeVue component
+for a plain `id` that should be `inputId` instead — but not blocking, and deliberately not fixed
+opportunistically here to keep this module's diff scoped to Inventory.
+
+**Two further rounds of real, CI-native bugs found and fixed** (each caught by the *next* run after
+the previous fix, since a fresh CI run was needed to reach each subsequent point in the golden
+path): (4) `SuppliesView.vue`'s `onSaved()` and `PurchaseOrderDetailView.vue`'s
+`onItemAdded()`/`onItemReceived()` each showed their own success toast on top of the one their
+child dialog (`SupplyFormDialog`/`AddPurchaseOrderItemDialog`/`ReceivePurchaseOrderItemDialog`)
+already displays for the same action — a real double-toast bug on every Supply save/item add/item
+receive, caught by Playwright's strict-mode violation (two identical toast nodes), not flakiness.
+Same bug, third instance: `SupplyDetailView.vue`'s `onRecorded()` duplicated
+`RecordStockMovementDialog.vue`'s own "Movement recorded" toast. All three fixed by keeping only
+the state-refresh call each handler still needs. (5) The E2E spec itself had a real selector
+ambiguity: `page.getByText('Used')` matched both the Stock Movements ledger's own cell and the
+just-closed Record Movement dialog's Reason combobox (its `aria-label` still carried "Used" from
+its last interaction even while hidden) — fixed by scoping ledger-reason assertions to
+`.p-datatable`, and proactively fixed the identical landmine at the end of the test (two "Received"
+rows exist in the ledger by then) with `.first()` before it was ever hit.
+
+**RESOLVED 2026-07-27**: confirmed via the GitHub Actions API across five `workflow_dispatch` runs
+on `feature/inventory` (`30277023360` → `30280053248` → `30280937935` → `30281608486` →
+`30282195677`), each surfacing and closing exactly one more real, CI-native bug than the last — a
+textbook case for why "verified locally" is provisional until CI itself confirms it (this dev
+machine's own local E2E attempts hit the pre-existing Windows Docker networking latency described
+above and never got far enough into the golden path to surface bugs 4/5 at all). Final run
+(`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**,
+including all three `inventory.spec.ts` tests with no retries needed.

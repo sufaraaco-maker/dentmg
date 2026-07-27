@@ -218,8 +218,44 @@ load, not a code defect — logged as its own `TECH_DEBT.md` entry rather than s
 Playwright E2E spec for Payments (and for Billing) is still open — see `TECH_DEBT.md`. See
 `docs/modules/payments-design.md` for the full design + Decision Log.
 
-Next module: not yet selected — Payments closes out the Billing → Payments financial-module pair per the
-roadmap; see `docs/roadmap.md` for what's next.
+**Clinical Notes — Production Ready ✅ (merged to `main` via PR #3, 2026-07-26)**: SOAP-structured
+per-patient clinical documentation (chief complaint + Subjective/Objective/Assessment/Plan, `note_type`,
+optional `Appointment` link), Draft → Signed lifecycle (atomic sign via `DB::transaction`, blank-note
+rejection, `ClinicalNoteLockedException` guarding any further write to a signed note), append-only
+addendums (no update/delete route at any permission level, enforced at the schema level too). Admin/dentist
+author+sign+addend, admin-only delete; **receptionist has no access at all** (a deliberate divergence from
+Dental Chart/Treatment Plans, given the sensitivity of clinical narrative content), enforced at policy,
+frontend tab-visibility, and router-guard layers. 703/703 backend tests (60 Clinical-Notes-specific),
+595/595 frontend Vitest tests (31 Clinical-Notes-specific), a permanent Playwright E2E suite
+(`frontend/e2e/clinical-notes.spec.ts`) built during this module's own implementation (closing the E2E gap
+Treatment Plans/Billing/Payments each deferred), confirmed 19/19 green via the GitHub Actions API
+(`workflow_dispatch` run `30189070147`) — see `docs/modules/clinical-notes-design.md` and TECH_DEBT.md for
+open (non-blocking) items.
+
+**Inventory — Production Ready ✅ (2026-07-27, `feature/inventory`, CI-confirmed, not yet merged to `main`)**:
+admin-managed Supplier/Supply Category/Supply catalogs (`is_active` soft-disable, mirroring
+`AppointmentType`/`DentalCondition`'s convention), an immutable append-only `stock_movements` ledger
+(`quantity_on_hand`/`is_low_stock` always computed live via `SUM(quantity_delta)`, never stored — a
+deliberate improvement over Open Dental's own mutable-on-hand-field precedent, per the design doc's §0
+competitive research), and a Purchase Order `draft` → `placed` → `partially_received` → `received` lifecycle
+(per-item receiving hard-capped at `quantity_ordered`, cancel only while nothing has been received).
+Dentists may record `used`/`wasted`/`expired` Stock Movements (a deliberate divergence from the
+admin+receptionist-only precedent every prior financial module used, since dentists are the ones actually
+consuming supplies chairside); Supplier/Category management and Purchase Order procurement remain
+admin+receptionist, Purchase Order delete admin-only. New top-level **Inventory** sidebar group and a
+Dashboard Low Stock widget. 771/771 backend tests (68 Inventory-specific) + 19 new frontend Vitest tests
+green, `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright E2E suite
+(`frontend/e2e/inventory.spec.ts`) confirmed via the GitHub Actions API across five `workflow_dispatch` runs
+— each run's native CI environment (unaffected by this dev machine's own Windows Docker networking latency,
+already logged against Dental Chart/Clinical Notes) surfaced one more real bug than the last: a genuine
+PHPStan error, a codebase-wide `id`-vs-`inputId` PrimeVue accessibility defect, a missing confirm-dialog
+label, two duplicate-toast bugs, and one real E2E selector ambiguity — all fixed and re-verified. Final run
+(`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
+`docs/modules/inventory-design.md` and TECH_DEBT.md for the full diagnostic trail.
+
+Next module: not yet selected — remaining not-started modules per the list above are Laboratory, Imaging,
+Reports, Settings, AI Assistant.
+See `docs/roadmap.md` for current per-module status.
 
 Full documentation set: see docs/ (architecture, database-design, api-guidelines, coding-standards, decisions, roadmap, deployment, modules/), plus CHANGELOG.md and TECH_DEBT.md at the repo root.
 

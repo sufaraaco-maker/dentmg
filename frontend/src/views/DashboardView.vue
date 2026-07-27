@@ -8,6 +8,7 @@ import Button from 'primevue/button'
 import TodayScheduleWidget from '@/components/appointments/TodayScheduleWidget.vue'
 import UpcomingAppointmentsWidget from '@/components/appointments/UpcomingAppointmentsWidget.vue'
 import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
+import LowStockWidget from '@/components/inventory/LowStockWidget.vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -87,6 +88,10 @@ onMounted(async () => {
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <TodayScheduleWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
       <UpcomingAppointmentsWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <LowStockWidget />
     </div>
 
     <AppointmentDialog v-model:visible="newAppointmentDialogVisible" />

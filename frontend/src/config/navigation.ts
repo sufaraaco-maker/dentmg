@@ -72,6 +72,35 @@ export const navigation: NavItem[] = [
     comingSoon: true,
   },
   {
+    labelKey: 'nav.inventory',
+    icon: 'pi pi-box',
+    routeName: 'supplies',
+    children: [
+      {
+        labelKey: 'inventory.nav.supplies',
+        icon: 'pi pi-box',
+        routeName: 'supplies',
+      },
+      {
+        labelKey: 'inventory.nav.purchaseOrders',
+        icon: 'pi pi-truck',
+        routeName: 'purchase-orders',
+      },
+      {
+        labelKey: 'inventory.nav.suppliers',
+        icon: 'pi pi-building',
+        routeName: 'suppliers',
+        roles: ['admin'],
+      },
+      {
+        labelKey: 'inventory.nav.categories',
+        icon: 'pi pi-tags',
+        routeName: 'supply-categories',
+        roles: ['admin'],
+      },
+    ],
+  },
+  {
     labelKey: 'nav.billing',
     icon: 'pi pi-wallet',
     comingSoon: true,

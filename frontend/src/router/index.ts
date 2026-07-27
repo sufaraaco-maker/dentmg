@@ -95,6 +95,38 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
+          path: 'supplies',
+          name: 'supplies',
+          component: () => import('@/views/SuppliesView.vue'),
+        },
+        {
+          path: 'supplies/:id',
+          name: 'supply-detail',
+          component: () => import('@/views/SupplyDetailView.vue'),
+        },
+        {
+          path: 'purchase-orders',
+          name: 'purchase-orders',
+          component: () => import('@/views/PurchaseOrdersView.vue'),
+        },
+        {
+          path: 'purchase-orders/:id',
+          name: 'purchase-order-detail',
+          component: () => import('@/views/PurchaseOrderDetailView.vue'),
+        },
+        {
+          path: 'inventory/suppliers',
+          name: 'suppliers',
+          component: () => import('@/views/SuppliersView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'inventory/categories',
+          name: 'supply-categories',
+          component: () => import('@/views/SupplyCategoriesView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
           path: 'forbidden',
           name: 'forbidden',
           component: () => import('@/views/ForbiddenView.vue'),

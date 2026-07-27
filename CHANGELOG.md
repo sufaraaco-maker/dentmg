@@ -5,11 +5,67 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 ## Unreleased
 
 _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
-and Payments are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/Payments 2026-07-25
-via PR #1, plus a same-day concurrency fix via PR #2) but not yet re-tagged. Billing and Payments still lack
-a permanent E2E suite (Billing also lacks a backend Feature-test suite and its final `modules/billing.md`
-doc) before either meets the same "Production Ready" bar as Appointments/Dental Chart — see `docs/roadmap.md`
-and `TECH_DEBT.md` for current per-module status._
+Payments, and Clinical Notes are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/
+Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR
+#3) but not yet re-tagged. Clinical Notes shipped its own permanent E2E suite and is confirmed
+Production Ready. Inventory (`feature/inventory`, below) is CI-confirmed Production Ready
+(GitHub Actions `workflow_dispatch` run `30282195677`, 2026-07-27) but not yet merged to `main`.
+Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
+Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
+bar as Appointments/Dental Chart/Clinical Notes — see `docs/roadmap.md` and `TECH_DEBT.md` for current
+per-module status._
+
+### Added — Inventory (design approved and implemented same-day, 2026-07-26)
+- **Admin-managed catalogs**: `Supplier` (contact info) and `Supply Category` (a real table, not a fixed
+  enum — dental supply categories genuinely vary per clinic), both using the same `is_active` soft-disable
+  convention as `AppointmentType`/`DentalCondition` rather than a hard delete or `Auditable` trail.
+- **`Supply`**: the stock-item catalog (name, SKU, unit of measure, unit cost, reorder level/quantity,
+  default supplier), with `quantity_on_hand`/`is_low_stock` always computed live from the ledger below —
+  never a stored, independently-editable counter that can drift, a deliberate improvement over Open Dental's
+  own mutable on-hand field (design doc §0 competitive research).
+- **`stock_movements`**: an immutable, append-only ledger — every quantity change (`initial_stock`, `used`,
+  `wasted`, `expired`, `correction`, or system-generated `received`) is a signed `quantity_delta` row, never
+  edited or deleted; a correction is always a new offsetting row, mirroring `Payment`'s refund-is-a-new-row
+  rule exactly. A negative movement is rejected server-side if it would take on-hand below zero
+  (`InsufficientStockException`), row-locking the `Supply` first to close the same race
+  `PaymentService::refund()` already guards against.
+- **Purchase Orders**: `draft` → `placed` → `partially_received` → `received` lifecycle (plus `cancelled`
+  from `draft`/`placed`). Items are add/edit/delete-able only while draft; receiving is per-item, hard-capped
+  at `quantity_ordered` (genuine over-shipment becomes an explicit `correction` movement or a new order, never
+  silent over-receipt); cancel is blocked the instant any item has a real receipt against it. `PurchaseOrder`
+  gets `Auditable`; `order_number` (`PO-000001`) is assigned via the same lock-highest-row-and-increment
+  pattern `PatientService::create()` already uses for `patient_code`.
+- **Permissions**: dentists may record `used`/`wasted`/`expired` Stock Movements (a deliberate divergence
+  from the admin+receptionist-only precedent every prior financial module — Billing, Payments — used, since
+  dentists are the ones actually consuming supplies chairside); Supplier/Category management and Purchase
+  Order procurement (create/place/receive/cancel) remain admin+receptionist; Purchase Order delete is
+  admin-only, mirroring `InvoicePolicy`/`PaymentPolicy`'s identical stricter-than-everything-else precedent.
+- **Frontend**: `SuppliersView.vue`/`SupplyCategoriesView.vue` (admin-only catalog CRUD, mirroring
+  `AppointmentTypesView.vue`), a paginated `SuppliesView.vue` (mirroring `PatientsView.vue`'s direct-`api`-
+  call pattern — Supplies/Purchase Orders deliberately have no Pinia store, only the two small catalog
+  lookups do) + `SupplyDetailView.vue` (stock movement ledger, Record Usage/Adjustment dialog),
+  `PurchaseOrdersView.vue` + `PurchaseOrderDetailView.vue` (full lifecycle actions). New top-level
+  **Inventory** sidebar group and a `LowStockWidget.vue` Dashboard card. Full en/ar/tr i18n, zero
+  missing/extra keys verified across all three locale files.
+- **Verification**: backend `pint`/`phpstan analyse` clean, 771/771 backend tests green (68
+  Inventory-specific: Feature + Unit). Frontend `vue-tsc`/ESLint/Prettier clean, 19 new Vitest tests
+  (stores + typed-error service) green. A permanent Playwright E2E suite
+  (`frontend/e2e/inventory.spec.ts`) was written during this module's own implementation and
+  **confirmed via the GitHub Actions API across five `workflow_dispatch` runs** on `feature/inventory`
+  (`30277023360` → `30280053248` → `30280937935` → `30281608486` → `30282195677`) — this dev machine's
+  own local attempts hit the same Windows Docker Desktop networking latency already logged against Dental
+  Chart/Clinical Notes (reproduced identically on the completely unrelated, pre-existing `auth.spec.ts`,
+  ruling out an Inventory-specific cause) and never got far enough into the golden path to be conclusive,
+  so CI's native runner did the real verification instead — surfacing and closing five genuine bugs one
+  run at a time: a real PHPStan error (`PurchaseOrderService` assigning a plain string to a
+  `Carbon|null`-cast property), a codebase-wide PrimeVue accessibility defect (`id` instead of `inputId`
+  on every `InputNumber`/`DatePicker`/`Select`, silently breaking every affected field's label
+  association — the same pre-existing mistake was found, unfixed, in `UsersView.vue` too, logged as its
+  own follow-up), a missing confirm-dialog `acceptLabel`, two duplicate-toast bugs (child dialog and
+  parent view each showing their own "saved"/"added"/"received" toast for one action), and one real E2E
+  selector ambiguity (a hidden dialog's leftover `aria-label` colliding with a ledger cell's text). Final
+  run (`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
+  `TECH_DEBT.md` for the full diagnostic trail.
 
 ### Added — Clinical Notes (design approved 2026-07-25, backend + frontend implementation-complete
 2026-07-26, closing the permanent-E2E-suite gap the prior three modules each deferred)
