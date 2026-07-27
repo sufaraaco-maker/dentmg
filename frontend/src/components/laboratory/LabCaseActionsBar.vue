@@ -50,11 +50,25 @@ async function handleError(err: unknown): Promise<void> {
   }
 }
 
+/**
+ * A distinct message per action (design doc §4) — not one generic "updated" string — so that
+ * running two transitions back-to-back (e.g. send then receive, both well within a single
+ * toast's 3s life) never leaves two identically-worded toasts visible at once, which would make
+ * "the action succeeded" ambiguous to a user watching the screen just as it was to the E2E
+ * suite's own `getByText()` assertion (a real strict-mode collision CI's native runner caught).
+ */
+const ACTION_SUCCESS_KEYS = {
+  send: 'laboratory.labCases.sentSuccess',
+  receive: 'laboratory.labCases.receivedSuccess',
+  'quality-check': 'laboratory.labCases.qualityCheckedSuccess',
+  cancel: 'laboratory.labCases.cancelledSuccess',
+} as const
+
 async function runAction(action: 'send' | 'receive' | 'quality-check' | 'cancel'): Promise<void> {
   busy.value = true
   try {
     const { data } = await api.post<LabCase>(`/lab-cases/${props.labCase.id}/${action}`)
-    toast.add({ severity: 'success', summary: t('laboratory.labCases.actionSuccess'), life: 3000 })
+    toast.add({ severity: 'success', summary: t(ACTION_SUCCESS_KEYS[action]), life: 3000 })
     emit('updated', data)
   } catch (err) {
     await handleError(err)

@@ -105,18 +105,18 @@ test.describe('laboratory', () => {
 
     // --- Send to the lab — due date auto-calculated from the lab's 5-day turnaround.
     await page.getByRole('button', { name: 'Send to Lab' }).click()
-    await expect(page.getByText('Lab case updated')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Case sent to lab')).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('.p-tag')).toContainText('Sent')
     await expect(page.getByRole('button', { name: 'Send to Lab' })).toHaveCount(0)
 
     // --- Mark received.
     await page.getByRole('button', { name: 'Mark Received' }).click()
-    await expect(page.getByText('Lab case updated')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Case marked received')).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('.p-tag')).toContainText('Received')
 
     // --- Quality check — terminal, no further actions offered.
     await page.getByRole('button', { name: 'Quality Check' }).click()
-    await expect(page.getByText('Lab case updated')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Quality check completed')).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('.p-tag')).toContainText('Quality Checked')
     await expect(page.getByRole('button', { name: 'Mark Received' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Cancel Case' })).toHaveCount(0)
@@ -143,7 +143,7 @@ test.describe('laboratory', () => {
     await page.getByRole('button', { name: 'Cancel Case' }).click()
     const confirmDialog = page.locator('.p-confirmdialog')
     await confirmDialog.getByRole('button', { name: 'Cancel Case' }).click()
-    await expect(page.getByText('Lab case updated')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Lab case cancelled')).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('.p-tag')).toContainText('Cancelled')
     await expect(page.getByRole('button', { name: 'Send to Lab' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Cancel Case' })).toHaveCount(0)

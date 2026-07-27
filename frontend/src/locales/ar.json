@@ -1137,7 +1137,10 @@
       "confirmDeleteHeader": "حذف حالة المختبر",
       "confirmDeleteMessage": "هل تريد حذف حالة المختبر هذه (مسودة)؟ لا يمكن التراجع عن هذا الإجراء.",
       "confirmCancelMessage": "هل تريد إلغاء حالة المختبر هذه؟ لا يمكن التراجع عن هذا الإجراء.",
-      "actionSuccess": "تم تحديث حالة المختبر",
+      "sentSuccess": "تم إرسال الحالة إلى المختبر",
+      "receivedSuccess": "تم تأكيد استلام الحالة",
+      "qualityCheckedSuccess": "تم فحص الجودة",
+      "cancelledSuccess": "تم إلغاء حالة المختبر",
       "actionError": "تعذّر تحديث حالة المختبر",
       "forbidden": "ليس لديك صلاحية لتنفيذ هذا الإجراء",
       "status": {

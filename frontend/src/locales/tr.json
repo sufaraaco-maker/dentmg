@@ -1137,7 +1137,10 @@
       "confirmDeleteHeader": "Laboratuvar Vakasını Sil",
       "confirmDeleteMessage": "Bu taslak laboratuvar vakası silinsin mi? Bu işlem geri alınamaz.",
       "confirmCancelMessage": "Bu laboratuvar vakası iptal edilsin mi? Bu işlem geri alınamaz.",
-      "actionSuccess": "Laboratuvar vakası güncellendi",
+      "sentSuccess": "Vaka laboratuvara gönderildi",
+      "receivedSuccess": "Vaka teslim alındı olarak işaretlendi",
+      "qualityCheckedSuccess": "Kalite kontrolü tamamlandı",
+      "cancelledSuccess": "Laboratuvar vakası iptal edildi",
       "actionError": "Laboratuvar vakası güncellenemedi",
       "forbidden": "Bu işlemi gerçekleştirme yetkiniz yok",
       "status": {

@@ -1137,7 +1137,10 @@
       "confirmDeleteHeader": "Delete Lab Case",
       "confirmDeleteMessage": "Delete this draft lab case? This cannot be undone.",
       "confirmCancelMessage": "Cancel this lab case? This cannot be undone.",
-      "actionSuccess": "Lab case updated",
+      "sentSuccess": "Case sent to lab",
+      "receivedSuccess": "Case marked received",
+      "qualityCheckedSuccess": "Quality check completed",
+      "cancelledSuccess": "Lab case cancelled",
       "actionError": "Failed to update lab case",
       "forbidden": "You don't have permission to perform this action",
       "status": {
