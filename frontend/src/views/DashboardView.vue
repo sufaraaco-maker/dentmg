@@ -9,6 +9,7 @@ import TodayScheduleWidget from '@/components/appointments/TodayScheduleWidget.v
 import UpcomingAppointmentsWidget from '@/components/appointments/UpcomingAppointmentsWidget.vue'
 import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
 import LowStockWidget from '@/components/inventory/LowStockWidget.vue'
+import DueLabCasesWidget from '@/components/laboratory/DueLabCasesWidget.vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -92,6 +93,7 @@ onMounted(async () => {
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <LowStockWidget />
+      <DueLabCasesWidget />
     </div>
 
     <AppointmentDialog v-model:visible="newAppointmentDialogVisible" />
