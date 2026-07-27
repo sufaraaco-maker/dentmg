@@ -814,16 +814,27 @@ entry above).
 scanning step (e.g. ClamAV via a queued job) between upload and the image becoming visible/
 downloadable to other staff.
 
-### Known limitation: local Playwright verification for Imaging blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes/Inventory — not yet CI-confirmed
+### Known limitation: local Playwright verification for Imaging blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes/Inventory — RESOLVED 2026-07-27 (CI confirmed 27/27)
 `frontend/e2e/imaging.spec.ts` could not be run locally — both tests failed at `login()` itself
 (`page.waitForFunction` exceeded 25s), the identical symptom already documented for every prior
 module on this dev machine. Diagnosed directly, not assumed: `curl http://localhost:8000/api/ping`
 took 2.4s for a trivial, effectively-instant server-side endpoint. `docker exec dentalsuite_app`
 migration (`2026_07_27_000003_create_patient_images_table`) applied cleanly against the real dev
 Postgres.
-**Revisit**: not a regression and not blocking — CI's native runner has none of this host's
-networking overhead (confirmed for every prior module's equivalent suite). CI verification via
-`workflow_dispatch` is required for final confirmation before this item can be marked resolved.
+**RESOLVED 2026-07-27**: confirmed via the GitHub Actions API across three `workflow_dispatch` runs
+on `feature/imaging` — the first surfaced two real PHPStan errors (`PatientImageService`: a dead
+`?? 0` on `UploadedFile::getSize()`'s non-nullable return, a dead `=== false` check on
+`ob_get_clean()` right after `ob_start()`, and a `$patient->id` int/string type mismatch needing an
+explicit cast) plus a real E2E selector bug (`imaging.spec.ts`'s dialog-open assertion matched both
+the dialog title and its own submit button, both reading "Upload Images" — fixed by giving the
+submit button its own distinct "Upload" label, en/ar/tr, and scoping the title assertion to
+`.p-dialog-title`). The second run surfaced two more real E2E selector bugs: a page-wide
+`getByText('16')` matched an unrelated element instead of the tooth dropdown's own option (fixed by
+scoping to `.p-select-option:visible`, mirroring `laboratory.spec.ts`'s established pattern), and
+unscoped "Edit"/"Delete" button locators collided with `PatientDetailView`'s own header buttons for
+the patient record (fixed by scoping to the specific thumbnail's `.group` container). Final run
+(`30310705267`): **Backend success (834/834), Frontend success (637/637), E2E success — 27/27
+passed, 0 failed, 0 flaky.**
 
 ### Local-disk image storage is a known V1 limitation for horizontal scaling
 Design doc §7 decision 5 / §11: every image read/write goes through the `Storage` facade using the

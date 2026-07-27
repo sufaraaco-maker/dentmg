@@ -10,7 +10,8 @@ Treatment Plans/Billing/Payments 2026-07-25 via PR #1, plus a same-day concurren
 Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`; Laboratory 2026-07-27
 via PR #5, merge commit `bac6ae1`) but not yet re-tagged. Clinical Notes, Inventory, and Laboratory each
 shipped their own permanent E2E suite and are confirmed Production Ready. Imaging (`feature/imaging`,
-below) is the module currently in progress.
+below) is CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run `30310705267`,
+2026-07-27) but not yet merged to `main`.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
 bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory — see `docs/roadmap.md` and

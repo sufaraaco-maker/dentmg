@@ -1,7 +1,15 @@
-# Imaging — Module Design (Approved 2026-07-27)
+# Imaging — Module Design (Production Ready, 2026-07-27)
 
-**Status: Design approved 2026-07-27 — implementation starting now** (Database → Backend → Frontend →
-Tests → CI → PR → Merge, per [[workflow_two_phase_process]]).
+**Status: Design approved and implemented 2026-07-27–28; CI-confirmed Production Ready 2026-07-27.**
+`PatientImage` per-patient gallery, authenticated/policy-checked storage streaming, and the
+non-destructive lightbox viewer are all in place, backend and frontend. Backend: Pint/PHPStan clean,
+834/834 backend tests green (19 Imaging-specific). Frontend: `vue-tsc`/ESLint/Prettier clean,
+637/637 Vitest tests green, production build green. A permanent Playwright E2E suite
+(`frontend/e2e/imaging.spec.ts`) is **confirmed via the GitHub Actions API** across three
+`workflow_dispatch` runs on `feature/imaging` — the first two surfaced three real PHPStan errors and
+three real E2E selector bugs, all fixed and re-verified. Final run (`30310705267`): **Backend
+success, Frontend success, E2E success — 27/27 passed, 0 failed, 0 flaky.** Not yet merged to
+`main`. See `TECH_DEBT.md` for the full diagnostic trail.
 
 ## Approval & Decision Log (2026-07-27)
 
