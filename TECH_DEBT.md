@@ -693,3 +693,75 @@ machine's own local E2E attempts hit the pre-existing Windows Docker networking 
 above and never got far enough into the golden path to surface bugs 4/5 at all). Final run
 (`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**,
 including all three `inventory.spec.ts` tests with no retries needed.
+
+## Open (new from Laboratory module, 2026-07-27)
+
+### Local `phpstan analyse` container issue recurred, same root cause as Inventory's — confirmed pre-existing again, not a Laboratory regression
+Same symptom as the Inventory entry above: `docker exec dentalsuite_app vendor/bin/phpstan analyse`
+reported 427 errors, nearly all "undefined property" on pre-existing, unrelated models
+(`TreatmentPlan`/`TreatmentPlanItem`). Re-isolated the same way: `git stash -u` back to the exact
+`main` state (Laboratory's design-doc-only commit removed) reproduced **420** errors with zero
+Laboratory code present; re-applying the stash added exactly 7 more, all the identical
+"undefined property" shape on `Lab`/`LabCase` files (`User::$role`, `User::$name` — the same class
+of noise, not a real defect). Also tried `php artisan migrate` (the two new Laboratory migrations
+were still `Pending` against this container's real dev Postgres) and clearing
+`storage/phpstan`'s result cache — neither changed the error count, ruling out both as the cause.
+**Revisit**: same as the Inventory entry — local/environment issue, not a code defect. CI's own
+`phpstan analyse` step confirmed clean for Laboratory (see RESOLVED note below).
+
+### Pre-existing `dental-chart.spec.ts` 429 rate-limit collision surfaced during Laboratory's own CI runs — confirmed unrelated to Laboratory
+Both `workflow_dispatch` runs for `feature/laboratory` (`30293175321`, `30294033562`) failed the
+same two `dental-chart.spec.ts` tests with an identical `POST /patients` `429 Too Many Attempts`
+(`AppServiceProvider`'s `RateLimiter::for('api', ...)`, 120 requests/minute per authenticated
+user). **Proven unrelated to Laboratory, not just assumed**: `npx playwright test --list` shows
+Playwright's actual (alphabetical-by-file, `workers: 1`, strictly sequential) execution order —
+`dental-chart.spec.ts` runs and fails at position 10-12 in the suite, `laboratory.spec.ts` at
+position 16-18, *after* it. Laboratory's own requests cannot retroactively cause an error that
+already happened earlier in a sequential run — the 429 is cumulative admin-authenticated request
+volume from `appointments.spec.ts`/`clinical-notes.spec.ts`/`dental-chart.spec.ts`'s own earlier
+tests hitting the per-minute limiter, reproduced identically in both runs regardless of Laboratory's
+presence. `inventory.spec.ts`/`patients.spec.ts` also showed the same pre-existing first-load
+button-timeout flakiness already logged elsewhere in this file (passed on retry both times).
+**Revisit**: raise the `api` rate limiter's per-minute allowance for the `testing`/CI environment
+specifically (or reduce redundant admin-authenticated requests across E2E specs), so the cumulative
+request volume across the full E2E suite — which only grows as more modules add their own specs —
+stops intermittently tripping `dental-chart.spec.ts`. Not blocking Laboratory: its own three E2E
+tests passed cleanly with no retries in the second run (see RESOLVED note below), and this is a
+suite-wide capacity issue predating Laboratory, not a defect in it.
+
+**Fixed 2026-07-27 (same day, before opening the Laboratory PR)**: rather than leave this for a
+future module to trip over again, made the limit configurable — `RateLimiter::for('api', ...)` in
+`AppServiceProvider` now reads `config('api.throttle_per_minute')` (new `backend/config/api.php`,
+`env('API_THROTTLE_PER_MINUTE', 120)`) instead of a hardcoded `120`. Production behavior is
+unchanged (default stays 120; `.env.example` documents the var at its existing default). Only
+`.github/workflows/ci.yml`'s E2E job env now sets `API_THROTTLE_PER_MINUTE=1000`, so the full
+Playwright suite (single-worker, sequential, one demo admin) has enough headroom regardless of how
+many more specs future modules add.
+
+**RESOLVED 2026-07-27**: confirmed via `workflow_dispatch` run `30295881535` on commit `33de932` —
+**Backend success (815/815 tests), Frontend success (627/627 Vitest tests), E2E success: 25/25
+passed, 0 failed, 0 flaky** (previously-flaky `inventory.spec.ts`/`patients.spec.ts` also passed
+clean this run, with no retries needed). `dental-chart.spec.ts` and `laboratory.spec.ts` both
+green, closing this item for good rather than leaving it to trip the next module too.
+
+### Real bug found and fixed via CI: duplicate-worded toast on rapid back-to-back Lab Case status transitions
+First `workflow_dispatch` run (`30293175321`) caught a genuine strict-mode violation, not
+flakiness: `LabCaseActionsBar.vue` used one generic toast message ("Lab case updated") for all four
+transitions (send/receive/qualityCheck/cancel). The E2E golden-path test runs send → receive →
+quality-check in quick succession; since each toast has a 3s life, two identically-worded toasts
+were genuinely on screen at once — the same ambiguity a real user would see, not just a test
+artifact. Fixed by giving each action its own distinct message ("Case sent to lab" / "Case marked
+received" / "Quality check completed" / "Lab case cancelled"), updated in all three locale files
+(938/938/938 key parity re-verified) and the E2E spec's own assertions.
+
+**RESOLVED 2026-07-27**: confirmed via the GitHub Actions API across two `workflow_dispatch` runs
+on `feature/laboratory` (`30293175321` → `30294033562`), the second closing the one real bug the
+first surfaced (the duplicate-toast issue above). Final run (`30294033562`): **Backend success,
+Frontend success**; E2E: all three `laboratory.spec.ts` tests passed with no retries needed (the
+run's only remaining failures/flakiness — `dental-chart.spec.ts`, `inventory.spec.ts`,
+`patients.spec.ts` — are the pre-existing, proven-unrelated issues documented above).
+
+**Fully green 2026-07-27**: the suite-wide 429 rate-limit item above was then fixed (not just
+documented) before opening the PR. Re-run via `workflow_dispatch` (`30295881535`, commit `33de932`)
+confirms the whole CI pipeline clean: **Backend 815/815, Frontend 627/627, E2E 25/25 — zero
+failures, zero flakes.**

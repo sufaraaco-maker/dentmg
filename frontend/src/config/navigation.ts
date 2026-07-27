@@ -101,6 +101,24 @@ export const navigation: NavItem[] = [
     ],
   },
   {
+    labelKey: 'nav.laboratory',
+    icon: 'pi pi-send',
+    routeName: 'lab-cases',
+    children: [
+      {
+        labelKey: 'laboratory.nav.labCases',
+        icon: 'pi pi-send',
+        routeName: 'lab-cases',
+      },
+      {
+        labelKey: 'laboratory.nav.labs',
+        icon: 'pi pi-building',
+        routeName: 'labs',
+        roles: ['admin'],
+      },
+    ],
+  },
+  {
     labelKey: 'nav.billing',
     icon: 'pi pi-wallet',
     comingSoon: true,

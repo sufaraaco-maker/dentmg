@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         // throttleApi()). /login has its own tighter, purpose-built limiter
         // (see AuthService::MAX_ATTEMPTS) — this is the general-purpose backstop for
         // everything else (patients, users, appointments, etc.), which previously had none.
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by(
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('api.throttle_per_minute'))->by(
             $request->user()?->id ?: $request->ip()
         ));
     }

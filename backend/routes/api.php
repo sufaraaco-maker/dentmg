@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\DentistTimeOffController;
 use App\Http\Controllers\Api\DentistWorkingHourController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\InvoiceItemController;
+use App\Http\Controllers\Api\LabCaseController;
+use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PurchaseOrderController;
@@ -135,4 +137,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('purchase-orders/{purchase_order}/place', [PurchaseOrderController::class, 'place']);
     Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
+
+    Route::apiResource('labs', LabController::class);
+
+    // Must precede the apiResource below — otherwise "due" is captured by {lab_case}.
+    Route::get('lab-cases/due', [LabCaseController::class, 'dueOrOverdue']);
+    Route::post('lab-cases/{lab_case}/send', [LabCaseController::class, 'send']);
+    Route::post('lab-cases/{lab_case}/receive', [LabCaseController::class, 'receive']);
+    Route::post('lab-cases/{lab_case}/quality-check', [LabCaseController::class, 'qualityCheck']);
+    Route::post('lab-cases/{lab_case}/cancel', [LabCaseController::class, 'cancel']);
+    Route::apiResource('lab-cases', LabCaseController::class);
 });

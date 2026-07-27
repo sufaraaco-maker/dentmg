@@ -127,6 +127,22 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
+          path: 'lab-cases',
+          name: 'lab-cases',
+          component: () => import('@/views/LabCasesView.vue'),
+        },
+        {
+          path: 'lab-cases/:id',
+          name: 'lab-case-detail',
+          component: () => import('@/views/LabCaseDetailView.vue'),
+        },
+        {
+          path: 'laboratory/labs',
+          name: 'labs',
+          component: () => import('@/views/LabsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
           path: 'forbidden',
           name: 'forbidden',
           component: () => import('@/views/ForbiddenView.vue'),
