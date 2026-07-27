@@ -1165,6 +1165,7 @@
   "imaging": {
     "title": "Görüntüleme",
     "upload": "Görsel Yükle",
+    "confirmUpload": "Yükle",
     "uploadTitle": "Görsel Yükle",
     "editTitle": "Görseli Düzenle",
     "files": "Dosyalar",

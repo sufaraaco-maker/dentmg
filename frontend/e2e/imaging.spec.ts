@@ -62,7 +62,9 @@ async function goToImagingTab(page: Page, patientId: string) {
 async function uploadOneImage(page: Page, options: { imageType?: string; tooth?: string } = {}) {
   await page.getByRole('button', { name: 'Upload Images' }).click()
   const dialog = page.locator('.p-dialog')
-  await expect(dialog.getByText('Upload Images')).toBeVisible()
+  // Scoped to the dialog's own title span, not `getByText` — the dialog also contains its own
+  // "Upload Images" submit button, and both would otherwise match a plain text locator.
+  await expect(dialog.locator('.p-dialog-title')).toHaveText('Upload Images')
 
   await dialog.locator('input[type="file"]').setInputFiles({
     name: 'xray.jpg',
@@ -83,7 +85,7 @@ async function uploadOneImage(page: Page, options: { imageType?: string; tooth?:
     await expect(page.locator('.p-select-overlay')).toBeHidden()
   }
 
-  await dialog.getByRole('button', { name: 'Upload Images' }).click()
+  await dialog.getByRole('button', { name: 'Upload', exact: true }).click()
   await expect(page.getByText('Images uploaded.')).toBeVisible({ timeout: 10_000 })
 }
 

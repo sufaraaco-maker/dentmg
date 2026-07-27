@@ -257,7 +257,7 @@ async function submit() {
 
       <div class="flex justify-end gap-2 pt-2">
         <Button type="button" :label="t('common.cancel')" text @click="emit('update:visible', false)" />
-        <Button type="submit" :label="t('imaging.upload')" :loading="saving" />
+        <Button type="submit" :label="t('imaging.confirmUpload')" :loading="saving" />
       </div>
     </form>
   </Dialog>

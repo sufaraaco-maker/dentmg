@@ -1165,6 +1165,7 @@
   "imaging": {
     "title": "Imaging",
     "upload": "Upload Images",
+    "confirmUpload": "Upload",
     "uploadTitle": "Upload Images",
     "editTitle": "Edit Image",
     "files": "Files",

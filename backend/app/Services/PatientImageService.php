@@ -74,7 +74,7 @@ class PatientImageService
 
         [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
 
-        $thumbnailPath = $this->generateThumbnail($disk, $file->getRealPath(), $patient->id, $id);
+        $thumbnailPath = $this->generateThumbnail($disk, $file->getRealPath(), (string) $patient->id, $id);
 
         return PatientImage::create([
             'patient_id' => $patient->id,
@@ -89,7 +89,7 @@ class PatientImageService
             'path' => $path,
             'thumbnail_path' => $thumbnailPath,
             'mime_type' => $file->getMimeType() ?? $file->getClientMimeType(),
-            'file_size' => $file->getSize() ?? 0,
+            'file_size' => $file->getSize(),
             'width' => $width,
             'height' => $height,
             'notes' => $metadata['notes'] ?? null,
@@ -135,10 +135,6 @@ class PatientImageService
 
         imagedestroy($source);
         imagedestroy($thumbnail);
-
-        if ($contents === false) {
-            return null;
-        }
 
         $thumbnailPath = "patient-images/{$patientId}/thumbnails/{$imageId}.jpg";
         Storage::disk($disk)->put($thumbnailPath, $contents);
