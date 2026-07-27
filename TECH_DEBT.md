@@ -644,3 +644,27 @@ exactly — CI's native runner has none of this host's networking overhead. Unli
 this has **not yet been confirmed via an actual CI run** (this branch has not been pushed to a PR
 yet) — do that before marking this resolved, following the exact same `workflow_dispatch` /
 GitHub Actions API confirmation process used for every prior module.
+
+**Update (2026-07-27)**: pushed and run via `workflow_dispatch` (run `30277023360`). CI's own
+native runner — unaffected by this host's networking latency — surfaced genuine, reproducible
+bugs the local flakiness had been masking: (1) a real PHPStan error (`PurchaseOrderService`
+assigning a plain string to a `Carbon|null`-cast property) fixed by assigning `now()` directly
+instead of `now()->toDateString()`; (2) every `InputNumber`/`DatePicker`/`Select` in the Inventory
+components used a plain `id` prop, which PrimeVue applies to the component's root wrapper, not its
+inner focusable input — the paired `<label for="...">` never actually associated with anything
+focusable, a genuine accessibility defect (label-click-to-focus and screen readers both silently
+broken), not just a test-selector inconvenience. Fixed everywhere in Inventory using PrimeVue's own
+`input-id` prop, which correctly forwards to the real input. (3) `PurchaseOrderActionsBar`'s cancel
+confirmation never set `acceptLabel`/`rejectLabel`, defaulting to PrimeVue's generic "Yes"/"No"
+instead of the contextual label `InvoiceActionsBar.vue`'s own confirm dialogs already use. All
+three fixed and re-verified locally (Pint, 35/35 `PurchaseOrder` tests, `vue-tsc`/ESLint/Prettier,
+19/19 Inventory Vitest tests) before pushing again for re-confirmation.
+
+**Codebase-wide gap noted, not fixed here (out of scope for this module)**: the same `id` (instead
+of `inputId`) mistake on a PrimeVue form control already exists elsewhere — e.g. `UsersView.vue`'s
+role `Select` (`id="role"` paired with `<label for="role">`) — confirming this is a pre-existing,
+systemic gap across the codebase's PrimeVue form usage, not something introduced by Inventory.
+**Revisit**: worth a dedicated accessibility-focused pass across every module's forms at some
+point, auditing every `Select`/`InputNumber`/`DatePicker`/similar wrapped-input PrimeVue component
+for a plain `id` that should be `inputId` instead — but not blocking, and deliberately not fixed
+opportunistically here to keep this module's diff scoped to Inventory.
