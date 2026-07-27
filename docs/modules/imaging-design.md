@@ -1,7 +1,44 @@
-# Imaging — Module Design (Draft, awaiting approval)
+# Imaging — Module Design (Approved 2026-07-27)
 
-**Status: Design Phase — not yet approved, no code written.** Per [[workflow_two_phase_process]], this
-document is presented in full for review; implementation does not start until explicitly approved.
+**Status: Design approved 2026-07-27 — implementation starting now** (Database → Backend → Frontend →
+Tests → CI → PR → Merge, per [[workflow_two_phase_process]]).
+
+## Approval & Decision Log (2026-07-27)
+
+All five open items from §7 approved as recommended, plus four additional binding requirements:
+
+1. **DICOM/CBCT** — **APPROVED as recommended**, out of scope V1. Additional requirement: the model must
+   not need reshaping to add it later — see the new §15 below.
+2. **Persistent annotation/drawing tools** — **APPROVED as recommended**, deferred to V2. Additional
+   requirement, now binding for implementation: viewer enhancements (brightness/contrast/invert/zoom) are
+   **strictly non-destructive and non-persistent** — CSS/canvas filters applied client-side only, nothing
+   written back to the stored file or database, ever. No "save adjusted view" feature in V1.
+3. **Formal FMX/series grouping** — **APPROVED as recommended**, deferred to V2. V1 ships type filter +
+   date-range filter + tooth filter only, exactly as designed.
+4. **Permission width** — **APPROVED as recommended**: `admin`+`dentist`+`receptionist` for
+   `viewAny`/`view`/`create`/`update`; `admin`-only for `delete`. Additional requirement: if/when clinical
+   annotation tools are added (V2+), they must be gated to `admin`+`dentist` only, not the wider
+   `create`/`update` set — noted for that future design pass, not implemented now.
+5. **Storage disk** — **APPROVED as recommended**: `local` in V1. Additional binding requirement: **zero
+   code outside the `Storage` facade may reference a disk/path directly** — every read/write/delete goes
+   through `Storage::disk($image->disk)->...()`, so switching the `API_THROTTLE`-style config value (here,
+   effectively `FILESYSTEM_DISK` per row, already how `disk` is modeled in §3) to `s3` is purely a config
+   change, never a code change.
+
+**Four additional design requirements added at approval, now binding for implementation:**
+- **No single-clinic assumption anywhere** — not just storage paths (§3.1, already addressed), but also
+  business logic: no service method may hardcode "the clinic" as an implicit singleton. Already naturally
+  true (no `clinic_id` exists anywhere in this codebase yet), called out explicitly so implementation
+  doesn't introduce one informally (e.g. a hardcoded clinic name/timezone/setting).
+- **Every screen (upload/gallery/lightbox) fully responsive and usable from a phone inside an installed
+  PWA, with direct camera capture** — already designed this way in §8; binding at implementation and
+  Final-Review verification time, not just design intent.
+- **Original file is never modified, ever** — reinforces item 2 above; the one immutability rule for this
+  whole module.
+- **Design must allow future attachment types (DICOM, STL, PDF) without restructuring this module** — see
+  new §15 below, added at approval to make this concrete rather than just implied by §11.
+
+Approved: proceed to implementation.
 
 ## 0. Competitive Research (required before any design, per standing product philosophy)
 
@@ -236,6 +273,25 @@ directly from an index-response row, matching how `DentalChartEntry`'s list-only
 - Formal FMX/series grouping (§7 item 3).
 - Direct sensor/TWAIN hardware capture bridge, if a real clinic hardware-integration need appears.
 - A general-purpose document/attachment module, if a real need beyond clinical images appears (§2/§12).
+
+## 15. Future Attachment-Type Extensibility (added at approval, 2026-07-27)
+
+Confirmed the schema in §3 needs no reshaping to add DICOM/STL/PDF later:
+- `disk`/`path`/`mime_type`/`file_size`/`patient_id`/`uploaded_by`/`notes`/the two traceability FKs are
+  already file-type-agnostic — a PDF or STL row uses every one of these columns exactly the same way an
+  image row does.
+- `image_type` is implemented as a **plain `string` column** validated against a PHP backed enum (`ImageType`),
+  not a native Postgres enum type — confirmed by checking how `LabCaseStatus`/`LabCase.status` was actually
+  implemented (`backend/database/migrations/2026_07_27_000002_create_lab_cases_table.php:56`,
+  `$table->string('status')`). Adding new cases later (`xray_cbct`, `document_pdf`, `model_stl`, ...) is a
+  one-line PHP enum change, never an `ALTER TYPE ... ADD VALUE` migration.
+- `width`/`height`/`thumbnail_path` are already nullable — naturally `null` for a non-rasterizable file
+  type like STL without needing a schema change.
+- The one thing that *would* eventually need a real decision (not now): whether a non-image type (PDF/STL)
+  stays in this same table/module or becomes its own model once there's a real need — left as an explicit
+  open question for that future moment, not decided speculatively today, per this project's standing
+  "don't build ahead of a demonstrated need" discipline. Either path is available without reshaping what's
+  built in V1.
 
 ---
 
