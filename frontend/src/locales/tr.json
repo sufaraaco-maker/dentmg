@@ -55,6 +55,8 @@
     "save": "Kaydet",
     "edit": "Düzenle",
     "delete": "Sil",
+    "remove": "Kaldır",
+    "close": "Kapat",
     "deactivate": "Devre Dışı Bırak",
     "create": "Oluştur",
     "add": "Ekle",
@@ -149,6 +151,7 @@
       "overview": "Genel Bakış",
       "appointments": "Randevular",
       "dentalChart": "Diş Şeması",
+      "imaging": "Görüntüleme",
       "treatmentPlans": "Tedavi Planları",
       "clinicalNotes": "Klinik Notlar",
       "invoices": "Faturalar",
@@ -1157,6 +1160,53 @@
         "qualityCheck": "Kalite Kontrolü",
         "cancel": "Vakayı İptal Et"
       }
+    }
+  },
+  "imaging": {
+    "title": "Görüntüleme",
+    "upload": "Görsel Yükle",
+    "uploadTitle": "Görsel Yükle",
+    "editTitle": "Görseli Düzenle",
+    "files": "Dosyalar",
+    "dropHint": "Görselleri buraya sürükleyip bırakın veya dosya seçin / kameranızı kullanın",
+    "chooseFiles": "Dosya Seç",
+    "imageType": "Tür",
+    "tooth": "Diş",
+    "noToothTag": "Dişe bağlı değil",
+    "allTypes": "Tüm Türler",
+    "allTeeth": "Tüm Dişler",
+    "takenAt": "Çekim Tarihi",
+    "takenFrom": "Başlangıç",
+    "takenTo": "Bitiş",
+    "notes": "Notlar",
+    "empty": "Henüz görsel yüklenmedi.",
+    "loadError": "Görseller yüklenemedi.",
+    "uploadError": "Görseller yüklenemedi.",
+    "updateError": "Görsel güncellenemedi.",
+    "deleteError": "Görsel silinemedi.",
+    "uploaded": "Görseller yüklendi.",
+    "updated": "Görsel güncellendi.",
+    "deleted": "Görsel silindi.",
+    "fieldRequired": "Bu alan zorunludur.",
+    "deleteConfirmHeader": "Görseli Sil",
+    "deleteConfirmMessage": "Bu görsel silinsin mi? Bu işlem geri alınamaz.",
+    "types": {
+      "intraoral_photo": "Ağız İçi Fotoğraf",
+      "extraoral_photo": "Ağız Dışı Fotoğraf",
+      "xray_periapical": "Periapikal Röntgen",
+      "xray_bitewing": "Bitewing Röntgen",
+      "xray_panoramic": "Panoramik Röntgen",
+      "xray_cephalometric": "Sefalometrik Röntgen",
+      "other": "Diğer"
+    },
+    "lightbox": {
+      "label": "Görsel görüntüleyici",
+      "previous": "Önceki görsel",
+      "next": "Sonraki görsel",
+      "invert": "Renkleri Ters Çevir",
+      "compare": "Karşılaştır",
+      "selectCompare": "Karşılaştırılacak görseli seçin",
+      "resetAdjustments": "Ayarları Sıfırla"
     }
   }
 }

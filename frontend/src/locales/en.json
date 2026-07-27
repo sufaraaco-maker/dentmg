@@ -55,6 +55,8 @@
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
+    "remove": "Remove",
+    "close": "Close",
     "deactivate": "Deactivate",
     "create": "Create",
     "add": "Add",
@@ -149,6 +151,7 @@
       "overview": "Overview",
       "appointments": "Appointments",
       "dentalChart": "Dental Chart",
+      "imaging": "Imaging",
       "treatmentPlans": "Treatment Plans",
       "clinicalNotes": "Clinical Notes",
       "invoices": "Invoices",
@@ -1157,6 +1160,53 @@
         "qualityCheck": "Quality Check",
         "cancel": "Cancel Case"
       }
+    }
+  },
+  "imaging": {
+    "title": "Imaging",
+    "upload": "Upload Images",
+    "uploadTitle": "Upload Images",
+    "editTitle": "Edit Image",
+    "files": "Files",
+    "dropHint": "Drag and drop images here, or choose files / use your camera",
+    "chooseFiles": "Choose Files",
+    "imageType": "Type",
+    "tooth": "Tooth",
+    "noToothTag": "No tooth tag",
+    "allTypes": "All Types",
+    "allTeeth": "All Teeth",
+    "takenAt": "Date Taken",
+    "takenFrom": "From",
+    "takenTo": "To",
+    "notes": "Notes",
+    "empty": "No images uploaded yet.",
+    "loadError": "Failed to load images.",
+    "uploadError": "Failed to upload images.",
+    "updateError": "Failed to update image.",
+    "deleteError": "Failed to delete image.",
+    "uploaded": "Images uploaded.",
+    "updated": "Image updated.",
+    "deleted": "Image deleted.",
+    "fieldRequired": "This field is required.",
+    "deleteConfirmHeader": "Delete Image",
+    "deleteConfirmMessage": "Delete this image? This cannot be undone.",
+    "types": {
+      "intraoral_photo": "Intraoral Photo",
+      "extraoral_photo": "Extraoral Photo",
+      "xray_periapical": "Periapical X-ray",
+      "xray_bitewing": "Bitewing X-ray",
+      "xray_panoramic": "Panoramic X-ray",
+      "xray_cephalometric": "Cephalometric X-ray",
+      "other": "Other"
+    },
+    "lightbox": {
+      "label": "Image viewer",
+      "previous": "Previous image",
+      "next": "Next image",
+      "invert": "Invert colors",
+      "compare": "Compare",
+      "selectCompare": "Select image to compare",
+      "resetAdjustments": "Reset adjustments"
     }
   }
 }

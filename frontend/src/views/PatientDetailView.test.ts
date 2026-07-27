@@ -67,6 +67,11 @@ async function mountView(role: UserRole) {
   mockedApiGet.mockReset()
   mockedApiGet.mockImplementation((url: string) => {
     if (url.endsWith('/audit-logs')) return Promise.resolve({ data: { data: [] } })
+    if (url.includes('/images')) {
+      return Promise.resolve({
+        data: { data: [], meta: { current_page: 1, last_page: 1, per_page: 30, total: 0 } },
+      })
+    }
     return Promise.resolve({ data: makePatient() })
   })
 
