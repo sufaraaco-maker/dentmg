@@ -73,15 +73,19 @@ async function uploadOneImage(page: Page, options: { imageType?: string; tooth?:
   })
   await expect(dialog.getByText('xray.jpg')).toBeVisible()
 
+  // Scoped to the open overlay's own option items (`.p-select-option`), not a page-wide text
+  // search — `getByText`/`page.getByText` would otherwise happily match unrelated "16"/type text
+  // anywhere else on the page (e.g. behind the modal), same class of bug already worked around in
+  // `laboratory.spec.ts`'s `selectFirstOption` helper.
   if (options.imageType) {
     await dialog.locator('div:has(> label:text-is("Type")) .p-select').click()
-    await page.getByText(options.imageType, { exact: true }).click()
+    await page.locator('li.p-select-option:visible', { hasText: options.imageType }).first().click()
     await expect(page.locator('.p-select-overlay')).toBeHidden()
   }
 
   if (options.tooth) {
     await dialog.locator('div:has(> label:text-is("Tooth")) .p-select').click()
-    await page.getByText(options.tooth, { exact: false }).first().click()
+    await page.locator('li.p-select-option:visible', { hasText: options.tooth }).first().click()
     await expect(page.locator('.p-select-overlay')).toBeHidden()
   }
 
@@ -112,9 +116,12 @@ test.describe('imaging', () => {
     await lightbox.getByLabel('Close').click()
     await expect(lightbox).toBeHidden()
 
-    // --- Edit metadata via the hover pencil action.
-    await page.locator('.group').first().hover()
-    await page.getByRole('button', { name: 'Edit' }).click()
+    // --- Edit metadata via the hover pencil action. Scoped to the thumbnail's own `.group`
+    // container, not the page — `PatientDetailView`'s header has its own "Edit"/"Delete" buttons
+    // for the patient record itself, which would otherwise collide with these.
+    const thumbnail = page.locator('.group').first()
+    await thumbnail.hover()
+    await thumbnail.getByRole('button', { name: 'Edit' }).click()
     const editDialog = page.locator('.p-dialog')
     await expect(editDialog.getByText('Edit Image')).toBeVisible()
     await editDialog.locator('#edit-image-notes').fill('Baseline periapical, tooth 16')
@@ -122,8 +129,8 @@ test.describe('imaging', () => {
     await expect(page.getByText('Image updated.')).toBeVisible({ timeout: 10_000 })
 
     // --- Delete (admin-only).
-    await page.locator('.group').first().hover()
-    await page.getByRole('button', { name: 'Delete' }).click()
+    await thumbnail.hover()
+    await thumbnail.getByRole('button', { name: 'Delete' }).click()
     const confirmDialog = page.locator('.p-confirmdialog')
     await confirmDialog.getByRole('button', { name: 'Delete' }).click()
     await expect(page.getByText('Image deleted.')).toBeVisible({ timeout: 10_000 })
@@ -137,15 +144,17 @@ test.describe('imaging', () => {
     await goToImagingTab(page, patient.id)
     await expect(page.getByRole('button', { name: 'Upload Images' })).toBeVisible()
     await uploadOneImage(page)
-    await page.locator('.group').first().hover()
-    await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible()
+    const receptionistThumbnail = page.locator('.group').first()
+    await receptionistThumbnail.hover()
+    await expect(receptionistThumbnail.getByRole('button', { name: 'Delete' })).toHaveCount(0)
+    await expect(receptionistThumbnail.getByRole('button', { name: 'Edit' })).toBeVisible()
 
     await logout(page)
     await loginAsEnglish(page, 'dentist')
     await goToImagingTab(page, patient.id)
     await expect(page.getByRole('button', { name: 'Upload Images' })).toBeVisible()
-    await page.locator('.group').first().hover()
-    await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0)
+    const dentistThumbnail = page.locator('.group').first()
+    await dentistThumbnail.hover()
+    await expect(dentistThumbnail.getByRole('button', { name: 'Delete' })).toHaveCount(0)
   })
 })
