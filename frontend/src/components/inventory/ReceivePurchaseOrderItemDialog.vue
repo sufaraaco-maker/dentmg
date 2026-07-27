@@ -73,10 +73,7 @@ async function submit() {
       expiration_date: form.expiration_date ? toLocalDateString(form.expiration_date) : null,
     }
 
-    const { data } = await api.post<PurchaseOrder>(
-      `/purchase-order-items/${props.item.id}/receive`,
-      payload,
-    )
+    const { data } = await api.post<PurchaseOrder>(`/purchase-order-items/${props.item.id}/receive`, payload)
 
     toast.add({ severity: 'success', summary: t('inventory.purchaseOrders.items.received'), life: 3000 })
     emit('received', data)
@@ -119,8 +116,8 @@ async function submit() {
           {{ t('inventory.purchaseOrders.items.quantityReceivedNow') }}
         </label>
         <InputNumber
-          id="receive-quantity"
           v-model="form.quantity"
+          input-id="receive-quantity"
           :min="1"
           :max="item.quantity_remaining"
           :invalid="!!errors.quantity"
@@ -133,7 +130,7 @@ async function submit() {
         <label for="receive-expiration" class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('inventory.movements.expirationDate') }}
         </label>
-        <DatePicker id="receive-expiration" v-model="form.expiration_date" show-icon fluid />
+        <DatePicker v-model="form.expiration_date" input-id="receive-expiration" show-icon fluid />
       </div>
 
       <div class="flex justify-end gap-2 pt-2">

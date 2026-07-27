@@ -162,7 +162,9 @@ function confirmDelete() {
             <dd dir="ltr" class="text-start">{{ order.ordered_at ? formatDate(order.ordered_at) : '—' }}</dd>
 
             <dt class="text-surface-500">{{ t('inventory.purchaseOrders.expectedAt') }}</dt>
-            <dd dir="ltr" class="text-start">{{ order.expected_at ? formatDate(order.expected_at) : '—' }}</dd>
+            <dd dir="ltr" class="text-start">
+              {{ order.expected_at ? formatDate(order.expected_at) : '—' }}
+            </dd>
 
             <dt class="text-surface-500">{{ t('inventory.purchaseOrders.createdAt') }}</dt>
             <dd dir="ltr" class="text-start">{{ formatDateTime(order.created_at) }}</dd>
@@ -193,12 +195,19 @@ function confirmDelete() {
           <DataTable v-else :value="order.items">
             <Column :header="t('inventory.purchaseOrders.items.description')" field="description" />
             <Column :header="t('inventory.purchaseOrders.items.quantityOrdered')" field="quantity_ordered" />
-            <Column :header="t('inventory.purchaseOrders.items.quantityReceived')" field="quantity_received" />
+            <Column
+              :header="t('inventory.purchaseOrders.items.quantityReceived')"
+              field="quantity_received"
+            />
             <Column :header="t('inventory.purchaseOrders.items.unitCost')">
-              <template #body="{ data }"><span dir="ltr">{{ data.unit_cost }}</span></template>
+              <template #body="{ data }"
+                ><span dir="ltr">{{ data.unit_cost }}</span></template
+              >
             </Column>
             <Column :header="t('inventory.purchaseOrders.items.subtotal')">
-              <template #body="{ data }"><span dir="ltr">{{ data.subtotal }}</span></template>
+              <template #body="{ data }"
+                ><span dir="ltr">{{ data.subtotal }}</span></template
+              >
             </Column>
             <Column v-if="canReceive" style="width: 10rem">
               <template #body="{ data }">

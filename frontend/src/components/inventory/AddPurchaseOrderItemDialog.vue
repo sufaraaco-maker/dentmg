@@ -96,7 +96,10 @@ async function submit() {
       description: form.description.trim() || null,
     }
 
-    const { data } = await api.post<PurchaseOrder>(`/purchase-orders/${props.purchaseOrder.id}/items`, payload)
+    const { data } = await api.post<PurchaseOrder>(
+      `/purchase-orders/${props.purchaseOrder.id}/items`,
+      payload,
+    )
 
     toast.add({ severity: 'success', summary: t('inventory.purchaseOrders.items.added'), life: 3000 })
     emit('added', data)
@@ -135,8 +138,8 @@ async function submit() {
           {{ t('inventory.purchaseOrders.items.supply') }}
         </label>
         <Select
-          id="item-supply"
           v-model="form.supply_id"
+          input-id="item-supply"
           :options="supplyOptions"
           option-label="label"
           option-value="value"
@@ -158,8 +161,8 @@ async function submit() {
             {{ t('inventory.purchaseOrders.items.quantityOrdered') }}
           </label>
           <InputNumber
-            id="item-quantity"
             v-model="form.quantity_ordered"
+            input-id="item-quantity"
             :min="1"
             :invalid="!!errors.quantity_ordered"
             fluid
@@ -172,7 +175,13 @@ async function submit() {
           <label for="item-unit-cost" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('inventory.purchaseOrders.items.unitCostOverride') }}
           </label>
-          <InputNumber id="item-unit-cost" v-model="form.unit_cost" :min="0" :max-fraction-digits="2" fluid />
+          <InputNumber
+            v-model="form.unit_cost"
+            input-id="item-unit-cost"
+            :min="0"
+            :max-fraction-digits="2"
+            fluid
+          />
         </div>
       </div>
 

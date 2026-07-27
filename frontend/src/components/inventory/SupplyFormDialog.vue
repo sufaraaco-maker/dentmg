@@ -171,8 +171,8 @@ async function submit() {
             {{ t('inventory.supplies.category') }}
           </label>
           <Select
-            id="supply-category"
             v-model="form.category_id"
+            input-id="supply-category"
             :options="categoryOptions"
             option-label="label"
             option-value="value"
@@ -180,15 +180,17 @@ async function submit() {
             :invalid="!!errors.category_id"
             fluid
           />
-          <Message v-if="errors.category_id" severity="error" size="small">{{ errors.category_id[0] }}</Message>
+          <Message v-if="errors.category_id" severity="error" size="small">{{
+            errors.category_id[0]
+          }}</Message>
         </div>
         <div class="flex flex-col gap-2">
           <label for="supply-supplier" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('inventory.supplies.defaultSupplier') }}
           </label>
           <Select
-            id="supply-supplier"
             v-model="form.default_supplier_id"
+            input-id="supply-supplier"
             :options="supplierOptions"
             option-label="label"
             option-value="value"
@@ -223,19 +225,25 @@ async function submit() {
           <label for="supply-cost" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('inventory.supplies.unitCost') }}
           </label>
-          <InputNumber id="supply-cost" v-model="form.unit_cost" :min="0" :max-fraction-digits="2" fluid />
+          <InputNumber
+            v-model="form.unit_cost"
+            input-id="supply-cost"
+            :min="0"
+            :max-fraction-digits="2"
+            fluid
+          />
         </div>
         <div class="flex flex-col gap-2">
           <label for="supply-reorder-level" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('inventory.supplies.reorderLevel') }}
           </label>
-          <InputNumber id="supply-reorder-level" v-model="form.reorder_level" :min="0" fluid />
+          <InputNumber v-model="form.reorder_level" input-id="supply-reorder-level" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-2">
           <label for="supply-reorder-qty" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('inventory.supplies.reorderQuantity') }}
           </label>
-          <InputNumber id="supply-reorder-qty" v-model="form.reorder_quantity" :min="1" fluid />
+          <InputNumber v-model="form.reorder_quantity" input-id="supply-reorder-qty" :min="1" fluid />
         </div>
       </div>
 

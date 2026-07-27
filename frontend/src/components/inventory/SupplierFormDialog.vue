@@ -96,7 +96,9 @@ async function submit() {
       is_active: form.is_active,
     }
 
-    const saved = props.supplier ? await store.update(props.supplier.id, payload) : await store.create(payload)
+    const saved = props.supplier
+      ? await store.update(props.supplier.id, payload)
+      : await store.create(payload)
 
     toast.add({ severity: 'success', summary: t('inventory.suppliers.saved'), life: 3000 })
     emit('saved', saved)

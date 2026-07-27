@@ -115,7 +115,11 @@ class PurchaseOrderService
             }
 
             $locked->status = PurchaseOrderStatus::Placed;
-            $locked->ordered_at = now()->toDateString();
+            // A Carbon instance, not ->toDateString(): `ordered_at` is cast to 'date' (Carbon|null),
+            // and PHPStan/Larastan's cast-aware property typing (phpstan.neon's parseModelCastsMethod)
+            // rejects a plain string assignment even though Eloquent would normalize it identically at
+            // runtime — assigning the already-correct type avoids the mismatch outright.
+            $locked->ordered_at = now();
             $locked->save();
 
             return $locked->fresh('items');

@@ -21,7 +21,13 @@ interface PaginatedOrders {
   meta: { current_page: number; last_page: number; per_page: number; total: number }
 }
 
-const STATUS_OPTIONS: PurchaseOrderStatus[] = ['draft', 'placed', 'partially_received', 'received', 'cancelled']
+const STATUS_OPTIONS: PurchaseOrderStatus[] = [
+  'draft',
+  'placed',
+  'partially_received',
+  'received',
+  'cancelled',
+]
 
 const { t } = useI18n()
 const router = useRouter()
@@ -43,7 +49,11 @@ async function fetchOrders() {
   loading.value = true
   try {
     const { data } = await api.get<PaginatedOrders>('/purchase-orders', {
-      params: { supplier_id: supplierId.value || undefined, status: status.value || undefined, page: page.value },
+      params: {
+        supplier_id: supplierId.value || undefined,
+        status: status.value || undefined,
+        page: page.value,
+      },
     })
     orders.value = data.data
     totalRecords.value = data.meta.total
@@ -127,7 +137,9 @@ onMounted(async () => {
       </template>
 
       <Column :header="t('inventory.purchaseOrders.orderNumber')">
-        <template #body="{ data }"><span dir="ltr">{{ data.order_number }}</span></template>
+        <template #body="{ data }"
+          ><span dir="ltr">{{ data.order_number }}</span></template
+        >
       </Column>
       <Column :header="t('inventory.purchaseOrders.supplier')">
         <template #body="{ data }">{{ data.supplier?.name ?? '—' }}</template>

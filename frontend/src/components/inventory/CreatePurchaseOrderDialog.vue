@@ -107,8 +107,8 @@ async function submit() {
           {{ t('inventory.purchaseOrders.supplier') }}
         </label>
         <Select
-          id="po-supplier"
           v-model="form.supplier_id"
+          input-id="po-supplier"
           :options="suppliersStore.items.filter((s) => s.is_active)"
           option-label="name"
           option-value="id"
@@ -124,7 +124,7 @@ async function submit() {
         <label for="po-expected" class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('inventory.purchaseOrders.expectedAt') }}
         </label>
-        <DatePicker id="po-expected" v-model="form.expected_at" show-icon fluid />
+        <DatePicker v-model="form.expected_at" input-id="po-expected" show-icon fluid />
       </div>
 
       <div class="flex flex-col gap-2">

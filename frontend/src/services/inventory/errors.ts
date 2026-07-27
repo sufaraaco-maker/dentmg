@@ -1,6 +1,9 @@
 import type { InventoryError } from '@/types/inventory'
 
-const ERROR_CODES: InventoryError['code'][] = ['inventory_insufficient_stock', 'invalid_purchase_order_operation']
+const ERROR_CODES: InventoryError['code'][] = [
+  'inventory_insufficient_stock',
+  'invalid_purchase_order_operation',
+]
 
 export function isInventoryError(data: unknown): data is InventoryError {
   if (typeof data !== 'object' || data === null || !('code' in data)) return false

@@ -71,7 +71,9 @@ async function submit() {
   try {
     const payload = { name: form.name.trim(), sort_order: form.sort_order, is_active: form.is_active }
 
-    const saved = props.category ? await store.update(props.category.id, payload) : await store.create(payload)
+    const saved = props.category
+      ? await store.update(props.category.id, payload)
+      : await store.create(payload)
 
     toast.add({ severity: 'success', summary: t('inventory.categories.saved'), life: 3000 })
     emit('saved', saved)
@@ -112,7 +114,7 @@ async function submit() {
         <label for="category-sort" class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('inventory.categories.sortOrder') }}
         </label>
-        <InputNumber id="category-sort" v-model="form.sort_order" :min="0" fluid />
+        <InputNumber v-model="form.sort_order" input-id="category-sort" :min="0" fluid />
       </div>
 
       <div class="flex items-center gap-3">

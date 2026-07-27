@@ -30,7 +30,7 @@ describe('rethrowInventoryError', () => {
     const axiosError = {
       response: {
         data: {
-          message: "This would exceed the ordered quantity.",
+          message: 'This would exceed the ordered quantity.',
           code: 'invalid_purchase_order_operation',
         },
       },

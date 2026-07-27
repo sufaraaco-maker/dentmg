@@ -119,7 +119,12 @@ onMounted(async () => {
       <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
         {{ t('inventory.supplies.title') }}
       </h1>
-      <Button v-if="canManage" :label="t('inventory.supplies.new')" icon="pi pi-plus" @click="openCreateDialog" />
+      <Button
+        v-if="canManage"
+        :label="t('inventory.supplies.new')"
+        icon="pi pi-plus"
+        @click="openCreateDialog"
+      />
     </div>
 
     <div class="flex flex-wrap items-center gap-4">

@@ -246,7 +246,9 @@ function confirmDeactivate() {
             @page="onMovementsPage"
           >
             <Column :header="t('inventory.movements.occurredAt')">
-              <template #body="{ data }"><span dir="ltr">{{ formatDateTime(data.occurred_at) }}</span></template>
+              <template #body="{ data }"
+                ><span dir="ltr">{{ formatDateTime(data.occurred_at) }}</span></template
+              >
             </Column>
             <Column :header="t('inventory.movements.reason')">
               <template #body="{ data }">{{ t(`inventory.movements.reasons.${data.reason}`) }}</template>
@@ -255,7 +257,11 @@ function confirmDeactivate() {
               <template #body="{ data }">
                 <span
                   dir="ltr"
-                  :class="data.quantity_delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'"
+                  :class="
+                    data.quantity_delta < 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-600 dark:text-green-400'
+                  "
                 >
                   {{ data.quantity_delta > 0 ? '+' : '' }}{{ data.quantity_delta }}
                 </span>

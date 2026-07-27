@@ -114,10 +114,14 @@ onMounted(async () => {
       <Column field="name" :header="t('inventory.suppliers.name')" sortable />
       <Column field="contact_name" :header="t('inventory.suppliers.contactName')" />
       <Column field="phone" :header="t('inventory.suppliers.phone')">
-        <template #body="{ data }"><span dir="ltr">{{ data.phone ?? '—' }}</span></template>
+        <template #body="{ data }"
+          ><span dir="ltr">{{ data.phone ?? '—' }}</span></template
+        >
       </Column>
       <Column field="email" :header="t('inventory.suppliers.email')">
-        <template #body="{ data }"><span dir="ltr">{{ data.email ?? '—' }}</span></template>
+        <template #body="{ data }"
+          ><span dir="ltr">{{ data.email ?? '—' }}</span></template
+        >
       </Column>
       <Column field="is_active" :header="t('inventory.suppliers.status')" sortable>
         <template #body="{ data }">

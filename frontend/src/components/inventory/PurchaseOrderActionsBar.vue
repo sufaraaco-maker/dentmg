@@ -69,6 +69,8 @@ function confirmCancel(): void {
     header: t('inventory.purchaseOrders.actions.cancel'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
+    acceptLabel: t('inventory.purchaseOrders.actions.cancel'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       busy.value = true
       try {

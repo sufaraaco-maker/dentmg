@@ -13,7 +13,12 @@ import { api } from '@/lib/api'
 import { isInventoryError } from '@/services/inventory'
 import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { toLocalDateString } from '@/lib/date'
-import { STOCK_MOVEMENT_REASONS, type StockMovement, type StockMovementReason, type Supply } from '@/types/inventory'
+import {
+  STOCK_MOVEMENT_REASONS,
+  type StockMovement,
+  type StockMovementReason,
+  type Supply,
+} from '@/types/inventory'
 
 /**
  * Records a manual Stock Movement against one Supply (design doc §2/§8/§9). `initial_stock` is
@@ -145,8 +150,8 @@ async function submit() {
           {{ t('inventory.movements.reason') }}
         </label>
         <Select
-          id="movement-reason"
           v-model="form.reason"
+          input-id="movement-reason"
           :options="reasonOptions"
           option-label="label"
           option-value="value"
@@ -174,7 +179,13 @@ async function submit() {
         <label for="movement-quantity" class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('inventory.movements.quantity') }}
         </label>
-        <InputNumber id="movement-quantity" v-model="form.quantity" :min="1" :invalid="!!errors.quantity" fluid />
+        <InputNumber
+          v-model="form.quantity"
+          input-id="movement-quantity"
+          :min="1"
+          :invalid="!!errors.quantity"
+          fluid
+        />
         <Message v-if="errors.quantity" severity="error" size="small">{{ errors.quantity[0] }}</Message>
       </div>
 
@@ -182,7 +193,7 @@ async function submit() {
         <label for="movement-expiration" class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('inventory.movements.expirationDate') }}
         </label>
-        <DatePicker id="movement-expiration" v-model="form.expiration_date" show-icon fluid />
+        <DatePicker v-model="form.expiration_date" input-id="movement-expiration" show-icon fluid />
       </div>
 
       <div class="flex flex-col gap-2">

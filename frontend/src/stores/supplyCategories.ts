@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
-import type { CreateSupplyCategoryPayload, SupplyCategory, UpdateSupplyCategoryPayload } from '@/types/inventory'
+import type {
+  CreateSupplyCategoryPayload,
+  SupplyCategory,
+  UpdateSupplyCategoryPayload,
+} from '@/types/inventory'
 
 /**
  * Small, rarely-changing clinic configuration data (dropdown source + admin CRUD backing) —
