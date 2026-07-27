@@ -8,8 +8,9 @@ _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, 
 Payments, and Clinical Notes are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/
 Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR
 #3) but not yet re-tagged. Clinical Notes shipped its own permanent E2E suite and is confirmed
-Production Ready. Inventory (`feature/inventory`, below) is implementation-complete but not yet merged/
-CI-confirmed. Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
+Production Ready. Inventory (`feature/inventory`, below) is CI-confirmed Production Ready
+(GitHub Actions `workflow_dispatch` run `30282195677`, 2026-07-27) but not yet merged to `main`.
+Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
 bar as Appointments/Dental Chart/Clinical Notes — see `docs/roadmap.md` and `TECH_DEBT.md` for current
 per-module status._
@@ -46,19 +47,25 @@ per-module status._
   `PurchaseOrdersView.vue` + `PurchaseOrderDetailView.vue` (full lifecycle actions). New top-level
   **Inventory** sidebar group and a `LowStockWidget.vue` Dashboard card. Full en/ar/tr i18n, zero
   missing/extra keys verified across all three locale files.
-- **Verification**: backend `pint` clean, `phpstan analyse` reproduces a pre-existing, environment-only
-  breakage unrelated to this module (confirmed via `git stash` against untouched `main` — see
-  `TECH_DEBT.md`), 771/771 backend tests green (68 Inventory-specific: Feature + Unit). Frontend
-  `vue-tsc`/ESLint clean, 19 new Vitest tests (stores + typed-error service) green. A permanent Playwright
-  E2E suite (`frontend/e2e/inventory.spec.ts`) was written during this module's own implementation and
-  structurally verified correct via direct browser inspection (Suppliers/Supplies/Purchase Orders screens,
-  forms, sidebar nav, and permission gating all confirmed rendering and behaving correctly), but a full
-  local green run is blocked by the same Windows Docker Desktop networking latency already logged against
-  Dental Chart/Clinical Notes — reproduced identically on the completely unrelated, pre-existing
-  `auth.spec.ts`, conclusively ruling out an Inventory-specific defect. **Not yet CI-confirmed** (this
-  branch hasn't been pushed to a PR yet) — see `TECH_DEBT.md` for the full diagnostic trail, including two
-  real E2E-spec bugs (an ambiguous `getByLabel` selector, too-tight assertion timeouts) and an unrelated
-  dev-database reseed found and fixed along the way.
+- **Verification**: backend `pint`/`phpstan analyse` clean, 771/771 backend tests green (68
+  Inventory-specific: Feature + Unit). Frontend `vue-tsc`/ESLint/Prettier clean, 19 new Vitest tests
+  (stores + typed-error service) green. A permanent Playwright E2E suite
+  (`frontend/e2e/inventory.spec.ts`) was written during this module's own implementation and
+  **confirmed via the GitHub Actions API across five `workflow_dispatch` runs** on `feature/inventory`
+  (`30277023360` → `30280053248` → `30280937935` → `30281608486` → `30282195677`) — this dev machine's
+  own local attempts hit the same Windows Docker Desktop networking latency already logged against Dental
+  Chart/Clinical Notes (reproduced identically on the completely unrelated, pre-existing `auth.spec.ts`,
+  ruling out an Inventory-specific cause) and never got far enough into the golden path to be conclusive,
+  so CI's native runner did the real verification instead — surfacing and closing five genuine bugs one
+  run at a time: a real PHPStan error (`PurchaseOrderService` assigning a plain string to a
+  `Carbon|null`-cast property), a codebase-wide PrimeVue accessibility defect (`id` instead of `inputId`
+  on every `InputNumber`/`DatePicker`/`Select`, silently breaking every affected field's label
+  association — the same pre-existing mistake was found, unfixed, in `UsersView.vue` too, logged as its
+  own follow-up), a missing confirm-dialog `acceptLabel`, two duplicate-toast bugs (child dialog and
+  parent view each showing their own "saved"/"added"/"received" toast for one action), and one real E2E
+  selector ambiguity (a hidden dialog's leftover `aria-label` colliding with a ledger cell's text). Final
+  run (`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
+  `TECH_DEBT.md` for the full diagnostic trail.
 
 ### Added — Clinical Notes (design approved 2026-07-25, backend + frontend implementation-complete
 2026-07-26, closing the permanent-E2E-suite gap the prior three modules each deferred)

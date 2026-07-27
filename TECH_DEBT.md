@@ -668,3 +668,28 @@ systemic gap across the codebase's PrimeVue form usage, not something introduced
 point, auditing every `Select`/`InputNumber`/`DatePicker`/similar wrapped-input PrimeVue component
 for a plain `id` that should be `inputId` instead — but not blocking, and deliberately not fixed
 opportunistically here to keep this module's diff scoped to Inventory.
+
+**Two further rounds of real, CI-native bugs found and fixed** (each caught by the *next* run after
+the previous fix, since a fresh CI run was needed to reach each subsequent point in the golden
+path): (4) `SuppliesView.vue`'s `onSaved()` and `PurchaseOrderDetailView.vue`'s
+`onItemAdded()`/`onItemReceived()` each showed their own success toast on top of the one their
+child dialog (`SupplyFormDialog`/`AddPurchaseOrderItemDialog`/`ReceivePurchaseOrderItemDialog`)
+already displays for the same action — a real double-toast bug on every Supply save/item add/item
+receive, caught by Playwright's strict-mode violation (two identical toast nodes), not flakiness.
+Same bug, third instance: `SupplyDetailView.vue`'s `onRecorded()` duplicated
+`RecordStockMovementDialog.vue`'s own "Movement recorded" toast. All three fixed by keeping only
+the state-refresh call each handler still needs. (5) The E2E spec itself had a real selector
+ambiguity: `page.getByText('Used')` matched both the Stock Movements ledger's own cell and the
+just-closed Record Movement dialog's Reason combobox (its `aria-label` still carried "Used" from
+its last interaction even while hidden) — fixed by scoping ledger-reason assertions to
+`.p-datatable`, and proactively fixed the identical landmine at the end of the test (two "Received"
+rows exist in the ledger by then) with `.first()` before it was ever hit.
+
+**RESOLVED 2026-07-27**: confirmed via the GitHub Actions API across five `workflow_dispatch` runs
+on `feature/inventory` (`30277023360` → `30280053248` → `30280937935` → `30281608486` →
+`30282195677`), each surfacing and closing exactly one more real, CI-native bug than the last — a
+textbook case for why "verified locally" is provisional until CI itself confirms it (this dev
+machine's own local E2E attempts hit the pre-existing Windows Docker networking latency described
+above and never got far enough into the golden path to surface bugs 4/5 at all). Final run
+(`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**,
+including all three `inventory.spec.ts` tests with no retries needed.

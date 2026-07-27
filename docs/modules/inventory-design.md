@@ -1,17 +1,19 @@
-# Inventory — Module Design (Implementation Complete, 2026-07-26)
+# Inventory — Module Design (Production Ready, 2026-07-27)
 
-**Status: Design approved and implemented (backend + frontend) same-day, 2026-07-26.** Suppliers/Supply
-Categories/Supplies catalogs, the immutable `stock_movements` ledger, and the full Purchase Order
-draft→placed→partially_received→received lifecycle are all in place, backend and frontend. Backend:
-`pint`/`phpstan analyse` — Pint clean; PHPStan reproduces a pre-existing, environment-only breakage
-unrelated to this module (confirmed via `git stash` against untouched `main`, see `TECH_DEBT.md`) — 771/771
-backend tests green (68 Inventory-specific: Feature + Unit). Frontend: `vue-tsc`/ESLint clean, 19 new Vitest
+**Status: Design approved and implemented same-day (2026-07-26); CI-confirmed Production Ready the
+following day (2026-07-27).** Suppliers/Supply Categories/Supplies catalogs, the immutable
+`stock_movements` ledger, and the full Purchase Order draft→placed→partially_received→received lifecycle
+are all in place, backend and frontend. Backend: `pint`/`phpstan analyse` clean, 771/771 backend tests
+green (68 Inventory-specific: Feature + Unit). Frontend: `vue-tsc`/ESLint/Prettier clean, 19 new Vitest
 tests (stores + typed-error service) green. A permanent Playwright E2E suite
-(`frontend/e2e/inventory.spec.ts`) was written and structurally verified correct via direct browser
-inspection, but a full local green run is blocked by the same Windows Docker Desktop networking latency
-already logged against Dental Chart/Clinical Notes — **not yet CI-confirmed** (this branch hasn't been
-pushed yet); see `TECH_DEBT.md` for the full diagnostic trail, including two real E2E-spec bugs and an
-unrelated dev-database reseed found and fixed along the way.
+(`frontend/e2e/inventory.spec.ts`) is **confirmed via the GitHub Actions API** across five
+`workflow_dispatch` runs on `feature/inventory` — this dev machine's own local E2E attempts hit the same
+Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes and were
+inconclusive, so CI's native runner did the real verification, surfacing and closing five genuine bugs one
+run at a time (a real PHPStan error, a codebase-wide PrimeVue `id`-vs-`inputId` accessibility defect, a
+missing confirm-dialog label, two duplicate-toast bugs, and one E2E selector ambiguity). Final run
+(`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
+`TECH_DEBT.md` for the full diagnostic trail. Not yet merged to `main`.
 
 ## Implementation Summary (added at Final Review, 2026-07-26)
 

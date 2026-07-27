@@ -232,7 +232,7 @@ Treatment Plans/Billing/Payments each deferred), confirmed 19/19 green via the G
 (`workflow_dispatch` run `30189070147`) — see `docs/modules/clinical-notes-design.md` and TECH_DEBT.md for
 open (non-blocking) items.
 
-**Inventory — Implementation Complete ✅ (2026-07-26, same day as design approval, `feature/inventory`)**:
+**Inventory — Production Ready ✅ (2026-07-27, `feature/inventory`, CI-confirmed, not yet merged to `main`)**:
 admin-managed Supplier/Supply Category/Supply catalogs (`is_active` soft-disable, mirroring
 `AppointmentType`/`DentalCondition`'s convention), an immutable append-only `stock_movements` ledger
 (`quantity_on_hand`/`is_low_stock` always computed live via `SUM(quantity_delta)`, never stored — a
@@ -244,10 +244,13 @@ admin+receptionist-only precedent every prior financial module used, since denti
 consuming supplies chairside); Supplier/Category management and Purchase Order procurement remain
 admin+receptionist, Purchase Order delete admin-only. New top-level **Inventory** sidebar group and a
 Dashboard Low Stock widget. 771/771 backend tests (68 Inventory-specific) + 19 new frontend Vitest tests
-green, `vue-tsc`/ESLint/Pint clean; a permanent Playwright E2E suite
-(`frontend/e2e/inventory.spec.ts`) was written and structurally verified correct via direct browser
-inspection, but full local confirmation is blocked by the same Windows Docker Desktop networking latency
-already logged against Dental Chart/Clinical Notes — **not yet CI-confirmed** (not yet pushed to a PR) — see
+green, `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright E2E suite
+(`frontend/e2e/inventory.spec.ts`) confirmed via the GitHub Actions API across five `workflow_dispatch` runs
+— each run's native CI environment (unaffected by this dev machine's own Windows Docker networking latency,
+already logged against Dental Chart/Clinical Notes) surfaced one more real bug than the last: a genuine
+PHPStan error, a codebase-wide `id`-vs-`inputId` PrimeVue accessibility defect, a missing confirm-dialog
+label, two duplicate-toast bugs, and one real E2E selector ambiguity — all fixed and re-verified. Final run
+(`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
 `docs/modules/inventory-design.md` and TECH_DEBT.md for the full diagnostic trail.
 
 Next module: not yet selected — remaining not-started modules per the list above are Laboratory, Imaging,
