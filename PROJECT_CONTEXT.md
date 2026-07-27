@@ -283,8 +283,11 @@ those merges; `docs/roadmap.md` now reflects the correct status. All three still
 Playwright E2E suite (see `TECH_DEBT.md`), so none has reached the "Production Ready" bar Appointments/
 Dental Chart/Clinical Notes/Inventory/Laboratory meet.
 
-Next module: not yet selected — remaining not-started modules are Imaging, Reports, Settings, AI
-Assistant.
+Next module: **Imaging** (confirmed 2026-07-27), design phase starting now. Planned order after Imaging:
+Reports, then Settings, then AI Assistant (per user's explicit prioritization — Imaging completes the
+clinical workflow alongside Dental Chart/Clinical Notes/Laboratory; Reports benefits from accumulated
+data across the operational modules; Settings consolidates config once the rest has stabilized; AI
+Assistant depends on data/workflow completeness across everything else to add real value).
 See `docs/roadmap.md` for current per-module status.
 
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
