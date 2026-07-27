@@ -83,9 +83,12 @@ test.describe('inventory', () => {
     await expect(page.getByText('5 box')).toBeVisible()
     await expect(page.getByText('Low Stock')).toBeVisible()
 
-    // --- The ledger shows both movements.
-    await expect(page.getByText('Initial Stock')).toBeVisible()
-    await expect(page.getByText('Used')).toBeVisible()
+    // --- The ledger shows both movements. Scoped to the DataTable itself — the last-closed
+    // Record Movement dialog's own Reason combobox can still carry a matching aria-label (e.g.
+    // "Used") even while hidden, making a bare page-wide getByText ambiguous.
+    const ledger = page.locator('.p-datatable')
+    await expect(ledger.getByText('Initial Stock')).toBeVisible()
+    await expect(ledger.getByText('Used')).toBeVisible()
 
     // --- Low Stock now shows up on the Dashboard widget — its "view" link only renders once the
     // count is > 0 (LowStockWidget.vue), so this is a real assertion the widget reflects the
@@ -141,7 +144,9 @@ test.describe('inventory', () => {
     await page.getByRole('cell', { name: supplyName }).click()
     await expect(page.getByText('35 box')).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText('Low Stock')).toHaveCount(0)
-    await expect(page.getByText('Received')).toBeVisible()
+    // Two "Received" rows by now (the partial + the remaining receipt) — .first() confirms at
+    // least one renders without a strict-mode violation on the (correctly) duplicate text.
+    await expect(page.locator('.p-datatable').getByText('Received').first()).toBeVisible()
   })
 
   test('a draft purchase order can be cancelled before anything is received', async ({ page }) => {
