@@ -232,8 +232,26 @@ Treatment Plans/Billing/Payments each deferred), confirmed 19/19 green via the G
 (`workflow_dispatch` run `30189070147`) — see `docs/modules/clinical-notes-design.md` and TECH_DEBT.md for
 open (non-blocking) items.
 
-Next module: not yet selected — Clinical Notes closes out the clinical-documentation module; remaining
-not-started modules per the list above are Inventory, Laboratory, Imaging, Reports, Settings, AI Assistant.
+**Inventory — Implementation Complete ✅ (2026-07-26, same day as design approval, `feature/inventory`)**:
+admin-managed Supplier/Supply Category/Supply catalogs (`is_active` soft-disable, mirroring
+`AppointmentType`/`DentalCondition`'s convention), an immutable append-only `stock_movements` ledger
+(`quantity_on_hand`/`is_low_stock` always computed live via `SUM(quantity_delta)`, never stored — a
+deliberate improvement over Open Dental's own mutable-on-hand-field precedent, per the design doc's §0
+competitive research), and a Purchase Order `draft` → `placed` → `partially_received` → `received` lifecycle
+(per-item receiving hard-capped at `quantity_ordered`, cancel only while nothing has been received).
+Dentists may record `used`/`wasted`/`expired` Stock Movements (a deliberate divergence from the
+admin+receptionist-only precedent every prior financial module used, since dentists are the ones actually
+consuming supplies chairside); Supplier/Category management and Purchase Order procurement remain
+admin+receptionist, Purchase Order delete admin-only. New top-level **Inventory** sidebar group and a
+Dashboard Low Stock widget. 771/771 backend tests (68 Inventory-specific) + 19 new frontend Vitest tests
+green, `vue-tsc`/ESLint/Pint clean; a permanent Playwright E2E suite
+(`frontend/e2e/inventory.spec.ts`) was written and structurally verified correct via direct browser
+inspection, but full local confirmation is blocked by the same Windows Docker Desktop networking latency
+already logged against Dental Chart/Clinical Notes — **not yet CI-confirmed** (not yet pushed to a PR) — see
+`docs/modules/inventory-design.md` and TECH_DEBT.md for the full diagnostic trail.
+
+Next module: not yet selected — remaining not-started modules per the list above are Laboratory, Imaging,
+Reports, Settings, AI Assistant.
 See `docs/roadmap.md` for current per-module status.
 
 Full documentation set: see docs/ (architecture, database-design, api-guidelines, coding-standards, decisions, roadmap, deployment, modules/), plus CHANGELOG.md and TECH_DEBT.md at the repo root.

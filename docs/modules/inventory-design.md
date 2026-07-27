@@ -1,8 +1,50 @@
-# Inventory — Module Design (Design Approved 2026-07-26)
+# Inventory — Module Design (Implementation Complete, 2026-07-26)
 
-**Status: Design approved 2026-07-26.** Implementation proceeds backend-first, then frontend, with Feature
-tests, Vitest tests, and a permanent Playwright E2E suite completed before Final Review — same standard as
-Clinical Notes.
+**Status: Design approved and implemented (backend + frontend) same-day, 2026-07-26.** Suppliers/Supply
+Categories/Supplies catalogs, the immutable `stock_movements` ledger, and the full Purchase Order
+draft→placed→partially_received→received lifecycle are all in place, backend and frontend. Backend:
+`pint`/`phpstan analyse` — Pint clean; PHPStan reproduces a pre-existing, environment-only breakage
+unrelated to this module (confirmed via `git stash` against untouched `main`, see `TECH_DEBT.md`) — 771/771
+backend tests green (68 Inventory-specific: Feature + Unit). Frontend: `vue-tsc`/ESLint clean, 19 new Vitest
+tests (stores + typed-error service) green. A permanent Playwright E2E suite
+(`frontend/e2e/inventory.spec.ts`) was written and structurally verified correct via direct browser
+inspection, but a full local green run is blocked by the same Windows Docker Desktop networking latency
+already logged against Dental Chart/Clinical Notes — **not yet CI-confirmed** (this branch hasn't been
+pushed yet); see `TECH_DEBT.md` for the full diagnostic trail, including two real E2E-spec bugs and an
+unrelated dev-database reseed found and fixed along the way.
+
+## Implementation Summary (added at Final Review, 2026-07-26)
+
+**Backend**: `Supplier`/`SupplyCategory`/`Supply` catalogs (`is_active` soft-disable, no hard delete or
+`Auditable`, mirroring `AppointmentType`/`DentalCondition`); `StockMovement` (immutable, append-only ledger —
+`Supply::quantity_on_hand`/`is_low_stock` computed live via `SUM(quantity_delta)`, never stored, with a
+`withQuantityOnHand()`/`lowStock()` query-scope pair that joins the aggregate once for an entire paginated
+list rather than N+1 per row); `PurchaseOrder` (`Auditable`, soft-deletable, draft-only) + `PurchaseOrderItem`
+(snapshot `description`/`unit_cost`, hard-capped `quantity_received`). Services:
+`SupplierService`/`SupplyCategoryService`/`SupplyService` (thin catalog CRUD), `StockMovementService`
+(row-locks the `Supply` before checking the below-zero guard, mirroring `PaymentService::refund()`),
+`PurchaseOrderService` (row-locks the `PurchaseOrder` for `place()`/`receive()`/`cancel()`, mirroring
+`InvoiceService::issue()`). Permissions exactly as approved: dentists may record `used`/`wasted`/`expired`
+movements only; Supplier/Category management and Purchase Order procurement are admin+receptionist; Purchase
+Order delete is admin-only.
+
+**Frontend**: `SuppliersView.vue`/`SupplyCategoriesView.vue` (admin-only catalog CRUD, mirroring
+`AppointmentTypesView.vue`), `SuppliesView.vue` (paginated list, mirroring `PatientsView.vue`'s
+direct-`api`-call pattern rather than a Pinia store) + `SupplyDetailView.vue` (ledger table + Record
+Usage/Adjustment dialog), `PurchaseOrdersView.vue` + `PurchaseOrderDetailView.vue` (full lifecycle actions).
+Small Pinia stores (`stores/suppliers.ts`/`stores/supplyCategories.ts`) only for the two genuinely small,
+dropdown-backing catalogs — Supplies/Purchase Orders deliberately have no store, consistent with §13's own
+"paginated, not a small cache" framing. New top-level **Inventory** sidebar group (Decision 4) and a
+`LowStockWidget.vue` Dashboard card (Decision-adjacent, §11). Full en/ar/tr i18n, zero key-parity gaps
+verified across all three locale files.
+
+**Deviation from a design-doc closing sentence, noted for the record**: §6's closing paragraph said
+`purchase_order_items` is excluded from `Auditable` (grouped with the immutable `stock_movements`/catalog
+tables); the actual implementation follows this literally (no `Auditable` trait on `PurchaseOrderItem`),
+even though `InvoiceItem` — the closest prior-module analogue — does carry `Auditable` despite also having
+no soft-delete. Kept as designed rather than silently "fixed" mid-implementation, since it's a defensible,
+approved call (an item's own edit history while still draft is low-stakes, and the design was already
+approved as written) — flagged here rather than left as an unexplained inconsistency for a future reader.
 
 ## Approval & Decision Log (2026-07-26)
 

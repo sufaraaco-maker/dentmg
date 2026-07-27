@@ -8,10 +8,57 @@ _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, 
 Payments, and Clinical Notes are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/
 Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR
 #3) but not yet re-tagged. Clinical Notes shipped its own permanent E2E suite and is confirmed
-Production Ready. Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
+Production Ready. Inventory (`feature/inventory`, below) is implementation-complete but not yet merged/
+CI-confirmed. Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
 bar as Appointments/Dental Chart/Clinical Notes — see `docs/roadmap.md` and `TECH_DEBT.md` for current
 per-module status._
+
+### Added — Inventory (design approved and implemented same-day, 2026-07-26)
+- **Admin-managed catalogs**: `Supplier` (contact info) and `Supply Category` (a real table, not a fixed
+  enum — dental supply categories genuinely vary per clinic), both using the same `is_active` soft-disable
+  convention as `AppointmentType`/`DentalCondition` rather than a hard delete or `Auditable` trail.
+- **`Supply`**: the stock-item catalog (name, SKU, unit of measure, unit cost, reorder level/quantity,
+  default supplier), with `quantity_on_hand`/`is_low_stock` always computed live from the ledger below —
+  never a stored, independently-editable counter that can drift, a deliberate improvement over Open Dental's
+  own mutable on-hand field (design doc §0 competitive research).
+- **`stock_movements`**: an immutable, append-only ledger — every quantity change (`initial_stock`, `used`,
+  `wasted`, `expired`, `correction`, or system-generated `received`) is a signed `quantity_delta` row, never
+  edited or deleted; a correction is always a new offsetting row, mirroring `Payment`'s refund-is-a-new-row
+  rule exactly. A negative movement is rejected server-side if it would take on-hand below zero
+  (`InsufficientStockException`), row-locking the `Supply` first to close the same race
+  `PaymentService::refund()` already guards against.
+- **Purchase Orders**: `draft` → `placed` → `partially_received` → `received` lifecycle (plus `cancelled`
+  from `draft`/`placed`). Items are add/edit/delete-able only while draft; receiving is per-item, hard-capped
+  at `quantity_ordered` (genuine over-shipment becomes an explicit `correction` movement or a new order, never
+  silent over-receipt); cancel is blocked the instant any item has a real receipt against it. `PurchaseOrder`
+  gets `Auditable`; `order_number` (`PO-000001`) is assigned via the same lock-highest-row-and-increment
+  pattern `PatientService::create()` already uses for `patient_code`.
+- **Permissions**: dentists may record `used`/`wasted`/`expired` Stock Movements (a deliberate divergence
+  from the admin+receptionist-only precedent every prior financial module — Billing, Payments — used, since
+  dentists are the ones actually consuming supplies chairside); Supplier/Category management and Purchase
+  Order procurement (create/place/receive/cancel) remain admin+receptionist; Purchase Order delete is
+  admin-only, mirroring `InvoicePolicy`/`PaymentPolicy`'s identical stricter-than-everything-else precedent.
+- **Frontend**: `SuppliersView.vue`/`SupplyCategoriesView.vue` (admin-only catalog CRUD, mirroring
+  `AppointmentTypesView.vue`), a paginated `SuppliesView.vue` (mirroring `PatientsView.vue`'s direct-`api`-
+  call pattern — Supplies/Purchase Orders deliberately have no Pinia store, only the two small catalog
+  lookups do) + `SupplyDetailView.vue` (stock movement ledger, Record Usage/Adjustment dialog),
+  `PurchaseOrdersView.vue` + `PurchaseOrderDetailView.vue` (full lifecycle actions). New top-level
+  **Inventory** sidebar group and a `LowStockWidget.vue` Dashboard card. Full en/ar/tr i18n, zero
+  missing/extra keys verified across all three locale files.
+- **Verification**: backend `pint` clean, `phpstan analyse` reproduces a pre-existing, environment-only
+  breakage unrelated to this module (confirmed via `git stash` against untouched `main` — see
+  `TECH_DEBT.md`), 771/771 backend tests green (68 Inventory-specific: Feature + Unit). Frontend
+  `vue-tsc`/ESLint clean, 19 new Vitest tests (stores + typed-error service) green. A permanent Playwright
+  E2E suite (`frontend/e2e/inventory.spec.ts`) was written during this module's own implementation and
+  structurally verified correct via direct browser inspection (Suppliers/Supplies/Purchase Orders screens,
+  forms, sidebar nav, and permission gating all confirmed rendering and behaving correctly), but a full
+  local green run is blocked by the same Windows Docker Desktop networking latency already logged against
+  Dental Chart/Clinical Notes — reproduced identically on the completely unrelated, pre-existing
+  `auth.spec.ts`, conclusively ruling out an Inventory-specific defect. **Not yet CI-confirmed** (this
+  branch hasn't been pushed to a PR yet) — see `TECH_DEBT.md` for the full diagnostic trail, including two
+  real E2E-spec bugs (an ambiguous `getByLabel` selector, too-tight assertion timeouts) and an unrelated
+  dev-database reseed found and fixed along the way.
 
 ### Added — Clinical Notes (design approved 2026-07-25, backend + frontend implementation-complete
 2026-07-26, closing the permanent-E2E-suite gap the prior three modules each deferred)
