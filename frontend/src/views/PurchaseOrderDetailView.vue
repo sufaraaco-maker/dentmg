@@ -80,9 +80,11 @@ function onUpdated(updated: PurchaseOrder) {
   order.value = updated
 }
 
+// AddPurchaseOrderItemDialog.vue/ReceivePurchaseOrderItemDialog.vue already show their own
+// "added"/"received" toast on success — this just re-hydrates the order from the response, same
+// as onUpdated() above.
 function onItemAdded(updated: PurchaseOrder) {
   order.value = updated
-  toast.add({ severity: 'success', summary: t('inventory.purchaseOrders.items.added'), life: 3000 })
 }
 
 function openReceive(item: PurchaseOrderItem) {
@@ -91,7 +93,6 @@ function openReceive(item: PurchaseOrderItem) {
 
 function onItemReceived(updated: PurchaseOrder) {
   order.value = updated
-  toast.add({ severity: 'success', summary: t('inventory.purchaseOrders.items.received'), life: 3000 })
 }
 
 function confirmDelete() {

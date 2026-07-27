@@ -2,7 +2,6 @@
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -31,7 +30,6 @@ interface PaginatedSupplies {
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const auth = useAuthStore()
 const categoriesStore = useSupplyCategoriesStore()
 
@@ -98,8 +96,10 @@ function openEditDialog(supply: Supply, event: Event) {
   dialogVisible.value = true
 }
 
+// SupplyFormDialog.vue already shows its own "saved" toast on success — this just refreshes the
+// list (no Pinia store backs this paginated view, unlike Suppliers/Categories, so it can't rely on
+// reactive cache updates alone).
 function onSaved() {
-  toast.add({ severity: 'success', summary: t('inventory.supplies.saved'), life: 3000 })
   fetchSupplies()
 }
 
