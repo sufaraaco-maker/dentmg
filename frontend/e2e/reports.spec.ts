@@ -66,6 +66,8 @@ test.describe('reports', () => {
     const patient = await createPatient(page)
     await recordPayment(page, patient.id, '321.50')
 
+    const main = page.locator('main')
+
     await page.goto('/reports')
     await expect(page.getByRole('heading', { name: 'Reports' })).toBeVisible()
     for (const card of [
@@ -76,10 +78,14 @@ test.describe('reports', () => {
       'Treatment Plan Acceptance',
       'New Patients',
     ]) {
-      await expect(page.getByText(card, { exact: true })).toBeVisible()
+      // Scoped to <main> — the same label also appears in the sidebar nav (design doc's own
+      // "financial nav items must actually be hidden, not just the destination route" bar
+      // surfaced a real AppSidebarItem.vue bug during this suite's own first run; this selector
+      // just needs to not collide with that separate, already-visible sidebar link).
+      await expect(main.getByText(card, { exact: true })).toBeVisible()
     }
 
-    await page.getByText('Collections', { exact: true }).click()
+    await main.getByText('Collections', { exact: true }).click()
     await expect(page).toHaveURL(/\/reports\/collections$/)
     await expect(page.getByText(patient.fullName)).toBeVisible()
     await expect(page.getByText('321.50').first()).toBeVisible()
@@ -106,7 +112,7 @@ test.describe('reports', () => {
 
     await page.goto('/reports')
     await expect(page.getByText('Production', { exact: true })).toHaveCount(0)
-    await expect(page.getByText('New Patients', { exact: true })).toBeVisible()
+    await expect(page.locator('main').getByText('New Patients', { exact: true })).toBeVisible()
 
     await page.goto('/reports/production')
     await expect(page).toHaveURL(/\/forbidden$/, { timeout: 10_000 })

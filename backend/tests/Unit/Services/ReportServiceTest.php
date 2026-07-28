@@ -69,7 +69,7 @@ class ReportServiceTest extends TestCase
         $result = $this->service->production('2026-06-01', '2026-06-30');
 
         $this->assertSame('140.00', $result['summary']['total']);
-        $byDentist = $result['summary']['by_dentist']->keyBy('dentist');
+        $byDentist = collect($result['summary']['by_dentist'])->keyBy('dentist');
         $this->assertSame('100.00', $byDentist['Dr. Ada']['amount']);
         $this->assertSame('40.00', $byDentist['Unassigned']['amount']);
     }

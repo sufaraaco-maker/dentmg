@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import ReportsHomeView from './ReportsHomeView.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { UserRole } from '@/types/user'

@@ -99,7 +99,11 @@ describe('downloadReportCsv', () => {
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     const appendSpy = vi.spyOn(document.body, 'appendChild')
 
-    await downloadReportCsv('/reports/collections', { date_from: '2026-06-01', date_to: '2026-06-30' }, 'collections.csv')
+    await downloadReportCsv(
+      '/reports/collections',
+      { date_from: '2026-06-01', date_to: '2026-06-30' },
+      'collections.csv',
+    )
 
     expect(mockedApi.get).toHaveBeenCalledWith('/reports/collections', {
       params: { date_from: '2026-06-01', date_to: '2026-06-30', format: 'csv' },

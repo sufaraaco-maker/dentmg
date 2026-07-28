@@ -33,7 +33,7 @@ use Illuminate\Support\Collection;
 class ReportService
 {
     /**
-     * @return array{summary: array{total: string, by_dentist: Collection<int, array<string, mixed>>}, rows: list<array<string, mixed>>}
+     * @return array{summary: array{total: string, by_dentist: list<array{dentist: string, amount: string, count: int}>}, rows: list<array{invoice_number: string, patient: string, date: ?string, description: string, dentist: string, amount: string}>}
      */
     public function production(string $dateFrom, string $dateTo, ?string $dentistId = null): array
     {
@@ -57,7 +57,7 @@ class ReportService
         /** @var Collection<int, InvoiceItem> $items */
         $items = $query->get();
 
-        $dentistName = fn (InvoiceItem $item): string => $item->treatmentPlanItem?->treatmentPlan?->dentist?->name ?? 'Unassigned';
+        $dentistName = fn (InvoiceItem $item): string => $item->treatmentPlanItem?->treatmentPlan?->dentist->name ?? 'Unassigned';
 
         $rows = $items->map(fn (InvoiceItem $item) => [
             'invoice_number' => $item->invoice->invoice_number,
@@ -74,7 +74,8 @@ class ReportService
                 'amount' => $this->sumAmounts($group),
                 'count' => $group->count(),
             ])
-            ->values();
+            ->values()
+            ->all();
 
         return [
             'summary' => [
@@ -86,7 +87,7 @@ class ReportService
     }
 
     /**
-     * @return array{summary: array{total: string, by_method: Collection<int, array<string, mixed>>}, rows: list<array<string, mixed>>}
+     * @return array{summary: array{total: string, by_method: list<array{method: string, amount: string, count: int}>}, rows: list<array{date: string, patient: string, invoice_number: ?string, method: string, amount: string}>}
      */
     public function collections(string $dateFrom, string $dateTo, ?PaymentMethod $method = null): array
     {
@@ -102,7 +103,7 @@ class ReportService
         $payments = $query->get();
 
         $rows = $payments->map(fn (Payment $payment) => [
-            'date' => $payment->received_at?->toDateString(),
+            'date' => $payment->received_at->toDateString(),
             'patient' => $payment->patient->full_name,
             'invoice_number' => $payment->invoice?->invoice_number,
             'method' => $payment->method->value,
@@ -115,7 +116,8 @@ class ReportService
                 'amount' => $this->sumPaymentAmounts($group),
                 'count' => $group->count(),
             ])
-            ->values();
+            ->values()
+            ->all();
 
         return [
             'summary' => [
@@ -175,7 +177,7 @@ class ReportService
     }
 
     /**
-     * @return array{summary: array{total: int, by_status: Collection<int, array<string, mixed>>, no_show_rate: float, cancellation_rate: float}, rows: list<array<string, mixed>>}
+     * @return array{summary: array{total: int, by_status: list<array{status: string, count: int}>, no_show_rate: float, cancellation_rate: float}, rows: list<array{date: string, patient: string, dentist: string, type: ?string, status: string}>}
      */
     public function appointmentAnalytics(string $dateFrom, string $dateTo, ?string $dentistId = null): array
     {
@@ -196,7 +198,8 @@ class ReportService
 
         $byStatus = $appointments->groupBy(fn (Appointment $a) => $a->status->value)
             ->map(fn (Collection $group, string $status) => ['status' => $status, 'count' => $group->count()])
-            ->values();
+            ->values()
+            ->all();
 
         $rows = $appointments->map(fn (Appointment $a) => [
             'date' => $a->start_at->toDateString(),
@@ -267,7 +270,7 @@ class ReportService
     }
 
     /**
-     * @return array{summary: array{total: int, by_month: Collection<int, array<string, mixed>>}, rows: list<array<string, mixed>>}
+     * @return array{summary: array{total: int, by_month: list<array{month: string, count: int}>}, rows: list<array{name: string, patient_code: string, registered_at: string}>}
      */
     public function newPatients(string $dateFrom, string $dateTo): array
     {
@@ -285,7 +288,8 @@ class ReportService
 
         $byMonth = $patients->groupBy(fn (Patient $p) => $p->created_at->format('Y-m'))
             ->map(fn (Collection $group, string $month) => ['month' => $month, 'count' => $group->count()])
-            ->values();
+            ->values()
+            ->all();
 
         return [
             'summary' => [

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { NavItem } from '@/config/navigation'
+import { useAuthStore } from '@/stores/auth'
 
 const props = withDefaults(
   defineProps<{
@@ -18,12 +19,25 @@ const emit = defineEmits<{ navigate: [] }>()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
-const hasChildren = computed(() => !!props.item.children?.length)
+// Same role filter `AppSidebar.vue` already applies to its top-level items — children need the
+// exact same check, otherwise a `roles`-restricted child (e.g. an admin-only report) still
+// renders its link for every role, only to bounce to /forbidden on click (real bug found via
+// Reports' own E2E suite, which was the first to assert nav-link visibility rather than just the
+// destination route's guard).
+const visibleChildren = computed(
+  () =>
+    props.item.children?.filter(
+      (child) => !child.roles || (auth.user && child.roles.includes(auth.user.role)),
+    ) ?? [],
+)
+
+const hasChildren = computed(() => visibleChildren.value.length > 0)
 
 const isActive = computed(() => {
   if (props.item.routeName && route.name === props.item.routeName) return true
-  return !!props.item.children?.some((child) => child.routeName === route.name)
+  return visibleChildren.value.some((child) => child.routeName === route.name)
 })
 
 const expanded = ref(isActive.value && hasChildren.value)
@@ -31,7 +45,7 @@ const expanded = ref(isActive.value && hasChildren.value)
 watch(
   () => route.name,
   () => {
-    if (hasChildren.value && props.item.children?.some((child) => child.routeName === route.name)) {
+    if (hasChildren.value && visibleChildren.value.some((child) => child.routeName === route.name)) {
       expanded.value = true
     }
   },
@@ -106,7 +120,7 @@ function onParentClick() {
     </div>
 
     <ul v-if="hasChildren && expanded && !collapsed" class="mt-1 flex flex-col gap-1 ps-9">
-      <li v-for="child in item.children" :key="child.labelKey">
+      <li v-for="child in visibleChildren" :key="child.labelKey">
         <RouterLink
           v-if="child.routeName"
           :to="{ name: child.routeName }"
