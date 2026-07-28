@@ -856,6 +856,31 @@ legitimately reads `TreatmentPlanItem`/`User` properties for the Production/Trea
 Acceptance reports). **Revisit**: same as the Inventory/Laboratory entries — a local/environment
 issue, not a code defect. CI's own `phpstan analyse` step is the authoritative check.
 
+**RESOLVED 2026-07-28**: confirmed clean via `workflow_dispatch` run `30326106755` — CI's real,
+Ubuntu-based `phpstan analyse` step passed with zero errors, confirming this was entirely the local
+container quirk and not a masked real issue.
+
+### Real bugs found and fixed via CI: 4 genuine PHPStan findings in `ReportService.php`, plus a shared `AppSidebarItem.vue` nav-gating bug
+First `workflow_dispatch` run (`30323783949`) caught real issues, not noise: (1) two unnecessary
+nullsafe operators Larastan correctly flagged as redundant given the code path reaching them
+(`TreatmentPlan.dentist`/`Payment.received_at` are never null there); (2) two return-type mismatches
+— `Collection<int, array{specific shape}>` isn't automatically assignable to a declared
+`Collection<int, array<string, mixed>>>` under PHPStan's invariant generics for `Collection`'s value
+type parameter — fixed by converting the grouped `by_dentist`/`by_method`/`by_status`/`by_month`
+summaries to plain arrays (`->all()`) and tightening each method's `@return` docblock to the exact
+concrete shape; (3) via the E2E suite, `AppSidebarItem.vue`'s child nav items never actually enforced
+their own `roles` field — only `AppSidebar.vue`'s top-level items were role-filtered, so an
+admin-only child link (e.g. Reports' own Production/Collections/A-R Aging) rendered for every role
+and only denied access on click. This is a bug shared by every prior module using per-child nav
+gating (Inventory's Suppliers/Categories, Laboratory's Labs, Dental Chart's Conditions) — invisible
+until now because no earlier E2E spec asserted nav-*link* visibility by text, only the destination
+route's `/forbidden` guard or a button on the destination page. Fixed by filtering `item.children`
+the same way `AppSidebar.vue`'s top-level items were already filtered.
+
+**RESOLVED 2026-07-28**: confirmed via the GitHub Actions API — second `workflow_dispatch` run
+(`30326106755`) on `feature/reports` is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 —
+zero failures.**
+
 ### Known limitation: local Playwright verification for Reports blocked by an Alpine/musl vs. glibc Chromium mismatch in this dev container — a new root cause, not the Windows Docker networking issue logged against Dental Chart/Clinical Notes/Inventory/Imaging
 `frontend/e2e/reports.spec.ts` (2 tests) is written and statically clean (`eslint`/`prettier --check`
 both pass), but could not be executed in this session's `dentalsuite_frontend` container: Playwright's
@@ -872,3 +897,7 @@ prior local-environment limitation (Windows Docker networking latency, the recur
 container quirk above). If local E2E runs against this container are wanted again in the future,
 switching its base image away from Alpine (e.g. to a Debian/Ubuntu-based Node image) would remove
 this specific blocker.
+
+**RESOLVED 2026-07-28**: confirmed via the GitHub Actions API across two `workflow_dispatch` runs on
+`feature/reports` — the first (`30323783949`) surfaced the real bugs documented above, the second
+(`30326106755`) is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 — zero failures.**

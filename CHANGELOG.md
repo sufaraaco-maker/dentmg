@@ -11,9 +11,8 @@ PR #2; Clinical Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merg
 Laboratory 2026-07-27 via PR #5, merge commit `bac6ae1`; Imaging 2026-07-28 via PR #6, merge commit
 `2b1fb45`) but not yet re-tagged. Clinical Notes, Inventory, Laboratory, and Imaging each shipped their
 own permanent E2E suite and are confirmed Production Ready. Reports (`feature/reports`, below) is
-implemented with backend/frontend tests green, but its own permanent E2E suite is not yet CI-confirmed
-(local Playwright execution was blocked by this session's dev-container environment, see
-`TECH_DEBT.md`) and it is not yet merged to `main`.
+CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run `30326106755`, 2026-07-28) but
+not yet merged to `main`.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
 bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory/Imaging — see `docs/roadmap.md` and
@@ -40,14 +39,22 @@ bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory/Imaging —
   in), a role-filtered `ReportsHomeView.vue` card grid, six report views under `views/reports/`, a shared
   `ReportDateRangeFilter.vue` (using `frontend/src/lib/date.ts` only, per the Datetime Policy), and CSV
   download via a native `Blob`/anchor-element helper.
-- **Real bug found and fixed**: a `whereBetween` date-range filter on `issue_date`/`received_at`
-  compared as strings against a bare `Y-m-d` upper bound — any stored value with a time-of-day suffix
-  sorted past the boundary and was silently excluded. Fixed by bounding both sides to the full day,
-  caught by a new end-of-month `DashboardTest` fixture rather than by inspection.
-- 855/855 backend tests (21 Reports-specific) + 650/650 frontend Vitest tests green, `vue-tsc`/ESLint/
-  Prettier clean, production build green. Permanent Playwright suite (`frontend/e2e/reports.spec.ts`,
-  2 tests) written and statically clean, pending CI confirmation — see `docs/modules/reports-design.md`
-  and `TECH_DEBT.md`.
+- **Real bugs found and fixed via CI** (not local inspection — local Playwright execution was blocked
+  by this session's Alpine-based dev container, see `TECH_DEBT.md`): a `whereBetween` date-range
+  filter on `issue_date`/`received_at` compared as strings against a bare `Y-m-d` upper bound, silently
+  excluding rows whose stored value carried a time-of-day suffix (caught by a new end-of-month
+  `DashboardTest` fixture); four genuine Larastan findings in `ReportService.php` (two unnecessary
+  nullsafe operators, two return-type mismatches from `Collection`'s invariant generics); and a real,
+  pre-existing bug shared by every module with role-gated sidebar children (Inventory, Laboratory,
+  Dental Chart) — `AppSidebarItem.vue` never actually filtered `item.children` by role, only
+  `AppSidebar.vue`'s top-level items, so a restricted nav link rendered for every role and only denied
+  access on click.
+- 855/855 backend tests (21 Reports-specific) + 652/652 frontend Vitest tests green, `vue-tsc`/ESLint/
+  Pint/Prettier clean, production build green. Permanent Playwright suite
+  (`frontend/e2e/reports.spec.ts`, 2 tests) confirmed via the GitHub Actions API across two
+  `workflow_dispatch` runs — the first (`30323783949`) surfaced the bugs above, the second
+  (`30326106755`) is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 — zero failures.** See
+  `docs/modules/reports-design.md` and `TECH_DEBT.md` for the full diagnostic trail.
 
 ### Added — Imaging (design approved 2026-07-27, implemented 2026-07-28)
 - **`PatientImage`**: per-patient diagnostic image (intraoral/extraoral photo, periapical/bitewing/

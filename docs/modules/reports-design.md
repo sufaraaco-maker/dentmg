@@ -1,16 +1,36 @@
-# Reports — Module Design (Implemented, 2026-07-28)
+# Reports — Module Design (Production Ready, 2026-07-28)
 
-**Status: Design approved and implemented same-day (2026-07-28), on `feature/reports`.** Backend
-(`ReportService`, six endpoints, Gate-based permissions, CSV export) and frontend (Reports home page, six
-report views, shared date-range filter, `DashboardService.monthly_revenue` wired to real data) are both in
-place. Backend: Pint clean, 855/855 backend tests green (21 Reports-specific: 7 `ReportServiceTest` + 13
-`ReportTest` + 1 updated `DashboardTest`). Frontend: `vue-tsc`/ESLint/Prettier clean, 650/650 Vitest tests
-green (13 Reports-specific), production build green. A permanent Playwright E2E suite
-(`frontend/e2e/reports.spec.ts`, 2 tests) is written and statically clean (lint/format), but **could not be
-executed in this session's local dev container** — its Alpine/musl base cannot run Playwright's glibc-built
-Chromium, a local-environment limitation distinct from the code itself (see `TECH_DEBT.md`). Per this
-project's established practice, CI's own Ubuntu `workflow_dispatch` run is the authoritative E2E check,
-confirmed in the Final Review section below once the CI run completes.
+**Status: Design approved and implemented same-day (2026-07-28); CI-confirmed Production Ready the same
+day.** Backend (`ReportService`, six endpoints, Gate-based permissions, CSV export) and frontend (Reports
+home page, six report views, shared date-range filter, `DashboardService.monthly_revenue` wired to real
+data) are both in place. Backend: Pint/PHPStan clean, 855/855 backend tests green (21 Reports-specific).
+Frontend: `vue-tsc`/ESLint/Prettier clean, 652/652 Vitest tests green (15 Reports-specific — 13 in
+`services/reports`/`components/reports`/`views/ReportsHomeView`, plus 2 new `AppSidebarItem` role-filtering
+tests for the shared bug fixed below), production build green. A permanent Playwright E2E suite
+(`frontend/e2e/reports.spec.ts`, 2 tests) is **confirmed via the GitHub Actions API** — local execution was
+blocked in this session's dev container (Alpine/musl base vs. Playwright's glibc-built Chromium, see
+`TECH_DEBT.md`), but two `workflow_dispatch` runs on `feature/reports` gave the real, authoritative signal:
+the first (`30323783949`) surfaced four genuine PHPStan findings and a real, pre-existing shared-component
+bug (below); the second (`30326106755`), after fixing both, is fully green: **Backend 855/855, Frontend
+652/652, E2E 29/29 — zero failures.**
+
+**Real bugs found and fixed via CI** (not local inspection):
+1. Four genuine Larastan findings in `ReportService.php` — two unnecessary nullsafe operators (Larastan
+   knows `TreatmentPlan.dentist`/`Payment.received_at` are never null given the code path reaching them),
+   and two return-type mismatches caused by `Collection`'s invariant generics (a `Collection<int,
+   array{specific shape}>` isn't automatically assignable to a declared `Collection<int, array<string,
+   mixed>>>`). Fixed by converting the grouped `by_dentist`/`by_method`/`by_status`/`by_month` summaries to
+   plain arrays (`->all()`) and tightening each method's `@return` docblock to the exact concrete shape.
+2. **`AppSidebarItem.vue`'s child items never actually enforced their own `roles` field** — a bug shared by
+   every prior module using per-child nav gating (Inventory's Suppliers/Categories, Laboratory's Labs,
+   Dental Chart's Conditions), invisible until now because no earlier E2E spec asserted nav-*link*
+   visibility by text, only the destination route's `/forbidden` guard or a button on the destination page.
+   Reports' own financial-report nav items (Production/Collections/A-R Aging, `roles: ['admin']`) were the
+   first case where the link itself needed to be hidden as part of the module's own approved design (§5:
+   "enforced at the API layer... not just hidden in the frontend nav" — this bug meant it wasn't even
+   reliably hidden in the frontend nav either). Fixed by filtering `item.children` the same way
+   `AppSidebar.vue`'s top-level items were already filtered; also fixes the identical latent bug for every
+   other module's admin-only nav children, though only Reports' own E2E assertions exercise it directly.
 
 ## Implementation Summary (added at Final Review, 2026-07-28)
 
