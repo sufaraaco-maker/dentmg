@@ -25,7 +25,8 @@ const newAppointmentDialogVisible = ref(false)
 interface DashboardSummary {
   total_patients: number
   today_appointments: number
-  monthly_revenue: number
+  /** Decimal-cast, always a string (e.g. "225.50") — see Reports design doc §1/§7. */
+  monthly_revenue: string
 }
 
 const summary = ref<DashboardSummary | null>(null)
@@ -76,7 +77,11 @@ onMounted(async () => {
             </span>
             <div>
               <Skeleton v-if="loading" width="4rem" height="1.5rem" />
-              <p v-else class="tabular-nums text-xl font-semibold text-surface-900 dark:text-surface-0">
+              <p
+                v-else
+                dir="ltr"
+                class="text-start tabular-nums text-xl font-semibold text-surface-900 dark:text-surface-0"
+              >
                 {{ summary?.[stat.key] ?? 0 }}
               </p>
               <p class="text-sm text-surface-500">{{ t(`dashboard.stats.${stat.key}`) }}</p>

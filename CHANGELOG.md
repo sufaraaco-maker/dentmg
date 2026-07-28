@@ -5,17 +5,49 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 ## Unreleased
 
 _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
-Payments, Clinical Notes, Inventory, and Laboratory are all merged to `main` (Dental Chart 2026-07-22;
-Treatment Plans/Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical
-Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`; Laboratory 2026-07-27
-via PR #5, merge commit `bac6ae1`) but not yet re-tagged. Clinical Notes, Inventory, and Laboratory each
-shipped their own permanent E2E suite and are confirmed Production Ready. Imaging (`feature/imaging`,
-below) is CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run `30310705267`,
-2026-07-27) but not yet merged to `main`.
+Payments, Clinical Notes, Inventory, Laboratory, and Imaging are all merged to `main` (Dental Chart
+2026-07-22; Treatment Plans/Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via
+PR #2; Clinical Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`;
+Laboratory 2026-07-27 via PR #5, merge commit `bac6ae1`; Imaging 2026-07-28 via PR #6, merge commit
+`2b1fb45`) but not yet re-tagged. Clinical Notes, Inventory, Laboratory, and Imaging each shipped their
+own permanent E2E suite and are confirmed Production Ready. Reports (`feature/reports`, below) is
+implemented with backend/frontend tests green, but its own permanent E2E suite is not yet CI-confirmed
+(local Playwright execution was blocked by this session's dev-container environment, see
+`TECH_DEBT.md`) and it is not yet merged to `main`.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
-bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory — see `docs/roadmap.md` and
+bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory/Imaging — see `docs/roadmap.md` and
 `TECH_DEBT.md` for current per-module status._
+
+### Added — Reports (design approved and implemented same-day, 2026-07-28)
+- **`ReportService`**: six live-query reports over existing data, no new tables — Production (billed
+  charges by dentist), Collections (payments received, by method), A/R Aging (outstanding invoice
+  balances bucketed by days overdue — a point-in-time snapshot, not date-ranged), Appointment Analytics
+  (completed/no-show/cancellation rates), Treatment Plan Acceptance (presented vs. accepted/rejected,
+  by `accepted_at`/`rejected_at` rather than current status), and New Patients (registrations by range).
+  Every method returns a plain `['summary', 'rows']` array with no HTTP/CSV/view knowledge, so
+  `ReportController` and `DashboardService` both reuse it without duplicating any aggregation logic.
+- **Permissions**: two plain Gate abilities (`view-financial-reports`/`view-operational-reports`,
+  `AppServiceProvider::boot()`) since Reports has no natural Eloquent model for a Policy. Financial
+  reports (Production/Collections/A-R Aging) are `admin`-only — a stricter tier than this codebase's
+  usual "everyone can view" convention, since these expose practice-wide aggregate revenue rather than
+  one patient's billing in clinical context; operational reports stay open to every role.
+- **Export**: CSV only, streamed via native `fputcsv` — no new dependency, no PDF, no scheduled/emailed
+  reports, no ad-hoc query builder (all explicitly out of scope, see design doc §8/§9).
+- **`DashboardService.monthly_revenue`**: previously hardcoded to `0` since Dashboard's original
+  implementation; now calls `ReportService::collections()` for the current calendar month.
+- **Frontend**: a new **Reports** top-level nav group (the existing `comingSoon` sidebar scaffold filled
+  in), a role-filtered `ReportsHomeView.vue` card grid, six report views under `views/reports/`, a shared
+  `ReportDateRangeFilter.vue` (using `frontend/src/lib/date.ts` only, per the Datetime Policy), and CSV
+  download via a native `Blob`/anchor-element helper.
+- **Real bug found and fixed**: a `whereBetween` date-range filter on `issue_date`/`received_at`
+  compared as strings against a bare `Y-m-d` upper bound — any stored value with a time-of-day suffix
+  sorted past the boundary and was silently excluded. Fixed by bounding both sides to the full day,
+  caught by a new end-of-month `DashboardTest` fixture rather than by inspection.
+- 855/855 backend tests (21 Reports-specific) + 650/650 frontend Vitest tests green, `vue-tsc`/ESLint/
+  Prettier clean, production build green. Permanent Playwright suite (`frontend/e2e/reports.spec.ts`,
+  2 tests) written and statically clean, pending CI confirmation — see `docs/modules/reports-design.md`
+  and `TECH_DEBT.md`.
 
 ### Added — Imaging (design approved 2026-07-27, implemented 2026-07-28)
 - **`PatientImage`**: per-patient diagnostic image (intraoral/extraoral photo, periapical/bitewing/

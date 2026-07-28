@@ -1209,5 +1209,113 @@
       "selectCompare": "اختر صورة للمقارنة",
       "resetAdjustments": "إعادة ضبط التعديلات"
     }
+  },
+  "reports": {
+    "title": "التقارير",
+    "nav": {
+      "production": "الإنتاج",
+      "collections": "التحصيلات",
+      "arAging": "أعمار الذمم المدينة",
+      "appointments": "تحليلات المواعيد",
+      "treatmentPlanAcceptance": "قبول خطط العلاج",
+      "newPatients": "المرضى الجدد"
+    },
+    "home": {
+      "productionDescription": "الإنتاج المفوتر حسب الطبيب لفترة زمنية محددة",
+      "collectionsDescription": "المدفوعات المحصلة فعليًا لفترة زمنية محددة",
+      "arAgingDescription": "الأرصدة المستحقة حسب مدة التأخر",
+      "appointmentsDescription": "نشاط المواعيد المكتملة والملغاة والغياب لفترة زمنية محددة",
+      "treatmentPlanAcceptanceDescription": "نسبة قبول خطط العلاج المقدَّمة",
+      "newPatientsDescription": "تسجيلات المرضى الجدد لفترة زمنية محددة"
+    },
+    "filters": {
+      "dateFrom": "من",
+      "dateTo": "إلى",
+      "apply": "تطبيق",
+      "dentist": "الطبيب",
+      "allDentists": "كل الأطباء",
+      "method": "طريقة الدفع",
+      "allMethods": "كل الطرق"
+    },
+    "actions": {
+      "exportCsv": "تصدير CSV",
+      "print": "طباعة"
+    },
+    "loadError": "فشل تحميل التقرير",
+    "empty": "لا توجد بيانات للفترة المحددة",
+    "production": {
+      "total": "إجمالي الإنتاج",
+      "byDentist": "حسب الطبيب",
+      "columns": {
+        "invoiceNumber": "رقم الفاتورة",
+        "patient": "المريض",
+        "date": "التاريخ",
+        "description": "الوصف",
+        "dentist": "الطبيب",
+        "amount": "المبلغ"
+      }
+    },
+    "collections": {
+      "total": "إجمالي التحصيل",
+      "byMethod": "حسب طريقة الدفع",
+      "columns": {
+        "date": "التاريخ",
+        "patient": "المريض",
+        "invoiceNumber": "رقم الفاتورة",
+        "method": "طريقة الدفع",
+        "amount": "المبلغ"
+      }
+    },
+    "arAging": {
+      "total": "إجمالي المستحقات",
+      "buckets": {
+        "current": "غير مستحق بعد",
+        "1_30": "1-30 يومًا",
+        "31_60": "31-60 يومًا",
+        "61_90": "61-90 يومًا",
+        "90_plus": "أكثر من 90 يومًا"
+      },
+      "columns": {
+        "patient": "المريض",
+        "invoiceNumber": "رقم الفاتورة",
+        "dueDate": "تاريخ الاستحقاق",
+        "daysOverdue": "أيام التأخير",
+        "balanceDue": "الرصيد المستحق"
+      }
+    },
+    "appointments": {
+      "total": "إجمالي المواعيد",
+      "noShowRate": "نسبة الغياب",
+      "cancellationRate": "نسبة الإلغاء",
+      "columns": {
+        "date": "التاريخ",
+        "patient": "المريض",
+        "dentist": "الطبيب",
+        "type": "النوع",
+        "status": "الحالة"
+      }
+    },
+    "treatmentPlanAcceptance": {
+      "presented": "مُقدَّمة",
+      "accepted": "مقبولة",
+      "rejected": "مرفوضة",
+      "acceptanceRate": "نسبة القبول",
+      "acceptedValue": "قيمة الخطط المقبولة",
+      "columns": {
+        "patient": "المريض",
+        "dentist": "الطبيب",
+        "presentedAt": "تاريخ التقديم",
+        "status": "الحالة",
+        "value": "القيمة"
+      }
+    },
+    "newPatients": {
+      "total": "المرضى الجدد",
+      "columns": {
+        "name": "الاسم",
+        "patientCode": "رقم المريض",
+        "registeredAt": "تاريخ التسجيل"
+      }
+    }
   }
 }

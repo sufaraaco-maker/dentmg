@@ -143,6 +143,44 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
+          path: 'reports',
+          name: 'reports',
+          component: () => import('@/views/ReportsHomeView.vue'),
+        },
+        {
+          path: 'reports/production',
+          name: 'report-production',
+          component: () => import('@/views/reports/ProductionReportView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'reports/collections',
+          name: 'report-collections',
+          component: () => import('@/views/reports/CollectionsReportView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'reports/ar-aging',
+          name: 'report-ar-aging',
+          component: () => import('@/views/reports/ArAgingReportView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'reports/appointments',
+          name: 'report-appointments',
+          component: () => import('@/views/reports/AppointmentAnalyticsReportView.vue'),
+        },
+        {
+          path: 'reports/treatment-plan-acceptance',
+          name: 'report-treatment-plan-acceptance',
+          component: () => import('@/views/reports/TreatmentPlanAcceptanceReportView.vue'),
+        },
+        {
+          path: 'reports/new-patients',
+          name: 'report-new-patients',
+          component: () => import('@/views/reports/NewPatientsReportView.vue'),
+        },
+        {
           path: 'forbidden',
           name: 'forbidden',
           component: () => import('@/views/ForbiddenView.vue'),

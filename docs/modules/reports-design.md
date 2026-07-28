@@ -1,7 +1,51 @@
-# Reports — Module Design (Approved, 2026-07-28)
+# Reports — Module Design (Implemented, 2026-07-28)
 
-**Status: Design approved (2026-07-28); implementation starting on `feature/reports`.** This module follows
-Imaging in the planned order (`PROJECT_CONTEXT.md`): Reports next, then Settings, then AI Assistant.
+**Status: Design approved and implemented same-day (2026-07-28), on `feature/reports`.** Backend
+(`ReportService`, six endpoints, Gate-based permissions, CSV export) and frontend (Reports home page, six
+report views, shared date-range filter, `DashboardService.monthly_revenue` wired to real data) are both in
+place. Backend: Pint clean, 855/855 backend tests green (21 Reports-specific: 7 `ReportServiceTest` + 13
+`ReportTest` + 1 updated `DashboardTest`). Frontend: `vue-tsc`/ESLint/Prettier clean, 650/650 Vitest tests
+green (13 Reports-specific), production build green. A permanent Playwright E2E suite
+(`frontend/e2e/reports.spec.ts`, 2 tests) is written and statically clean (lint/format), but **could not be
+executed in this session's local dev container** — its Alpine/musl base cannot run Playwright's glibc-built
+Chromium, a local-environment limitation distinct from the code itself (see `TECH_DEBT.md`). Per this
+project's established practice, CI's own Ubuntu `workflow_dispatch` run is the authoritative E2E check,
+confirmed in the Final Review section below once the CI run completes.
+
+## Implementation Summary (added at Final Review, 2026-07-28)
+
+**Backend**: `ReportService` (`backend/app/Services/ReportService.php`) — six methods
+(`production`/`collections`/`arAging`/`appointmentAnalytics`/`treatmentPlanAcceptance`/`newPatients`), each
+returning a plain `['summary' => ..., 'rows' => [...]]` array with zero HTTP/CSV/view knowledge, per the
+Approval Log's data/presentation-separation requirement. Two Gate abilities
+(`view-financial-reports`/`view-operational-reports`, `AppServiceProvider::boot()`) since Reports has no
+natural Eloquent model to attach a Policy to. Six Form Requests (`app/Http/Requests/Report/`) each pairing
+validation with the matching Gate check. `ReportController` formats JSON or streams a native-`fputcsv` CSV
+(`?format=csv`) from the same service call. `DashboardService::monthly_revenue` now calls
+`ReportService::collections()` for the current calendar month instead of a hardcoded `0` — the aggregation
+logic lives in exactly one place, per Approval Log item 5.
+
+**Real bug found and fixed during implementation**: `whereBetween('issue_date'/'received_at', [$dateFrom,
+$dateTo])` compared as strings against a bare `Y-m-d` upper bound — any stored value carrying a time-of-day
+suffix (e.g. `'2026-07-31 23:59:59'`) sorted *after* the bare-date upper bound and was silently excluded.
+Fixed by bounding both sides to the full day (`"{$dateFrom} 00:00:00"`/`"{$dateTo} 23:59:59"`), matching the
+pattern already used for the genuinely-datetime columns (`start_at`/`presented_at`/`created_at`). Caught by
+`DashboardTest`'s own new end-of-month fixture, not by inspection.
+
+**Frontend**: `services/reports/index.ts` (six typed GET wrappers + `downloadReportCsv()`, a native
+`Blob`/anchor-element download — no new dependency, per §8 decision 3). `components/reports/
+ReportDateRangeFilter.vue` (shared `date_from`/`date_to` picker, `frontend/src/lib/date.ts` helpers only,
+per the project's Datetime Policy). Six views under `views/reports/` plus `ReportsHomeView.vue` (a
+role-filtered card grid). The existing `nav.reports` sidebar scaffold
+(`frontend/src/config/navigation.ts`) is filled in with per-child `roles: ['admin']` gating on the three
+financial items, exact convention as Inventory's/Laboratory's own admin-only sub-items; router-level
+`meta.roles` mirrors the same gate (double-enforced, not nav-only). `DashboardView.vue`'s `monthly_revenue`
+stat card now expects a decimal string, not `0`.
+
+**Deviation from a design-doc assumption, noted for the record**: `docs/api-guidelines.md`'s "list
+endpoints ... are always paginated" convention is deliberately not followed here — a report's row set is
+bounded by the caller's own date range (not open-ended), and CSV export needs the complete dataset in one
+response. Documented as an intentional exception, not an oversight.
 
 ## Approval & Decision Log (2026-07-28)
 

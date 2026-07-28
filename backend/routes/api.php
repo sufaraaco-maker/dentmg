@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchaseOrderItemController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplyCategoryController;
@@ -155,4 +156,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('images/{patient_image}/thumbnail', [PatientImageController::class, 'thumbnail'])->name('patient-images.thumbnail');
     Route::put('images/{patient_image}', [PatientImageController::class, 'update']);
     Route::delete('images/{patient_image}', [PatientImageController::class, 'destroy']);
+
+    Route::get('reports/production', [ReportController::class, 'production']);
+    Route::get('reports/collections', [ReportController::class, 'collections']);
+    Route::get('reports/ar-aging', [ReportController::class, 'arAging']);
+    Route::get('reports/appointments', [ReportController::class, 'appointmentAnalytics']);
+    Route::get('reports/treatment-plan-acceptance', [ReportController::class, 'treatmentPlanAcceptance']);
+    Route::get('reports/new-patients', [ReportController::class, 'newPatients']);
 });

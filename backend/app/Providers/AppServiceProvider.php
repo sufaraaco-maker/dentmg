@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,5 +36,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('api.throttle_per_minute'))->by(
             $request->user()?->id ?: $request->ip()
         ));
+
+        // Reports has no natural Eloquent model to attach a Policy to (design doc §5), so it uses
+        // two plain Gate abilities instead — financial reports expose practice-wide revenue/A-R,
+        // a categorically more sensitive scope than any single patient's billing record.
+        Gate::define('view-financial-reports', fn (User $user) => $user->role === UserRole::Admin);
+        Gate::define('view-operational-reports', fn (User $user) => true);
     }
 }

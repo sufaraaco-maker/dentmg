@@ -843,3 +843,32 @@ disk stored on each row (never hardcoded), so moving to `s3` (already configured
 itself still defaults to `local`, which doesn't survive/replicate across multiple app servers.
 **Revisit**: switch `API`-style env config (`FILESYSTEM_DISK`/`AWS_*`) to `s3` before any production
 deployment that runs more than one app server instance.
+
+## Open (new from Reports module, 2026-07-28)
+
+### Local `phpstan analyse` container issue recurred again, same root cause as Inventory's/Laboratory's — confirmed pre-existing, not a Reports regression
+Same symptom, isolated the same way as the two entries above: a full `docker exec dentalsuite_app
+vendor/bin/phpstan analyse` reported 467 errors, nearly all "undefined property" on pre-existing,
+unrelated models (`TreatmentPlan`/`TreatmentPlanItem`/`User`). `git stash -u` back to the exact
+pre-Reports state reproduced **430** errors with zero Reports code present; restoring the stash
+added exactly 37 more, all the identical "undefined property" shape in `ReportService.php` (which
+legitimately reads `TreatmentPlanItem`/`User` properties for the Production/Treatment-Plan-
+Acceptance reports). **Revisit**: same as the Inventory/Laboratory entries — a local/environment
+issue, not a code defect. CI's own `phpstan analyse` step is the authoritative check.
+
+### Known limitation: local Playwright verification for Reports blocked by an Alpine/musl vs. glibc Chromium mismatch in this dev container — a new root cause, not the Windows Docker networking issue logged against Dental Chart/Clinical Notes/Inventory/Imaging
+`frontend/e2e/reports.spec.ts` (2 tests) is written and statically clean (`eslint`/`prettier --check`
+both pass), but could not be executed in this session's `dentalsuite_frontend` container: Playwright's
+downloaded Chromium/Chrome-for-Testing build is glibc-only, while this container's base image is
+Alpine Linux (musl libc) — `npx playwright install chromium` succeeds (downloads a glibc build with a
+"BEWARE: your OS is not officially supported" warning) but the browser fails to launch
+(`ENOENT`/dynamic-linker failure). Installing Alpine's own native `chromium` package
+(`apk add chromium`) did not resolve it either — Playwright Test's `chromium` project still resolves
+to its own downloaded (incompatible) binary rather than the system one via
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. **Revisit**: not a code defect — GitHub Actions' `ci.yml` E2E
+job runs on an `ubuntu-latest` runner, which Playwright fully supports; that `workflow_dispatch` run
+is the authoritative E2E check for this module, per this project's established practice for every
+prior local-environment limitation (Windows Docker networking latency, the recurring local PHPStan
+container quirk above). If local E2E runs against this container are wanted again in the future,
+switching its base image away from Alpine (e.g. to a Debian/Ubuntu-based Node image) would remove
+this specific blocker.

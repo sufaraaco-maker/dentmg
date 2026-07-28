@@ -306,11 +306,33 @@ success, E2E success — 27/27 passed, 0 failed, 0 flaky.** Real bug found and f
 bug is flagged in `TECH_DEBT.md`, not touched here. See `TECH_DEBT.md`/`docs/roadmap.md` for the full
 diagnostic trail.
 
-Next module after Imaging: Reports — not yet started. Planned order:
-Reports, then Settings, then AI Assistant (per user's explicit prioritization — Imaging completes the
-clinical workflow alongside Dental Chart/Clinical Notes/Laboratory; Reports benefits from accumulated
-data across the operational modules; Settings consolidates config once the rest has stabilized; AI
-Assistant depends on data/workflow completeness across everything else to add real value).
+**Reports — Implemented (2026-07-28, `feature/reports`, not yet merged to `main`)**: design approved
+2026-07-28 (see `docs/modules/reports-design.md`'s Approval & Decision Log). Six reports —
+Production, Collections, A/R Aging, Appointment Analytics, Treatment Plan Acceptance, New Patients —
+each a live query over existing data via a single `ReportService` (no new tables, no persisted
+snapshots). Financial reports (Production/Collections/A-R Aging) gated `admin`-only via two plain
+Gate abilities (`view-financial-reports`/`view-operational-reports`, since Reports has no natural
+Eloquent model for a Policy); operational reports open to every role, enforced at both the API layer
+and the frontend router (not nav-only). CSV export only (native `fputcsv`, no new dependency); no
+PDF, no scheduled/emailed reports, no ad-hoc query builder — all explicitly out of scope, see the
+design doc §8/§9. `DashboardService`'s previously-hardcoded `monthly_revenue => 0` now calls
+`ReportService::collections()` directly for the current month, so the aggregation logic lives in
+exactly one place. 855/855 backend tests (21 Reports-specific) + 650/650 frontend Vitest tests green,
+`vue-tsc`/ESLint/Prettier clean, production build green. A permanent Playwright E2E suite
+(`frontend/e2e/reports.spec.ts`, 2 tests) is written and statically clean but not yet CI-confirmed —
+this session's local dev container couldn't execute Playwright at all (Alpine/musl base vs.
+Playwright's glibc-only Chromium build, a new local-environment limitation distinct from the
+Windows Docker networking issue logged against earlier modules); GitHub Actions' `workflow_dispatch`
+run is the authoritative check, per this project's established practice (see `TECH_DEBT.md`). Real
+bug found and fixed along the way: a `whereBetween` date-range comparison against `issue_date`/
+`received_at` silently excluded rows whose stored value carried a time-of-day suffix past a bare
+`Y-m-d` upper bound — caught by `DashboardTest`'s own new fixture, fixed by bounding both sides to
+the full day.
+
+Next module after Reports: Settings, then AI Assistant (per user's explicit prioritization — Reports
+benefits from accumulated data across the operational modules; Settings consolidates config once the
+rest has stabilized; AI Assistant depends on data/workflow completeness across everything else to add
+real value).
 See `docs/roadmap.md` for current per-module status.
 
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
