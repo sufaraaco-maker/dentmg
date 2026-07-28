@@ -1,7 +1,57 @@
-# Reports — Module Design (Proposed, 2026-07-28)
+# Reports — Module Design (Approved, 2026-07-28)
 
-**Status: Design proposed, awaiting approval.** No code written yet. This module follows Imaging in the
-planned order (`PROJECT_CONTEXT.md`): Reports next, then Settings, then AI Assistant.
+**Status: Design approved (2026-07-28); implementation starting on `feature/reports`.** This module follows
+Imaging in the planned order (`PROJECT_CONTEXT.md`): Reports next, then Settings, then AI Assistant.
+
+## Approval & Decision Log (2026-07-28)
+
+All five proposed points approved as recommended:
+
+1. **V1 report catalog** (§4) — **APPROVED as proposed**: Production, Collections, A/R Aging, Appointment
+   Analytics, Treatment Plan Acceptance, New Patients.
+2. **No new tables; `ReportService` over existing data** (§3) — **APPROVED**, with the added requirement
+   that its queries stay written so a future per-clinic scoping clause (`WHERE clinic_id = ...`) or a
+   materialized-view/cache layer could be added later without a reshape (see the new **multi-tenant** and
+   **performance** requirements below — carried into §3/§4's finalized query notes).
+3. **Permissions** (§5) — **APPROVED**: financial reports (Production/Collections/A-R Aging) admin-only;
+   operational reports (Appointment Analytics/Treatment Plan Acceptance/New Patients) admin+dentist+
+   receptionist. **Explicit added requirement**: enforced at the API layer (Gate + Form Request
+   `authorize()`), not just hidden in the frontend nav — this was already the design (§5/§6), reconfirmed
+   here since it's a hard requirement, not just a recommendation.
+4. **Export** (§6/§7) — **APPROVED**: CSV only in V1; PDF, scheduled reports, and emailing deferred (§8
+   decisions 3–4 stand as proposed).
+5. **Dashboard `monthly_revenue`** (§1/§7) — **APPROVED**: replace the hardcoded `0` with a real value,
+   **with the explicit requirement that the calculation lives in exactly one place** — `ReportService`. See
+   the finalized §7 note: `DashboardService` calls `ReportService::collections()` directly; it does not
+   reimplement the aggregation.
+
+**Four standing architectural requirements applied to this module** (per `PROJECT_CONTEXT.md`'s permanent
+SaaS-multi-tenant-readiness and PWA/mobile-first principles, plus two module-specific ones raised at
+approval):
+
+- **SaaS multi-tenant readiness**: no `ReportService` query may assume "there is only one clinic" in a way
+  that would force a rewrite later — concretely, every query filters by explicit, passed-in criteria (date
+  range, optional `dentist_id`) rather than an unscoped `Model::all()`/table-wide implicit assumption, so a
+  future `clinic_id` column is an additive `WHERE` clause, not a redesign. No query in §4 reads from more
+  than the tables it names, and none hardcodes a single-clinic assumption beyond what already holds
+  system-wide (`PROJECT_CONTEXT.md`: "Single Organization (No Multi Tenant in Version 1)" — Reports doesn't
+  introduce a new instance of that assumption, it inherits the existing one).
+- **Responsive / PWA / mobile-first**: report tables, date-range filters, and the CSV export action must all
+  work touch-first on a phone/tablet, same bar as every prior module — the frontend plan (§7) uses the same
+  PrimeVue `DataTable` + responsive layout primitives already proven across Inventory/Laboratory/Imaging, no
+  new pattern needed.
+- **Data/presentation separation for reuse** (new, module-specific): `ReportService`'s public methods return
+  plain data (arrays/DTOs), with zero knowledge of HTTP, CSV formatting, or the Dashboard — `ReportController`
+  formats the HTTP response (JSON or CSV) and `DashboardService` calls `ReportService` directly for
+  `monthly_revenue`. This is what makes decision 5 above possible without duplicated aggregation logic, and
+  is also what would let a future scheduled-report job (§8 decision 4, still deferred) reuse the exact same
+  methods later.
+- **Performance notes documented, not pre-optimized** (new, module-specific): §4's finalized query notes
+  call out which reports touch the largest/most-joined tables (Production, joining `invoice_items` through
+  `treatment_plan_items`/`treatment_plans`) and note that indexing/materialized-views/caching are a future
+  option if real usage shows a need — consistent with `PROJECT_CONTEXT.md`'s "do not over-engineer" /
+  "performance before complexity" ordering: V1 ships plain, indexed queries; nothing is cached or
+  precomputed until a real slow-query is observed.
 
 ## 0. Competitive Research (required before any design, per standing product philosophy)
 
@@ -69,7 +119,21 @@ works and this codebase's standing discipline against introducing a new abstract
 report) is the only new backend component beyond controllers/requests/routes.
 
 Each report method accepts a plain filter shape: `date_from`, `date_to` (both required, validated by a
-per-endpoint Form Request), and `dentist_id` (nullable, where applicable — see §4).
+per-endpoint Form Request), and `dentist_id` (nullable, where applicable — see §4). Every method returns
+plain arrays/DTOs only — no HTTP, CSV, or view concerns leak into `ReportService` (per the Approval Log's
+data/presentation-separation requirement), which is what lets `ReportController` format JSON or CSV from the
+same call, and lets `DashboardService` call `ReportService::collections()` directly for `monthly_revenue`
+instead of reimplementing the aggregation.
+
+**Performance note (documented per Approval Log, not pre-optimized)**: §4.1's Production Report is the one
+query that joins three tables deep (`invoice_items` → `treatment_plan_items` → `treatment_plans`) to
+attribute a dentist; every other report reads at most one join away from its primary table. All date-range
+filters hit columns already indexed for their owning module's own use (`invoices.issue_date`,
+`payments.received_at`, `appointments.scheduled_at`, `treatment_plans.presented_at`, `patients.created_at`),
+so no new index is anticipated for V1. If real usage later shows the Production query is slow at scale, the
+options (added index on `treatment_plan_items.treatment_plan_id`, a materialized/cached monthly rollup) are
+additive changes to `ReportService`'s internals only — nothing in the API or frontend contract would need to
+change, since callers only ever see the returned data shape.
 
 ## 4. Report Catalog
 
