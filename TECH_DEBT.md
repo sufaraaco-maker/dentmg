@@ -765,3 +765,81 @@ run's only remaining failures/flakiness — `dental-chart.spec.ts`, `inventory.s
 documented) before opening the PR. Re-run via `workflow_dispatch` (`30295881535`, commit `33de932`)
 confirms the whole CI pipeline clean: **Backend 815/815, Frontend 627/627, E2E 25/25 — zero
 failures, zero flakes.**
+
+## Open (new from Imaging module, 2026-07-28)
+
+### `App\Rules\BelongsToPatient` throws a real SQL error when used against `TreatmentPlanItem` — pre-existing bug, also present (unexercised) in Laboratory
+Discovered while writing Imaging's own Feature tests for `treatment_plan_item_id` traceability:
+`BelongsToPatient` queries `$modelClass::query()->where('id', $value)->where('patient_id',
+$patientId)->exists()`, but `treatment_plan_items` has **no `patient_id` column** — confirmed
+directly (`Schema::getColumnListing('treatment_plan_items')` and the migration itself,
+`2026_07_22_000003_create_treatment_plan_items_table.php`, only has `treatment_plan_id`, not
+`patient_id`). Reproduced directly against real Postgres via `tinker`: the query throws
+`SQLSTATE[42703]: Undefined column`. `Lab CaseTest`/`LabCase`'s own
+`StoreLabCaseRequest`/`UpdateLabCaseRequest` use this exact same `BelongsToPatient(TreatmentPlanItem::class,
+...)` call and have the identical latent bug — never caught because no Laboratory test ever set
+`treatment_plan_item_id` on a request. In production, this means **any attempt to create or update a
+Lab Case with a `treatment_plan_item_id` set would 500-crash** instead of validating normally.
+**Fixed for Imaging only** (`StorePatientImageRequest`/`UpdatePatientImageRequest` use an inline
+closure querying via the `treatmentPlan` relation instead — see those files) — deliberately not
+touched in `LabCase`'s own Form Requests here, to keep this branch's diff scoped to Imaging.
+**Revisit**: apply the identical fix to `StoreLabCaseRequest`/`UpdateLabCaseRequest` (swap
+`BelongsToPatient(TreatmentPlanItem::class, ...)` for the same `whereHas('treatmentPlan', ...)`
+closure), and add a Feature test exercising `treatment_plan_item_id` to `LabCaseTest` so this class
+of gap can't recur silently. Low risk, small change — should be done before Laboratory's
+`treatment_plan_item_id` field is ever actually used in practice.
+
+### DICOM/CBCT, persistent annotation tools, and formal FMX/series grouping are out of V1 scope
+Named explicitly, not silently skipped — design doc §7/§14 (`docs/modules/imaging-design.md`) covers
+the reasoning for each: DICOM/CBCT is a materially larger, separate undertaking (dedicated viewer,
+study/series/instance data model) not needed for general-practice day-to-day workflow; persistent
+annotation/measurement tools need a calibrated canvas layer, deferred pending real demand; FMX/series
+grouping is covered well enough in V1 by the existing type/tooth/date-range filters.
+**Revisit**: only if a real need for any of the three appears in practice — see the design doc's
+§15 confirmation that the schema needs no reshaping to add any of them later.
+
+### Thumbnail generation is synchronous (GD, on the upload request), not queued
+Design doc §10: acceptable for V1 given realistic per-clinic upload volume (a handful of images per
+visit, not a bulk-import workflow). Redis-backed queues are already configured project-wide.
+**Revisit**: only if real upload volume makes the upload request noticeably slow in practice — move
+`PatientImageService`'s thumbnail generation into a queued job at that point, keeping the upload
+response return the image row immediately with `thumbnail_path` filled in by the job shortly after.
+
+### No malware/virus scanning on uploaded images
+Design doc §9: no such infrastructure exists anywhere in this codebase yet. Named as a known gap,
+not silently ignored — matches the same class of gap other modules' file-adjacent features would
+eventually need too (Laboratory's deferred file/photo/STL attachments, TECH_DEBT.md's Laboratory
+entry above).
+**Revisit**: before onboarding real multi-tenant SaaS clinics with broad staff upload access, add a
+scanning step (e.g. ClamAV via a queued job) between upload and the image becoming visible/
+downloadable to other staff.
+
+### Known limitation: local Playwright verification for Imaging blocked by the same Windows Docker Desktop networking latency already logged against Dental Chart/Clinical Notes/Inventory — RESOLVED 2026-07-27 (CI confirmed 27/27)
+`frontend/e2e/imaging.spec.ts` could not be run locally — both tests failed at `login()` itself
+(`page.waitForFunction` exceeded 25s), the identical symptom already documented for every prior
+module on this dev machine. Diagnosed directly, not assumed: `curl http://localhost:8000/api/ping`
+took 2.4s for a trivial, effectively-instant server-side endpoint. `docker exec dentalsuite_app`
+migration (`2026_07_27_000003_create_patient_images_table`) applied cleanly against the real dev
+Postgres.
+**RESOLVED 2026-07-27**: confirmed via the GitHub Actions API across three `workflow_dispatch` runs
+on `feature/imaging` — the first surfaced two real PHPStan errors (`PatientImageService`: a dead
+`?? 0` on `UploadedFile::getSize()`'s non-nullable return, a dead `=== false` check on
+`ob_get_clean()` right after `ob_start()`, and a `$patient->id` int/string type mismatch needing an
+explicit cast) plus a real E2E selector bug (`imaging.spec.ts`'s dialog-open assertion matched both
+the dialog title and its own submit button, both reading "Upload Images" — fixed by giving the
+submit button its own distinct "Upload" label, en/ar/tr, and scoping the title assertion to
+`.p-dialog-title`). The second run surfaced two more real E2E selector bugs: a page-wide
+`getByText('16')` matched an unrelated element instead of the tooth dropdown's own option (fixed by
+scoping to `.p-select-option:visible`, mirroring `laboratory.spec.ts`'s established pattern), and
+unscoped "Edit"/"Delete" button locators collided with `PatientDetailView`'s own header buttons for
+the patient record (fixed by scoping to the specific thumbnail's `.group` container). Final run
+(`30310705267`): **Backend success (834/834), Frontend success (637/637), E2E success — 27/27
+passed, 0 failed, 0 flaky.**
+
+### Local-disk image storage is a known V1 limitation for horizontal scaling
+Design doc §7 decision 5 / §11: every image read/write goes through the `Storage` facade using the
+disk stored on each row (never hardcoded), so moving to `s3` (already configured in
+`config/filesystems.php`, currently unused anywhere) is a config change, not a code change — but V1
+itself still defaults to `local`, which doesn't survive/replicate across multiple app servers.
+**Revisit**: switch `API`-style env config (`FILESYSTEM_DISK`/`AWS_*`) to `s3` before any production
+deployment that runs more than one app server instance.

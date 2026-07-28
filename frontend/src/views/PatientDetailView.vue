@@ -22,6 +22,7 @@ import type { Patient, PatientAuditLog } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
+import PatientImagingPanel from '@/components/imaging/PatientImagingPanel.vue'
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
 import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
 import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
@@ -150,6 +151,7 @@ onMounted(() => {
         <Tab value="overview">{{ t('patients.tabs.overview') }}</Tab>
         <Tab value="appointments">{{ t('patients.tabs.appointments') }}</Tab>
         <Tab value="dentalChart">{{ t('patients.tabs.dentalChart') }}</Tab>
+        <Tab value="imaging">{{ t('patients.tabs.imaging') }}</Tab>
         <Tab value="treatmentPlans">{{ t('patients.tabs.treatmentPlans') }}</Tab>
         <Tab v-if="canAccessClinicalNotes" value="clinicalNotes">{{ t('patients.tabs.clinicalNotes') }}</Tab>
         <Tab value="invoices">{{ t('patients.tabs.invoices') }}</Tab>
@@ -253,6 +255,12 @@ onMounted(() => {
         <TabPanel value="dentalChart">
           <div class="pt-2">
             <PatientDentalChartPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="imaging">
+          <div class="pt-2">
+            <PatientImagingPanel :patient-id="patientId" />
           </div>
         </TabPanel>
 

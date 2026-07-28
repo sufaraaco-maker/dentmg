@@ -5,16 +5,55 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 ## Unreleased
 
 _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
-Payments, Clinical Notes, and Inventory are all merged to `main` (Dental Chart 2026-07-22; Treatment Plans/
-Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26
-via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`) but not yet re-tagged. Clinical Notes and
-Inventory each shipped their own permanent E2E suite and are confirmed Production Ready. Laboratory
-(`feature/laboratory`, below) is CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run
-`30294033562`, 2026-07-27) but not yet merged to `main`.
+Payments, Clinical Notes, Inventory, and Laboratory are all merged to `main` (Dental Chart 2026-07-22;
+Treatment Plans/Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via PR #2; Clinical
+Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`; Laboratory 2026-07-27
+via PR #5, merge commit `bac6ae1`) but not yet re-tagged. Clinical Notes, Inventory, and Laboratory each
+shipped their own permanent E2E suite and are confirmed Production Ready. Imaging (`feature/imaging`,
+below) is CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run `30310705267`,
+2026-07-27) but not yet merged to `main`.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
 bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory — see `docs/roadmap.md` and
 `TECH_DEBT.md` for current per-module status._
+
+### Added — Imaging (design approved 2026-07-27, implemented 2026-07-28)
+- **`PatientImage`**: per-patient diagnostic image (intraoral/extraoral photo, periapical/bitewing/
+  panoramic/cephalometric X-ray, or other), optionally tagged to an FDI tooth number + surfaces (exact
+  convention as `DentalChartEntry`), a `taken_at` date distinct from upload time, and optional one-way
+  traceability links to a `TreatmentPlanItem`/`Appointment` (exact convention as `LabCase`).
+- **Storage**: every read/write/delete goes through the `Storage` facade using a per-row `disk` column —
+  never a hardcoded disk or raw filesystem path — so moving from `local` (V1 default) to `s3` (already
+  configured, currently unused anywhere) is a config change, not a code change (design doc §7 decision 5).
+  Images are served only through an authenticated, policy-checked streaming route
+  (`GET /images/{id}/file`/`/thumbnail`) — never a public/static URL (design doc §9).
+- **Thumbnails**: generated synchronously at upload time via PHP's built-in GD extension — no new Composer
+  dependency (design doc §10).
+- **Permissions**: `admin`+`dentist`+`receptionist` can view/upload/edit metadata — deliberately wider than
+  Laboratory/Clinical Notes' clinical-only gating, since uploading/organizing images is largely a front-desk
+  task in practice; `admin`-only delete, matching every other module.
+- **Frontend**: a new **Imaging** tab on `PatientDetailView` (patient-scoped, not a top-level sidebar item —
+  unlike Laboratory/Inventory), no Pinia store (direct-`api`-call pattern mirroring `LabCasesView.vue`,
+  since a gallery is inherently paginated per-patient data). Upload dialog with drag-and-drop plus the
+  standard HTML5 `capture` attribute for direct mobile camera access — no native app or extra library.
+  Responsive thumbnail grid; a full-screen lightbox with non-destructive brightness/contrast/invert filters,
+  zoom via CSS transform + native touch-scroll panning, prev/next navigation, and a two-image compare mode —
+  none of these adjustments are ever persisted, matching the design's file-immutability rule.
+  Authenticated images are fetched as blobs via `api` (never a plain cross-origin `<img src>`, which can't
+  reliably carry Sanctum's session cookie) and exposed as object URLs via a small `useImageObjectUrl`
+  composable that revokes them on cleanup.
+- **Out of V1 scope, named explicitly** (design doc §7/§14): DICOM/CBCT support, direct sensor/TWAIN
+  hardware capture, persistent annotation/measurement tools, and formal FMX/series grouping — the schema
+  needs no reshaping to add any of these later (design doc §15).
+- **Standing architectural principles applied** (first module built under them): checked explicitly against
+  SaaS multi-tenant readiness (no single-clinic assumption in any storage path or business logic) and
+  PWA/mobile-first UI (fully responsive, camera-capture-ready) per the design doc's dedicated closing
+  section.
+- **Real bug found and fixed while testing**: `App\Rules\BelongsToPatient` throws a genuine SQL error when
+  validating `treatment_plan_item_id` (that model has no direct `patient_id` column) — fixed in Imaging's
+  own Form Requests via a relation-based check; the identical pre-existing bug in Laboratory's
+  `StoreLabCaseRequest`/`UpdateLabCaseRequest` (never exercised by that module's own tests) is flagged in
+  `TECH_DEBT.md` rather than fixed here, to keep this branch's diff scoped to Imaging.
 
 ### Added — Laboratory (design approved and implemented same-day, 2026-07-27)
 - **Admin-managed `Lab` vendor catalog**: contact info, notes, `default_turnaround_days` (drives the

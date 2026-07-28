@@ -253,7 +253,7 @@ label, two duplicate-toast bugs, and one real E2E selector ambiguity — all fix
 (`30282195677`): **Backend success, Frontend success, E2E success — 20/20 E2E tests green**. See
 `docs/modules/inventory-design.md` and TECH_DEBT.md for the full diagnostic trail.
 
-**Laboratory — Production Ready ✅ (2026-07-27, `feature/laboratory`, CI-confirmed)**: admin-managed
+**Laboratory — Production Ready ✅ (2026-07-27, merged to `main` via PR #5, merge commit `bac6ae1`)**: admin-managed
 `Lab` vendor catalog (own model, not reused from `Supplier` — the two have unrelated relations) and
 `LabCase` (patient/lab/dentist/tooth-numbers/shade/material/fee/tracking-number, one record per case
 — no header+items split, unlike Purchase Orders). `LabCaseStatus` lifecycle: `draft` → `sent` →
@@ -283,7 +283,30 @@ those merges; `docs/roadmap.md` now reflects the correct status. All three still
 Playwright E2E suite (see `TECH_DEBT.md`), so none has reached the "Production Ready" bar Appointments/
 Dental Chart/Clinical Notes/Inventory/Laboratory meet.
 
-Next module: **Imaging** (confirmed 2026-07-27), design phase starting now. Planned order after Imaging:
+**Imaging — Production Ready ✅ (2026-07-27, `feature/imaging`, CI-confirmed)**: design approved
+2026-07-27 (see `docs/modules/imaging-design.md`'s Approval & Decision Log). `PatientImage` per-patient gallery
+(photos + X-rays, optional FDI tooth/surface tagging, `taken_at` distinct from upload time, one-way
+traceability to `TreatmentPlanItem`/`Appointment`). Storage exclusively via the `Storage` facade with
+a per-row `disk` column (local in V1, s3-ready via config only) and authenticated/policy-checked
+streaming routes — never a public URL. GD-based synchronous thumbnails, no new Composer dependency.
+Permissions: `admin`+`dentist`+`receptionist` view/upload/edit, `admin`-only delete. Frontend: a
+patient-scoped Imaging tab (no top-level nav, no Pinia store), upload dialog with mobile camera
+capture via the standard HTML5 `capture` attribute, and a non-destructive lightbox (brightness/
+contrast/invert/zoom/compare, nothing ever persisted). First module built under the new standing
+SaaS multi-tenant + PWA/mobile-first principles below — checked explicitly in the design doc's own
+closing section. DICOM/CBCT, hardware capture, persistent annotation, and formal FMX grouping are
+out of V1 scope by design (see `TECH_DEBT.md`). 834/834 backend tests (19 Imaging-specific) +
+637/637 frontend Vitest tests green, `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright
+E2E suite (`frontend/e2e/imaging.spec.ts`) confirmed via the GitHub Actions API across three
+`workflow_dispatch` runs — the first two surfaced three real PHPStan errors and three real E2E
+selector bugs, all fixed and re-verified. Final run (`30310705267`): **Backend success, Frontend
+success, E2E success — 27/27 passed, 0 failed, 0 flaky.** Real bug found and fixed along the way:
+`App\Rules\BelongsToPatient` throws a genuine SQL error against `TreatmentPlanItem` (no direct
+`patient_id` column) — fixed in this module's own Form Requests; Laboratory's identical pre-existing
+bug is flagged in `TECH_DEBT.md`, not touched here. Merge to `main` still pending — see
+`TECH_DEBT.md`/`docs/roadmap.md` for the full diagnostic trail.
+
+Next module after Imaging: not yet started. Planned order:
 Reports, then Settings, then AI Assistant (per user's explicit prioritization — Imaging completes the
 clinical workflow alongside Dental Chart/Clinical Notes/Laboratory; Reports benefits from accumulated
 data across the operational modules; Settings consolidates config once the rest has stabilized; AI

@@ -55,6 +55,8 @@
     "save": "حفظ",
     "edit": "تعديل",
     "delete": "حذف",
+    "remove": "إزالة",
+    "close": "إغلاق",
     "deactivate": "تعطيل",
     "create": "إنشاء",
     "add": "إضافة",
@@ -149,6 +151,7 @@
       "overview": "نظرة عامة",
       "appointments": "المواعيد",
       "dentalChart": "مخطط الأسنان",
+      "imaging": "الأشعة والصور",
       "treatmentPlans": "خطط العلاج",
       "clinicalNotes": "الملاحظات السريرية",
       "invoices": "الفواتير",
@@ -1157,6 +1160,54 @@
         "qualityCheck": "فحص الجودة",
         "cancel": "إلغاء الحالة"
       }
+    }
+  },
+  "imaging": {
+    "title": "الأشعة والصور",
+    "upload": "رفع صور",
+    "confirmUpload": "رفع",
+    "uploadTitle": "رفع صور",
+    "editTitle": "تعديل الصورة",
+    "files": "الملفات",
+    "dropHint": "اسحب الصور وأفلتها هنا، أو اختر ملفات / استخدم الكاميرا",
+    "chooseFiles": "اختيار ملفات",
+    "imageType": "النوع",
+    "tooth": "السن",
+    "noToothTag": "بدون ربط بسن",
+    "allTypes": "كل الأنواع",
+    "allTeeth": "كل الأسنان",
+    "takenAt": "تاريخ الالتقاط",
+    "takenFrom": "من",
+    "takenTo": "إلى",
+    "notes": "ملاحظات",
+    "empty": "لا توجد صور مرفوعة بعد.",
+    "loadError": "فشل تحميل الصور.",
+    "uploadError": "فشل رفع الصور.",
+    "updateError": "فشل تحديث الصورة.",
+    "deleteError": "فشل حذف الصورة.",
+    "uploaded": "تم رفع الصور.",
+    "updated": "تم تحديث الصورة.",
+    "deleted": "تم حذف الصورة.",
+    "fieldRequired": "هذا الحقل مطلوب.",
+    "deleteConfirmHeader": "حذف الصورة",
+    "deleteConfirmMessage": "هل تريد حذف هذه الصورة؟ لا يمكن التراجع عن هذا الإجراء.",
+    "types": {
+      "intraoral_photo": "صورة داخل الفم",
+      "extraoral_photo": "صورة خارج الفم",
+      "xray_periapical": "أشعة periapical",
+      "xray_bitewing": "أشعة bitewing",
+      "xray_panoramic": "أشعة بانورامية",
+      "xray_cephalometric": "أشعة cephalometric",
+      "other": "أخرى"
+    },
+    "lightbox": {
+      "label": "عارض الصور",
+      "previous": "الصورة السابقة",
+      "next": "الصورة التالية",
+      "invert": "عكس الألوان",
+      "compare": "مقارنة",
+      "selectCompare": "اختر صورة للمقارنة",
+      "resetAdjustments": "إعادة ضبط التعديلات"
     }
   }
 }

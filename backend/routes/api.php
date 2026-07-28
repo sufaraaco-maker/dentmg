@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchaseOrderItemController;
@@ -147,4 +148,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('lab-cases/{lab_case}/quality-check', [LabCaseController::class, 'qualityCheck']);
     Route::post('lab-cases/{lab_case}/cancel', [LabCaseController::class, 'cancel']);
     Route::apiResource('lab-cases', LabCaseController::class);
+
+    Route::get('patients/{patient}/images', [PatientImageController::class, 'index']);
+    Route::post('patients/{patient}/images', [PatientImageController::class, 'store']);
+    Route::get('images/{patient_image}/file', [PatientImageController::class, 'file'])->name('patient-images.file');
+    Route::get('images/{patient_image}/thumbnail', [PatientImageController::class, 'thumbnail'])->name('patient-images.thumbnail');
+    Route::put('images/{patient_image}', [PatientImageController::class, 'update']);
+    Route::delete('images/{patient_image}', [PatientImageController::class, 'destroy']);
 });
