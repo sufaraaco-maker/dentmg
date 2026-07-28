@@ -1209,5 +1209,113 @@
       "selectCompare": "Select image to compare",
       "resetAdjustments": "Reset adjustments"
     }
+  },
+  "reports": {
+    "title": "Reports",
+    "nav": {
+      "production": "Production",
+      "collections": "Collections",
+      "arAging": "A/R Aging",
+      "appointments": "Appointment Analytics",
+      "treatmentPlanAcceptance": "Treatment Plan Acceptance",
+      "newPatients": "New Patients"
+    },
+    "home": {
+      "productionDescription": "Production billed out by dentist for a date range",
+      "collectionsDescription": "Payments actually collected for a date range",
+      "arAgingDescription": "Outstanding balances by how overdue they are",
+      "appointmentsDescription": "Completed, cancelled, and no-show activity for a date range",
+      "treatmentPlanAcceptanceDescription": "How much presented treatment gets accepted",
+      "newPatientsDescription": "New patient registrations for a date range"
+    },
+    "filters": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "apply": "Apply",
+      "dentist": "Dentist",
+      "allDentists": "All Dentists",
+      "method": "Method",
+      "allMethods": "All Methods"
+    },
+    "actions": {
+      "exportCsv": "Export CSV",
+      "print": "Print"
+    },
+    "loadError": "Failed to load report",
+    "empty": "No data for the selected range",
+    "production": {
+      "total": "Total Production",
+      "byDentist": "By Dentist",
+      "columns": {
+        "invoiceNumber": "Invoice #",
+        "patient": "Patient",
+        "date": "Date",
+        "description": "Description",
+        "dentist": "Dentist",
+        "amount": "Amount"
+      }
+    },
+    "collections": {
+      "total": "Total Collected",
+      "byMethod": "By Method",
+      "columns": {
+        "date": "Date",
+        "patient": "Patient",
+        "invoiceNumber": "Invoice #",
+        "method": "Method",
+        "amount": "Amount"
+      }
+    },
+    "arAging": {
+      "total": "Total Outstanding",
+      "buckets": {
+        "current": "Current",
+        "1_30": "1-30 Days",
+        "31_60": "31-60 Days",
+        "61_90": "61-90 Days",
+        "90_plus": "90+ Days"
+      },
+      "columns": {
+        "patient": "Patient",
+        "invoiceNumber": "Invoice #",
+        "dueDate": "Due Date",
+        "daysOverdue": "Days Overdue",
+        "balanceDue": "Balance Due"
+      }
+    },
+    "appointments": {
+      "total": "Total Appointments",
+      "noShowRate": "No-Show Rate",
+      "cancellationRate": "Cancellation Rate",
+      "columns": {
+        "date": "Date",
+        "patient": "Patient",
+        "dentist": "Dentist",
+        "type": "Type",
+        "status": "Status"
+      }
+    },
+    "treatmentPlanAcceptance": {
+      "presented": "Presented",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "acceptanceRate": "Acceptance Rate",
+      "acceptedValue": "Accepted Value",
+      "columns": {
+        "patient": "Patient",
+        "dentist": "Dentist",
+        "presentedAt": "Presented",
+        "status": "Status",
+        "value": "Value"
+      }
+    },
+    "newPatients": {
+      "total": "New Patients",
+      "columns": {
+        "name": "Name",
+        "patientCode": "Patient Code",
+        "registeredAt": "Registered"
+      }
+    }
   }
 }

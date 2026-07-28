@@ -56,4 +56,7 @@ the exception class — Laravel's handler auto-invokes it, so no controller `try
 
 - REST resource routes (`Route::apiResource`) unless the action genuinely isn't CRUD-shaped (e.g. `/api/dashboard/summary`).
 - List endpoints accept `?search=` where a text search makes sense, and are always paginated (never return unbounded collections).
+  - **Exception: Reports** (`/api/reports/*`) — each response is bounded by the caller's own required date
+    range (or, for A/R Aging, a point-in-time snapshot) rather than open-ended, and CSV export
+    (`?format=csv`) needs the complete result set in one response. See `docs/modules/reports-design.md` §6.
 - Controllers stay thin: parse request → call Service → return Resource. No query building, no business rules in the controller.

@@ -1,8 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import AppSidebarItem from './AppSidebarItem.vue'
+import { useAuthStore } from '@/stores/auth'
 import type { NavItem } from '@/config/navigation'
+import type { UserRole } from '@/types/user'
 
 function makeRouter(): Router {
   return createRouter({
@@ -31,6 +34,10 @@ const dashboardItem: NavItem = { labelKey: 'nav.dashboard', icon: 'pi pi-home', 
 
 const comingSoonItem: NavItem = { labelKey: 'nav.billing', icon: 'pi pi-wallet', comingSoon: true }
 
+function setRole(role: UserRole) {
+  useAuthStore().user = { id: 'u1', name: 'Test User', email: 'u1@example.com', role }
+}
+
 const appointmentsItem: NavItem = {
   labelKey: 'nav.appointments',
   icon: 'pi pi-calendar',
@@ -42,6 +49,10 @@ const appointmentsItem: NavItem = {
 }
 
 describe('AppSidebarItem', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('renders a router link for a plain item and labels it with the i18n text', async () => {
     const { wrapper } = await mountItem(dashboardItem)
     const link = wrapper.get('a')
@@ -76,6 +87,51 @@ describe('AppSidebarItem', () => {
   it('auto-expands when a child route is already active', async () => {
     const { wrapper } = await mountItem(appointmentsItem, { path: '/appointments/types' })
     expect(wrapper.findAll('a')).toHaveLength(2)
+  })
+
+  it('hides a role-restricted child from a role it does not allow, not just the destination route', async () => {
+    const itemWithRestrictedChild: NavItem = {
+      labelKey: 'nav.reports',
+      icon: 'pi pi-chart-bar',
+      routeName: 'reports',
+      children: [
+        {
+          labelKey: 'reports.nav.production',
+          icon: 'pi pi-chart-line',
+          routeName: 'appointments',
+          roles: ['admin'],
+        },
+        { labelKey: 'appointments.nav.board', icon: 'pi pi-calendar', routeName: 'dentist-schedule' },
+      ],
+    }
+
+    setRole('receptionist')
+    const { wrapper } = await mountItem(itemWithRestrictedChild, { path: '/' })
+    await wrapper.get('button').trigger('click')
+    const links = wrapper.findAll('a')
+    expect(links).toHaveLength(1)
+    expect(links[0]?.text()).toContain('Calendar')
+  })
+
+  it('shows a role-restricted child to a role it does allow', async () => {
+    const itemWithRestrictedChild: NavItem = {
+      labelKey: 'nav.reports',
+      icon: 'pi pi-chart-bar',
+      routeName: 'reports',
+      children: [
+        {
+          labelKey: 'reports.nav.production',
+          icon: 'pi pi-chart-line',
+          routeName: 'appointments',
+          roles: ['admin'],
+        },
+      ],
+    }
+
+    setRole('admin')
+    const { wrapper } = await mountItem(itemWithRestrictedChild, { path: '/' })
+    await wrapper.get('button').trigger('click')
+    expect(wrapper.findAll('a')).toHaveLength(1)
   })
 
   it('navigates to the group route instead of expanding when the rail is collapsed', async () => {

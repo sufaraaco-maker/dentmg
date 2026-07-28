@@ -843,3 +843,61 @@ disk stored on each row (never hardcoded), so moving to `s3` (already configured
 itself still defaults to `local`, which doesn't survive/replicate across multiple app servers.
 **Revisit**: switch `API`-style env config (`FILESYSTEM_DISK`/`AWS_*`) to `s3` before any production
 deployment that runs more than one app server instance.
+
+## Open (new from Reports module, 2026-07-28)
+
+### Local `phpstan analyse` container issue recurred again, same root cause as Inventory's/Laboratory's — confirmed pre-existing, not a Reports regression
+Same symptom, isolated the same way as the two entries above: a full `docker exec dentalsuite_app
+vendor/bin/phpstan analyse` reported 467 errors, nearly all "undefined property" on pre-existing,
+unrelated models (`TreatmentPlan`/`TreatmentPlanItem`/`User`). `git stash -u` back to the exact
+pre-Reports state reproduced **430** errors with zero Reports code present; restoring the stash
+added exactly 37 more, all the identical "undefined property" shape in `ReportService.php` (which
+legitimately reads `TreatmentPlanItem`/`User` properties for the Production/Treatment-Plan-
+Acceptance reports). **Revisit**: same as the Inventory/Laboratory entries — a local/environment
+issue, not a code defect. CI's own `phpstan analyse` step is the authoritative check.
+
+**RESOLVED 2026-07-28**: confirmed clean via `workflow_dispatch` run `30326106755` — CI's real,
+Ubuntu-based `phpstan analyse` step passed with zero errors, confirming this was entirely the local
+container quirk and not a masked real issue.
+
+### Real bugs found and fixed via CI: 4 genuine PHPStan findings in `ReportService.php`, plus a shared `AppSidebarItem.vue` nav-gating bug
+First `workflow_dispatch` run (`30323783949`) caught real issues, not noise: (1) two unnecessary
+nullsafe operators Larastan correctly flagged as redundant given the code path reaching them
+(`TreatmentPlan.dentist`/`Payment.received_at` are never null there); (2) two return-type mismatches
+— `Collection<int, array{specific shape}>` isn't automatically assignable to a declared
+`Collection<int, array<string, mixed>>>` under PHPStan's invariant generics for `Collection`'s value
+type parameter — fixed by converting the grouped `by_dentist`/`by_method`/`by_status`/`by_month`
+summaries to plain arrays (`->all()`) and tightening each method's `@return` docblock to the exact
+concrete shape; (3) via the E2E suite, `AppSidebarItem.vue`'s child nav items never actually enforced
+their own `roles` field — only `AppSidebar.vue`'s top-level items were role-filtered, so an
+admin-only child link (e.g. Reports' own Production/Collections/A-R Aging) rendered for every role
+and only denied access on click. This is a bug shared by every prior module using per-child nav
+gating (Inventory's Suppliers/Categories, Laboratory's Labs, Dental Chart's Conditions) — invisible
+until now because no earlier E2E spec asserted nav-*link* visibility by text, only the destination
+route's `/forbidden` guard or a button on the destination page. Fixed by filtering `item.children`
+the same way `AppSidebar.vue`'s top-level items were already filtered.
+
+**RESOLVED 2026-07-28**: confirmed via the GitHub Actions API — second `workflow_dispatch` run
+(`30326106755`) on `feature/reports` is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 —
+zero failures.**
+
+### Known limitation: local Playwright verification for Reports blocked by an Alpine/musl vs. glibc Chromium mismatch in this dev container — a new root cause, not the Windows Docker networking issue logged against Dental Chart/Clinical Notes/Inventory/Imaging
+`frontend/e2e/reports.spec.ts` (2 tests) is written and statically clean (`eslint`/`prettier --check`
+both pass), but could not be executed in this session's `dentalsuite_frontend` container: Playwright's
+downloaded Chromium/Chrome-for-Testing build is glibc-only, while this container's base image is
+Alpine Linux (musl libc) — `npx playwright install chromium` succeeds (downloads a glibc build with a
+"BEWARE: your OS is not officially supported" warning) but the browser fails to launch
+(`ENOENT`/dynamic-linker failure). Installing Alpine's own native `chromium` package
+(`apk add chromium`) did not resolve it either — Playwright Test's `chromium` project still resolves
+to its own downloaded (incompatible) binary rather than the system one via
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. **Revisit**: not a code defect — GitHub Actions' `ci.yml` E2E
+job runs on an `ubuntu-latest` runner, which Playwright fully supports; that `workflow_dispatch` run
+is the authoritative E2E check for this module, per this project's established practice for every
+prior local-environment limitation (Windows Docker networking latency, the recurring local PHPStan
+container quirk above). If local E2E runs against this container are wanted again in the future,
+switching its base image away from Alpine (e.g. to a Debian/Ubuntu-based Node image) would remove
+this specific blocker.
+
+**RESOLVED 2026-07-28**: confirmed via the GitHub Actions API across two `workflow_dispatch` runs on
+`feature/reports` — the first (`30323783949`) surfaced the real bugs documented above, the second
+(`30326106755`) is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 — zero failures.**

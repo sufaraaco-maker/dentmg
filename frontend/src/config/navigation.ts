@@ -126,7 +126,42 @@ export const navigation: NavItem[] = [
   {
     labelKey: 'nav.reports',
     icon: 'pi pi-chart-bar',
-    comingSoon: true,
+    routeName: 'reports',
+    children: [
+      {
+        labelKey: 'reports.nav.production',
+        icon: 'pi pi-chart-line',
+        routeName: 'report-production',
+        roles: ['admin'],
+      },
+      {
+        labelKey: 'reports.nav.collections',
+        icon: 'pi pi-wallet',
+        routeName: 'report-collections',
+        roles: ['admin'],
+      },
+      {
+        labelKey: 'reports.nav.arAging',
+        icon: 'pi pi-exclamation-circle',
+        routeName: 'report-ar-aging',
+        roles: ['admin'],
+      },
+      {
+        labelKey: 'reports.nav.appointments',
+        icon: 'pi pi-calendar',
+        routeName: 'report-appointments',
+      },
+      {
+        labelKey: 'reports.nav.treatmentPlanAcceptance',
+        icon: 'pi pi-clipboard',
+        routeName: 'report-treatment-plan-acceptance',
+      },
+      {
+        labelKey: 'reports.nav.newPatients',
+        icon: 'pi pi-user-plus',
+        routeName: 'report-new-patients',
+      },
+    ],
   },
   {
     labelKey: 'nav.users',

@@ -1209,5 +1209,113 @@
       "selectCompare": "Karşılaştırılacak görseli seçin",
       "resetAdjustments": "Ayarları Sıfırla"
     }
+  },
+  "reports": {
+    "title": "Raporlar",
+    "nav": {
+      "production": "Üretim",
+      "collections": "Tahsilatlar",
+      "arAging": "Alacak Yaşlandırma",
+      "appointments": "Randevu Analitiği",
+      "treatmentPlanAcceptance": "Tedavi Planı Kabulü",
+      "newPatients": "Yeni Hastalar"
+    },
+    "home": {
+      "productionDescription": "Belirli bir tarih aralığında diş hekimine göre faturalanan üretim",
+      "collectionsDescription": "Belirli bir tarih aralığında gerçekten tahsil edilen ödemeler",
+      "arAgingDescription": "Ne kadar gecikmiş olduklarına göre bekleyen bakiyeler",
+      "appointmentsDescription": "Belirli bir tarih aralığında tamamlanan, iptal edilen ve gelinmeyen randevu etkinliği",
+      "treatmentPlanAcceptanceDescription": "Sunulan tedavinin ne kadarının kabul edildiği",
+      "newPatientsDescription": "Belirli bir tarih aralığındaki yeni hasta kayıtları"
+    },
+    "filters": {
+      "dateFrom": "Başlangıç",
+      "dateTo": "Bitiş",
+      "apply": "Uygula",
+      "dentist": "Diş Hekimi",
+      "allDentists": "Tüm Diş Hekimleri",
+      "method": "Yöntem",
+      "allMethods": "Tüm Yöntemler"
+    },
+    "actions": {
+      "exportCsv": "CSV Olarak Dışa Aktar",
+      "print": "Yazdır"
+    },
+    "loadError": "Rapor yüklenemedi",
+    "empty": "Seçilen tarih aralığı için veri yok",
+    "production": {
+      "total": "Toplam Üretim",
+      "byDentist": "Diş Hekimine Göre",
+      "columns": {
+        "invoiceNumber": "Fatura No",
+        "patient": "Hasta",
+        "date": "Tarih",
+        "description": "Açıklama",
+        "dentist": "Diş Hekimi",
+        "amount": "Tutar"
+      }
+    },
+    "collections": {
+      "total": "Toplam Tahsilat",
+      "byMethod": "Yönteme Göre",
+      "columns": {
+        "date": "Tarih",
+        "patient": "Hasta",
+        "invoiceNumber": "Fatura No",
+        "method": "Yöntem",
+        "amount": "Tutar"
+      }
+    },
+    "arAging": {
+      "total": "Toplam Bekleyen Bakiye",
+      "buckets": {
+        "current": "Güncel",
+        "1_30": "1-30 Gün",
+        "31_60": "31-60 Gün",
+        "61_90": "61-90 Gün",
+        "90_plus": "90+ Gün"
+      },
+      "columns": {
+        "patient": "Hasta",
+        "invoiceNumber": "Fatura No",
+        "dueDate": "Vade Tarihi",
+        "daysOverdue": "Gecikme Günü",
+        "balanceDue": "Bekleyen Bakiye"
+      }
+    },
+    "appointments": {
+      "total": "Toplam Randevu",
+      "noShowRate": "Gelmeme Oranı",
+      "cancellationRate": "İptal Oranı",
+      "columns": {
+        "date": "Tarih",
+        "patient": "Hasta",
+        "dentist": "Diş Hekimi",
+        "type": "Tür",
+        "status": "Durum"
+      }
+    },
+    "treatmentPlanAcceptance": {
+      "presented": "Sunuldu",
+      "accepted": "Kabul Edildi",
+      "rejected": "Reddedildi",
+      "acceptanceRate": "Kabul Oranı",
+      "acceptedValue": "Kabul Edilen Değer",
+      "columns": {
+        "patient": "Hasta",
+        "dentist": "Diş Hekimi",
+        "presentedAt": "Sunulma Tarihi",
+        "status": "Durum",
+        "value": "Değer"
+      }
+    },
+    "newPatients": {
+      "total": "Yeni Hastalar",
+      "columns": {
+        "name": "Ad",
+        "patientCode": "Hasta Kodu",
+        "registeredAt": "Kayıt Tarihi"
+      }
+    }
   }
 }
