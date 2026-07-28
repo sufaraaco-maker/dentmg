@@ -283,7 +283,7 @@ those merges; `docs/roadmap.md` now reflects the correct status. All three still
 Playwright E2E suite (see `TECH_DEBT.md`), so none has reached the "Production Ready" bar Appointments/
 Dental Chart/Clinical Notes/Inventory/Laboratory meet.
 
-**Imaging — Production Ready ✅ (2026-07-27, `feature/imaging`, CI-confirmed)**: design approved
+**Imaging — Production Ready ✅ (2026-07-27, merged to `main` via PR #6, 2026-07-28, merge commit `2b1fb45`)**: design approved
 2026-07-27 (see `docs/modules/imaging-design.md`'s Approval & Decision Log). `PatientImage` per-patient gallery
 (photos + X-rays, optional FDI tooth/surface tagging, `taken_at` distinct from upload time, one-way
 traceability to `TreatmentPlanItem`/`Appointment`). Storage exclusively via the `Storage` facade with
@@ -303,10 +303,10 @@ selector bugs, all fixed and re-verified. Final run (`30310705267`): **Backend s
 success, E2E success — 27/27 passed, 0 failed, 0 flaky.** Real bug found and fixed along the way:
 `App\Rules\BelongsToPatient` throws a genuine SQL error against `TreatmentPlanItem` (no direct
 `patient_id` column) — fixed in this module's own Form Requests; Laboratory's identical pre-existing
-bug is flagged in `TECH_DEBT.md`, not touched here. Merge to `main` still pending — see
-`TECH_DEBT.md`/`docs/roadmap.md` for the full diagnostic trail.
+bug is flagged in `TECH_DEBT.md`, not touched here. See `TECH_DEBT.md`/`docs/roadmap.md` for the full
+diagnostic trail.
 
-Next module after Imaging: not yet started. Planned order:
+Next module after Imaging: Reports — not yet started. Planned order:
 Reports, then Settings, then AI Assistant (per user's explicit prioritization — Imaging completes the
 clinical workflow alongside Dental Chart/Clinical Notes/Laboratory; Reports benefits from accumulated
 data across the operational modules; Settings consolidates config once the rest has stabilized; AI
