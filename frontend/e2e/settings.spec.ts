@@ -96,6 +96,6 @@ test.describe('settings', () => {
     await page.locator('#account-new-password input').fill('an-unused-new-password')
     await page.locator('#account-confirm-password input').fill('an-unused-new-password')
     await page.getByRole('button', { name: 'Change Password' }).click()
-    await expect(page.getByText('The provided password is incorrect.')).toBeVisible()
+    await expect(page.getByText('The password is incorrect.')).toBeVisible()
   })
 })

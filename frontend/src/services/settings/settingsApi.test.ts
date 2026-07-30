@@ -22,7 +22,9 @@ beforeEach(() => {
 
 describe('clinic settings', () => {
   it('fetches the singleton clinic settings row', async () => {
-    mockedApi.get.mockResolvedValue({ data: { id: '1', name: 'Bright Smile', updated_at: '2026-07-30T00:00:00Z' } })
+    mockedApi.get.mockResolvedValue({
+      data: { id: '1', name: 'Bright Smile', updated_at: '2026-07-30T00:00:00Z' },
+    })
 
     await getClinicSettings()
 
@@ -30,7 +32,9 @@ describe('clinic settings', () => {
   })
 
   it('updates clinic settings via PUT', async () => {
-    mockedApi.put.mockResolvedValue({ data: { id: '1', name: 'Bright Smile', updated_at: '2026-07-30T00:00:00Z' } })
+    mockedApi.put.mockResolvedValue({
+      data: { id: '1', name: 'Bright Smile', updated_at: '2026-07-30T00:00:00Z' },
+    })
 
     await updateClinicSettings({ name: 'Bright Smile', phone: '555-0100', address: null, email: null })
 
@@ -46,7 +50,14 @@ describe('clinic settings', () => {
 describe('billing settings', () => {
   it('fetches the singleton billing settings row', async () => {
     mockedApi.get.mockResolvedValue({
-      data: { id: '1', currency_code: 'USD', tax_rate: null, invoice_number_prefix: 'INV', next_invoice_sequence: 1, updated_at: '2026-07-30T00:00:00Z' },
+      data: {
+        id: '1',
+        currency_code: 'USD',
+        tax_rate: null,
+        invoice_number_prefix: 'INV',
+        next_invoice_sequence: 1,
+        updated_at: '2026-07-30T00:00:00Z',
+      },
     })
 
     await getBillingSettings()
@@ -56,7 +67,14 @@ describe('billing settings', () => {
 
   it('updates billing settings via PUT, never sending next_invoice_sequence', async () => {
     mockedApi.put.mockResolvedValue({
-      data: { id: '1', currency_code: 'EUR', tax_rate: 5, invoice_number_prefix: 'INV', next_invoice_sequence: 1, updated_at: '2026-07-30T00:00:00Z' },
+      data: {
+        id: '1',
+        currency_code: 'EUR',
+        tax_rate: 5,
+        invoice_number_prefix: 'INV',
+        next_invoice_sequence: 1,
+        updated_at: '2026-07-30T00:00:00Z',
+      },
     })
 
     await updateBillingSettings({ currency_code: 'EUR', tax_rate: 5, invoice_number_prefix: 'INV' })
@@ -71,7 +89,9 @@ describe('billing settings', () => {
 
 describe('profile', () => {
   it('fetches the current user profile', async () => {
-    mockedApi.get.mockResolvedValue({ data: { id: '1', name: 'Ada', email: 'ada@example.com', role: 'admin' } })
+    mockedApi.get.mockResolvedValue({
+      data: { id: '1', name: 'Ada', email: 'ada@example.com', role: 'admin' },
+    })
 
     await getProfile()
 
@@ -79,7 +99,9 @@ describe('profile', () => {
   })
 
   it('updates the profile via PUT', async () => {
-    mockedApi.put.mockResolvedValue({ data: { id: '1', name: 'Ada', email: 'ada@example.com', role: 'admin' } })
+    mockedApi.put.mockResolvedValue({
+      data: { id: '1', name: 'Ada', email: 'ada@example.com', role: 'admin' },
+    })
 
     await updateProfile({ name: 'Ada' })
 

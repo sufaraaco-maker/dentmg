@@ -82,7 +82,10 @@ describe('AccountView', () => {
   it('surfaces a wrong-current-password 422 error', async () => {
     mockedGetProfile.mockResolvedValue(makeUser())
     mockedUpdatePassword.mockRejectedValue({
-      response: { status: 422, data: { errors: { current_password: ['The provided password is incorrect.'] } } },
+      response: {
+        status: 422,
+        data: { errors: { current_password: ['The provided password is incorrect.'] } },
+      },
     })
     useAuthStore().user = makeUser()
 

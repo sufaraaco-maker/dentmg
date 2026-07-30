@@ -120,7 +120,12 @@ async function submitPassword() {
                 <label for="account-name" class="text-sm text-surface-700 dark:text-surface-200">
                   {{ t('account.name') }}
                 </label>
-                <InputText id="account-name" v-model="profileForm.name" :invalid="!!profileErrors.name" fluid />
+                <InputText
+                  id="account-name"
+                  v-model="profileForm.name"
+                  :invalid="!!profileErrors.name"
+                  fluid
+                />
                 <Message v-if="profileErrors.name" severity="error" size="small">
                   {{ profileErrors.name[0] }}
                 </Message>
