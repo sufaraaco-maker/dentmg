@@ -335,10 +335,34 @@ comparison against `issue_date`/`received_at` silently excluded rows whose store
 time-of-day suffix past a bare `Y-m-d` upper bound — caught by `DashboardTest`'s own new fixture,
 fixed by bounding both sides to the full day.
 
-Next module after Reports: Settings, then AI Assistant (per user's explicit prioritization — Reports
-benefits from accumulated data across the operational modules; Settings consolidates config once the
-rest has stabilized; AI Assistant depends on data/workflow completeness across everything else to add
-real value).
+**Settings — Production Ready ✅ (2026-07-30, `feature/settings`, CI-confirmed)**: design approved
+2026-07-30 (see `docs/modules/settings-design.md`'s Approval notes). Closes three concrete gaps rather
+than building a speculative settings tree: **Practice Settings** (new `ClinicSetting` singleton table,
+clinic name/phone/address/email, admin-only update but every-role `view` since the Lab Case printable
+slip needs to read it), **Billing Settings** (the existing `BillingSetting` table's first-ever API/UI —
+`currency_code`/`tax_rate`/`invoice_number_prefix` editable, `next_invoice_sequence` shown read-only
+since `InvoiceService` alone owns writing it), and **My Account** (self-service profile edit +
+current-password-gated password change for every role, structurally IDOR-proof since every route
+resolves its target from `$request->user()`, never a route-model-bound `{user}`). Practice Settings is
+wired into the Laboratory module's printable Lab Case slip as its first real consumer. Settings home
+nav entry fills in the existing `nav.settings` `comingSoon` scaffold (admin-only at the top level,
+since every child is admin-only); My Account is reachable from the header avatar menu instead, since
+every role — not just admins — needs it. 877/877 backend tests (22 Settings-specific:
+`ClinicSettingTest`/`BillingSettingTest`/`ProfileTest`) + 672/672 frontend Vitest tests green (a real
+pre-existing gap found and fixed along the way: `AppSidebar.test.ts`'s mock router had no `settings`
+route, so mounting the sidebar for an admin threw once Settings became a real nav link instead of a
+`comingSoon` placeholder), `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright E2E suite
+(`frontend/e2e/settings.spec.ts`) confirmed via the GitHub Actions API across two `workflow_dispatch`
+runs — the first (`30561623931`) surfaced a Prettier formatting gap in three new files and a wrong
+error-message string in the My Account E2E test (Laravel's `current_password` rule actually returns
+"The password is incorrect.", not the assumed "The provided password is incorrect." — invisible to the
+backend's own `ProfileTest` since it only asserts the error key, not the rendered message), both fixed;
+the second run (`30562178951`) is fully green: **Backend 877/877, Frontend 672/672, E2E 32/32 — zero
+failures.** Multi-branch/location settings, clinic logo upload, and notification/reminder settings are
+deliberately out of scope for V1 (see `docs/modules/settings-design.md`'s §2/§9 and `TECH_DEBT.md`).
+
+Next module after Settings: AI Assistant (per user's explicit prioritization — it depends on data/
+workflow completeness across everything else to add real value, so it comes last).
 See `docs/roadmap.md` for current per-module status.
 
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:

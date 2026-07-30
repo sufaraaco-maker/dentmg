@@ -1,12 +1,16 @@
 # Settings — Module Design (Approved, 2026-07-30)
 
-**Status: Approved 2026-07-30.** Implementation complete on `feature/settings` (2026-07-30):
-`ClinicSetting`/`BillingSetting` API+UI, My Account self-service, Lab Case slip integration.
-877/877 backend tests (22 Settings-specific) + 672/672 frontend Vitest tests green locally,
-`vue-tsc`/ESLint/Pint clean.
-Permanent E2E suite (`frontend/e2e/settings.spec.ts`) written but not yet CI-confirmed — see
-`TECH_DEBT.md` for the local-verification limitations (same pre-existing PHPStan container quirk and
-Alpine/glibc Playwright mismatch logged against Reports) and `docs/roadmap.md` for current status.
+**Status: Done — Production Ready ✅.** CI-confirmed 2026-07-30 on `feature/settings` (not yet merged
+to `main`): `ClinicSetting`/`BillingSetting` API+UI, My Account self-service, Lab Case slip
+integration. 877/877 backend tests (22 Settings-specific) + 672/672 frontend Vitest tests green,
+`vue-tsc`/ESLint/Pint/Prettier clean, permanent E2E suite (`frontend/e2e/settings.spec.ts`) confirmed
+32/32 green via the GitHub Actions API (`workflow_dispatch` run `30562178951`). A first CI run
+(`30561623931`) surfaced two real, small issues — a Prettier formatting gap in three new files and a
+wrong error-message string in the My Account E2E test (Laravel's `current_password` rule actually
+returns "The password is incorrect.", not the test's assumed "The provided password is incorrect.")
+— both fixed; the second run is fully green. See `TECH_DEBT.md` for the full diagnostic trail
+(including the same pre-existing local PHPStan-container quirk and Alpine/glibc Playwright mismatch
+already logged against Reports, both confirmed clean via CI) and `docs/roadmap.md` for current status.
 This module followed Reports in the planned order (`PROJECT_CONTEXT.md`); AI Assistant is next.
 
 **Approval notes**: confirmed SaaS/multi-tenant readiness (§3's `clinic_id`-ready singleton pattern),
