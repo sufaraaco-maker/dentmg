@@ -14,6 +14,7 @@
     "laboratory": "المختبر",
     "reports": "التقارير",
     "settings": "الإعدادات",
+    "myAccount": "حسابي",
     "logout": "تسجيل الخروج",
     "comingSoon": "قريبًا",
     "toggleSidebar": "تبديل الشريط الجانبي",
@@ -1317,5 +1318,53 @@
         "registeredAt": "تاريخ التسجيل"
       }
     }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "nav": {
+      "practice": "إعدادات العيادة",
+      "billing": "إعدادات الفوترة"
+    },
+    "home": {
+      "practiceDescription": "اسم العيادة ومعلومات التواصل والعنوان",
+      "billingDescription": "العملة ونسبة الضريبة وترقيم الفواتير"
+    },
+    "practice": {
+      "title": "إعدادات العيادة",
+      "name": "اسم العيادة",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "address": "العنوان",
+      "saved": "تم حفظ إعدادات العيادة بنجاح",
+      "saveError": "فشل حفظ إعدادات العيادة",
+      "loadError": "فشل تحميل إعدادات العيادة"
+    },
+    "billing": {
+      "title": "إعدادات الفوترة",
+      "currencyCode": "رمز العملة",
+      "taxRate": "نسبة الضريبة",
+      "invoiceNumberPrefix": "بادئة رقم الفاتورة",
+      "nextInvoiceSequence": "رقم الفاتورة التالي",
+      "nextInvoiceSequenceHint": "يُدار تلقائيًا من النظام — يتحدث عند إصدار كل فاتورة.",
+      "saved": "تم حفظ إعدادات الفوترة بنجاح",
+      "saveError": "فشل حفظ إعدادات الفوترة",
+      "loadError": "فشل تحميل إعدادات الفوترة"
+    }
+  },
+  "account": {
+    "title": "حسابي",
+    "profileTitle": "الملف الشخصي",
+    "passwordTitle": "تغيير كلمة المرور",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور الجديدة",
+    "changePassword": "تغيير كلمة المرور",
+    "profileSaved": "تم تحديث الملف الشخصي بنجاح",
+    "profileSaveError": "فشل تحديث الملف الشخصي",
+    "passwordSaved": "تم تغيير كلمة المرور بنجاح",
+    "passwordSaveError": "فشل تغيير كلمة المرور",
+    "loadError": "فشل تحميل بيانات الحساب"
   }
 }

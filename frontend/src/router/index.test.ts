@@ -103,6 +103,33 @@ describe('router authorization guard', () => {
     expect(router.currentRoute.value.name).toBe('dentist-schedule')
   })
 
+  it('blocks a dentist from the admin-only Settings route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('dentist')
+
+    await router.push({ name: 'settings' })
+    expect(router.currentRoute.value.name).toBe('forbidden')
+  })
+
+  it('allows an admin to reach the Settings route', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('admin')
+
+    await router.push({ name: 'settings' })
+    expect(router.currentRoute.value.name).toBe('settings')
+  })
+
+  it('allows every authenticated role to reach My Account (self-service, no roles meta)', async () => {
+    const auth = useAuthStore()
+    auth.initialized = true
+    auth.user = makeUser('receptionist')
+
+    await router.push({ name: 'account' })
+    expect(router.currentRoute.value.name).toBe('account')
+  })
+
   it('redirects an already-authenticated user away from the guest-only login page', async () => {
     const auth = useAuthStore()
     auth.initialized = true

@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillingSettingController;
 use App\Http\Controllers\Api\ClinicalNoteController;
+use App\Http\Controllers\Api\ClinicSettingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DentalChartEntryController;
 use App\Http\Controllers\Api\DentalConditionController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchaseOrderItemController;
 use App\Http\Controllers\Api\ReportController;
@@ -163,4 +166,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reports/appointments', [ReportController::class, 'appointmentAnalytics']);
     Route::get('reports/treatment-plan-acceptance', [ReportController::class, 'treatmentPlanAcceptance']);
     Route::get('reports/new-patients', [ReportController::class, 'newPatients']);
+
+    Route::get('clinic-settings', [ClinicSettingController::class, 'show']);
+    Route::put('clinic-settings', [ClinicSettingController::class, 'update']);
+
+    Route::get('billing-settings', [BillingSettingController::class, 'show']);
+    Route::put('billing-settings', [BillingSettingController::class, 'update']);
+
+    Route::get('profile', [ProfileController::class, 'show']);
+    Route::put('profile', [ProfileController::class, 'update']);
+    Route::put('profile/password', [ProfileController::class, 'updatePassword']);
 });

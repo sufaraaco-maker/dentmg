@@ -172,6 +172,9 @@ export const navigation: NavItem[] = [
   {
     labelKey: 'nav.settings',
     icon: 'pi pi-cog',
-    comingSoon: true,
+    routeName: 'settings',
+    // Every child is admin-only, so this is gated at the top level itself rather than a
+    // mixed-visibility group (design doc §7) — unlike Reports, which has some non-admin children.
+    roles: ['admin'],
   },
 ]

@@ -13,13 +13,18 @@ import LabCaseStatusChip from '@/components/laboratory/LabCaseStatusChip.vue'
 import LabCaseActionsBar from '@/components/laboratory/LabCaseActionsBar.vue'
 import { parseServerDateTime } from '@/lib/date'
 import { toothDisplayName } from '@/lib/teeth'
+import { getClinicSettings } from '@/services/settings'
 import type { LabCase } from '@/types/laboratory'
+import type { ClinicSetting } from '@/types/settings'
 
 /**
  * Lab Case Detail (design doc §6) — overview card, status-transition actions bar, and a
  * browser-printable slip (design doc §7 decision 2 — `@media print` CSS only, no PDF library),
  * mirroring `PurchaseOrderDetailView.vue`'s overview-card + actions-bar shape. No items table:
  * unlike a Purchase Order, a Lab Case is a single prescription record (design doc §3).
+ *
+ * Settings design doc §4.1: first real consumer of Practice Settings — the print-only header block
+ * below renders the clinic's own name/contact info so a printed slip identifies who sent it.
  */
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -33,6 +38,7 @@ const caseId = computed(() => route.params.id as string)
 const labCase = ref<LabCase | null>(null)
 const loading = ref(false)
 const notFound = ref(false)
+const clinicSettings = ref<ClinicSetting | null>(null)
 
 const canDelete = computed(() => auth.isAdmin)
 const isDraft = computed(() => labCase.value?.status === 'draft')
@@ -51,6 +57,14 @@ async function load() {
 }
 
 watch(caseId, load, { immediate: true })
+
+getClinicSettings()
+  .then((settings) => {
+    clinicSettings.value = settings
+  })
+  .catch(() => {
+    // Non-fatal: the slip still prints without a clinic header if this fails.
+  })
 
 function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(
@@ -119,6 +133,15 @@ function confirmDelete() {
           @click="confirmDelete"
         />
       </div>
+    </div>
+
+    <div v-if="clinicSettings?.name" class="hidden print:block">
+      <p class="font-semibold text-surface-900">{{ clinicSettings.name }}</p>
+      <p v-if="clinicSettings.phone || clinicSettings.email" class="text-sm text-surface-600" dir="ltr">
+        {{ [clinicSettings.phone, clinicSettings.email].filter(Boolean).join(' · ') }}
+      </p>
+      <p v-if="clinicSettings.address" class="text-sm text-surface-600">{{ clinicSettings.address }}</p>
+      <hr class="my-2 border-surface-300" />
     </div>
 
     <LabCaseActionsBar v-if="labCase" :lab-case="labCase" @updated="onUpdated" />

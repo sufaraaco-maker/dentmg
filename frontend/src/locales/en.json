@@ -14,6 +14,7 @@
     "laboratory": "Laboratory",
     "reports": "Reports",
     "settings": "Settings",
+    "myAccount": "My Account",
     "logout": "Logout",
     "comingSoon": "Soon",
     "toggleSidebar": "Toggle sidebar",
@@ -1317,5 +1318,53 @@
         "registeredAt": "Registered"
       }
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "nav": {
+      "practice": "Practice Settings",
+      "billing": "Billing Settings"
+    },
+    "home": {
+      "practiceDescription": "Clinic name, contact info, and address",
+      "billingDescription": "Currency, tax rate, and invoice numbering"
+    },
+    "practice": {
+      "title": "Practice Settings",
+      "name": "Clinic Name",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "saved": "Practice settings saved successfully",
+      "saveError": "Failed to save practice settings",
+      "loadError": "Failed to load practice settings"
+    },
+    "billing": {
+      "title": "Billing Settings",
+      "currencyCode": "Currency Code",
+      "taxRate": "Tax Rate",
+      "invoiceNumberPrefix": "Invoice Number Prefix",
+      "nextInvoiceSequence": "Next Invoice Number",
+      "nextInvoiceSequenceHint": "System-managed — updates automatically each time an invoice is issued.",
+      "saved": "Billing settings saved successfully",
+      "saveError": "Failed to save billing settings",
+      "loadError": "Failed to load billing settings"
+    }
+  },
+  "account": {
+    "title": "My Account",
+    "profileTitle": "Profile",
+    "passwordTitle": "Change Password",
+    "name": "Name",
+    "email": "Email",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "changePassword": "Change Password",
+    "profileSaved": "Profile updated successfully",
+    "profileSaveError": "Failed to update profile",
+    "passwordSaved": "Password changed successfully",
+    "passwordSaveError": "Failed to change password",
+    "loadError": "Failed to load account"
   }
 }
