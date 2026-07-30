@@ -148,6 +148,29 @@ export const router = createRouter({
           component: () => import('@/views/ReportsHomeView.vue'),
         },
         {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('@/views/SettingsHomeView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'settings/practice',
+          name: 'settings-practice',
+          component: () => import('@/views/settings/PracticeSettingsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'settings/billing',
+          name: 'settings-billing',
+          component: () => import('@/views/settings/BillingSettingsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'account',
+          name: 'account',
+          component: () => import('@/views/AccountView.vue'),
+        },
+        {
           path: 'reports/production',
           name: 'report-production',
           component: () => import('@/views/reports/ProductionReportView.vue'),

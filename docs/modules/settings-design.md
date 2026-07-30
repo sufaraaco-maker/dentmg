@@ -1,7 +1,19 @@
-# Settings — Module Design (Proposed, 2026-07-30)
+# Settings — Module Design (Approved, 2026-07-30)
 
-**Status: Design proposed, awaiting approval.** No code written yet. This module follows Reports in the
-planned order (`PROJECT_CONTEXT.md`): Settings next, then AI Assistant.
+**Status: Approved 2026-07-30.** Implementation complete on `feature/settings` (2026-07-30):
+`ClinicSetting`/`BillingSetting` API+UI, My Account self-service, Lab Case slip integration.
+877/877 backend tests (22 Settings-specific) + 672/672 frontend Vitest tests green locally,
+`vue-tsc`/ESLint/Pint clean.
+Permanent E2E suite (`frontend/e2e/settings.spec.ts`) written but not yet CI-confirmed — see
+`TECH_DEBT.md` for the local-verification limitations (same pre-existing PHPStan container quirk and
+Alpine/glibc Playwright mismatch logged against Reports) and `docs/roadmap.md` for current status.
+This module followed Reports in the planned order (`PROJECT_CONTEXT.md`); AI Assistant is next.
+
+**Approval notes**: confirmed SaaS/multi-tenant readiness (§3's `clinic_id`-ready singleton pattern),
+PWA/mobile-first compatibility (§7), full en/ar/tr i18n with no hardcoded strings, Clean
+Architecture/SOLID layering (Policy → Form Request → Service → Controller), and My Account security
+(current-password-gated password change, structural IDOR-proofing via `$request->user()` — §5) before
+starting implementation.
 
 ## 0. Competitive Research (required before any design, per standing product philosophy)
 
@@ -127,7 +139,8 @@ of the other (§8 decision 5).
 
 | Action | Roles | Precedent |
 |---|---|---|
-| View/update Practice Settings | admin only | Mirrors `SupplierPolicy`/`AppointmentTypePolicy` — clinic configuration, not day-to-day entry. |
+| View Practice Settings | every role | **Deviation from the original proposal, caught during implementation**: the Lab Case printable slip (§4.1) — reachable by every role with lab-case access — needs to read clinic name/phone/address to render its print header, so `view` cannot be admin-only or non-admins 403 printing a slip. Mirrors `SupplierPolicy`'s `viewAny: true` / mutate-only-admin shape; clinic contact info carries no more sensitivity than a business card. |
+| Update Practice Settings | admin only | Unchanged from the original proposal — mirrors `SupplierPolicy`/`AppointmentTypePolicy` mutation gating. |
 | View/update Billing Settings | admin only | Same tier as Practice Settings — financial configuration is at least as sensitive as Treatment Plans' pricing data (mirrors Billing's own design doc §14 reasoning). |
 | View/update own profile, change own password | every role (self only) | New territory for this codebase — no prior module has self-service. Enforced structurally, not just by policy: routes resolve the target from `$request->user()`, never a route-model-bound `{user}` parameter, so there is no ID to substitute into an IDOR attempt in the first place. |
 
@@ -136,13 +149,19 @@ of the other (§8 decision 5).
 ```php
 class ClinicSettingPolicy
 {
+    public function view(User $actor): bool { return true; } // see deviation note above
+    public function update(User $actor): bool { return $actor->isAdmin(); }
+}
+
+class BillingSettingPolicy
+{
     public function view(User $actor): bool { return $actor->isAdmin(); }
     public function update(User $actor): bool { return $actor->isAdmin(); }
 }
 ```
-`BillingSettingPolicy` is identical in shape. Both are checked against the model *class*
-(`$this->user()->can('view', ClinicSetting::class)`), the standard Laravel idiom for a singleton resource
-with no meaningful per-instance identity to bind a route parameter to.
+Both are checked against the model *class* (`$this->user()->can('view', ClinicSetting::class)`), the
+standard Laravel idiom for a singleton resource with no meaningful per-instance identity to bind a route
+parameter to.
 
 **My Account has no Policy** — `ProfileController`'s actions operate exclusively on `$request->user()`, so
 "can the actor edit this profile" is definitionally always true for their own profile and never reachable

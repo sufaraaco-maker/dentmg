@@ -14,6 +14,7 @@
     "laboratory": "Laboratuvar",
     "reports": "Raporlar",
     "settings": "Ayarlar",
+    "myAccount": "Hesabım",
     "logout": "Çıkış Yap",
     "comingSoon": "Yakında",
     "toggleSidebar": "Kenar çubuğunu aç/kapat",
@@ -1317,5 +1318,53 @@
         "registeredAt": "Kayıt Tarihi"
       }
     }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "nav": {
+      "practice": "Klinik Ayarları",
+      "billing": "Faturalama Ayarları"
+    },
+    "home": {
+      "practiceDescription": "Klinik adı, iletişim bilgileri ve adres",
+      "billingDescription": "Para birimi, vergi oranı ve fatura numaralandırma"
+    },
+    "practice": {
+      "title": "Klinik Ayarları",
+      "name": "Klinik Adı",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "address": "Adres",
+      "saved": "Klinik ayarları başarıyla kaydedildi",
+      "saveError": "Klinik ayarları kaydedilemedi",
+      "loadError": "Klinik ayarları yüklenemedi"
+    },
+    "billing": {
+      "title": "Faturalama Ayarları",
+      "currencyCode": "Para Birimi Kodu",
+      "taxRate": "Vergi Oranı",
+      "invoiceNumberPrefix": "Fatura Numarası Öneki",
+      "nextInvoiceSequence": "Sonraki Fatura Numarası",
+      "nextInvoiceSequenceHint": "Sistem tarafından yönetilir — her fatura kesildiğinde otomatik olarak güncellenir.",
+      "saved": "Faturalama ayarları başarıyla kaydedildi",
+      "saveError": "Faturalama ayarları kaydedilemedi",
+      "loadError": "Faturalama ayarları yüklenemedi"
+    }
+  },
+  "account": {
+    "title": "Hesabım",
+    "profileTitle": "Profil",
+    "passwordTitle": "Şifre Değiştir",
+    "name": "Ad",
+    "email": "E-posta",
+    "currentPassword": "Mevcut Şifre",
+    "newPassword": "Yeni Şifre",
+    "confirmPassword": "Yeni Şifreyi Onayla",
+    "changePassword": "Şifre Değiştir",
+    "profileSaved": "Profil başarıyla güncellendi",
+    "profileSaveError": "Profil güncellenemedi",
+    "passwordSaved": "Şifre başarıyla değiştirildi",
+    "passwordSaveError": "Şifre değiştirilemedi",
+    "loadError": "Hesap bilgileri yüklenemedi"
   }
 }

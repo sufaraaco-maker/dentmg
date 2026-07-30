@@ -901,3 +901,32 @@ this specific blocker.
 **RESOLVED 2026-07-28**: confirmed via the GitHub Actions API across two `workflow_dispatch` runs on
 `feature/reports` — the first (`30323783949`) surfaced the real bugs documented above, the second
 (`30326106755`) is fully green: **Backend 855/855, Frontend 652/652, E2E 29/29 — zero failures.**
+
+## Open (new from Settings module, 2026-07-30)
+
+### Local `phpstan analyse` container issue recurred again, same root cause as Inventory's/Laboratory's/Reports' — confirmed pre-existing, not a Settings regression
+Same symptom, isolated the same way as the three entries above: a full `docker exec dentalsuite_app
+vendor/bin/phpstan analyse` reported 466 "undefined property" errors, almost all on pre-existing,
+unrelated models. Isolated further this time by running PHPStan against a single untouched file with
+no Settings involvement at all — `app/Models/Patient.php` (last touched during the Patients module,
+weeks before Settings existed) — and it failed identically (3 "undefined property" errors on its own
+plain `$fillable` columns) both before and after a full `composer dump-autoload`, `optimize:clear`, and
+an app-container restart. Confirms this is entirely a local Larastan/container reflection quirk, not
+anything introduced by `ClinicSetting`/`BillingSettingResource`/`ProfileController`. **Revisit**: same
+as the Inventory/Laboratory/Reports entries — CI's own `phpstan analyse` step (Ubuntu runner) is the
+authoritative check, not this dev container.
+
+### Known limitation: local Playwright verification for Settings blocked by the same Alpine/musl vs. glibc Chromium mismatch logged against Reports
+`frontend/e2e/settings.spec.ts` (3 tests) is written and passes `eslint`/`vue-tsc`, but could not be
+executed in this session's `dentalsuite_frontend` container — same root cause as Reports' identical
+entry above (Alpine base image, Playwright's downloaded Chromium is glibc-only). **Revisit**: not a
+code defect; the GitHub Actions `ci.yml` E2E job (`ubuntu-latest`) is the authoritative check per this
+project's established practice.
+
+### Whole-app PWA manifest/service-worker gap — cross-cutting, not Settings' responsibility to fix
+Noted explicitly in the Settings design doc (§7): this codebase has no app-wide PWA manifest or
+service worker yet (confirmed absent via `frontend/vite.config.ts`/`package.json` at design time), so
+every module's "PWA-installable" bar has meant responsive/touch-ready screens compatible with a future
+PWA wrapper, not an actually-installable app today. **Revisit**: whenever the app-wide PWA shell is
+built (a separate, cross-cutting piece of work, not any one module's screens), not as a side effect of
+Settings.

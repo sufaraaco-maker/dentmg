@@ -40,7 +40,10 @@ function toggleNotifications(event: Event) {
 }
 
 const userMenu = ref()
-const userMenuItems = computed(() => [{ label: t('nav.logout'), icon: 'pi pi-sign-out', command: onLogout }])
+const userMenuItems = computed(() => [
+  { label: t('nav.myAccount'), icon: 'pi pi-user', command: () => router.push({ name: 'account' }) },
+  { label: t('nav.logout'), icon: 'pi pi-sign-out', command: onLogout },
+])
 function toggleUserMenu(event: Event) {
   userMenu.value?.toggle(event)
 }

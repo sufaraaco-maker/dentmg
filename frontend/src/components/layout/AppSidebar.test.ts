@@ -21,6 +21,7 @@ function makeRouter(): Router {
       { path: '/appointments/types', name: 'appointment-types', component: { template: '<div />' } },
       { path: '/appointments/schedule', name: 'dentist-schedule', component: { template: '<div />' } },
       { path: '/users', name: 'users', component: { template: '<div />' } },
+      { path: '/settings', name: 'settings', component: { template: '<div />' } },
     ],
   })
 }
