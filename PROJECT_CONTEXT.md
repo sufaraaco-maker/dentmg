@@ -361,8 +361,23 @@ the second run (`30562178951`) is fully green: **Backend 877/877, Frontend 672/6
 failures.** Multi-branch/location settings, clinic logo upload, and notification/reminder settings are
 deliberately out of scope for V1 (see `docs/modules/settings-design.md`'s §2/§9 and `TECH_DEBT.md`).
 
-Next module after Settings: AI Assistant (per user's explicit prioritization — it depends on data/
-workflow completeness across everything else to add real value, so it comes last).
+**AI Assistant — Design Approved 2026-07-31, implementation starting** (see
+`docs/modules/ai-assistant-design.md`'s Approval & Decisions section). Final module on the roadmap
+(per user's explicit prioritization — it depends on data/workflow completeness across everything
+else to add real value, so it comes last). Splits into two risk tiers by PHI exposure: three
+zero-PHI features ship first (Dashboard Insights, Smart Search, Writing Reports — aggregate report
+data or the user's own query text only, never patient-identified content sent to the Claude API);
+Clinical Notes draft-assist and Treatment Suggestions are built in the same pass but ship
+disabled-by-default and absent from the UI, gated behind an explicit admin acknowledgment that a
+signed BAA with Anthropic is in place (`ai_assistant_phi_features_acknowledged` on `ClinicSetting`)
+— a hard product requirement, not a soft default. AI is decision-support only: every suggestion
+routes through the existing Policy-gated service layer (`ClinicalNoteService`,
+`TreatmentPlanService`) and requires explicit user acceptance before any write; nothing is
+auto-created, auto-signed, or auto-persisted. A new append-only `AiInteractionLog` table records
+every prompt/response and acceptance decision; AI-generated content stays visually/programmatically
+distinguishable from user-authored content in the UI until accepted. Follows the standard module
+workflow: Design → Backend → Frontend → Tests → CI → Documentation → PR.
+
 See `docs/roadmap.md` for current per-module status.
 
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
