@@ -111,4 +111,39 @@ class ClinicSettingTest extends TestCase
         $this->assertTrue($response->json('ai_assistant_enabled'));
         $this->assertFalse($response->json('ai_assistant_phi_features_acknowledged'));
     }
+
+    /**
+     * Regression test: a fresh, never-configured clinic's self-healed row has a blank `name`
+     * (`ClinicSettingService::current()`). The AI Assistant Settings screen must be able to save
+     * its two toggles on their own without being forced to also resend (and re-validate as
+     * non-blank) a practice name it never touches.
+     */
+    public function test_admin_can_save_ai_assistant_toggles_alone_when_practice_name_is_still_blank(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create(['name' => '']);
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_enabled' => true,
+            'ai_assistant_phi_features_acknowledged' => true,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('', $response->json('name'));
+        $this->assertTrue($response->json('ai_assistant_enabled'));
+        $this->assertTrue($response->json('ai_assistant_phi_features_acknowledged'));
+    }
+
+    public function test_updating_clinic_settings_without_a_name_field_leaves_the_stored_name_untouched(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create(['name' => 'Bright Smile Dental']);
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_enabled' => true,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('Bright Smile Dental', $response->json('name'));
+    }
 }

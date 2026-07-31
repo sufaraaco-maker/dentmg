@@ -223,7 +223,7 @@ class AiAssistantService
      * created by this method — the returned candidates are added one-by-one through the existing
      * `TreatmentPlanService::addItem()` only once the dentist explicitly accepts each one.
      *
-     * @return array{candidates: list<array{dental_condition_id: string, tooth_number: ?int, surfaces: ?string, rationale: string}>, log: AiInteractionLog}
+     * @return array{candidates: list<array{dental_condition_id: string, tooth_number: ?string, surfaces: ?list<string>, rationale: string}>, log: AiInteractionLog}
      */
     public function suggestTreatmentItems(TreatmentPlan $plan, User $actor): array
     {
@@ -265,8 +265,12 @@ class AiAssistantService
                         'type' => 'object',
                         'properties' => [
                             'dental_condition_id' => ['type' => 'string', 'description' => 'Must be one of the provided catalog IDs.'],
-                            'tooth_number' => ['type' => ['integer', 'null']],
-                            'surfaces' => ['type' => ['string', 'null']],
+                            'tooth_number' => ['type' => ['string', 'null'], 'description' => 'FDI/Universal tooth number as it appears in the chart findings, e.g. "14".'],
+                            'surfaces' => [
+                                'type' => ['array', 'null'],
+                                'items' => ['type' => 'string', 'enum' => ['M', 'D', 'F', 'L', 'O', 'I']],
+                                'description' => 'Tooth surfaces this procedure applies to (Mesial/Distal/Facial/Lingual/Occlusal/Incisal); null when not tooth-specific.',
+                            ],
                             'rationale' => ['type' => 'string'],
                         ],
                         'required' => ['dental_condition_id', 'tooth_number', 'surfaces', 'rationale'],
