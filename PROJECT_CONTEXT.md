@@ -394,6 +394,18 @@ Tests → CI → Documentation → PR.
 
 See `docs/roadmap.md` for current per-module status.
 
+**Frontend UX & Navigation Redesign — Design drafted 2026-07-31, awaiting final go-ahead** (see
+`docs/modules/frontend-ux-redesign.md`). With every module on the original roadmap Production Ready ✅,
+focus shifts to a cross-cutting, frontend-only quality pass: full Sidebar/Header redesign (section
+grouping, Favorites, Recent Items), a Command Palette (`Ctrl+K`), a shared `AppDataTable.vue` rollout
+across all ~20 list views (sticky headers, column resize/reorder, bulk actions, shared empty/skeleton
+states), a Dashboard refresh (chart.js-backed indicator cards, Quick Actions), and a full motion/
+responsive/WCAG-AA accessibility pass — benchmarked against Linear/Notion/Stripe/Vercel interaction
+patterns rather than dental-EMR competitors. Explicitly no new backend scope; evolves the existing
+PrimeVue Aura theme rather than introducing a bespoke design system. Split into four sequential phases
+(Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish), each run through the full
+standard workflow independently so `main` stays releasable between phases.
+
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
 1. **SaaS multi-tenant readiness** — every new schema/service/API decision must stay compatible with a
    future multi-clinic model; V1 stays single-organization, but no design should assume it in a way that
