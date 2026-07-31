@@ -79,7 +79,9 @@ onMounted(fetchInvoices)
 
 <template>
   <div class="flex flex-col gap-4">
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ t('invoices.index.title') }}</h1>
+    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+      {{ t('invoices.index.title') }}
+    </h1>
 
     <div class="flex flex-wrap items-center gap-4">
       <IconField class="max-w-sm">

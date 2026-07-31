@@ -98,7 +98,9 @@ function onNavigate() {
 
       <template v-if="!collapsed">
         <div v-if="favoriteItems.length > 0" class="mt-4">
-          <h2 class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-surface-400 dark:text-surface-500">
+          <h2
+            class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-surface-400 dark:text-surface-500"
+          >
             {{ t('nav.favorites') }}
           </h2>
           <ul class="flex flex-col gap-1">
@@ -113,11 +115,16 @@ function onNavigate() {
         </div>
 
         <div v-if="sidebarPreferences.recentItems.length > 0" class="mt-4">
-          <h2 class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-surface-400 dark:text-surface-500">
+          <h2
+            class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-surface-400 dark:text-surface-500"
+          >
             {{ t('nav.recent') }}
           </h2>
           <ul class="flex flex-col gap-1">
-            <li v-for="entry in sidebarPreferences.recentItems" :key="`recent-${entry.routeName}-${JSON.stringify(entry.params)}`">
+            <li
+              v-for="entry in sidebarPreferences.recentItems"
+              :key="`recent-${entry.routeName}-${JSON.stringify(entry.params)}`"
+            >
               <RouterLink
                 :to="{ name: entry.routeName, params: entry.params }"
                 class="flex items-center gap-3 rounded-lg border-s-[3px] border-transparent px-3 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-0"

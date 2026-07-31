@@ -15,7 +15,10 @@ vi.mock('@/lib/api', () => ({
 const mockedApi = vi.mocked(api)
 
 function withStartPath(router: Router, path: string) {
-  return router.push(path).then(() => router.isReady()).then(() => router)
+  return router
+    .push(path)
+    .then(() => router.isReady())
+    .then(() => router)
 }
 
 async function mountView(role: UserRole, path = '/patients') {

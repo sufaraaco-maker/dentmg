@@ -48,7 +48,12 @@ describe('useSidebarPreferencesStore recent items', () => {
   it('records a visit at the front of the list', () => {
     const store = useSidebarPreferencesStore()
 
-    store.recordVisit({ routeName: 'patient-detail', params: { id: 'p1' }, label: 'nav.patients', icon: 'pi pi-user' })
+    store.recordVisit({
+      routeName: 'patient-detail',
+      params: { id: 'p1' },
+      label: 'nav.patients',
+      icon: 'pi pi-user',
+    })
 
     expect(store.recentItems).toHaveLength(1)
     expect(store.recentItems[0]?.routeName).toBe('patient-detail')
@@ -57,9 +62,24 @@ describe('useSidebarPreferencesStore recent items', () => {
 
   it('moves a re-visited entry back to the front instead of duplicating it', () => {
     const store = useSidebarPreferencesStore()
-    store.recordVisit({ routeName: 'patient-detail', params: { id: 'p1' }, label: 'nav.patients', icon: 'pi pi-user' })
-    store.recordVisit({ routeName: 'invoice-detail', params: { id: 'p2', invoiceId: 'i1' }, label: 'patients.tabs.invoices', icon: 'pi pi-wallet' })
-    store.recordVisit({ routeName: 'patient-detail', params: { id: 'p1' }, label: 'nav.patients', icon: 'pi pi-user' })
+    store.recordVisit({
+      routeName: 'patient-detail',
+      params: { id: 'p1' },
+      label: 'nav.patients',
+      icon: 'pi pi-user',
+    })
+    store.recordVisit({
+      routeName: 'invoice-detail',
+      params: { id: 'p2', invoiceId: 'i1' },
+      label: 'patients.tabs.invoices',
+      icon: 'pi pi-wallet',
+    })
+    store.recordVisit({
+      routeName: 'patient-detail',
+      params: { id: 'p1' },
+      label: 'nav.patients',
+      icon: 'pi pi-user',
+    })
 
     expect(store.recentItems).toHaveLength(2)
     expect(store.recentItems[0]?.routeName).toBe('patient-detail')
@@ -68,7 +88,12 @@ describe('useSidebarPreferencesStore recent items', () => {
   it('caps the list at 5 entries', () => {
     const store = useSidebarPreferencesStore()
     for (let i = 0; i < 7; i += 1) {
-      store.recordVisit({ routeName: 'patient-detail', params: { id: `p${i}` }, label: 'nav.patients', icon: 'pi pi-user' })
+      store.recordVisit({
+        routeName: 'patient-detail',
+        params: { id: `p${i}` },
+        label: 'nav.patients',
+        icon: 'pi pi-user',
+      })
     }
 
     expect(store.recentItems).toHaveLength(5)
@@ -77,7 +102,12 @@ describe('useSidebarPreferencesStore recent items', () => {
 
   it('upgrades a fallback label to a real name without touching other entries', () => {
     const store = useSidebarPreferencesStore()
-    store.recordVisit({ routeName: 'patient-detail', params: { id: 'p1' }, label: 'nav.patients', icon: 'pi pi-user' })
+    store.recordVisit({
+      routeName: 'patient-detail',
+      params: { id: 'p1' },
+      label: 'nav.patients',
+      icon: 'pi pi-user',
+    })
 
     store.updateRecentLabel('patient-detail', { id: 'p1' }, 'Jane Doe')
 

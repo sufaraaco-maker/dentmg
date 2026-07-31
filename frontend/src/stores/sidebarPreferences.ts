@@ -57,12 +57,17 @@ export const useSidebarPreferencesStore = defineStore('sidebarPreferences', () =
       : [...collapsedSections.value, section]
   }
 
-  function recordVisit(entry: { routeName: string; params: Record<string, string>; label: string; icon: string }) {
+  function recordVisit(entry: {
+    routeName: string
+    params: Record<string, string>
+    label: string
+    icon: string
+  }) {
     const withoutDuplicate = recentItems.value.filter((item) => !sameEntry(item, entry))
-    recentItems.value = [
-      { ...entry, isLiteral: false, visitedAt: Date.now() },
-      ...withoutDuplicate,
-    ].slice(0, MAX_RECENT_ITEMS)
+    recentItems.value = [{ ...entry, isLiteral: false, visitedAt: Date.now() }, ...withoutDuplicate].slice(
+      0,
+      MAX_RECENT_ITEMS,
+    )
   }
 
   /** Upgrades a fallback (i18n-key) label to the record's real display name, once a detail view has

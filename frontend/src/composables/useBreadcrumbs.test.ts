@@ -13,7 +13,11 @@ function makeRouter(): Router {
       { path: '/appointments/types', name: 'appointment-types', component: { template: '<div />' } },
       { path: '/patients', name: 'patients', component: { template: '<div />' } },
       { path: '/patients/:id', name: 'patient-detail', component: { template: '<div />' } },
-      { path: '/patients/:id/invoices/:invoiceId', name: 'invoice-detail', component: { template: '<div />' } },
+      {
+        path: '/patients/:id/invoices/:invoiceId',
+        name: 'invoice-detail',
+        component: { template: '<div />' },
+      },
       { path: '/account', name: 'account', component: { template: '<div />' } },
       { path: '/settings', name: 'settings', component: { template: '<div />' } },
       { path: '/settings/practice', name: 'settings-practice', component: { template: '<div />' } },

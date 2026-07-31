@@ -23,12 +23,7 @@ const SHORTCUTS = [
 </script>
 
 <template>
-  <Dialog
-    v-model:visible="shortcutsHelp.open"
-    modal
-    :header="t('shortcuts.title')"
-    class="w-full max-w-md"
-  >
+  <Dialog v-model:visible="shortcutsHelp.open" modal :header="t('shortcuts.title')" class="w-full max-w-md">
     <dl class="flex flex-col gap-3">
       <div
         v-for="shortcut in SHORTCUTS"

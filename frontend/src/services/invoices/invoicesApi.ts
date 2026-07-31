@@ -20,7 +20,9 @@ export const invoicesApi = {
   /** Clinic-wide, paginated (frontend-ux-redesign design doc §5.1/§11) — the Billing sidebar
    *  entry's destination, distinct from `list()` above which stays intentionally unpaginated and
    *  patient-scoped. */
-  async listAll(params: { page?: number; search?: string; status?: InvoiceStatus } = {}): Promise<PaginatedInvoices> {
+  async listAll(
+    params: { page?: number; search?: string; status?: InvoiceStatus } = {},
+  ): Promise<PaginatedInvoices> {
     const { data } = await api.get<PaginatedInvoices>('/invoices', { params })
     return data
   },

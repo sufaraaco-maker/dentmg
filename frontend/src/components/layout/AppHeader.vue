@@ -76,7 +76,10 @@ function toggleUserMenu(event: Event) {
         :aria-label="t('breadcrumbs.label')"
       >
         <template v-for="(crumb, index) in breadcrumbs" :key="`${crumb.labelKey}-${index}`">
-          <i v-if="index > 0" class="pi pi-angle-right rtl:rotate-180 text-xs text-surface-300 dark:text-surface-600" />
+          <i
+            v-if="index > 0"
+            class="pi pi-angle-right rtl:rotate-180 text-xs text-surface-300 dark:text-surface-600"
+          />
           <RouterLink
             v-if="crumb.routeName"
             :to="{ name: crumb.routeName }"

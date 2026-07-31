@@ -148,7 +148,9 @@ function onKeydown(event: KeyboardEvent) {
           autofocus
           @keydown="onKeydown"
         />
-        <kbd class="rounded border border-surface-200 px-1.5 py-0.5 text-xs text-surface-400 dark:border-surface-700">
+        <kbd
+          class="rounded border border-surface-200 px-1.5 py-0.5 text-xs text-surface-400 dark:border-surface-700"
+        >
           Esc
         </kbd>
       </div>

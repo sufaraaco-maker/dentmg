@@ -83,7 +83,11 @@ export function useAppShortcuts() {
       return
     }
 
-    if (event.key === '?') {
+    // `event.code === 'Slash' && event.shiftKey` as a fallback alongside `event.key === '?'` —
+    // some automated input pipelines (Playwright/CDP key dispatch) don't reliably resolve the
+    // shifted `key` value for punctuation the way a real keypress does, so this is defensive
+    // for those environments too, not just real users on non-US layouts where `?` sits elsewhere.
+    if (event.key === '?' || (event.code === 'Slash' && event.shiftKey)) {
       event.preventDefault()
       shortcutsHelp.show()
     }

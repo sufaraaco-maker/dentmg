@@ -49,7 +49,9 @@ export function useBreadcrumbs() {
 
     const standalone = STANDALONE_ROUTES[name]
     if (standalone) {
-      const parentTrail = standalone.parentRouteName ? (findNavTrailByRouteName(standalone.parentRouteName) ?? []) : []
+      const parentTrail = standalone.parentRouteName
+        ? (findNavTrailByRouteName(standalone.parentRouteName) ?? [])
+        : []
       return [
         ...parentTrail.map((item) => ({ labelKey: item.labelKey, routeName: item.routeName })),
         { labelKey: standalone.labelKey },

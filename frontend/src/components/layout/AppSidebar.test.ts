@@ -116,7 +116,9 @@ describe('AppSidebar favorites', () => {
     const { wrapper } = await mountSidebar('admin')
     expect(wrapper.text()).not.toContain('Favorites')
 
-    const favoriteButtons = wrapper.findAll('button[aria-label]').filter((b) => b.attributes('aria-label') === 'Add to favorites')
+    const favoriteButtons = wrapper
+      .findAll('button[aria-label]')
+      .filter((b) => b.attributes('aria-label') === 'Add to favorites')
     await favoriteButtons[0]?.trigger('click')
 
     expect(wrapper.text()).toContain('Favorites')

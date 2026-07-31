@@ -227,11 +227,31 @@ export function flattenNavItems(): NavItem[] {
  */
 export const DETAIL_ROUTES: Record<string, { icon: string; labelKey: string; parentRouteName: string }> = {
   'patient-detail': { icon: 'pi pi-user', labelKey: 'nav.patients', parentRouteName: 'patients' },
-  'treatment-plan-detail': { icon: 'pi pi-clipboard', labelKey: 'patients.tabs.treatmentPlans', parentRouteName: 'patients' },
-  'clinical-note-detail': { icon: 'pi pi-file', labelKey: 'patients.tabs.clinicalNotes', parentRouteName: 'patients' },
+  'treatment-plan-detail': {
+    icon: 'pi pi-clipboard',
+    labelKey: 'patients.tabs.treatmentPlans',
+    parentRouteName: 'patients',
+  },
+  'clinical-note-detail': {
+    icon: 'pi pi-file',
+    labelKey: 'patients.tabs.clinicalNotes',
+    parentRouteName: 'patients',
+  },
   'invoice-detail': { icon: 'pi pi-wallet', labelKey: 'patients.tabs.invoices', parentRouteName: 'patients' },
-  'appointment-detail': { icon: 'pi pi-calendar', labelKey: 'nav.appointments', parentRouteName: 'appointments' },
+  'appointment-detail': {
+    icon: 'pi pi-calendar',
+    labelKey: 'nav.appointments',
+    parentRouteName: 'appointments',
+  },
   'supply-detail': { icon: 'pi pi-box', labelKey: 'inventory.nav.supplies', parentRouteName: 'supplies' },
-  'purchase-order-detail': { icon: 'pi pi-truck', labelKey: 'inventory.nav.purchaseOrders', parentRouteName: 'purchase-orders' },
-  'lab-case-detail': { icon: 'pi pi-send', labelKey: 'laboratory.nav.labCases', parentRouteName: 'lab-cases' },
+  'purchase-order-detail': {
+    icon: 'pi pi-truck',
+    labelKey: 'inventory.nav.purchaseOrders',
+    parentRouteName: 'purchase-orders',
+  },
+  'lab-case-detail': {
+    icon: 'pi pi-send',
+    labelKey: 'laboratory.nav.labCases',
+    parentRouteName: 'lab-cases',
+  },
 }

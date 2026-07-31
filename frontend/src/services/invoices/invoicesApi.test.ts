@@ -31,7 +31,9 @@ describe('invoicesApi.listAll', () => {
   })
 
   it('defaults to no params when called with none', async () => {
-    mockedApi.get.mockResolvedValue({ data: { data: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } } })
+    mockedApi.get.mockResolvedValue({
+      data: { data: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
+    })
 
     await invoicesApi.listAll()
 
