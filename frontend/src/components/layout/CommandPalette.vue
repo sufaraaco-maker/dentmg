@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
@@ -100,7 +100,11 @@ watch(
       query.value = ''
       activeIndex.value = 0
       await nextTick()
-      inputRef.value?.$el?.focus()
+      // `InputText`'s public instance type doesn't declare `$el` (options-API component) — same
+      // cast-through-`ComponentPublicInstance` pattern as `PatientSearchSelect.vue`'s identical
+      // autofocus need, not a plain `as any`.
+      const instance = inputRef.value as ComponentPublicInstance | undefined
+      ;(instance?.$el as HTMLElement | undefined)?.focus()
     }
   },
 )

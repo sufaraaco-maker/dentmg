@@ -80,7 +80,11 @@ test.describe('frontend-nav-shell', () => {
     await loginAndWaitForShell(page)
 
     await page.keyboard.press('?')
-    await expect(page.getByRole('heading', { name: 'Keyboard Shortcuts' })).toBeVisible()
+    // PrimeVue's `Dialog` renders its `:header` prop as plain text (an `aria-labelledby` target
+    // for the dialog itself), not a semantic `<h1>`-`<h6>` — confirmed via the Playwright trace's
+    // own accessibility snapshot at the moment of an earlier failed `getByRole('heading', ...)`
+    // attempt, which showed the dialog (and every shortcut row) rendered correctly all along.
+    await expect(page.getByRole('dialog', { name: 'Keyboard Shortcuts' })).toBeVisible()
     await expect(page.getByText('Open Command Palette')).toBeVisible()
   })
 
