@@ -50,7 +50,7 @@ test.describe('ai-assistant', () => {
     await expect(page.getByText('Business Associate Agreement')).toHaveCount(0)
 
     // --- Confirm the zero-PHI entry points are absent everywhere before enabling.
-    await page.goto('/dashboard')
+    await page.goto('/')
     await expect(page.getByText('Ask a question about your data')).toHaveCount(0)
     await page.goto('/patients')
     await expect(page.getByText('Smart Search', { exact: true })).toHaveCount(0)
@@ -69,7 +69,7 @@ test.describe('ai-assistant', () => {
     // --- Zero-PHI entry points now appear across Dashboard, Patients, and Reports. Each `goto` is
     // a full SPA reload (fresh Pinia store), so the widget's own settings fetch needs more than
     // the 5s default timeout under CI's first-paint latency.
-    await page.goto('/dashboard')
+    await page.goto('/')
     await expect(page.getByText('Ask a question about your data')).toBeVisible({ timeout: 15_000 })
     await page.goto('/patients')
     await expect(page.getByText('Smart Search', { exact: true })).toBeVisible({ timeout: 15_000 })
@@ -78,7 +78,7 @@ test.describe('ai-assistant', () => {
 
     // --- Cleanup: leave the shared singleton back at its default, off state.
     await resetAiAssistantSettings(page)
-    await page.goto('/dashboard')
+    await page.goto('/')
     await expect(page.getByText('Ask a question about your data')).toHaveCount(0, { timeout: 15_000 })
   })
 
