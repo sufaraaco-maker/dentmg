@@ -45,9 +45,15 @@ describe('askSmartSearch', () => {
 
 describe('getReportNarrative', () => {
   it('sends the report type merged with non-empty params', async () => {
-    mockedApi.post.mockResolvedValue({ data: { narrative: 'Production was steady.', interaction_id: 'log-3' } })
+    mockedApi.post.mockResolvedValue({
+      data: { narrative: 'Production was steady.', interaction_id: 'log-3' },
+    })
 
-    await getReportNarrative('production', { date_from: '2026-01-01', date_to: '2026-01-31', dentist_id: null })
+    await getReportNarrative('production', {
+      date_from: '2026-01-01',
+      date_to: '2026-01-31',
+      dentist_id: null,
+    })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/ai-assistant/report-narrative', {
       report_type: 'production',
@@ -65,7 +71,9 @@ describe('draftClinicalNote', () => {
 
     await draftClinicalNote('note-1', 'pt c/o pain')
 
-    expect(mockedApi.post).toHaveBeenCalledWith('/clinical-notes/note-1/ai-draft', { shorthand: 'pt c/o pain' })
+    expect(mockedApi.post).toHaveBeenCalledWith('/clinical-notes/note-1/ai-draft', {
+      shorthand: 'pt c/o pain',
+    })
   })
 })
 

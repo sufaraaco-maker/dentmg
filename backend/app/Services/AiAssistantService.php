@@ -445,8 +445,10 @@ class AiAssistantService
     private function executeSearchTool(string $name, array $input): mixed
     {
         return match ($name) {
-            'search_patients' => $this->patientService->paginate($input['search'] ?? null)
-                ->getCollection()
+            // ->items() rather than ->getCollection() — PatientService::paginate() is typed
+            // against the Illuminate\Contracts\Pagination\LengthAwarePaginator contract, which
+            // only declares items(), not the concrete AbstractPaginator's getCollection().
+            'search_patients' => collect($this->patientService->paginate($input['search'] ?? null)->items())
                 ->map(fn (Patient $patient) => ['id' => $patient->id, 'name' => $patient->full_name, 'patient_code' => $patient->patient_code])
                 ->values(),
             'search_appointments' => $this->appointmentService->search($input)

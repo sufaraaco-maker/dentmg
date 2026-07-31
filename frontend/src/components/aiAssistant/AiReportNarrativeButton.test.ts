@@ -49,7 +49,10 @@ describe('AiReportNarrativeButton', () => {
 
   it('fetches and displays the narrative when clicked', async () => {
     mockedGetClinicSettings.mockResolvedValue(makeSettings({ ai_assistant_enabled: true }))
-    mockedGetReportNarrative.mockResolvedValue({ narrative: 'Production held steady.', interaction_id: 'log-1' })
+    mockedGetReportNarrative.mockResolvedValue({
+      narrative: 'Production held steady.',
+      interaction_id: 'log-1',
+    })
 
     const wrapper = mount(AiReportNarrativeButton, {
       props: { reportType: 'production', params: { date_from: '2026-01-01', date_to: '2026-01-31' } },
