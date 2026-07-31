@@ -21,7 +21,39 @@
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat",
     "collapse": "Kenar çubuğunu daralt",
-    "expand": "Kenar çubuğunu genişlet"
+    "expand": "Kenar çubuğunu genişlet",
+    "favorites": "Favoriler",
+    "recent": "Son Kullanılanlar",
+    "favorite": "Favorilere ekle",
+    "unfavorite": "Favorilerden kaldır",
+    "sections": {
+      "clinical": "Klinik",
+      "operations": "Operasyonlar",
+      "insights": "Analizler",
+      "admin": "Yönetim"
+    }
+  },
+  "breadcrumbs": {
+    "label": "Gezinme yolu"
+  },
+  "commandPalette": {
+    "title": "Komut Paleti",
+    "placeholder": "Ara veya git...",
+    "shortcutHint": "Ctrl K",
+    "goTo": "{page} sayfasına git",
+    "newPatient": "Yeni Hasta",
+    "shortcuts": "Klavye Kısayolları",
+    "empty": "Sonuç bulunamadı"
+  },
+  "shortcuts": {
+    "title": "Klavye Kısayolları",
+    "commandPalette": "Komut Paletini Aç",
+    "goToDashboard": "Panele Git",
+    "goToPatients": "Hastalara Git",
+    "goToAppointments": "Randevulara Git",
+    "goToReports": "Raporlara Git",
+    "goToSettings": "Ayarlara Git",
+    "showHelp": "Bu yardımı göster"
   },
   "dashboard": {
     "title": "Panel",
@@ -732,6 +764,12 @@
     "loadError": "Faturalar yüklenemedi",
     "createError": "Fatura oluşturulamadı",
     "forbidden": "Bunu yapma izniniz yok",
+    "index": {
+      "title": "Faturalandırma",
+      "search": "Fatura no veya hasta adına göre ara",
+      "allStatuses": "Tüm Durumlar",
+      "patient": "Hasta"
+    },
     "list": {
       "number": "Fatura No",
       "draftLabel": "Taslak",

@@ -21,7 +21,39 @@
     "openMenu": "فتح القائمة",
     "closeMenu": "إغلاق القائمة",
     "collapse": "طي الشريط الجانبي",
-    "expand": "توسيع الشريط الجانبي"
+    "expand": "توسيع الشريط الجانبي",
+    "favorites": "المفضلة",
+    "recent": "الأخيرة",
+    "favorite": "إضافة إلى المفضلة",
+    "unfavorite": "إزالة من المفضلة",
+    "sections": {
+      "clinical": "سريري",
+      "operations": "عمليات",
+      "insights": "تحليلات",
+      "admin": "الإدارة"
+    }
+  },
+  "breadcrumbs": {
+    "label": "مسار التنقل"
+  },
+  "commandPalette": {
+    "title": "لوحة الأوامر",
+    "placeholder": "ابحث أو انتقل إلى...",
+    "shortcutHint": "Ctrl K",
+    "goTo": "الانتقال إلى {page}",
+    "newPatient": "مريض جديد",
+    "shortcuts": "اختصارات لوحة المفاتيح",
+    "empty": "لا توجد نتائج"
+  },
+  "shortcuts": {
+    "title": "اختصارات لوحة المفاتيح",
+    "commandPalette": "فتح لوحة الأوامر",
+    "goToDashboard": "الانتقال إلى لوحة التحكم",
+    "goToPatients": "الانتقال إلى المرضى",
+    "goToAppointments": "الانتقال إلى المواعيد",
+    "goToReports": "الانتقال إلى التقارير",
+    "goToSettings": "الانتقال إلى الإعدادات",
+    "showHelp": "عرض هذه المساعدة"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -732,6 +764,12 @@
     "loadError": "تعذّر تحميل الفواتير",
     "createError": "تعذّر إنشاء الفاتورة",
     "forbidden": "ليس لديك صلاحية القيام بذلك",
+    "index": {
+      "title": "الفواتير",
+      "search": "ابحث برقم الفاتورة أو اسم المريض",
+      "allStatuses": "كل الحالات",
+      "patient": "المريض"
+    },
     "list": {
       "number": "رقم الفاتورة",
       "draftLabel": "مسودة",

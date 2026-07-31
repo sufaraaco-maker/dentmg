@@ -17,6 +17,7 @@ import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
 import { parseLocalDate, parseServerDateTime } from '@/lib/date'
 import type { Patient, PatientAuditLog } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
@@ -34,6 +35,7 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const auth = useAuthStore()
+const sidebarPreferences = useSidebarPreferencesStore()
 
 // Design doc §10/§15 Decision D: receptionists have NO access to Clinical Notes at all — the tab
 // itself must not render for them, not just its write actions, matching `ClinicalNotePolicy`'s
@@ -67,6 +69,9 @@ async function fetchPatient() {
   try {
     const { data } = await api.get<Patient>(`/patients/${patientId.value}`)
     patient.value = data
+    // Upgrades the Sidebar's Recent Items fallback ("Patients") to the real name, no extra fetch
+    // (frontend-ux-redesign design doc §5.1).
+    sidebarPreferences.updateRecentLabel('patient-detail', { id: patientId.value }, data.full_name)
   } finally {
     loading.value = false
   }
@@ -86,6 +91,7 @@ async function fetchAuditLogs() {
 
 function onSaved(updated: Patient) {
   patient.value = updated
+  sidebarPreferences.updateRecentLabel('patient-detail', { id: patientId.value }, updated.full_name)
   toast.add({ severity: 'success', summary: t('patients.saved'), life: 3000 })
   fetchAuditLogs()
 }

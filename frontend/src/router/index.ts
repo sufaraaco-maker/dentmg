@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { buildRecentItemFromRoute, useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
 import type { UserRole } from '@/types/user'
 
 declare module 'vue-router' {
@@ -9,6 +10,10 @@ declare module 'vue-router' {
     guestOnly?: boolean
     /** Roles allowed to access this route. Omitted = any authenticated role. Enforced here, not just hidden from nav. */
     roles?: UserRole[]
+    /** True on record-detail routes only (frontend-ux-redesign design doc §5.1) — drives the
+     *  Sidebar's Recent Items tracker via the `afterEach` hook below. List/index routes stay
+     *  untracked; recording every list visit would drown out the record pages Recents exists for. */
+    recent?: boolean
   }
 }
 
@@ -46,11 +51,13 @@ export const router = createRouter({
           path: 'patients/:id',
           name: 'patient-detail',
           component: () => import('@/views/PatientDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'patients/:id/treatment-plans/:planId',
           name: 'treatment-plan-detail',
           component: () => import('@/views/TreatmentPlanDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'patients/:id/clinical-notes/:noteId',
@@ -59,12 +66,18 @@ export const router = createRouter({
           // Design doc §10/§15 Decision D: receptionists have no access to Clinical Notes at all —
           // enforced here too (not just the hidden tab), same "backend/route both guard, not just
           // the UI" bar as every other role-restricted route in this file.
-          meta: { roles: ['admin', 'dentist'] },
+          meta: { roles: ['admin', 'dentist'], recent: true },
         },
         {
           path: 'patients/:id/invoices/:invoiceId',
           name: 'invoice-detail',
           component: () => import('@/views/InvoiceDetailView.vue'),
+          meta: { recent: true },
+        },
+        {
+          path: 'invoices',
+          name: 'invoices',
+          component: () => import('@/views/InvoicesView.vue'),
         },
         {
           path: 'appointments',
@@ -87,6 +100,7 @@ export const router = createRouter({
           path: 'appointments/:id',
           name: 'appointment-detail',
           component: () => import('@/views/AppointmentDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'dental-chart/conditions',
@@ -103,6 +117,7 @@ export const router = createRouter({
           path: 'supplies/:id',
           name: 'supply-detail',
           component: () => import('@/views/SupplyDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'purchase-orders',
@@ -113,6 +128,7 @@ export const router = createRouter({
           path: 'purchase-orders/:id',
           name: 'purchase-order-detail',
           component: () => import('@/views/PurchaseOrderDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'inventory/suppliers',
@@ -135,6 +151,7 @@ export const router = createRouter({
           path: 'lab-cases/:id',
           name: 'lab-case-detail',
           component: () => import('@/views/LabCaseDetailView.vue'),
+          meta: { recent: true },
         },
         {
           path: 'laboratory/labs',
@@ -244,4 +261,15 @@ router.beforeEach(async (to) => {
   }
 
   return true
+})
+
+// Sidebar Recent Items (frontend-ux-redesign design doc §5.1) — `afterEach`, not `beforeEach`, so
+// a navigation the guard above redirected (unauthenticated/forbidden) never gets recorded.
+router.afterEach((to) => {
+  if (!to.meta.recent || !to.name) return
+
+  const entry = buildRecentItemFromRoute(to.name as string, to.params as Record<string, string>)
+  if (entry) {
+    useSidebarPreferencesStore().recordVisit(entry)
+  }
 })

@@ -22,12 +22,20 @@ function makeRouter(): Router {
       { path: '/appointments/schedule', name: 'dentist-schedule', component: { template: '<div />' } },
       { path: '/users', name: 'users', component: { template: '<div />' } },
       { path: '/settings', name: 'settings', component: { template: '<div />' } },
+      // Billing is a real `RouterLink` now (no longer `comingSoon`) — `useLink` resolves it
+      // eagerly on render, so every test in this file needs a matching route or mounting itself
+      // throws, not just the tests that specifically assert on Billing.
+      { path: '/invoices', name: 'invoices', component: { template: '<div />' } },
     ],
   })
 }
 
 beforeEach(() => {
   setActivePinia(createPinia())
+  // `sidebarPreferences` is backed by real `localStorage` (`@vueuse/core`'s `useLocalStorage`),
+  // which jsdom does not reset between `it()` blocks the way a fresh Pinia instance resets
+  // in-memory state — without this, a favorite/recent toggled in one test would leak into the next.
+  localStorage.clear()
 })
 
 async function mountSidebar(role: UserRole, variant: 'desktop' | 'drawer' = 'desktop') {
@@ -71,11 +79,65 @@ describe('AppSidebar role-based visibility', () => {
   it('renders unbuilt modules as visible "Soon" items, not fake links', async () => {
     const { wrapper } = await mountSidebar('admin')
     expect(wrapper.text()).toContain('Dental Chart')
-    expect(wrapper.text()).toContain('Billing')
-    expect(wrapper.findAll('.pi-wallet').length).toBeGreaterThan(0)
+    expect(wrapper.text()).toContain('Treatment Plans')
+    expect(wrapper.findAll('.pi-clipboard').length).toBeGreaterThan(0)
     // Coming-soon items render no navigable target for their own row.
     const links = wrapper.findAll('a').map((a) => a.text())
-    expect(links.some((text) => text.includes('Billing'))).toBe(false)
+    expect(links.some((text) => text.includes('Treatment Plans'))).toBe(false)
+  })
+
+  it('renders Billing as a real navigable link, not a "Soon" placeholder', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    const links = wrapper.findAll('a').map((a) => a.text())
+    expect(links.some((text) => text.includes('Billing'))).toBe(true)
+  })
+})
+
+describe('AppSidebar sections', () => {
+  it('groups items under collapsible section headers', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    expect(wrapper.text()).toContain('Operations')
+    expect(wrapper.text()).toContain('Admin')
+  })
+
+  it('collapses a section when its header is clicked, hiding its items', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    expect(wrapper.text()).toContain('Billing')
+
+    const headers = wrapper.findAll('button').filter((b) => b.text() === 'Operations')
+    await headers[0]?.trigger('click')
+
+    expect(wrapper.text()).not.toContain('Billing')
+  })
+})
+
+describe('AppSidebar favorites', () => {
+  it('shows a Favorites group once an item is favorited', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    expect(wrapper.text()).not.toContain('Favorites')
+
+    const favoriteButtons = wrapper.findAll('button[aria-label]').filter((b) => b.attributes('aria-label') === 'Add to favorites')
+    await favoriteButtons[0]?.trigger('click')
+
+    expect(wrapper.text()).toContain('Favorites')
+  })
+})
+
+describe('AppSidebar recent items', () => {
+  it('shows a Recent group once a visit is recorded', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    expect(wrapper.text()).not.toContain('Recent')
+
+    const { useSidebarPreferencesStore } = await import('@/stores/sidebarPreferences')
+    useSidebarPreferencesStore().recordVisit({
+      routeName: 'patients',
+      params: {},
+      label: 'nav.patients',
+      icon: 'pi pi-users',
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('Recent')
   })
 })
 

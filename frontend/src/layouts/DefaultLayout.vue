@@ -4,13 +4,21 @@ import { useI18n } from 'vue-i18n'
 import Drawer from 'primevue/drawer'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import CommandPalette from '@/components/layout/CommandPalette.vue'
+import AppKeyboardShortcutsHelp from '@/components/layout/AppKeyboardShortcutsHelp.vue'
 import { useUiStore } from '@/stores/ui'
+import { useAppShortcuts } from '@/composables/useAppShortcuts'
 import { RTL_LOCALES, type SupportedLocale } from '@/locales'
 
 const { t, locale } = useI18n()
 const ui = useUiStore()
 
 const isRtl = computed(() => RTL_LOCALES.includes(locale.value as SupportedLocale))
+
+// App-wide shortcuts (Ctrl+K, ?, g-chords) mounted exactly once here, not per-view
+// (frontend-ux-redesign design doc §5.4) — `DefaultLayout` is itself a singleton for the
+// authenticated app shell.
+useAppShortcuts()
 </script>
 
 <template>
@@ -32,5 +40,8 @@ const isRtl = computed(() => RTL_LOCALES.includes(locale.value as SupportedLocal
         <RouterView />
       </main>
     </div>
+
+    <CommandPalette />
+    <AppKeyboardShortcutsHelp />
   </div>
 </template>

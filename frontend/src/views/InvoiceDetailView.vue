@@ -17,6 +17,7 @@ import EditInvoiceDialog from '@/components/invoices/EditInvoiceDialog.vue'
 import InvoicePaymentsPanel from '@/components/payments/InvoicePaymentsPanel.vue'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
+import { useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
 import { parseServerDateTime, parseLocalDate } from '@/lib/date'
 import type { Invoice, InvoiceItem } from '@/types/invoice'
 
@@ -51,6 +52,7 @@ const toast = useToast()
 const confirm = useConfirm()
 const invoicesStore = useInvoicesStore()
 const auth = useAuthStore()
+const sidebarPreferences = useSidebarPreferencesStore()
 
 const patientId = computed(() => route.params.id as string)
 const invoiceId = computed(() => route.params.invoiceId as string)
@@ -98,6 +100,23 @@ async function load() {
 }
 
 watch(invoiceId, load, { immediate: true })
+
+// Upgrades the Sidebar's Recent Items fallback to the real invoice number, no extra fetch
+// (frontend-ux-redesign design doc §5.1) — a still-draft invoice has no number yet, so it keeps
+// the generic fallback label until issued.
+watch(
+  invoice,
+  (current) => {
+    if (current?.invoice_number) {
+      sidebarPreferences.updateRecentLabel(
+        'invoice-detail',
+        { id: patientId.value, invoiceId: invoiceId.value },
+        current.invoice_number,
+      )
+    }
+  },
+  { immediate: true },
+)
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(parseLocalDate(value))
