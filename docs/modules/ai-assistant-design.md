@@ -1,7 +1,17 @@
 # AI Assistant — Module Design (Approved)
 
-**Status: Approved for implementation, 2026-07-31.** This is the final module named in
-`PROJECT_CONTEXT.md`'s Main Modules list, following Settings (merged to `main` 2026-07-30 via PR #8).
+**Status: Done — Production Ready ✅.** CI-confirmed 2026-07-31 on `feature/ai-assistant` (not yet
+merged to `main`): Dashboard Insights, Smart Search, Writing Reports (zero-PHI, enabled-eligible) plus
+the framework, data model, and feature flags for Clinical Notes draft-assist and Treatment Suggestions
+(built but disabled-by-default and absent from the UI until an admin acknowledges a signed BAA). 905/905
+backend tests (28 AI-Assistant-specific) + 694/694 frontend Vitest tests green (22 new), `vue-tsc`/
+ESLint/Pint/Prettier clean, permanent E2E suite (`frontend/e2e/ai-assistant.spec.ts`) confirmed 34/34
+green via the GitHub Actions API (`workflow_dispatch` run `30605056813`). Four earlier CI iterations
+surfaced one real backend bug (`LengthAwarePaginator` contract doesn't expose `getCollection()`) and
+three real, spec-only E2E bugs (unscoped role query, tight assertion timeouts, a nonexistent
+`/dashboard` route) — see `TECH_DEBT.md`'s "AI Assistant module" section for the full account. This is
+the final module named in `PROJECT_CONTEXT.md`'s Main Modules list, following Settings (merged to
+`main` 2026-07-30 via PR #8).
 
 ## Approval & Decisions (2026-07-31)
 

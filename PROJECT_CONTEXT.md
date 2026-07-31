@@ -361,22 +361,36 @@ the second run (`30562178951`) is fully green: **Backend 877/877, Frontend 672/6
 failures.** Multi-branch/location settings, clinic logo upload, and notification/reminder settings are
 deliberately out of scope for V1 (see `docs/modules/settings-design.md`'s §2/§9 and `TECH_DEBT.md`).
 
-**AI Assistant — Design Approved 2026-07-31, implementation starting** (see
-`docs/modules/ai-assistant-design.md`'s Approval & Decisions section). Final module on the roadmap
-(per user's explicit prioritization — it depends on data/workflow completeness across everything
-else to add real value, so it comes last). Splits into two risk tiers by PHI exposure: three
-zero-PHI features ship first (Dashboard Insights, Smart Search, Writing Reports — aggregate report
-data or the user's own query text only, never patient-identified content sent to the Claude API);
-Clinical Notes draft-assist and Treatment Suggestions are built in the same pass but ship
-disabled-by-default and absent from the UI, gated behind an explicit admin acknowledgment that a
-signed BAA with Anthropic is in place (`ai_assistant_phi_features_acknowledged` on `ClinicSetting`)
-— a hard product requirement, not a soft default. AI is decision-support only: every suggestion
-routes through the existing Policy-gated service layer (`ClinicalNoteService`,
-`TreatmentPlanService`) and requires explicit user acceptance before any write; nothing is
-auto-created, auto-signed, or auto-persisted. A new append-only `AiInteractionLog` table records
-every prompt/response and acceptance decision; AI-generated content stays visually/programmatically
-distinguishable from user-authored content in the UI until accepted. Follows the standard module
-workflow: Design → Backend → Frontend → Tests → CI → Documentation → PR.
+**AI Assistant — Production Ready ✅ (2026-07-31, `feature/ai-assistant`, CI-confirmed)**: design
+approved 2026-07-31 (see `docs/modules/ai-assistant-design.md`'s Approval & Decisions section).
+Final module on the roadmap (per user's explicit prioritization — it depends on data/workflow
+completeness across everything else to add real value, so it comes last). Splits into two risk
+tiers by PHI exposure: three zero-PHI features ship enabled-eligible (Dashboard Insights, Smart
+Search, Writing Reports — aggregate report data or the user's own query text only, never
+patient-identified content sent to the Claude API); Clinical Notes draft-assist and Treatment
+Suggestions are built in the same pass but ship disabled-by-default and absent from the UI, gated
+behind an explicit admin acknowledgment that a signed BAA with Anthropic is in place
+(`ai_assistant_phi_features_acknowledged` on `ClinicSetting`) — a hard product requirement, not a
+soft default. AI is decision-support only: every suggestion routes through the existing
+Policy-gated service layer (`ClinicalNoteService`, `TreatmentPlanService`) and requires explicit
+user acceptance before any write; nothing is auto-created, auto-signed, or auto-persisted. A new
+append-only `AiInteractionLog` table records every prompt/response and acceptance decision;
+AI-generated content stays visually/programmatically distinguishable from user-authored content
+in the UI ("AI-suggested, unreviewed" tag) until accepted. The whole module is additionally gated
+at the infrastructure level: with no `ANTHROPIC_API_KEY` configured, every endpoint fails closed
+with a 503 rather than silently no-op'ing. 905/905 backend tests (28 new: 12 in `AiAssistantGatingTest`,
+10 in `AiAssistantControllerTest`, 2 in `AiInteractionFeatureTest`, plus 4 regression tests added to
+`ClinicSettingTest` for partial-update gating) + 694/694 frontend Vitest tests green
+(22 new, zero regressions), `vue-tsc`/ESLint/Pint/Prettier clean; a permanent Playwright E2E suite
+(`frontend/e2e/ai-assistant.spec.ts`) confirmed via the GitHub Actions API across five
+`workflow_dispatch` runs on `feature/ai-assistant` — the first two iterations fixed a real backend
+bug (`LengthAwarePaginator` contract doesn't expose `getCollection()`, only `items()`) and Prettier
+formatting; the next two fixed E2E-spec-only issues (a switch-role query needed scoping to `main`
+plus a self-healing settings reset for CI retries; a stray `/dashboard` goto that should have been
+`/`, since the dashboard route is the bare root path) — the app itself needed zero further changes
+after the first fix. Final run (`30605056813`) is fully green: **Backend 905/905, Frontend 694/694,
+E2E 34/34 — zero failures.** Follows the standard module workflow: Design → Backend → Frontend →
+Tests → CI → Documentation → PR.
 
 See `docs/roadmap.md` for current per-module status.
 
