@@ -24,5 +24,12 @@ class ClinicSetting extends Model
         'phone',
         'address',
         'email',
+        'ai_assistant_enabled',
+        'ai_assistant_phi_features_acknowledged',
+    ];
+
+    protected $casts = [
+        'ai_assistant_enabled' => 'boolean',
+        'ai_assistant_phi_features_acknowledged' => 'boolean',
     ];
 }

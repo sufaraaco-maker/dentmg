@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -9,10 +9,19 @@ import Skeleton from 'primevue/skeleton'
 import Card from 'primevue/card'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
+import Message from 'primevue/message'
 import ClinicalNoteStatusChip from '@/components/clinicalNotes/ClinicalNoteStatusChip.vue'
 import { useClinicalNotesStore } from '@/stores/clinicalNotes'
 import { useAuthStore } from '@/stores/auth'
+import { useAiAssistantStore } from '@/stores/aiAssistant'
 import { isClinicalNoteError } from '@/services/clinicalNotes'
+import {
+  aiAssistantErrorCode,
+  draftClinicalNote,
+  recordAiDecision,
+} from '@/services/aiAssistant/aiAssistantApi'
 import { parseServerDateTime } from '@/lib/date'
 import { CLINICAL_NOTE_TYPES } from '@/types/clinicalNote'
 import type { ClinicalNote } from '@/types/clinicalNote'
@@ -37,6 +46,9 @@ const toast = useToast()
 const confirm = useConfirm()
 const clinicalNotesStore = useClinicalNotesStore()
 const auth = useAuthStore()
+const aiAssistantStore = useAiAssistantStore()
+
+onMounted(() => aiAssistantStore.load())
 
 const patientId = computed(() => route.params.id as string)
 const noteId = computed(() => route.params.noteId as string)
@@ -52,6 +64,11 @@ const isSigned = computed(() => note.value?.status === 'signed')
 const canEdit = computed(() => canWrite.value && isDraft.value)
 const canSign = computed(() => canWrite.value && isDraft.value)
 const canAddendum = computed(() => canWrite.value && isSigned.value)
+// PHI-bearing feature (design doc §4.4) — absent from the UI, not just disabled, unless the admin
+// has both turned the module on and confirmed the BAA-with-Anthropic prerequisite (§5 Layer 2).
+const canUseAiDraft = computed(
+  () => canEdit.value && aiAssistantStore.enabled && aiAssistantStore.phiAcknowledged,
+)
 
 async function load() {
   notFound.value = false
@@ -111,12 +128,70 @@ async function saveDraft() {
       assessment: form.assessment || null,
       plan: form.plan || null,
     })
+    // Whatever the dentist actually saved — post-edit, not the raw AI draft — is the
+    // auditable record of what was accepted (design doc §5's auditability requirement).
+    if (aiDraftPending.value && aiInteractionId.value) {
+      const finalText = [form.subjective, form.objective, form.assessment, form.plan].join('\n\n')
+      recordAiDecision(aiInteractionId.value, true, finalText).catch(() => {})
+      aiDraftPending.value = false
+      aiInteractionId.value = null
+    }
     toast.add({ severity: 'success', summary: t('clinicalNotes.detail.savedDraft'), life: 3000 })
   } catch (err) {
     await handleSaveError(err)
   } finally {
     saving.value = false
   }
+}
+
+// --- AI draft-assist (design doc §4.4, PHI-bearing) ---------------------------------------------
+
+const aiDraftDialogVisible = ref(false)
+const aiShorthand = ref('')
+const aiDrafting = ref(false)
+const aiDraftError = ref<string | null>(null)
+/** True once AI has filled the SOAP fields below, until the dentist saves (accept) or discards
+ *  (reject) — drives the "AI-suggested, unreviewed" label (Approval decision 5, 2026-07-31). */
+const aiDraftPending = ref(false)
+const aiInteractionId = ref<string | null>(null)
+
+function openAiDraftDialog() {
+  aiShorthand.value = ''
+  aiDraftError.value = null
+  aiDraftDialogVisible.value = true
+}
+
+async function generateAiDraft() {
+  if (!note.value || !aiShorthand.value.trim()) return
+
+  aiDrafting.value = true
+  aiDraftError.value = null
+  try {
+    const draft = await draftClinicalNote(note.value.id, aiShorthand.value.trim())
+    form.subjective = draft.subjective
+    form.objective = draft.objective
+    form.assessment = draft.assessment
+    form.plan = draft.plan
+    aiDraftPending.value = true
+    aiInteractionId.value = draft.interaction_id
+    aiDraftDialogVisible.value = false
+  } catch (err) {
+    aiDraftError.value =
+      aiAssistantErrorCode(err) === 'ai_assistant_unavailable'
+        ? t('aiAssistant.unavailableError')
+        : t('aiAssistant.genericError')
+  } finally {
+    aiDrafting.value = false
+  }
+}
+
+function discardAiDraft() {
+  Object.assign(form, formFromNote(note.value))
+  if (aiInteractionId.value) {
+    recordAiDecision(aiInteractionId.value, false).catch(() => {})
+  }
+  aiDraftPending.value = false
+  aiInteractionId.value = null
 }
 
 async function handleSaveError(err: unknown): Promise<void> {
@@ -249,21 +324,46 @@ function goToPatient() {
         <template #title>
           <div class="flex items-center justify-between">
             <span>{{ t('clinicalNotes.title') }}</span>
-            <Button
-              v-if="canSign"
-              :label="t('clinicalNotes.detail.sign')"
-              icon="pi pi-verified"
-              severity="success"
-              size="small"
-              :loading="signing"
-              @click="confirmSign"
-            />
+            <div class="flex items-center gap-2">
+              <Button
+                v-if="canUseAiDraft"
+                :label="t('aiAssistant.clinicalNoteDraft.action')"
+                icon="pi pi-sparkles"
+                severity="secondary"
+                outlined
+                size="small"
+                @click="openAiDraftDialog"
+              />
+              <Button
+                v-if="canSign"
+                :label="t('clinicalNotes.detail.sign')"
+                icon="pi pi-verified"
+                severity="success"
+                size="small"
+                :loading="signing"
+                @click="confirmSign"
+              />
+            </div>
           </div>
         </template>
         <template #content>
           <p v-if="isSigned" class="mb-4 text-xs text-surface-500 dark:text-surface-400">
             <i class="pi pi-lock me-1" />{{ t('clinicalNotes.detail.lockedNote') }}
           </p>
+
+          <div
+            v-if="aiDraftPending"
+            class="mb-4 flex items-center justify-between rounded-lg bg-primary-50 p-3 dark:bg-primary-400/10"
+          >
+            <Tag severity="info" icon="pi pi-sparkles" :value="t('aiAssistant.unreviewedLabel')" />
+            <Button
+              :label="t('aiAssistant.clinicalNoteDraft.discard')"
+              text
+              size="small"
+              severity="secondary"
+              @click="discardAiDraft"
+            />
+          </div>
 
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
@@ -369,5 +469,34 @@ function goToPatient() {
         </template>
       </Card>
     </template>
+
+    <Dialog
+      :visible="aiDraftDialogVisible"
+      modal
+      :header="t('aiAssistant.clinicalNoteDraft.dialogTitle')"
+      class="w-full max-w-lg"
+      @update:visible="(v: boolean) => (aiDraftDialogVisible = v)"
+    >
+      <div class="flex flex-col gap-3">
+        <p class="text-sm text-surface-500">{{ t('aiAssistant.clinicalNoteDraft.dialogHint') }}</p>
+        <Textarea
+          v-model="aiShorthand"
+          rows="4"
+          auto-resize
+          maxlength="4000"
+          :placeholder="t('aiAssistant.clinicalNoteDraft.shorthandPlaceholder')"
+        />
+        <Message v-if="aiDraftError" severity="error" size="small">{{ aiDraftError }}</Message>
+        <div class="flex justify-end">
+          <Button
+            :label="t('aiAssistant.clinicalNoteDraft.generate')"
+            icon="pi pi-sparkles"
+            :loading="aiDrafting"
+            :disabled="!aiShorthand.trim()"
+            @click="generateAiDraft"
+          />
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>

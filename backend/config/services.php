@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // AI Assistant module (design doc §5/§6) — absent-by-default: no ANTHROPIC_API_KEY means the
+    // AiAssistantService is never constructed and no behavior anywhere else in the app changes.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-5'),
+    ],
+
 ];

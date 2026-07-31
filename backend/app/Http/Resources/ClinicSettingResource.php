@@ -20,6 +20,8 @@ class ClinicSettingResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'email' => $this->email,
+            'ai_assistant_enabled' => $this->ai_assistant_enabled,
+            'ai_assistant_phi_features_acknowledged' => $this->ai_assistant_phi_features_acknowledged,
             'updated_at' => $this->updated_at->toIso8601String(),
         ];
     }

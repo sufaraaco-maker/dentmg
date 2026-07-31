@@ -4,14 +4,20 @@ export interface ClinicSetting {
   phone: string | null
   address: string | null
   email: string | null
+  ai_assistant_enabled: boolean
+  ai_assistant_phi_features_acknowledged: boolean
   updated_at: string
 }
 
 export interface UpdateClinicSettingPayload {
-  name: string
+  /** Only required when actually setting the practice name (Practice Settings' own form always
+   *  sends it); omit entirely for a partial update, e.g. AI Assistant Settings' toggles-only save. */
+  name?: string
   phone?: string | null
   address?: string | null
   email?: string | null
+  ai_assistant_enabled?: boolean
+  ai_assistant_phi_features_acknowledged?: boolean
 }
 
 export interface BillingSetting {
