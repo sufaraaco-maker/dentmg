@@ -1,6 +1,6 @@
-# Frontend UX & Navigation Redesign — Design Document (Awaiting Approval)
+# Frontend UX & Navigation Redesign — Design Document (Approved)
 
-**Status: Design drafted 2026-07-31, awaiting user approval before implementation begins.** This is
+**Status: Phase 1 (Navigation Shell) approved for implementation, 2026-07-31.** This is
 not a new business module — it is a cross-cutting initiative across the entire existing frontend,
 started once every module on the original roadmap (`PROJECT_CONTEXT.md`'s Main Modules list) reached
 Production Ready ✅. Explicit user framing: focus entirely on **Frontend** quality — navigation,
