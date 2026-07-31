@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue'
+import AiReportNarrativeButton from '@/components/aiAssistant/AiReportNarrativeButton.vue'
 import { downloadReportCsv, getTreatmentPlanAcceptanceReport } from '@/services/reports'
 import { useProvidersStore } from '@/stores/providers'
 import { toLocalDateString } from '@/lib/date'
@@ -95,6 +96,11 @@ onMounted(async () => {
         </div>
       </template>
     </ReportDateRangeFilter>
+
+    <AiReportNarrativeButton
+      report-type="treatment_plan_acceptance"
+      :params="{ date_from: dateFrom, date_to: dateTo, dentist_id: dentistId }"
+    />
 
     <Message v-if="error" severity="error">{{ t('reports.loadError') }}</Message>
 

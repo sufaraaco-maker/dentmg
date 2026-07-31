@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import Card from 'primevue/card'
 import Message from 'primevue/message'
+import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
 import TreatmentPlanStatusChip from '@/components/treatmentPlans/TreatmentPlanStatusChip.vue'
 import TreatmentPlanItemsTable from '@/components/treatmentPlans/TreatmentPlanItemsTable.vue'
 import TreatmentPlanActionsBar from '@/components/treatmentPlans/TreatmentPlanActionsBar.vue'
@@ -13,8 +15,15 @@ import TreatmentPlanItemDialog from '@/components/treatmentPlans/TreatmentPlanIt
 import { useTreatmentPlansStore } from '@/stores/treatmentPlans'
 import { useDentalConditionsStore } from '@/stores/dentalConditions'
 import { useAuthStore } from '@/stores/auth'
+import { useAiAssistantStore } from '@/stores/aiAssistant'
+import {
+  aiAssistantErrorCode,
+  recordAiDecision,
+  suggestTreatmentItems,
+} from '@/services/aiAssistant/aiAssistantApi'
 import { parseServerDateTime } from '@/lib/date'
 import type { TreatmentPlanItem } from '@/types/treatmentPlan'
+import type { AiTreatmentSuggestionCandidate } from '@/types/aiAssistant'
 
 /**
  * Plan Detail (design doc §11/§21 Steps 7-8) — metadata, status, cost summary, revision
@@ -36,6 +45,9 @@ const router = useRouter()
 const treatmentPlansStore = useTreatmentPlansStore()
 const conditionsStore = useDentalConditionsStore()
 const auth = useAuthStore()
+const aiAssistantStore = useAiAssistantStore()
+
+onMounted(() => aiAssistantStore.load())
 
 const patientId = computed(() => route.params.id as string)
 const planId = computed(() => route.params.planId as string)
@@ -48,6 +60,11 @@ const notFound = ref(false)
 const canWrite = computed(() => auth.isAdmin || auth.isDentist)
 // Items may only be added while the plan is still a draft (`TreatmentPlanService::addItem()`).
 const canAddItem = computed(() => canWrite.value && plan.value?.status === 'draft')
+// PHI-bearing feature (design doc §4.5) — absent from the UI, not just disabled, unless the admin
+// has both turned the module on and confirmed the BAA-with-Anthropic prerequisite (§5 Layer 2).
+const canUseAiSuggestions = computed(
+  () => canAddItem.value && aiAssistantStore.enabled && aiAssistantStore.phiAcknowledged,
+)
 
 const itemDialogVisible = ref(false)
 const editingItem = ref<TreatmentPlanItem | null>(null)
@@ -60,6 +77,73 @@ function openAddItem() {
 function openEditItem(item: TreatmentPlanItem) {
   editingItem.value = item
   itemDialogVisible.value = true
+}
+
+// --- AI Treatment Suggestions (design doc §4.5, PHI-bearing) ------------------------------------
+
+const suggestionsDialogVisible = ref(false)
+const suggesting = ref(false)
+const suggestionsError = ref<string | null>(null)
+const candidates = ref<AiTreatmentSuggestionCandidate[]>([])
+const addedCandidates = ref<Set<number>>(new Set())
+const addingCandidateIndex = ref<number | null>(null)
+const suggestionInteractionId = ref<string | null>(null)
+const anyCandidateAdded = ref(false)
+
+function conditionName(id: string): string {
+  return conditionsStore.items.find((c) => c.id === id)?.name ?? id
+}
+
+async function openSuggestionsDialog() {
+  if (!plan.value) return
+
+  suggestionsDialogVisible.value = true
+  suggesting.value = true
+  suggestionsError.value = null
+  candidates.value = []
+  addedCandidates.value = new Set()
+  anyCandidateAdded.value = false
+  suggestionInteractionId.value = null
+
+  try {
+    const result = await suggestTreatmentItems(plan.value.id)
+    candidates.value = result.candidates
+    suggestionInteractionId.value = result.interaction_id
+  } catch (err) {
+    suggestionsError.value =
+      aiAssistantErrorCode(err) === 'ai_assistant_unavailable'
+        ? t('aiAssistant.unavailableError')
+        : t('aiAssistant.genericError')
+  } finally {
+    suggesting.value = false
+  }
+}
+
+async function addCandidate(candidate: AiTreatmentSuggestionCandidate, index: number) {
+  if (!plan.value) return
+
+  addingCandidateIndex.value = index
+  try {
+    await treatmentPlansStore.addItem(plan.value.id, {
+      dental_condition_id: candidate.dental_condition_id,
+      tooth_number: candidate.tooth_number,
+      surfaces: candidate.surfaces ?? undefined,
+    })
+    addedCandidates.value = new Set(addedCandidates.value).add(index)
+    anyCandidateAdded.value = true
+  } finally {
+    addingCandidateIndex.value = null
+  }
+}
+
+function closeSuggestionsDialog() {
+  suggestionsDialogVisible.value = false
+  if (suggestionInteractionId.value) {
+    const summary = anyCandidateAdded.value
+      ? `Added ${addedCandidates.value.size} of ${candidates.value.length} suggested items`
+      : undefined
+    recordAiDecision(suggestionInteractionId.value, anyCandidateAdded.value, summary).catch(() => {})
+  }
 }
 
 async function load() {
@@ -218,13 +302,24 @@ function goToPlan(id: string) {
         <template #title>
           <div class="flex items-center justify-between">
             <span>{{ t('treatmentPlans.detail.items') }}</span>
-            <Button
-              v-if="canAddItem"
-              :label="t('treatmentPlans.items.add')"
-              icon="pi pi-plus"
-              size="small"
-              @click="openAddItem"
-            />
+            <div class="flex items-center gap-2">
+              <Button
+                v-if="canUseAiSuggestions"
+                :label="t('aiAssistant.treatmentSuggestion.action')"
+                icon="pi pi-sparkles"
+                severity="secondary"
+                outlined
+                size="small"
+                @click="openSuggestionsDialog"
+              />
+              <Button
+                v-if="canAddItem"
+                :label="t('treatmentPlans.items.add')"
+                icon="pi pi-plus"
+                size="small"
+                @click="openAddItem"
+              />
+            </div>
           </div>
         </template>
         <template #content>
@@ -235,6 +330,59 @@ function goToPlan(id: string) {
         </template>
       </Card>
     </template>
+
+    <Dialog
+      :visible="suggestionsDialogVisible"
+      modal
+      :header="t('aiAssistant.treatmentSuggestion.dialogTitle')"
+      class="w-full max-w-2xl"
+      @update:visible="(v: boolean) => (v ? null : closeSuggestionsDialog())"
+    >
+      <Skeleton v-if="suggesting" height="10rem" />
+
+      <Message v-else-if="suggestionsError" severity="error">{{ suggestionsError }}</Message>
+
+      <p v-else-if="!candidates.length" class="text-sm text-surface-500">
+        {{ t('aiAssistant.treatmentSuggestion.empty') }}
+      </p>
+
+      <ul v-else class="flex flex-col gap-3">
+        <li
+          v-for="(candidate, index) in candidates"
+          :key="index"
+          class="flex items-start justify-between gap-3 rounded-lg border border-surface-200 p-3 dark:border-surface-700"
+        >
+          <div>
+            <div class="flex items-center gap-2">
+              <Tag severity="info" icon="pi pi-sparkles" :value="t('aiAssistant.unreviewedLabel')" />
+              <span class="font-medium text-surface-900 dark:text-surface-0">{{
+                conditionName(candidate.dental_condition_id)
+              }}</span>
+              <span v-if="candidate.tooth_number" class="text-sm text-surface-500" dir="ltr">
+                #{{ candidate.tooth_number
+                }}<template v-if="candidate.surfaces?.length">
+                  ({{ candidate.surfaces.join(', ') }})</template
+                >
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">{{ candidate.rationale }}</p>
+          </div>
+          <Button
+            v-if="!addedCandidates.has(index)"
+            :label="t('aiAssistant.treatmentSuggestion.add')"
+            icon="pi pi-plus"
+            size="small"
+            :loading="addingCandidateIndex === index"
+            @click="addCandidate(candidate, index)"
+          />
+          <Tag v-else severity="success" :value="t('aiAssistant.treatmentSuggestion.added')" />
+        </li>
+      </ul>
+
+      <template #footer>
+        <Button :label="t('common.close')" text @click="closeSuggestionsDialog" />
+      </template>
+    </Dialog>
   </div>
 
   <TreatmentPlanItemDialog v-if="plan" v-model:visible="itemDialogVisible" :plan="plan" :item="editingItem" />

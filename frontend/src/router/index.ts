@@ -166,6 +166,12 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
+          path: 'settings/ai-assistant',
+          name: 'settings-ai-assistant',
+          component: () => import('@/views/settings/AiAssistantSettingsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
           path: 'account',
           name: 'account',
           component: () => import('@/views/AccountView.vue'),

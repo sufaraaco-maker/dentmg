@@ -13,8 +13,10 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { askSmartSearch } from '@/services/aiAssistant/aiAssistantApi'
 import type { Patient } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
+import AiQuestionBox from '@/components/aiAssistant/AiQuestionBox.vue'
 
 interface PaginatedPatients {
   data: Patient[]
@@ -121,6 +123,12 @@ onMounted(fetchPatients)
       <InputIcon class="pi pi-search" />
       <InputText v-model="search" :placeholder="t('patients.search')" class="w-full" />
     </IconField>
+
+    <AiQuestionBox
+      :title="t('aiAssistant.smartSearch.title')"
+      :placeholder="t('aiAssistant.smartSearch.placeholder')"
+      :ask-fn="askSmartSearch"
+    />
 
     <DataTable
       :value="patients"

@@ -5,6 +5,7 @@ import Message from 'primevue/message'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import AiReportNarrativeButton from '@/components/aiAssistant/AiReportNarrativeButton.vue'
 import { downloadReportCsv, getArAgingReport } from '@/services/reports'
 import type { ArAgingBucket, ArAgingReport } from '@/types/reports'
 
@@ -54,6 +55,8 @@ onMounted(fetchReport)
         @click="exportCsv"
       />
     </div>
+
+    <AiReportNarrativeButton report-type="ar_aging" :params="{}" />
 
     <Message v-if="error" severity="error">{{ t('reports.loadError') }}</Message>
 
