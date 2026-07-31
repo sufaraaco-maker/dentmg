@@ -394,17 +394,36 @@ Tests → CI → Documentation → PR.
 
 See `docs/roadmap.md` for current per-module status.
 
-**Frontend UX & Navigation Redesign — Design drafted 2026-07-31, awaiting final go-ahead** (see
-`docs/modules/frontend-ux-redesign.md`). With every module on the original roadmap Production Ready ✅,
-focus shifts to a cross-cutting, frontend-only quality pass: full Sidebar/Header redesign (section
-grouping, Favorites, Recent Items), a Command Palette (`Ctrl+K`), a shared `AppDataTable.vue` rollout
-across all ~20 list views (sticky headers, column resize/reorder, bulk actions, shared empty/skeleton
-states), a Dashboard refresh (chart.js-backed indicator cards, Quick Actions), and a full motion/
-responsive/WCAG-AA accessibility pass — benchmarked against Linear/Notion/Stripe/Vercel interaction
-patterns rather than dental-EMR competitors. Explicitly no new backend scope; evolves the existing
-PrimeVue Aura theme rather than introducing a bespoke design system. Split into four sequential phases
-(Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish), each run through the full
-standard workflow independently so `main` stays releasable between phases.
+**Frontend UX & Navigation Redesign** (see `docs/modules/frontend-ux-redesign.md`). With every module
+on the original roadmap Production Ready ✅, focus shifted to a cross-cutting, frontend-only quality
+pass, benchmarked against Linear/Notion/Stripe/Vercel interaction patterns rather than dental-EMR
+competitors — explicitly no new backend scope beyond one small, user-approved exception (below), and
+evolves the existing PrimeVue Aura theme rather than introducing a bespoke design system. Split into
+four sequential phases (Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish), each run
+through the full standard workflow independently so `main` stays releasable between phases.
+
+**Phase 1: Navigation Shell — Production Ready ✅ (CI-confirmed 2026-07-31, `feature/frontend-nav-shell`,
+not yet merged to `main`)**: Sidebar redesign (collapsible section grouping, Favorites, Recent Items —
+last 5 visited record pages, upgraded from a generic fallback to the real name once a detail view loads
+it, all `localStorage`-only per the confirmed frontend-only scope — plus true recursive nesting,
+resolving a previously-tracked one-level limit), Header redesign (a breadcrumb trail derived from the
+existing nav config, no per-route duplication, plus a global search/Command Palette entry point),
+Command Palette (`Ctrl+K`/`Cmd+K`: role-filtered "Go to X" for every reachable route, a "New Patient"
+quick action, arrow-key navigation), and app-wide keyboard shortcuts (`?` for a shortcuts-help overlay,
+Linear-style `g`-then-X go-to chords) generalizing the existing calendar-shortcuts guard pattern
+without touching it. One small, explicitly-approved backend exception to the "frontend-only" framing:
+a `GET /invoices` endpoint (paginated, searchable, status-filterable) — the Billing sidebar entry had
+been silently stuck on a stale "Coming Soon" flag despite the underlying Invoice CRUD working end to
+end, and no clinic-wide list endpoint existed to point it at. 913/913 backend tests (8 new) + 751/751
+frontend Vitest tests (30 new), `vue-tsc -b`/ESLint/Prettier clean, permanent E2E suite
+(`frontend/e2e/frontend-nav-shell.spec.ts`) confirmed via the GitHub Actions API across three
+`workflow_dispatch` runs — real findings along the way: a `vue-tsc -b` build-only type error invisible
+to plain `--noEmit`, and three genuine E2E bugs (a locator searching inside a link instead of its
+sibling row, a `getByRole('heading', ...)` assertion against a PrimeVue `Dialog` header that renders as
+plain text not a semantic heading, and a keyboard-shortcut race against the app shell not yet being
+mounted) — the app itself needed only the type fix. Final run (`30629204011`) is fully green: **Backend
+913/913, Frontend 751/751, E2E 39/39 — zero failures.** Phases 2–4 (Dashboard, Data Tables System,
+Cross-cutting Polish) are not yet started.
 
 **Standing architectural principles (2026-07-27, apply to every future module's design phase)**:
 1. **SaaS multi-tenant readiness** — every new schema/service/API decision must stay compatible with a

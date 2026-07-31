@@ -28,7 +28,15 @@ Modules are implemented one at a time, each fully complete (migration → model 
 
 With every module above Production Ready ✅, focus has shifted to a cross-cutting, frontend-only
 navigation/UX redesign (Sidebar, Header, Command Palette, Dashboard, Data Tables System, motion/
-responsive/accessibility polish) — see `modules/frontend-ux-redesign.md`. Design drafted 2026-07-31,
-split into four sequential phases (Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish).
+responsive/accessibility polish) — see `modules/frontend-ux-redesign.md`. Split into four sequential
+phases (Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish), each run through the full
+standard workflow independently.
+
+| Phase | Status |
+|---|---|
+| **1. Navigation Shell** | **Done — Production Ready ✅**, CI-confirmed 2026-07-31 on `feature/frontend-nav-shell` (not yet merged to `main`) — Sidebar (collapsible sections, Favorites, Recent Items, true recursive nesting), Header (breadcrumbs, global search entry point), Command Palette (`Ctrl+K`), app-wide keyboard shortcuts (`?`, `g`-then-X chords), and a real Billing sidebar destination (`GET /invoices`, one small approved backend exception to the frontend-only scope). 913/913 backend tests (8 new) + 751/751 frontend Vitest tests (30 new), `vue-tsc -b`/ESLint/Prettier clean, permanent E2E suite confirmed 39/39 green on GitHub Actions (`workflow_dispatch` run `30629204011`, after fixing a `vue-tsc -b` build-only type error and three real E2E bugs CI's own runs surfaced — see `TECH_DEBT.md`) |
+| **2. Dashboard** | Not started |
+| **3. Data Tables System** | Not started |
+| **4. Cross-cutting Polish** | Not started |
 
 Full module list and scope boundaries are defined in `PROJECT_CONTEXT.md`.
