@@ -361,7 +361,7 @@ the second run (`30562178951`) is fully green: **Backend 877/877, Frontend 672/6
 failures.** Multi-branch/location settings, clinic logo upload, and notification/reminder settings are
 deliberately out of scope for V1 (see `docs/modules/settings-design.md`'s §2/§9 and `TECH_DEBT.md`).
 
-**AI Assistant — Production Ready ✅ (2026-07-31, `feature/ai-assistant`, CI-confirmed)**: design
+**AI Assistant — Production Ready ✅ (merged to `main` via PR #9, 2026-07-31, merge commit `644fed6`, CI-confirmed)**: design
 approved 2026-07-31 (see `docs/modules/ai-assistant-design.md`'s Approval & Decisions section).
 Final module on the roadmap (per user's explicit prioritization — it depends on data/workflow
 completeness across everything else to add real value, so it comes last). Splits into two risk

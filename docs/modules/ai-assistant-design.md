@@ -1,7 +1,7 @@
 # AI Assistant — Module Design (Approved)
 
-**Status: Done — Production Ready ✅.** CI-confirmed 2026-07-31 on `feature/ai-assistant` (not yet
-merged to `main`): Dashboard Insights, Smart Search, Writing Reports (zero-PHI, enabled-eligible) plus
+**Status: Done — Production Ready ✅.** Merged to `main` via PR #9 (2026-07-31, merge commit
+`644fed6`), CI-confirmed: Dashboard Insights, Smart Search, Writing Reports (zero-PHI, enabled-eligible) plus
 the framework, data model, and feature flags for Clinical Notes draft-assist and Treatment Suggestions
 (built but disabled-by-default and absent from the UI until an admin acknowledges a signed BAA). 905/905
 backend tests (28 AI-Assistant-specific) + 694/694 frontend Vitest tests green (22 new), `vue-tsc`/
