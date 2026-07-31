@@ -13,7 +13,16 @@ class ClinicSettingService
 {
     public function current(): ClinicSetting
     {
-        return ClinicSetting::query()->firstOrCreate([], ['name' => '']);
+        // The two AI Assistant flags are spelled out explicitly (not left to the DB column
+        // default) so the in-memory model returned by a fresh create() reflects `false` right
+        // away — Eloquent doesn't re-hydrate DB-computed defaults for attributes it didn't itself
+        // set on insert, so relying on the migration's ->default(false) alone would leave these
+        // `null` in PHP on the very request that self-heals the stub row.
+        return ClinicSetting::query()->firstOrCreate([], [
+            'name' => '',
+            'ai_assistant_enabled' => false,
+            'ai_assistant_phi_features_acknowledged' => false,
+        ]);
     }
 
     /**

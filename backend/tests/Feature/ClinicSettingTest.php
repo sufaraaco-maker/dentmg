@@ -85,4 +85,30 @@ class ClinicSettingTest extends TestCase
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['name']);
     }
+
+    public function test_ai_assistant_toggles_default_to_false(): void
+    {
+        $actor = User::factory()->admin()->create();
+
+        $response = $this->actingAs($actor)->getJson('/api/clinic-settings');
+
+        $response->assertOk();
+        $this->assertFalse($response->json('ai_assistant_enabled'));
+        $this->assertFalse($response->json('ai_assistant_phi_features_acknowledged'));
+    }
+
+    public function test_admin_can_enable_ai_assistant_without_acknowledging_phi_features(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create();
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'name' => 'Downtown Dental Clinic',
+            'ai_assistant_enabled' => true,
+        ]);
+
+        $response->assertOk();
+        $this->assertTrue($response->json('ai_assistant_enabled'));
+        $this->assertFalse($response->json('ai_assistant_phi_features_acknowledged'));
+    }
 }
