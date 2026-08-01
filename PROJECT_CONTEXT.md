@@ -402,8 +402,8 @@ evolves the existing PrimeVue Aura theme rather than introducing a bespoke desig
 four sequential phases (Navigation Shell → Dashboard → Data Tables → Cross-cutting Polish), each run
 through the full standard workflow independently so `main` stays releasable between phases.
 
-**Phase 1: Navigation Shell — Production Ready ✅ (CI-confirmed 2026-07-31, `feature/frontend-nav-shell`,
-not yet merged to `main`)**: Sidebar redesign (collapsible section grouping, Favorites, Recent Items —
+**Phase 1: Navigation Shell — Production Ready ✅ (merged to `main` via PR #10, 2026-08-01, merge
+commit `f45110a`, CI-confirmed)**: Sidebar redesign (collapsible section grouping, Favorites, Recent Items —
 last 5 visited record pages, upgraded from a generic fallback to the real name once a detail view loads
 it, all `localStorage`-only per the confirmed frontend-only scope — plus true recursive nesting,
 resolving a previously-tracked one-level limit), Header redesign (a breadcrumb trail derived from the

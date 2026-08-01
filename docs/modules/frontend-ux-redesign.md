@@ -1,7 +1,7 @@
 # Frontend UX & Navigation Redesign — Design Document (Approved)
 
 **Status: Phase 1 (Navigation Shell) — Done, Production Ready ✅, CI-confirmed 2026-07-31 on
-`feature/frontend-nav-shell` (not yet merged to `main`).** Sidebar redesign (collapsible sections,
+merged to `main` via PR #10, merge commit `f45110a`.** Sidebar redesign (collapsible sections,
 Favorites, Recent Items, true recursive nesting), Header redesign (breadcrumbs, global search/Command
 Palette entry point), Command Palette (`Ctrl+K`/`Cmd+K`), app-wide keyboard shortcuts (`?`, `g`-then-X
 chords), and the Billing sidebar entry's real destination (`GET /invoices`, a small approved backend
