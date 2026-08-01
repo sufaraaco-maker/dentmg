@@ -99,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('patients/{patient}/invoices', [InvoiceController::class, 'index']);
     Route::post('patients/{patient}/invoices', [InvoiceController::class, 'store']);
+    Route::get('invoices', [InvoiceController::class, 'indexAll']);
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
     Route::put('invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue']);

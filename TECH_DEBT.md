@@ -987,3 +987,56 @@ the app's own branded 404 page for the `/dashboard` case rather than an ambiguou
 **RESOLVED 2026-07-31**: confirmed via the GitHub Actions API across five `workflow_dispatch` runs on
 `feature/ai-assistant` — final run (`30605056813`) is fully green: **Backend 905/905, Frontend
 694/694, E2E 34/34 — zero failures.**
+
+## Open (new from Frontend UX & Navigation Redesign, Phase 1 — Navigation Shell, 2026-07-31)
+
+### `AppSidebarItem.vue`'s one-level nesting limit — RESOLVED as part of this phase's own scope
+The entry above (in the Settings-era section of this file) logged this as a deliberate, known gap.
+Phase 1's Sidebar redesign needed genuine multi-level rendering anyway (section grouping sits above the
+existing one level of `NavItem.children`), so `AppSidebarItem.vue` was generalized to recurse via its
+own filename (Vue SFCs can reference themselves in their own template) rather than hard-coding a single
+child `<ul>` block. No route in `config/navigation.ts` goes past 2 levels yet, but the renderer itself
+no longer caps it. **RESOLVED 2026-07-31** as a byproduct of `feature/frontend-nav-shell`, not a
+separate follow-up.
+
+### Real bug found via this phase's own Vitest suite: Command Palette's default view silently dropped low-priority items
+`CommandPalette.vue`'s unfiltered (no search query) action list was capped at `.slice(0, 20)` — with
+quick actions plus every flattened nav item in `config/navigation.ts`'s declared order, Users and
+Settings (declared last) fell past that cutoff and were simply never reachable without typing a
+search term first. Caught by this component's own `CommandPalette.test.ts` (`lists role-visible
+navigation actions when opened` asserting `Go to Users` is present), not discovered manually. Fixed by
+raising the cap to a generous defensive ceiling (60) that the realistic full list (~25-30 items today)
+never approaches, rather than removing the cap outright (still a guard against a hypothetical future
+explosion of nav items).
+
+### Real bugs found via CI across three `workflow_dispatch` runs — the app itself needed only one fix
+`frontend/e2e/frontend-nav-shell.spec.ts` took three iterations to go fully green, mirroring the
+pattern already established for Reports/Settings/AI Assistant (real, CI-native findings, not local
+environment noise — confirmed by every other spec in the suite passing unaffected across all three
+runs):
+1. **Prettier formatting** (run 1, `30625728579`): 14 new/modified files needed reformatting. Local
+   `prettier --check` had passed against a stale Windows/Docker bind-mount read of these files — the
+   exact "local prettier gives false readings on this machine" pathology already logged elsewhere in
+   this file for PHPStan, just for Prettier instead this time. CI's checkout (real git blobs) was
+   correct; fixed with a scoped `prettier --write` on exactly the flagged files.
+2. **A real, CI-only type error** (run 2, `30628192116`): `npm run build`'s `vue-tsc -b` (project-
+   references build mode) is stricter than the plain `vue-tsc --noEmit` used for local verification —
+   it caught `CommandPalette.vue` accessing `.$el` on a typed `InputText` ref, which the plain check
+   had missed. `InputText`'s public instance type doesn't declare `$el` (it's an options-API
+   component) — fixed with the exact same cast-through-`ComponentPublicInstance` pattern
+   `PatientSearchSelect.vue` already uses for its own autofocus need, confirmed by re-running
+   `npm run build` locally (not just `--noEmit`) before pushing again.
+3. **Two real E2E-spec-only bugs**, also run 2: (a) the favorite-star toggle test searched for the
+   `<button>` *inside* the `<a>` link locator — but the button is a sibling of the link, not a
+   descendant (a `<button>` can never validly nest inside an `<a>`), so the locator resolved to zero
+   elements and timed out; fixed by scoping to the shared parent row via `locator('xpath=..')`. (b)
+   the shortcuts-help test asserted `getByRole('heading', { name: 'Keyboard Shortcuts' })` — the
+   downloaded Playwright trace's own accessibility snapshot at the failure point showed the dialog
+   *had* opened correctly with every shortcut listed; PrimeVue's `Dialog` renders its `:header` prop as
+   plain text, not a semantic `<h1>`-`<h6>`, so the role query never matched anything real. Fixed to
+   assert `getByRole('dialog', { name: ... })` instead, which the trace confirmed already carries that
+   accessible name via `aria-labelledby`.
+
+**RESOLVED 2026-07-31**: confirmed via the GitHub Actions API across three `workflow_dispatch` runs on
+`feature/frontend-nav-shell` — final run (`30629204011`) is fully green: **Backend 913/913, Frontend
+751/751, E2E 39/39 — zero failures.**

@@ -56,6 +56,15 @@ class InvoiceResource extends JsonResource
                 'id' => $this->createdBy->id,
                 'name' => $this->createdBy->name,
             ]),
+            // Only meaningful on the clinic-wide list (frontend-ux-redesign design doc §5.1/§11) —
+            // every patient-scoped Invoice endpoint already has the patient in context and doesn't
+            // load this relation, so it's simply absent there (`whenLoaded`, same convention as
+            // `created_by` above).
+            'patient' => $this->whenLoaded('patient', fn () => [
+                'id' => $this->patient->id,
+                'first_name' => $this->patient->first_name,
+                'last_name' => $this->patient->last_name,
+            ]),
             'items' => InvoiceItemResource::collection($this->whenLoaded('items')),
         ];
     }

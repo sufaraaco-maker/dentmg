@@ -1,7 +1,12 @@
 import { api } from '@/lib/api'
 import { rethrowInvoiceError } from './errors'
-import type { CreateInvoicePayload, Invoice, UpdateInvoicePayload } from '@/types/invoice'
+import type { CreateInvoicePayload, Invoice, InvoiceStatus, UpdateInvoicePayload } from '@/types/invoice'
 import type { TreatmentPlanItem } from '@/types/treatmentPlan'
+
+export interface PaginatedInvoices {
+  data: Invoice[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
 
 export const invoicesApi = {
   // GET /api/patients/{patient}/invoices is deliberately not paginated — a patient's lifetime
@@ -9,6 +14,16 @@ export const invoicesApi = {
   // Treatment Plans/Dental Chart/Patient audit logs.
   async list(patientId: string): Promise<Invoice[]> {
     const { data } = await api.get<Invoice[]>(`/patients/${patientId}/invoices`)
+    return data
+  },
+
+  /** Clinic-wide, paginated (frontend-ux-redesign design doc §5.1/§11) — the Billing sidebar
+   *  entry's destination, distinct from `list()` above which stays intentionally unpaginated and
+   *  patient-scoped. */
+  async listAll(
+    params: { page?: number; search?: string; status?: InvoiceStatus } = {},
+  ): Promise<PaginatedInvoices> {
+    const { data } = await api.get<PaginatedInvoices>('/invoices', { params })
     return data
   },
 

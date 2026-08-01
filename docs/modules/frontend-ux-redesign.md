@@ -1,11 +1,27 @@
 # Frontend UX & Navigation Redesign — Design Document (Approved)
 
-**Status: Phase 1 (Navigation Shell) approved for implementation, 2026-07-31.** This is
-not a new business module — it is a cross-cutting initiative across the entire existing frontend,
-started once every module on the original roadmap (`PROJECT_CONTEXT.md`'s Main Modules list) reached
-Production Ready ✅. Explicit user framing: focus entirely on **Frontend** quality — navigation,
-polish, performance, accessibility — not new backend features. Four architecture forks were already
-resolved with the user before this doc was written (see §3).
+**Status: Phase 1 (Navigation Shell) — Done, Production Ready ✅, CI-confirmed 2026-07-31 on
+`feature/frontend-nav-shell` (not yet merged to `main`).** Sidebar redesign (collapsible sections,
+Favorites, Recent Items, true recursive nesting), Header redesign (breadcrumbs, global search/Command
+Palette entry point), Command Palette (`Ctrl+K`/`Cmd+K`), app-wide keyboard shortcuts (`?`, `g`-then-X
+chords), and the Billing sidebar entry's real destination (`GET /invoices`, a small approved backend
+addition) are all implemented, tested, and CI-green. 913/913 backend tests (8 new:
+`InvoiceControllerTest`) + 751/751 frontend Vitest tests (30 new), `vue-tsc -b`/ESLint/Prettier clean,
+permanent E2E suite (`frontend/e2e/frontend-nav-shell.spec.ts`, 5 tests) confirmed via the GitHub
+Actions API across three `workflow_dispatch` runs on `feature/frontend-nav-shell` — the first two
+surfaced Prettier formatting gaps, a `vue-tsc -b` build-only type error (`InputText` has no public
+`$el`, fixed with the same cast pattern `PatientSearchSelect.vue` already uses), and three real E2E
+bugs (a favorite-star locator searching inside the link instead of its sibling row; a shortcuts-help
+test asserting `getByRole('heading', ...)` against a PrimeVue `Dialog` header, which renders as plain
+text, not a semantic heading; a keyboard-shortcut race against `DefaultLayout` not yet being mounted).
+Final run (`30629204011`) is fully green: **Backend 913/913, Frontend 751/751, E2E 39/39 — zero
+failures.**
+
+This is not a new business module — it is a cross-cutting initiative across the entire existing
+frontend, started once every module on the original roadmap (`PROJECT_CONTEXT.md`'s Main Modules
+list) reached Production Ready ✅. Explicit user framing: focus entirely on **Frontend** quality —
+navigation, polish, performance, accessibility — not new backend features. Four architecture forks
+were already resolved with the user before this doc was written (see §3).
 
 ## 0. Competitive Research
 
@@ -106,12 +122,12 @@ four sequential phases, each run through the full standard workflow (Design → 
 CI → Documentation → PR) independently, so `main` stays releasable between phases and each phase gets
 its own CI-confirmed Production Ready checkpoint rather than one enormous PR:
 
-| Phase | Scope | Depends on |
-|---|---|---|
-| **1. Navigation Shell** | Sidebar redesign (grouping, favorites, recents, deeper nesting), Header redesign (breadcrumbs, global search entry point), Command Palette (`Ctrl+K`), app-wide keyboard shortcuts foundation | `@vueuse/core` addition |
-| **2. Dashboard** | Smart stat cards, quick actions, chart/indicator cards, layout refresh | Phase 1 (header/shortcuts patterns reused), `chart.js`+`vue-chartjs` |
-| **3. Data Tables System** | `AppDataTable.vue` shared wrapper (sticky header, column resize/reorder + persisted state, bulk actions, shared `EmptyState.vue`/skeleton loading), rollout across all ~20 list views | Phase 1 (bulk-action toolbar reuses shortcut/animation primitives) |
-| **4. Cross-cutting polish** | Motion/micro-interaction audit, full responsive audit (desktop/tablet/mobile) on every screen touched, WCAG AA accessibility pass (focus order, ARIA, contrast), keyboard-shortcut help overlay covering all of Phases 1–3 | Phases 1–3 complete |
+| Phase | Scope | Depends on | Status |
+|---|---|---|---|
+| **1. Navigation Shell** | Sidebar redesign (grouping, favorites, recents, deeper nesting), Header redesign (breadcrumbs, global search entry point), Command Palette (`Ctrl+K`), app-wide keyboard shortcuts foundation | `@vueuse/core` addition | **Done — Production Ready ✅** (CI-confirmed 2026-07-31, see status header above) |
+| **2. Dashboard** | Smart stat cards, quick actions, chart/indicator cards, layout refresh | Phase 1 (header/shortcuts patterns reused), `chart.js`+`vue-chartjs` | Not started |
+| **3. Data Tables System** | `AppDataTable.vue` shared wrapper (sticky header, column resize/reorder + persisted state, bulk actions, shared `EmptyState.vue`/skeleton loading), rollout across all ~20 list views | Phase 1 (bulk-action toolbar reuses shortcut/animation primitives) | Not started |
+| **4. Cross-cutting polish** | Motion/micro-interaction audit, full responsive audit (desktop/tablet/mobile) on every screen touched, WCAG AA accessibility pass (focus order, ARIA, contrast), keyboard-shortcut help overlay covering all of Phases 1–3 | Phases 1–3 complete | Not started |
 
 Each phase below is specified to the depth needed for implementation; exact component-by-component
 detail for later phases may be refined slightly at that phase's own kickoff if Phase 1/2 reveal better

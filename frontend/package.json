@@ -26,6 +26,7 @@
     "@fullcalendar/timegrid": "^6.1.21",
     "@fullcalendar/vue3": "^6.1.21",
     "@primeuix/themes": "^2.0.3",
+    "@vueuse/core": "^14.4.0",
     "axios": "^1.18.1",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",

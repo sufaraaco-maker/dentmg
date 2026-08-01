@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
@@ -24,6 +24,7 @@ interface PaginatedPatients {
 }
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
@@ -107,7 +108,17 @@ function confirmDelete(patient: Patient) {
   })
 }
 
-onMounted(fetchPatients)
+onMounted(() => {
+  fetchPatients()
+
+  // Command Palette "New Patient" quick action (frontend-ux-redesign design doc §5.3) — a plain
+  // `?new=1` query flag rather than a global create-dialog store, since this is the only view
+  // wired to it in Phase 1; stripped immediately so a page refresh doesn't reopen the dialog.
+  if (route.query.new === '1' && canManage) {
+    openCreateDialog()
+    router.replace({ query: {} })
+  }
+})
 </script>
 
 <template>

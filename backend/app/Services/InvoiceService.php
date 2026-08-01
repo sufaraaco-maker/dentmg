@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\TreatmentPlanItem;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,29 @@ use Illuminate\Support\Facades\DB;
  */
 class InvoiceService
 {
+    /**
+     * Clinic-wide invoice list (frontend-ux-redesign design doc §5.1/§11) — every other Invoice
+     * endpoint is deliberately patient-scoped and unpaginated (a single patient's lifetime invoice
+     * count stays small, per `InvoiceController::index()`'s own doc comment), but the Sidebar's
+     * Billing entry needs a real destination across the whole practice, which does need paging.
+     * Mirrors `PatientService::paginate()`'s exact shape (optional search, default 15/page).
+     */
+    public function paginateAll(?string $search = null, ?InvoiceStatus $status = null, int $perPage = 15): LengthAwarePaginator
+    {
+        return Invoice::query()
+            ->when($status, fn ($query) => $query->withStatus($status))
+            ->when($search, fn ($query) => $query->where(fn ($q) => $q
+                ->whereLike('invoice_number', "%{$search}%")
+                ->orWhereHas('patient', fn ($p) => $p
+                    ->whereLike('first_name', "%{$search}%")
+                    ->orWhereLike('last_name', "%{$search}%")
+                )
+            ))
+            ->with(['items.treatmentPlanItem', 'createdBy', 'payments', 'patient'])
+            ->latest()
+            ->paginate($perPage);
+    }
+
     /**
      * @param  array<string, mixed>  $data  Must include `patient_id` (set by the controller from
      *                                      the nested route, once Step 3 exists).

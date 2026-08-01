@@ -4,14 +4,19 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { NavItem } from '@/config/navigation'
 import { useAuthStore } from '@/stores/auth'
+import { useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
 
 const props = withDefaults(
   defineProps<{
     item: NavItem
     /** Desktop rail is collapsed to icon-only. Never true on the mobile drawer. */
     collapsed?: boolean
+    /** Nesting level, 0 = top-level. Recurses via this same component (Vue SFCs can reference
+     *  themselves by filename), generalizing what was previously a hard one-level limit
+     *  (frontend-ux-redesign design doc §5.1, resolves the matching TECH_DEBT.md entry). */
+    depth?: number
   }>(),
-  { collapsed: false },
+  { collapsed: false, depth: 0 },
 )
 
 const emit = defineEmits<{ navigate: [] }>()
@@ -20,6 +25,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const sidebarPreferences = useSidebarPreferencesStore()
 
 // Same role filter `AppSidebar.vue` already applies to its top-level items — children need the
 // exact same check, otherwise a `roles`-restricted child (e.g. an admin-only report) still
@@ -51,8 +57,19 @@ watch(
   },
 )
 
+const canFavorite = computed(() => !props.collapsed && !!props.item.routeName && !props.item.comingSoon)
+const isFavorite = computed(
+  () => !!props.item.routeName && sidebarPreferences.isFavorite(props.item.routeName),
+)
+
+function toggleFavorite(event: Event) {
+  event.stopPropagation()
+  event.preventDefault()
+  if (props.item.routeName) sidebarPreferences.toggleFavorite(props.item.routeName)
+}
+
 const rowClasses = computed(() => [
-  'flex w-full items-center gap-3 rounded-lg border-s-[3px] px-3 py-2 text-sm transition-colors',
+  'group/navitem flex w-full items-center gap-3 rounded-lg border-s-[3px] px-3 py-2 text-sm transition-colors',
   props.collapsed && 'justify-center px-0',
   props.item.comingSoon
     ? 'border-transparent text-surface-400 cursor-not-allowed dark:text-surface-600'
@@ -76,16 +93,37 @@ function onParentClick() {
 
 <template>
   <li>
-    <RouterLink
+    <!-- A `<button>` (favorite star) can never nest inside the `<RouterLink>` (`<a>`) below —
+         interactive-inside-interactive is invalid HTML and browsers/screen readers handle it
+         unpredictably — so the star is a flex sibling within this row `<div>` instead, not a
+         RouterLink child. -->
+    <div
       v-if="!hasChildren && item.routeName"
-      v-tooltip.right="collapsed ? t(item.labelKey) : undefined"
-      :to="{ name: item.routeName }"
-      :class="rowClasses"
-      @click="emit('navigate')"
+      :class="[rowClasses, depth > 0 && 'py-1.5 text-[0.8125rem]']"
+      :style="depth > 0 ? { paddingInlineStart: `${depth * 1.5 + 0.75}rem` } : undefined"
     >
-      <i :class="item.icon" class="text-base" />
-      <span v-if="!collapsed" class="truncate">{{ t(item.labelKey) }}</span>
-    </RouterLink>
+      <RouterLink
+        v-tooltip.right="collapsed ? t(item.labelKey) : undefined"
+        :to="{ name: item.routeName }"
+        class="flex min-w-0 items-center gap-3"
+        :class="!collapsed && 'flex-1'"
+        @click="emit('navigate')"
+      >
+        <i :class="item.icon" class="text-base" />
+        <span v-if="!collapsed" class="flex-1 truncate text-start">{{ t(item.labelKey) }}</span>
+      </RouterLink>
+      <button
+        v-if="canFavorite"
+        type="button"
+        class="shrink-0 rounded p-1 text-surface-300 opacity-0 transition-opacity hover:text-yellow-500 focus-visible:opacity-100 group-hover/navitem:opacity-100 dark:text-surface-600"
+        :class="isFavorite && '!opacity-100 text-yellow-500'"
+        :aria-label="t(isFavorite ? 'nav.unfavorite' : 'nav.favorite')"
+        :aria-pressed="isFavorite"
+        @click="toggleFavorite"
+      >
+        <i :class="isFavorite ? 'pi pi-star-fill' : 'pi pi-star'" class="text-xs" />
+      </button>
+    </div>
 
     <button
       v-else-if="hasChildren"
@@ -119,19 +157,15 @@ function onParentClick() {
       </template>
     </div>
 
-    <ul v-if="hasChildren && expanded && !collapsed" class="mt-1 flex flex-col gap-1 ps-9">
-      <li v-for="child in visibleChildren" :key="child.labelKey">
-        <RouterLink
-          v-if="child.routeName"
-          :to="{ name: child.routeName }"
-          active-class="bg-primary-50 font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300"
-          class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-0"
-          @click="emit('navigate')"
-        >
-          <i :class="child.icon" class="text-sm" />
-          <span class="truncate">{{ t(child.labelKey) }}</span>
-        </RouterLink>
-      </li>
+    <ul v-if="hasChildren && expanded && !collapsed" class="mt-1 flex flex-col gap-1">
+      <AppSidebarItem
+        v-for="child in visibleChildren"
+        :key="child.labelKey"
+        :item="child"
+        :collapsed="false"
+        :depth="depth + 1"
+        @navigate="emit('navigate')"
+      />
     </ul>
   </li>
 </template>

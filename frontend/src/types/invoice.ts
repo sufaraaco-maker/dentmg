@@ -66,6 +66,9 @@ export interface Invoice {
   balance_due?: string
   payment_status?: 'unpaid' | 'partially_paid' | 'paid'
   created_by?: InvoiceUserSummary
+  /** Only present on the clinic-wide list (`GET /invoices`, frontend-ux-redesign design doc
+   *  §5.1/§11) — every patient-scoped endpoint already has the patient in context. */
+  patient?: { id: string; first_name: string; last_name: string }
   items?: InvoiceItem[]
 }
 

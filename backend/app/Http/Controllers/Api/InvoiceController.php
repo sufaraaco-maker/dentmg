@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
 use App\Http\Requests\Invoice\UpdateInvoiceRequest;
@@ -10,6 +11,7 @@ use App\Http\Resources\TreatmentPlanItemResource;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Services\InvoiceService;
+use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
@@ -37,6 +39,27 @@ class InvoiceController extends Controller
             ->with(self::WITH)
             ->latest()
             ->get();
+
+        return InvoiceResource::collection($invoices);
+    }
+
+    /**
+     * Clinic-wide, paginated — the Sidebar's Billing entry needs a real destination across every
+     * patient (frontend-ux-redesign design doc §5.1/§11), unlike `index()` above which stays
+     * intentionally unpaginated per-patient. Same `viewAny` ability, same visibility rules.
+     */
+    public function indexAll(Request $request)
+    {
+        $this->authorize('viewAny', Invoice::class);
+
+        // `tryFrom`, not `from` — an unrecognized value is simply ignored (no filter applied)
+        // rather than a 500, since this is a plain query param, not a validated FormRequest body.
+        $status = $request->filled('status') ? InvoiceStatus::tryFrom($request->string('status')->value()) : null;
+
+        $invoices = $this->invoiceService->paginateAll(
+            $request->string('search')->value() ?: null,
+            $status,
+        );
 
         return InvoiceResource::collection($invoices);
     }

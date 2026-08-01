@@ -62,7 +62,11 @@ describe('AppSidebarItem', () => {
 
   it('applies the active styling when the current route matches', async () => {
     const { wrapper } = await mountItem(dashboardItem, { path: '/' })
-    expect(wrapper.get('a').classes()).toContain('text-primary')
+    // Active/coming-soon/hover styling lives on the row `<div>` wrapping the link, not the link
+    // itself — a favorite-star `<button>` can never nest inside an `<a>` (invalid HTML), so the
+    // link only wraps the icon/label and the row's own classes moved up one level.
+    const row = wrapper.get('a').element.parentElement
+    expect(row?.className).toContain('text-primary')
   })
 
   it('renders coming-soon items as disabled, with a badge and no link target', async () => {

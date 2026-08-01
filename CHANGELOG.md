@@ -18,6 +18,34 @@ Feature-test suite and its final `modules/billing.md` doc) before either meets t
 bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory/Imaging — see `docs/roadmap.md` and
 `TECH_DEBT.md` for current per-module status._
 
+### Added — Frontend UX & Navigation Redesign, Phase 1: Navigation Shell (`feature/frontend-nav-shell`, 2026-07-31)
+- **Context**: with every module on the original roadmap Production Ready ✅ (including Settings and AI
+  Assistant, both since merged to `main`), this is the first phase of a cross-cutting, frontend-only
+  quality initiative benchmarked against Linear/Notion/Stripe/Vercel — see
+  `docs/modules/frontend-ux-redesign.md` for the full design doc and phase breakdown.
+- **Sidebar**: collapsible section grouping (Clinical/Operations/Insights/Admin), Favorites (star
+  toggle, `localStorage`-only), Recent Items (last 5 visited record pages, upgraded from a generic
+  fallback label to the real name once a detail view loads it, no extra fetch), and true recursive
+  nesting (`AppSidebarItem.vue` referencing itself, resolving a previously-tracked one-level limit).
+- **Header**: a breadcrumb trail derived from the existing `config/navigation.ts` (no per-route
+  duplication) plus a global search/Command Palette entry button.
+- **Command Palette** (`Ctrl+K`/`Cmd+K`): role-filtered "Go to X" for every reachable route, a "New
+  Patient" quick action, arrow-key navigation, fuzzy text filter.
+- **`useAppShortcuts`**: app-wide `Ctrl+K`, `?` (shortcuts help overlay), and Linear-style `g`-then-X
+  go-to chords — generalizes the guard pattern already proven in the Appointments board's own
+  `useCalendarKeyboardShortcuts.ts` (untouched, still calendar-scoped) rather than duplicating it.
+- **Billing navigation fix**: the Sidebar's Billing entry had been stuck on a stale `comingSoon` flag
+  despite the underlying Invoice CRUD working end to end — the real gap was a missing clinic-wide list.
+  Added `GET /invoices` (paginated, searchable by invoice number/patient name, status filter) — one
+  small, explicitly user-approved backend exception to this phase's otherwise frontend-only scope —
+  plus `InvoicesView.vue`, the Sidebar's new real destination.
+- **Tests**: 913/913 backend tests (8 new: `InvoiceControllerTest`) + 751/751 frontend Vitest tests (30
+  new), `vue-tsc -b`/ESLint/Prettier clean, a new permanent E2E suite
+  (`frontend/e2e/frontend-nav-shell.spec.ts`) confirmed 39/39 green via the GitHub Actions API across
+  three `workflow_dispatch` runs (final run `30629204011`) — see `TECH_DEBT.md` for the real findings
+  along the way (a `vue-tsc -b` build-only type error, three E2E-spec-only bugs, one genuine
+  Command-Palette UX bug its own test suite caught before release).
+
 ### Added — Reports (design approved and implemented same-day, 2026-07-28)
 - **`ReportService`**: six live-query reports over existing data, no new tables — Production (billed
   charges by dentist), Collections (payments received, by method), A/R Aging (outstanding invoice

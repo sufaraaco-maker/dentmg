@@ -21,7 +21,39 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "favorites": "Favorites",
+    "recent": "Recent",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "sections": {
+      "clinical": "Clinical",
+      "operations": "Operations",
+      "insights": "Insights",
+      "admin": "Admin"
+    }
+  },
+  "breadcrumbs": {
+    "label": "Breadcrumb"
+  },
+  "commandPalette": {
+    "title": "Command Palette",
+    "placeholder": "Search or jump to...",
+    "shortcutHint": "Ctrl K",
+    "goTo": "Go to {page}",
+    "newPatient": "New Patient",
+    "shortcuts": "Keyboard Shortcuts",
+    "empty": "No results found"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "commandPalette": "Open Command Palette",
+    "goToDashboard": "Go to Dashboard",
+    "goToPatients": "Go to Patients",
+    "goToAppointments": "Go to Appointments",
+    "goToReports": "Go to Reports",
+    "goToSettings": "Go to Settings",
+    "showHelp": "Show this help"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -732,6 +764,12 @@
     "loadError": "Failed to load invoices",
     "createError": "Failed to create invoice",
     "forbidden": "You don't have permission to do that",
+    "index": {
+      "title": "Billing",
+      "search": "Search by invoice # or patient name",
+      "allStatuses": "All Statuses",
+      "patient": "Patient"
+    },
     "list": {
       "number": "Invoice #",
       "draftLabel": "Draft",
