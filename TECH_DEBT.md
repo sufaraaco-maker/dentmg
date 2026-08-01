@@ -1040,3 +1040,43 @@ runs):
 **RESOLVED 2026-07-31**: confirmed via the GitHub Actions API across three `workflow_dispatch` runs on
 `feature/frontend-nav-shell` — final run (`30629204011`) is fully green: **Backend 913/913, Frontend
 751/751, E2E 39/39 — zero failures.**
+
+## Open (new from `DemoDataSeeder`, 2026-08-01)
+
+### Four real bugs found while first running the new 110-Arabic-patient demo dataset seeder — RESOLVED before use
+Requested directly (not part of any module's own workflow): a large demo dataset spanning every
+module's status/scenario space, with Arabic-named patients, for manual review of the app as it
+stands after every module (including Frontend UX Phase 1) shipped. `DemoDataSeeder` follows the same
+"drive every state-machine-backed record through its module's Service, never a raw `::create()` with
+a hardcoded status" convention `TreatmentPlanSeeder` established — and running it against this dev
+database's actual (not idealized) state surfaced four genuine bugs, none caught by writing the code
+alone:
+1. **Working-hours "skip if already configured" guard was wrong.** The seeder checked "does this
+   dentist have *any* working-hour row?" before adding the full Sunday–Thursday 09:00–17:00 schedule
+   — but the original demo dentist already had a narrow, pre-existing 09:00–10:00 Sunday-only row
+   left over from earlier manual/E2E testing in this same database, so the guard skipped adding real
+   coverage for every other day, and the very first scheduled appointment outside that one-hour
+   window threw `OutsideWorkingHoursException`. Fixed by making the seeding unconditional —
+   `dentist_working_hours` has no unique constraint (multiple rows per day are expected, e.g. a
+   lunch-break split), so adding a wide row alongside a narrow pre-existing one is harmless.
+2. **Appointment-slot index collision across two separate seeding calls.** The deterministic
+   per-dentist slot-assignment helper maps a plain 0-based loop index to a (dentist, hour, day, week)
+   slot — called once for a "rich" patient group and again for a "mid-history" group, both starting
+   their index at 0, so the second call recomputed the exact same slots as the first and every
+   appointment in it collided (`DentistConflictException`) with one already booked for the same
+   dentist. Fixed with an explicit `$indexOffset` parameter carried across calls.
+3. **Hourly slot spacing was too tight for the longest appointment type.** Consecutive same-dentist
+   slots one hour apart left less than an hour of margin — the longest seeded type (Root Canal, 90
+   min) starting at one slot genuinely overlapped the next hourly slot for the same dentist. Fixed by
+   widening to a 2-hour cadence (09/11/13/15), safely covering any single-type duration with margin.
+4. **A Purchase Order never actually landed on `Placed`.** The per-status seeding helper had early
+   returns for the `Draft` and `Cancelled` targets only — every other target (including `Placed`
+   itself) fell through unconditionally into a `receive()` call, so the "Placed" scenario was
+   immediately promoted to `Received` and the resulting dataset had two `Received` orders and zero
+   `Placed` ones instead of one of each. Fixed with an explicit early return for `Placed`.
+
+**RESOLVED 2026-08-01**: after all four fixes, a clean `migrate:fresh --seed` run completed
+end-to-end with zero exceptions; every target status across every module's enum was verified present
+in the resulting data via direct query (Appointments: all 7 statuses; Dental Chart: all 5; Invoices:
+all 3; Lab Cases: all 5; Purchase Orders: all 5 — one of each). Full backend suite re-confirmed
+913/913 passing (zero regressions), PHPStan/Pint clean on the new file.

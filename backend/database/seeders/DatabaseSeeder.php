@@ -48,5 +48,6 @@ class DatabaseSeeder extends Seeder
         Patient::factory()->count(8)->create();
 
         $this->call(TreatmentPlanSeeder::class);
+        $this->call(DemoDataSeeder::class);
     }
 }
