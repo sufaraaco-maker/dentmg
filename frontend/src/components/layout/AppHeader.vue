@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import Popover from 'primevue/popover'
+import { Bell, BellOff, ChevronRight, LogOut, Menu as MenuIcon, Moon, Search, Sun, User } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useCommandPaletteStore } from '@/stores/commandPalette'
@@ -43,10 +44,14 @@ function toggleNotifications(event: Event) {
   notificationsPopover.value?.toggle(event)
 }
 
+/** `iconComponent` is a Lucide component rendered via the `#itemicon` slot below — PrimeVue's own
+ *  `MenuItem.icon` field expects a CSS class string (font-icon convention), so it's left unset;
+ *  `MenuItem`'s index signature allows this extra field without a cast (frontend-visual-redesign-
+ *  design.md §4/§7 — icon migration extends to header/menu icons too, not just the sidebar). */
 const userMenu = ref()
 const userMenuItems = computed(() => [
-  { label: t('nav.myAccount'), icon: 'pi pi-user', command: () => router.push({ name: 'account' }) },
-  { label: t('nav.logout'), icon: 'pi pi-sign-out', command: onLogout },
+  { label: t('nav.myAccount'), iconComponent: User, command: () => router.push({ name: 'account' }) },
+  { label: t('nav.logout'), iconComponent: LogOut, command: onLogout },
 ])
 function toggleUserMenu(event: Event) {
   userMenu.value?.toggle(event)
@@ -55,35 +60,33 @@ function toggleUserMenu(event: Event) {
 
 <template>
   <header
-    class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-surface-200 bg-surface-0 px-4 py-3 shadow-sm dark:border-surface-700 dark:bg-surface-900 lg:px-6"
+    class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-surface-200 bg-surface-0 px-4 py-3.5 shadow-sm dark:border-surface-700 dark:bg-surface-900 lg:px-6"
   >
     <div class="flex min-w-0 items-center gap-3">
-      <Button
-        class="lg:hidden"
-        icon="pi pi-bars"
-        text
-        rounded
-        :aria-label="t('nav.openMenu')"
-        @click="ui.openMobileSidebar"
-      />
+      <Button class="lg:hidden" text rounded :aria-label="t('nav.openMenu')" @click="ui.openMobileSidebar">
+        <template #icon="{ class: iconClass }">
+          <MenuIcon :size="20" :class="iconClass" />
+        </template>
+      </Button>
       <span class="text-lg font-semibold text-surface-900 dark:text-surface-0 lg:hidden">
         {{ t('app.name') }}
       </span>
 
       <nav
         v-if="breadcrumbs.length > 0"
-        class="hidden min-w-0 items-center gap-1.5 text-sm text-surface-500 dark:text-surface-400 lg:flex"
+        class="hidden min-w-0 flex-1 items-center gap-2 text-sm text-surface-500 dark:text-surface-400 lg:flex"
         :aria-label="t('breadcrumbs.label')"
       >
         <template v-for="(crumb, index) in breadcrumbs" :key="`${crumb.labelKey}-${index}`">
-          <i
+          <ChevronRight
             v-if="index > 0"
-            class="pi pi-angle-right rtl:rotate-180 text-xs text-surface-300 dark:text-surface-600"
+            :size="14"
+            class="shrink-0 text-surface-300 rtl:rotate-180 dark:text-surface-600"
           />
           <RouterLink
             v-if="crumb.routeName"
             :to="{ name: crumb.routeName }"
-            class="truncate hover:text-surface-900 hover:underline dark:hover:text-surface-0"
+            class="truncate rounded transition-colors hover:text-surface-900 dark:hover:text-surface-0"
           >
             {{ t(crumb.labelKey) }}
           </RouterLink>
@@ -94,32 +97,31 @@ function toggleUserMenu(event: Event) {
       </nav>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex shrink-0 items-center gap-2">
       <button
         type="button"
-        class="flex items-center gap-2 rounded-lg border border-surface-200 bg-surface-50 px-2.5 py-1.5 text-sm text-surface-400 transition-colors hover:border-surface-300 hover:text-surface-600 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-500 dark:hover:border-surface-600 dark:hover:text-surface-300 sm:px-3"
+        class="flex shrink-0 items-center gap-2 rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm text-surface-400 shadow-sm transition-colors hover:border-surface-300 hover:text-surface-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-500 dark:hover:border-surface-600 dark:hover:text-surface-300"
         :aria-label="t('commandPalette.title')"
         @click="commandPalette.show"
       >
-        <i class="pi pi-search text-xs" />
-        <span class="hidden sm:inline">{{ t('commandPalette.placeholder') }}</span>
+        <Search :size="16" class="shrink-0" />
+        <span class="hidden whitespace-nowrap sm:inline">{{ t('commandPalette.placeholder') }}</span>
         <kbd
-          class="ms-4 hidden rounded border border-surface-200 px-1.5 py-0.5 text-xs dark:border-surface-700 sm:inline"
+          class="ms-4 hidden whitespace-nowrap rounded-md border border-surface-200 bg-surface-0 px-1.5 py-0.5 text-xs shadow-sm dark:border-surface-700 dark:bg-surface-900 sm:inline"
         >
           {{ t('commandPalette.shortcutHint') }}
         </kbd>
       </button>
 
-      <Button
-        icon="pi pi-bell"
-        text
-        rounded
-        :aria-label="t('common.notifications')"
-        @click="toggleNotifications"
-      />
+      <Button text rounded :aria-label="t('common.notifications')" @click="toggleNotifications">
+        <template #icon="{ class: iconClass }">
+          <Bell :size="18" :class="iconClass" />
+        </template>
+      </Button>
       <Popover ref="notificationsPopover">
-        <div class="w-64 p-2 text-sm text-surface-500 dark:text-surface-400">
-          {{ t('common.noNotifications') }}
+        <div class="flex w-64 flex-col items-center gap-2 p-4 text-center">
+          <BellOff :size="24" class="text-surface-300 dark:text-surface-600" />
+          <p class="text-sm text-surface-500 dark:text-surface-400">{{ t('common.noNotifications') }}</p>
         </div>
       </Popover>
 
@@ -131,28 +133,33 @@ function toggleUserMenu(event: Event) {
         class="hidden w-36 sm:flex"
         @update:model-value="onLocaleChange"
       />
-      <Button
-        :icon="ui.isDark ? 'pi pi-sun' : 'pi pi-moon'"
-        text
-        rounded
-        :aria-label="t('common.theme')"
-        @click="ui.toggleTheme"
-      />
+      <Button text rounded :aria-label="t('common.theme')" @click="ui.toggleTheme">
+        <template #icon="{ class: iconClass }">
+          <Sun v-if="ui.isDark" :size="18" :class="iconClass" />
+          <Moon v-else :size="18" :class="iconClass" />
+        </template>
+      </Button>
 
       <Button text rounded class="gap-2 px-2" :aria-label="t('common.account')" @click="toggleUserMenu">
         <span
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary dark:bg-primary-400/10 dark:text-primary-300"
         >
           {{ initials }}
         </span>
         <span class="hidden text-start text-sm md:flex md:flex-col">
-          <span class="font-medium text-surface-900 dark:text-surface-0">{{ auth.user?.name }}</span>
-          <span class="text-xs text-surface-500 dark:text-surface-400">
+          <span class="whitespace-nowrap font-medium text-surface-900 dark:text-surface-0">{{
+            auth.user?.name
+          }}</span>
+          <span class="whitespace-nowrap text-xs text-surface-500 dark:text-surface-400">
             {{ auth.user ? t(`users.roles.${auth.user.role}`) : '' }}
           </span>
         </span>
       </Button>
-      <Menu ref="userMenu" :model="userMenuItems" popup />
+      <Menu ref="userMenu" :model="userMenuItems" popup>
+        <template #itemicon="{ item }">
+          <component :is="(item as { iconComponent?: unknown }).iconComponent" :size="16" class="p-menuitem-icon" />
+        </template>
+      </Menu>
     </div>
   </header>
 </template>

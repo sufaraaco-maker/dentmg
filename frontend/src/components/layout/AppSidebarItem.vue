@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { ChevronDown, Star } from 'lucide-vue-next'
 import type { NavItem } from '@/config/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
@@ -68,13 +69,17 @@ function toggleFavorite(event: Event) {
   if (props.item.routeName) sidebarPreferences.toggleFavorite(props.item.routeName)
 }
 
+// Premium active state (frontend-visual-redesign-design.md §5): a filled rounded highlight
+// spanning the full row (not just a border-tint), a thicker inline-start accent bar, semibold
+// text, and a resting shadow — evolving design-system.md §6's original 3px accent bar rather than
+// replacing the underlying mechanism.
 const rowClasses = computed(() => [
-  'group/navitem flex w-full items-center gap-3 rounded-lg border-s-[3px] px-3 py-2 text-sm transition-colors',
+  'group/navitem flex w-full items-center gap-3 rounded-xl border-s-4 px-3 py-2.5 text-sm transition-colors duration-150',
   props.collapsed && 'justify-center px-0',
   props.item.comingSoon
     ? 'border-transparent text-surface-400 cursor-not-allowed dark:text-surface-600'
     : isActive.value
-      ? 'border-primary bg-primary-50 font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300'
+      ? 'border-primary bg-primary-50 font-semibold text-primary shadow-sm dark:bg-primary-400/10 dark:text-primary-300'
       : 'border-transparent text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-0',
 ])
 
@@ -99,17 +104,18 @@ function onParentClick() {
          RouterLink child. -->
     <div
       v-if="!hasChildren && item.routeName"
-      :class="[rowClasses, depth > 0 && 'py-1.5 text-[0.8125rem]']"
+      :class="[rowClasses, depth > 0 && 'py-2 text-[0.8125rem]']"
       :style="depth > 0 ? { paddingInlineStart: `${depth * 1.5 + 0.75}rem` } : undefined"
     >
       <RouterLink
         v-tooltip.right="collapsed ? t(item.labelKey) : undefined"
         :to="{ name: item.routeName }"
+        :aria-current="isActive ? 'page' : undefined"
         class="flex min-w-0 items-center gap-3"
         :class="!collapsed && 'flex-1'"
         @click="emit('navigate')"
       >
-        <i :class="item.icon" class="text-base" />
+        <component :is="item.icon" :size="20" class="shrink-0" />
         <span v-if="!collapsed" class="flex-1 truncate text-start">{{ t(item.labelKey) }}</span>
       </RouterLink>
       <button
@@ -121,7 +127,7 @@ function onParentClick() {
         :aria-pressed="isFavorite"
         @click="toggleFavorite"
       >
-        <i :class="isFavorite ? 'pi pi-star-fill' : 'pi pi-star'" class="text-xs" />
+        <Star :size="14" :fill="isFavorite ? 'currentColor' : 'none'" />
       </button>
     </div>
 
@@ -133,10 +139,14 @@ function onParentClick() {
       :aria-expanded="expanded"
       @click="onParentClick"
     >
-      <i :class="item.icon" class="text-base" />
+      <component :is="item.icon" :size="20" class="shrink-0" />
       <template v-if="!collapsed">
         <span class="flex-1 text-start truncate">{{ t(item.labelKey) }}</span>
-        <i class="pi pi-chevron-down text-xs transition-transform" :class="expanded && 'rotate-180'" />
+        <ChevronDown
+          :size="16"
+          class="shrink-0 transition-transform duration-200"
+          :class="expanded && 'rotate-180'"
+        />
       </template>
     </button>
 
@@ -146,7 +156,7 @@ function onParentClick() {
       :class="rowClasses"
       aria-disabled="true"
     >
-      <i :class="item.icon" class="text-base" />
+      <component :is="item.icon" :size="20" class="shrink-0" />
       <template v-if="!collapsed">
         <span class="flex-1 truncate text-start">{{ t(item.labelKey) }}</span>
         <span
@@ -157,15 +167,26 @@ function onParentClick() {
       </template>
     </div>
 
-    <ul v-if="hasChildren && expanded && !collapsed" class="mt-1 flex flex-col gap-1">
-      <AppSidebarItem
-        v-for="child in visibleChildren"
-        :key="child.labelKey"
-        :item="child"
-        :collapsed="false"
-        :depth="depth + 1"
-        @navigate="emit('navigate')"
-      />
-    </ul>
+    <Transition
+      enter-active-class="motion-safe:transition-[grid-template-rows] motion-safe:duration-200 motion-safe:ease-out"
+      leave-active-class="motion-safe:transition-[grid-template-rows] motion-safe:duration-200 motion-safe:ease-out"
+      enter-from-class="grid-rows-[0fr]"
+      enter-to-class="grid-rows-[1fr]"
+      leave-from-class="grid-rows-[1fr]"
+      leave-to-class="grid-rows-[0fr]"
+    >
+      <div v-if="hasChildren && expanded && !collapsed" class="grid">
+        <ul class="mt-1 flex min-h-0 flex-col gap-1.5 overflow-hidden">
+          <AppSidebarItem
+            v-for="child in visibleChildren"
+            :key="child.labelKey"
+            :item="child"
+            :collapsed="false"
+            :depth="depth + 1"
+            @navigate="emit('navigate')"
+          />
+        </ul>
+      </div>
+    </Transition>
   </li>
 </template>

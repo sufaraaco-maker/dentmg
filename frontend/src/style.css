@@ -11,9 +11,15 @@
  * This project imports Tailwind's `theme.css` + `utilities.css` only (not the full `preflight.css`
  * reset), so it can coexist with PrimeVue's own component base styles without a second reset fighting
  * it. That means raw native elements never got Tailwind's usual reset — this scoped `tailwind-base`
- * layer restores just the two pieces that matter: border-box sizing (Tailwind's width/padding utilities
- * assume it) and neutralizing the browser's default `<button>` chrome (2px outset border/background),
- * which was otherwise visible through on hand-rolled buttons like the sidebar nav rows.
+ * layer restores just the pieces that matter: border-box sizing (Tailwind's width/padding utilities
+ * assume it), neutralizing the browser's default `<button>` chrome (2px outset border/background),
+ * which was otherwise visible through on hand-rolled buttons like the sidebar nav rows, and (found via
+ * real-browser screenshot verification during the Premium Visual Redesign's sidebar pass, §7 of
+ * design-system.md's own "worth another look" note) native `<ul>` bullets/indent and `<a>` blue/
+ * underline — both were rendering through on every raw (non-PrimeVue) list and link across the app,
+ * e.g. the sidebar's nav rows and the header's breadcrumb trail, silently contradicting each of those
+ * components' own Tailwind color/no-underline intent (a `hover:underline` utility is a no-op if the
+ * element is already unconditionally underlined by the browser's UA stylesheet).
  */
 @layer tailwind-base {
   *,
@@ -30,6 +36,18 @@
     font: inherit;
     color: inherit;
     cursor: pointer;
+  }
+
+  ul,
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 }
 

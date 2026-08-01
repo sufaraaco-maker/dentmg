@@ -1,5 +1,10 @@
 # Frontend UX & Navigation Redesign — Design Document (Approved)
 
+**Status (2026-08-01): Phase 2 (Dashboard) and part of Phase 4 (icons, motion, Recent Items removal) are
+superseded by [`frontend-visual-redesign-design.md`](./frontend-visual-redesign-design.md) — approved,
+implementation in progress. See that doc for current scope; the phase table in §4 below is kept for history
+but is no longer the authoritative plan for Phases 2/4.**
+
 **Status: Phase 1 (Navigation Shell) — Done, Production Ready ✅, CI-confirmed 2026-07-31 on
 merged to `main` via PR #10, merge commit `f45110a`.** Sidebar redesign (collapsible sections,
 Favorites, Recent Items, true recursive nesting), Header redesign (breadcrumbs, global search/Command
@@ -125,9 +130,9 @@ its own CI-confirmed Production Ready checkpoint rather than one enormous PR:
 | Phase | Scope | Depends on | Status |
 |---|---|---|---|
 | **1. Navigation Shell** | Sidebar redesign (grouping, favorites, recents, deeper nesting), Header redesign (breadcrumbs, global search entry point), Command Palette (`Ctrl+K`), app-wide keyboard shortcuts foundation | `@vueuse/core` addition | **Done — Production Ready ✅** (CI-confirmed 2026-07-31, see status header above) |
-| **2. Dashboard** | Smart stat cards, quick actions, chart/indicator cards, layout refresh | Phase 1 (header/shortcuts patterns reused), `chart.js`+`vue-chartjs` | Not started |
-| **3. Data Tables System** | `AppDataTable.vue` shared wrapper (sticky header, column resize/reorder + persisted state, bulk actions, shared `EmptyState.vue`/skeleton loading), rollout across all ~20 list views | Phase 1 (bulk-action toolbar reuses shortcut/animation primitives) | Not started |
-| **4. Cross-cutting polish** | Motion/micro-interaction audit, full responsive audit (desktop/tablet/mobile) on every screen touched, WCAG AA accessibility pass (focus order, ARIA, contrast), keyboard-shortcut help overlay covering all of Phases 1–3 | Phases 1–3 complete | Not started |
+| **2. Dashboard** | ~~Smart stat cards, quick actions, chart/indicator cards, layout refresh~~ — **superseded**, see `frontend-visual-redesign-design.md` §6 | Phase 1 (header/shortcuts patterns reused), `chart.js`+`vue-chartjs` | **Superseded 2026-08-01** |
+| **3. Data Tables System** | `AppDataTable.vue` shared wrapper (sticky header, column resize/reorder + persisted state, bulk actions, shared `EmptyState.vue`/skeleton loading), rollout across all ~20 list views | Phase 1 (bulk-action toolbar reuses shortcut/animation primitives) | Not started — `EmptyState.vue` will already exist once the visual redesign lands (built there, reused here) |
+| **4. Cross-cutting polish** | Motion/micro-interaction audit, full responsive audit (desktop/tablet/mobile) on every screen touched, WCAG AA accessibility pass (focus order, ARIA, contrast), keyboard-shortcut help overlay covering all of Phases 1–3 | Phases 1–3 complete | Icon migration, motion standardization, and Recent Items removal **pulled into and superseded by** `frontend-visual-redesign-design.md`; remaining scope (full WCAG audit, shortcuts help overlay) still **Not started** |
 
 Each phase below is specified to the depth needed for implementation; exact component-by-component
 detail for later phases may be refined slightly at that phase's own kickoff if Phase 1/2 reveal better

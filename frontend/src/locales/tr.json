@@ -23,11 +23,10 @@
     "collapse": "Kenar çubuğunu daralt",
     "expand": "Kenar çubuğunu genişlet",
     "favorites": "Favoriler",
-    "recent": "Son Kullanılanlar",
     "favorite": "Favorilere ekle",
     "unfavorite": "Favorilerden kaldır",
     "sections": {
-      "clinical": "Klinik",
+      "clinical": "Klinik Bakım",
       "operations": "Operasyonlar",
       "insights": "Analizler",
       "admin": "Yönetim"

@@ -1,3 +1,25 @@
+import type { Component } from 'vue'
+import {
+  AlertCircle,
+  BarChart3,
+  Building2,
+  Calendar,
+  ClipboardList,
+  Clock,
+  Home,
+  LineChart,
+  Network,
+  Package,
+  Palette,
+  Send,
+  Settings,
+  Tags,
+  Truck,
+  User,
+  UserPlus,
+  Users,
+  Wallet,
+} from 'lucide-vue-next'
 import type { UserRole } from '@/types/user'
 
 /** Section grouping keys (frontend-ux-redesign design doc §5.1) — order here is render order. */
@@ -7,8 +29,9 @@ export type NavSection = (typeof NAV_SECTIONS)[number]
 export interface NavItem {
   /** i18n key resolved against the current locale */
   labelKey: string
-  /** PrimeIcons class, e.g. 'pi pi-home' */
-  icon: string
+  /** Lucide icon component (frontend-visual-redesign-design.md §4/§5) — rendered via
+   *  `<component :is="icon" />`, replacing the previous PrimeIcons class-string convention. */
+  icon: Component
   /** Named route to link to. Omitted for "coming soon" items with no module yet. */
   routeName?: string
   /** Roles allowed to see this item. Omitted = visible to every authenticated role. */
@@ -28,40 +51,40 @@ export interface NavItem {
 export const navigation: NavItem[] = [
   {
     labelKey: 'nav.dashboard',
-    icon: 'pi pi-home',
+    icon: Home,
     routeName: 'dashboard',
   },
   {
     labelKey: 'nav.patients',
-    icon: 'pi pi-users',
+    icon: Users,
     routeName: 'patients',
   },
   {
     labelKey: 'nav.appointments',
-    icon: 'pi pi-calendar',
+    icon: Calendar,
     routeName: 'appointments',
     section: 'clinical',
     children: [
       {
         labelKey: 'appointments.nav.board',
-        icon: 'pi pi-calendar',
+        icon: Calendar,
         routeName: 'appointments',
       },
       {
         labelKey: 'appointments.nav.types',
-        icon: 'pi pi-tags',
+        icon: Tags,
         routeName: 'appointment-types',
       },
       {
         labelKey: 'appointments.nav.schedule',
-        icon: 'pi pi-clock',
+        icon: Clock,
         routeName: 'dentist-schedule',
       },
     ],
   },
   {
     labelKey: 'nav.dentalChart',
-    icon: 'pi pi-sitemap',
+    icon: Network,
     section: 'clinical',
     // No overview route of its own yet — the chart itself lives on PatientDetailView's Dental
     // Chart tab (implementation plan §2.3), not a dedicated screen. The catalog admin screen is
@@ -69,7 +92,7 @@ export const navigation: NavItem[] = [
     children: [
       {
         labelKey: 'dentalChart.nav.conditions',
-        icon: 'pi pi-palette',
+        icon: Palette,
         routeName: 'dental-conditions',
         roles: ['admin'],
       },
@@ -77,35 +100,35 @@ export const navigation: NavItem[] = [
   },
   {
     labelKey: 'nav.treatmentPlans',
-    icon: 'pi pi-clipboard',
+    icon: ClipboardList,
     section: 'clinical',
     comingSoon: true,
   },
   {
     labelKey: 'nav.inventory',
-    icon: 'pi pi-box',
+    icon: Package,
     routeName: 'supplies',
     section: 'operations',
     children: [
       {
         labelKey: 'inventory.nav.supplies',
-        icon: 'pi pi-box',
+        icon: Package,
         routeName: 'supplies',
       },
       {
         labelKey: 'inventory.nav.purchaseOrders',
-        icon: 'pi pi-truck',
+        icon: Truck,
         routeName: 'purchase-orders',
       },
       {
         labelKey: 'inventory.nav.suppliers',
-        icon: 'pi pi-building',
+        icon: Building2,
         routeName: 'suppliers',
         roles: ['admin'],
       },
       {
         labelKey: 'inventory.nav.categories',
-        icon: 'pi pi-tags',
+        icon: Tags,
         routeName: 'supply-categories',
         roles: ['admin'],
       },
@@ -113,18 +136,18 @@ export const navigation: NavItem[] = [
   },
   {
     labelKey: 'nav.laboratory',
-    icon: 'pi pi-send',
+    icon: Send,
     routeName: 'lab-cases',
     section: 'operations',
     children: [
       {
         labelKey: 'laboratory.nav.labCases',
-        icon: 'pi pi-send',
+        icon: Send,
         routeName: 'lab-cases',
       },
       {
         labelKey: 'laboratory.nav.labs',
-        icon: 'pi pi-building',
+        icon: Building2,
         routeName: 'labs',
         roles: ['admin'],
       },
@@ -135,61 +158,61 @@ export const navigation: NavItem[] = [
     // (patient-scoped) — the gap was purely a missing clinic-wide index, now built
     // (frontend-ux-redesign design doc §5.1/§11, `GET /invoices`).
     labelKey: 'nav.billing',
-    icon: 'pi pi-wallet',
+    icon: Wallet,
     routeName: 'invoices',
     section: 'operations',
   },
   {
     labelKey: 'nav.reports',
-    icon: 'pi pi-chart-bar',
+    icon: BarChart3,
     routeName: 'reports',
     section: 'insights',
     children: [
       {
         labelKey: 'reports.nav.production',
-        icon: 'pi pi-chart-line',
+        icon: LineChart,
         routeName: 'report-production',
         roles: ['admin'],
       },
       {
         labelKey: 'reports.nav.collections',
-        icon: 'pi pi-wallet',
+        icon: Wallet,
         routeName: 'report-collections',
         roles: ['admin'],
       },
       {
         labelKey: 'reports.nav.arAging',
-        icon: 'pi pi-exclamation-circle',
+        icon: AlertCircle,
         routeName: 'report-ar-aging',
         roles: ['admin'],
       },
       {
         labelKey: 'reports.nav.appointments',
-        icon: 'pi pi-calendar',
+        icon: Calendar,
         routeName: 'report-appointments',
       },
       {
         labelKey: 'reports.nav.treatmentPlanAcceptance',
-        icon: 'pi pi-clipboard',
+        icon: ClipboardList,
         routeName: 'report-treatment-plan-acceptance',
       },
       {
         labelKey: 'reports.nav.newPatients',
-        icon: 'pi pi-user-plus',
+        icon: UserPlus,
         routeName: 'report-new-patients',
       },
     ],
   },
   {
     labelKey: 'nav.users',
-    icon: 'pi pi-user',
+    icon: User,
     routeName: 'users',
     roles: ['admin'],
     section: 'admin',
   },
   {
     labelKey: 'nav.settings',
-    icon: 'pi pi-cog',
+    icon: Settings,
     routeName: 'settings',
     // Every child is admin-only, so this is gated at the top level itself rather than a
     // mixed-visibility group (design doc §7) — unlike Reports, which has some non-admin children.
@@ -222,36 +245,17 @@ export function flattenNavItems(): NavItem[] {
 
 /**
  * Record-detail routes that have no sidebar entry of their own (they're reached by clicking a row
- * in a list, never from the nav) — used by both `useBreadcrumbs` and the Recent Items tracker to
- * resolve an icon/parent/fallback label for a detail page (design doc §5.1/§5.4/§11).
+ * in a list, never from the nav) — used by `useBreadcrumbs` to resolve a parent/fallback label for
+ * a detail page (design doc §5.2). Previously also fed the Recent Items tracker (`icon` field) —
+ * that feature is removed (frontend-visual-redesign-design.md §1.2), so no `icon` field here.
  */
-export const DETAIL_ROUTES: Record<string, { icon: string; labelKey: string; parentRouteName: string }> = {
-  'patient-detail': { icon: 'pi pi-user', labelKey: 'nav.patients', parentRouteName: 'patients' },
-  'treatment-plan-detail': {
-    icon: 'pi pi-clipboard',
-    labelKey: 'patients.tabs.treatmentPlans',
-    parentRouteName: 'patients',
-  },
-  'clinical-note-detail': {
-    icon: 'pi pi-file',
-    labelKey: 'patients.tabs.clinicalNotes',
-    parentRouteName: 'patients',
-  },
-  'invoice-detail': { icon: 'pi pi-wallet', labelKey: 'patients.tabs.invoices', parentRouteName: 'patients' },
-  'appointment-detail': {
-    icon: 'pi pi-calendar',
-    labelKey: 'nav.appointments',
-    parentRouteName: 'appointments',
-  },
-  'supply-detail': { icon: 'pi pi-box', labelKey: 'inventory.nav.supplies', parentRouteName: 'supplies' },
-  'purchase-order-detail': {
-    icon: 'pi pi-truck',
-    labelKey: 'inventory.nav.purchaseOrders',
-    parentRouteName: 'purchase-orders',
-  },
-  'lab-case-detail': {
-    icon: 'pi pi-send',
-    labelKey: 'laboratory.nav.labCases',
-    parentRouteName: 'lab-cases',
-  },
+export const DETAIL_ROUTES: Record<string, { labelKey: string; parentRouteName: string }> = {
+  'patient-detail': { labelKey: 'nav.patients', parentRouteName: 'patients' },
+  'treatment-plan-detail': { labelKey: 'patients.tabs.treatmentPlans', parentRouteName: 'patients' },
+  'clinical-note-detail': { labelKey: 'patients.tabs.clinicalNotes', parentRouteName: 'patients' },
+  'invoice-detail': { labelKey: 'patients.tabs.invoices', parentRouteName: 'patients' },
+  'appointment-detail': { labelKey: 'nav.appointments', parentRouteName: 'appointments' },
+  'supply-detail': { labelKey: 'inventory.nav.supplies', parentRouteName: 'supplies' },
+  'purchase-order-detail': { labelKey: 'inventory.nav.purchaseOrders', parentRouteName: 'purchase-orders' },
+  'lab-case-detail': { labelKey: 'laboratory.nav.labCases', parentRouteName: 'lab-cases' },
 }

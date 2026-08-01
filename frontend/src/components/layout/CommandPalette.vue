@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
+import { computed, nextTick, ref, watch, type Component, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
+import { Search, UserPlus, Zap } from 'lucide-vue-next'
 import { useCommandPaletteStore } from '@/stores/commandPalette'
 import { useShortcutsHelpStore } from '@/stores/shortcutsHelp'
-import { useSidebarPreferencesStore } from '@/stores/sidebarPreferences'
 import { useAuthStore } from '@/stores/auth'
 import { flattenNavItems } from '@/config/navigation'
 
 interface PaletteAction {
   id: string
   label: string
-  icon: string
+  icon: Component
   keywords: string
   run: () => void
 }
@@ -23,7 +23,6 @@ const router = useRouter()
 const auth = useAuthStore()
 const commandPalette = useCommandPaletteStore()
 const shortcutsHelp = useShortcutsHelpStore()
-const sidebarPreferences = useSidebarPreferencesStore()
 
 const query = ref('')
 const activeIndex = ref(0)
@@ -50,7 +49,7 @@ const actions = computed<PaletteAction[]>(() => {
     quickActions.push({
       id: 'action:new-patient',
       label: t('commandPalette.newPatient'),
-      icon: 'pi pi-user-plus',
+      icon: UserPlus,
       keywords: t('commandPalette.newPatient'),
       run: () => router.push({ name: 'patients', query: { new: '1' } }),
     })
@@ -58,23 +57,13 @@ const actions = computed<PaletteAction[]>(() => {
   quickActions.push({
     id: 'action:shortcuts',
     label: t('commandPalette.shortcuts'),
-    icon: 'pi pi-bolt',
+    icon: Zap,
     keywords: t('commandPalette.shortcuts'),
     run: () => shortcutsHelp.show(),
   })
 
   return [...quickActions, ...navActions]
 })
-
-const recentActions = computed<PaletteAction[]>(() =>
-  sidebarPreferences.recentItems.map((item) => ({
-    id: `recent:${item.routeName}:${JSON.stringify(item.params)}`,
-    label: item.isLiteral ? item.label : t(item.label),
-    icon: item.icon,
-    keywords: item.isLiteral ? item.label : t(item.label),
-    run: () => router.push({ name: item.routeName, params: item.params }),
-  })),
-)
 
 // A generous defensive ceiling, not a functional one — today's full flattened nav list is under
 // 30 items, so every "Go to X" entry stays reachable without typing a query (a real bug caught by
@@ -84,7 +73,7 @@ const MAX_RESULTS = 60
 
 const filtered = computed<PaletteAction[]>(() => {
   const needle = query.value.trim().toLowerCase()
-  const pool = needle ? actions.value : [...recentActions.value, ...actions.value]
+  const pool = actions.value
   if (!needle) return pool.slice(0, MAX_RESULTS)
   return pool.filter((action) => action.keywords.toLowerCase().includes(needle)).slice(0, MAX_RESULTS)
 })
@@ -142,18 +131,20 @@ function onKeydown(event: KeyboardEvent) {
     :aria-label="t('commandPalette.title')"
   >
     <div role="dialog" aria-modal="true" :aria-label="t('commandPalette.title')" class="flex flex-col">
-      <div class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
-        <i class="pi pi-search text-surface-400" />
+      <div
+        class="flex items-center gap-2 rounded-t-xl border-b border-surface-200 px-4 py-3.5 dark:border-surface-700"
+      >
+        <Search :size="18" class="shrink-0 text-surface-400" />
         <InputText
           ref="inputRef"
           v-model="query"
-          class="w-full border-none !shadow-none !outline-none"
+          class="w-full rounded-md border-none !shadow-none !outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
           :placeholder="t('commandPalette.placeholder')"
           autofocus
           @keydown="onKeydown"
         />
         <kbd
-          class="rounded border border-surface-200 px-1.5 py-0.5 text-xs text-surface-400 dark:border-surface-700"
+          class="rounded-md border border-surface-200 bg-surface-50 px-1.5 py-0.5 text-xs text-surface-400 shadow-sm dark:border-surface-700 dark:bg-surface-800"
         >
           Esc
         </kbd>
@@ -168,16 +159,16 @@ function onKeydown(event: KeyboardEvent) {
             type="button"
             role="option"
             :aria-selected="index === activeIndex"
-            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-start text-sm transition-colors"
+            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
             :class="
               index === activeIndex
-                ? 'bg-primary-50 text-primary dark:bg-primary-400/10 dark:text-primary-300'
+                ? 'bg-primary-50 font-medium text-primary dark:bg-primary-400/10 dark:text-primary-300'
                 : 'text-surface-700 dark:text-surface-200'
             "
             @mouseenter="activeIndex = index"
             @click="runAction(action)"
           >
-            <i :class="action.icon" class="text-base" />
+            <component :is="action.icon" :size="18" class="shrink-0" />
             <span class="truncate">{{ action.label }}</span>
           </button>
         </li>
