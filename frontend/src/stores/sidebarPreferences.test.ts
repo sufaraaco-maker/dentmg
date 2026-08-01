@@ -43,4 +43,3 @@ describe('useSidebarPreferencesStore collapsed sections', () => {
     expect(store.isSectionCollapsed('operations')).toBe(false)
   })
 })
-

@@ -77,7 +77,12 @@ function onNavigate() {
       <span v-if="!collapsed" class="truncate text-lg font-semibold text-surface-900 dark:text-surface-0">
         {{ t('app.name') }}
       </span>
-      <Button text rounded :aria-label="t(collapsed ? 'nav.expand' : 'nav.collapse')" @click="ui.toggleSidebarCollapsed">
+      <Button
+        text
+        rounded
+        :aria-label="t(collapsed ? 'nav.expand' : 'nav.collapse')"
+        @click="ui.toggleSidebarCollapsed"
+      >
         <template #icon="{ class: iconClass }">
           <Menu :size="20" :class="iconClass" />
         </template>

@@ -1035,6 +1035,28 @@ runs):
 
 ## Open (new from `DemoDataSeeder`, 2026-08-01)
 
+### `DemoDataSeeder`'s data volume broke two permanent E2E tests on `main` — pre-existing, unrelated to any later branch
+Found while investigating a CI run on `feature/premium-visual-redesign` (Premium Visual Redesign, Step 3
+sign-off): two E2E tests fail consistently, both before and independent of that branch — confirmed by
+checking `main`'s own last 3 CI runs (`30694772153`, `30692748624`, `30692646064`, all 2026-08-01, all
+after the `DemoDataSeeder` commit `e1f1a32` merged), which show the **exact same two failures**, so this
+is not something introduced by the visual redesign work.
+1. **`appointments.spec.ts:117` ("creates, reschedules, and cancels an appointment")** — times out
+   clicking the List view's first row / the resulting "Edit" button. Most likely cause: the seeder's ~110
+   new patients and their appointments now occupy working-hour slots and/or shift which row is "first" in
+   the List view, which this test's dynamic slot-picking helpers (`ensureWorkingHours`,
+   `pickFirstAvailableSlot`) weren't written against.
+2. **`reports.spec.ts:62` ("admin sees a recorded payment on the Collections report...")** — the freshly
+   recorded test payment's patient name isn't found on the Collections report page. Most likely cause: the
+   Collections `DataTable` paginates at 20 rows (`CollectionsReportView.vue`); the seeder added a large
+   volume of collections rows, so a newly-created row may no longer land on page 1, which
+   `getByText(patient.fullName)` (no pagination-aware wait) doesn't account for.
+**Revisit**: needs its own investigation session against `main` directly (out of scope for the visual
+redesign initiative, which is frontend-presentation-only and did not touch either the Appointments/Reports
+components or `DemoDataSeeder`) — likely fixes are either seeding smaller/isolated E2E fixture data instead
+of sharing the full demo dataset, or making each test explicitly account for pagination/slot availability
+rather than assuming "first row"/"page 1" for a large shared dataset.
+
 ### Four real bugs found while first running the new 110-Arabic-patient demo dataset seeder — RESOLVED before use
 Requested directly (not part of any module's own workflow): a large demo dataset spanning every
 module's status/scenario space, with Arabic-named patients, for manual review of the app as it

@@ -6,7 +6,17 @@ import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import Popover from 'primevue/popover'
-import { Bell, BellOff, ChevronRight, LogOut, Menu as MenuIcon, Moon, Search, Sun, User } from 'lucide-vue-next'
+import {
+  Bell,
+  BellOff,
+  ChevronRight,
+  LogOut,
+  Menu as MenuIcon,
+  Moon,
+  Search,
+  Sun,
+  User,
+} from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useCommandPaletteStore } from '@/stores/commandPalette'
@@ -157,7 +167,11 @@ function toggleUserMenu(event: Event) {
       </Button>
       <Menu ref="userMenu" :model="userMenuItems" popup>
         <template #itemicon="{ item }">
-          <component :is="(item as { iconComponent?: unknown }).iconComponent" :size="16" class="p-menuitem-icon" />
+          <component
+            :is="(item as { iconComponent?: unknown }).iconComponent"
+            :size="16"
+            class="p-menuitem-icon"
+          />
         </template>
       </Menu>
     </div>
