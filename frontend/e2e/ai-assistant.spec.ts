@@ -63,7 +63,9 @@ test.describe('ai-assistant', () => {
     await expect(page.getByText('Business Associate Agreement')).toBeVisible()
     await expect(switches).toHaveCount(2)
     await expect(switches.nth(1)).not.toBeChecked()
-    await page.getByRole('button', { name: 'Save' }).click()
+    // `exact: true` — the AI Assistant Settings screen also has its own "Save Key" button
+    // (ai-assistant-settings-api-key-design.md §7), a substring match on 'Save' would now hit both.
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
     await expect(page.getByText('AI Assistant settings saved successfully')).toBeVisible()
 
     // --- Zero-PHI entry points now appear across Dashboard, Patients, and Reports. Each `goto` is
