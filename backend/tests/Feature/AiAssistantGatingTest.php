@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Anthropic\Client;
+use App\Exceptions\AiAssistant\AiAssistantUnavailableException;
 use App\Models\ClinicalNote;
 use App\Models\ClinicSetting;
 use App\Models\TreatmentPlan;
 use App\Models\User;
+use App\Services\AiAssistantService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -180,5 +183,42 @@ class AiAssistantGatingTest extends TestCase
         $response = $this->actingAs($actor)->postJson("/api/treatment-plans/{$plan->id}/ai-suggestions");
 
         $response->assertStatus(422)->assertJson(['code' => 'treatment_plan_item_locked']);
+    }
+
+    /**
+     * `AiAssistantService::client()`'s key precedence (ai-assistant-settings-api-key-design.md §6):
+     * a Settings-stored key must let the module past the "unconfigured" gate even with no
+     * `ANTHROPIC_API_KEY` in the environment. Invoked via reflection on the private method directly
+     * — constructing the SDK client is a local, no-network operation (it only stores config), so
+     * this proves the precedence logic itself without the real network call an actual `messages->
+     * create()` request would make (this test suite never makes real Anthropic API calls, per this
+     * file's own class-level doc comment).
+     */
+    public function test_client_resolves_from_the_settings_stored_key_with_no_env_key_configured(): void
+    {
+        ClinicSetting::factory()->create([
+            'ai_assistant_enabled' => true,
+            'ai_assistant_api_key' => 'sk-ant-test-settings-key',
+        ]);
+
+        $service = app(AiAssistantService::class);
+        $method = new \ReflectionMethod($service, 'client');
+        $method->setAccessible(true);
+
+        $client = $method->invoke($service);
+
+        $this->assertInstanceOf(Client::class, $client);
+    }
+
+    public function test_client_throws_unavailable_when_neither_settings_key_nor_env_key_is_configured(): void
+    {
+        ClinicSetting::factory()->create(['ai_assistant_enabled' => true]);
+
+        $service = app(AiAssistantService::class);
+        $method = new \ReflectionMethod($service, 'client');
+        $method->setAccessible(true);
+
+        $this->expectException(AiAssistantUnavailableException::class);
+        $method->invoke($service);
     }
 }

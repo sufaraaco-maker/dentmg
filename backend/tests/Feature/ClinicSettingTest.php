@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\ClinicSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ClinicSettingTest extends TestCase
@@ -145,5 +147,86 @@ class ClinicSettingTest extends TestCase
 
         $response->assertOk();
         $this->assertSame('Bright Smile Dental', $response->json('name'));
+    }
+
+    // AI Assistant API key (ai-assistant-settings-api-key-design.md §11) — the response must never
+    // expose the raw value, only a `configured` boolean + last-4, and the value must never land in
+    // the audit trail in plain form.
+
+    public function test_admin_can_set_the_ai_assistant_api_key_and_the_response_never_exposes_the_raw_value(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create();
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_api_key' => 'sk-ant-abcd1234',
+        ]);
+
+        $response->assertOk();
+        $this->assertTrue($response->json('ai_assistant_api_key_configured'));
+        $this->assertSame('1234', $response->json('ai_assistant_api_key_last4'));
+        $response->assertJsonMissingPath('ai_assistant_api_key');
+
+        // Stored encrypted, not plaintext. `ClinicSetting::query()->value()` hydrates a full model
+        // (casts apply, decrypting it) — `DB::table()` is the actual raw column value, bypassing
+        // Eloquent entirely.
+        $raw = DB::table('clinic_settings')->value('ai_assistant_api_key');
+        $this->assertNotSame('sk-ant-abcd1234', $raw);
+        $this->assertSame('sk-ant-abcd1234', ClinicSetting::query()->first()->ai_assistant_api_key);
+    }
+
+    public function test_saving_the_ai_assistant_api_key_does_not_write_its_raw_value_into_the_audit_trail(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create();
+
+        $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_api_key' => 'sk-ant-abcd1234',
+        ])->assertOk();
+
+        $log = AuditLog::query()->where('auditable_type', ClinicSetting::class)->latest('created_at')->first();
+        $this->assertNotNull($log);
+        $this->assertArrayNotHasKey('ai_assistant_api_key', $log->changes ?? []);
+        $this->assertStringNotContainsString('sk-ant-abcd1234', json_encode($log->changes));
+    }
+
+    public function test_admin_can_remove_the_ai_assistant_api_key_with_an_explicit_null(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create(['ai_assistant_api_key' => 'sk-ant-abcd1234']);
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_api_key' => null,
+        ]);
+
+        $response->assertOk();
+        $this->assertFalse($response->json('ai_assistant_api_key_configured'));
+        $this->assertNull($response->json('ai_assistant_api_key_last4'));
+        $this->assertNull(ClinicSetting::query()->first()->ai_assistant_api_key);
+    }
+
+    public function test_omitting_the_ai_assistant_api_key_field_leaves_a_previously_saved_key_untouched(): void
+    {
+        $actor = User::factory()->admin()->create();
+        ClinicSetting::factory()->create(['ai_assistant_api_key' => 'sk-ant-abcd1234']);
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_enabled' => true,
+        ]);
+
+        $response->assertOk();
+        $this->assertTrue($response->json('ai_assistant_api_key_configured'));
+        $this->assertSame('sk-ant-abcd1234', ClinicSetting::query()->first()->ai_assistant_api_key);
+    }
+
+    public function test_dentist_cannot_set_the_ai_assistant_api_key(): void
+    {
+        $actor = User::factory()->dentist()->create();
+
+        $response = $this->actingAs($actor)->putJson('/api/clinic-settings', [
+            'ai_assistant_api_key' => 'sk-ant-abcd1234',
+        ]);
+
+        $response->assertForbidden();
     }
 }

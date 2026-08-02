@@ -10,6 +10,15 @@ vi.mock('@/services/settings', () => ({
   updateClinicSettings: vi.fn(),
 }))
 
+// Real `ConfirmDialog` is a global singleton mounted once in App.vue, not by this view — auto-
+// accepting here tests the actual removeApiKey() wiring (does it send an explicit `null`?)
+// without needing to render/click through the real dialog component.
+vi.mock('primevue/useconfirm', () => ({
+  useConfirm: () => ({
+    require: (options: { accept?: () => void }) => options.accept?.(),
+  }),
+}))
+
 const mockedGet = vi.mocked(getClinicSettings)
 const mockedUpdate = vi.mocked(updateClinicSettings)
 
@@ -22,6 +31,8 @@ function makeSettings(overrides: Partial<ClinicSetting> = {}): ClinicSetting {
     email: null,
     ai_assistant_enabled: false,
     ai_assistant_phi_features_acknowledged: false,
+    ai_assistant_api_key_configured: false,
+    ai_assistant_api_key_last4: null,
     updated_at: '2026-07-30T00:00:00Z',
     ...overrides,
   }
@@ -72,6 +83,110 @@ describe('AiAssistantSettingsView', () => {
     expect(mockedUpdate).toHaveBeenCalledWith({
       ai_assistant_enabled: true,
       ai_assistant_phi_features_acknowledged: false,
+    })
+  })
+
+  describe('API key management', () => {
+    it('shows an empty input (never pre-filled) when no key is configured yet', async () => {
+      mockedGet.mockResolvedValue(makeSettings({ ai_assistant_enabled: true }))
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('Anthropic API Key')
+      expect(wrapper.text()).not.toContain('configured, ending in')
+      const input = wrapper.find('input[type="password"], input[type="text"]')
+      expect(input.exists()).toBe(true)
+    })
+
+    it('shows the masked "configured" chip with last4 once a key is set, not the raw value', async () => {
+      mockedGet.mockResolvedValue(
+        makeSettings({
+          ai_assistant_enabled: true,
+          ai_assistant_api_key_configured: true,
+          ai_assistant_api_key_last4: 'ab12',
+        }),
+      )
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('ab12')
+      expect(wrapper.text()).toContain('Replace')
+      expect(wrapper.text()).toContain('Remove')
+    })
+
+    it('saves a new key as its own action, independent of the toggles form', async () => {
+      mockedGet.mockResolvedValue(makeSettings({ ai_assistant_enabled: true }))
+      mockedUpdate.mockResolvedValue(
+        makeSettings({
+          ai_assistant_enabled: true,
+          ai_assistant_api_key_configured: true,
+          ai_assistant_api_key_last4: 'cd34',
+        }),
+      )
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      await wrapper.get('input[type="password"]').setValue('sk-ant-abcd1234')
+      const saveKeyButton = wrapper.findAll('button').find((b) => b.text() === 'Save Key')
+      await saveKeyButton?.trigger('click')
+      await flushPromises()
+
+      expect(mockedUpdate).toHaveBeenCalledWith({ ai_assistant_api_key: 'sk-ant-abcd1234' })
+      expect(mockedUpdate).not.toHaveBeenCalledWith(
+        expect.objectContaining({ ai_assistant_enabled: expect.anything() }),
+      )
+    })
+
+    it('disables Save Key until something is typed', async () => {
+      mockedGet.mockResolvedValue(makeSettings({ ai_assistant_enabled: true }))
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      const saveKeyButton = wrapper.findAll('button').find((b) => b.text() === 'Save Key')
+      expect(saveKeyButton?.attributes('disabled')).toBeDefined()
+    })
+
+    it('removes the key on confirm accept, sending an explicit null (not omitting the field)', async () => {
+      mockedGet.mockResolvedValue(
+        makeSettings({
+          ai_assistant_enabled: true,
+          ai_assistant_api_key_configured: true,
+          ai_assistant_api_key_last4: 'ab12',
+        }),
+      )
+      mockedUpdate.mockResolvedValue(makeSettings({ ai_assistant_enabled: true }))
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      const removeButton = wrapper.findAll('button').find((b) => b.text() === 'Remove')
+      await removeButton?.trigger('click')
+      await flushPromises()
+
+      expect(mockedUpdate).toHaveBeenCalledWith({ ai_assistant_api_key: null })
+    })
+
+    it('"Replace" reveals an empty input rather than the previously configured key', async () => {
+      mockedGet.mockResolvedValue(
+        makeSettings({
+          ai_assistant_enabled: true,
+          ai_assistant_api_key_configured: true,
+          ai_assistant_api_key_last4: 'ab12',
+        }),
+      )
+
+      const wrapper = mount(AiAssistantSettingsView)
+      await flushPromises()
+
+      const replaceButton = wrapper.findAll('button').find((b) => b.text() === 'Replace')
+      await replaceButton?.trigger('click')
+
+      const input = wrapper.get<HTMLInputElement>('input[type="password"]')
+      expect(input.element.value).toBe('')
     })
   })
 })
