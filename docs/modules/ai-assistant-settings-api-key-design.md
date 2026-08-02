@@ -1,6 +1,16 @@
-# AI Assistant — Settings-Managed API Key — Design Document (Pending Approval)
+# AI Assistant — Settings-Managed API Key — Design Document (Approved, 2026-08-02)
 
-**Status: Design Phase — awaiting explicit approval. No code written yet.**
+**Status: Done — Production Ready ✅.** Implemented as designed (commit `48c55f7`, with a follow-up E2E
+locator fix in `e4a9b06`): encrypted `ai_assistant_api_key` column on `clinic_settings`,
+`AuditLogService::EXCLUDED_KEYS` extended, `AiAssistantService::client()` prefers the Settings-stored key
+over `.env`, `ClinicSettingResource` returns only `configured`/`last4`, and
+`AiAssistantSettingsView.vue` gets the masked set/replace/remove UI. Backend 926/926 tests, Pint/PHPStan
+clean; Frontend 749/749 tests, `vue-tsc`/ESLint/Prettier clean. Verified in a real browser (light/dark,
+RTL, full set/replace/remove flow, toast confirmations). Originally committed onto
+`feature/premium-visual-redesign` by mistake — that branch's own design doc scopes it as "frontend-only,
+presentation-layer only" (`docs/modules/frontend-visual-redesign-design.md`), so this backend feature
+(migration, encrypted column, audit-log change) was out of scope there. Split onto its own
+`feature/ai-assistant-api-key` branch (2026-08-02) and shipped via its own PR instead.
 
 Amends [`ai-assistant-design.md`](./ai-assistant-design.md) (the original AI Assistant module design,
 merged via PR #9). That design deliberately kept the Anthropic API key as an ops-managed secret
