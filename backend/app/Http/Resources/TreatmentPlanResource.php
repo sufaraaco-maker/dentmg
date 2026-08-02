@@ -46,6 +46,15 @@ class TreatmentPlanResource extends JsonResource
                 'id' => $this->createdBy->id,
                 'name' => $this->createdBy->name,
             ]),
+            // Only meaningful on the clinic-wide list (mirrors `InvoiceResource`'s identical field)
+            // — every patient-scoped TreatmentPlan endpoint already has the patient in context and
+            // doesn't load this relation, so it's simply absent there (`whenLoaded`, same
+            // convention as `created_by` above).
+            'patient' => $this->whenLoaded('patient', fn () => [
+                'id' => $this->patient->id,
+                'first_name' => $this->patient->first_name,
+                'last_name' => $this->patient->last_name,
+            ]),
             'superseded_by_plan' => $this->whenLoaded('supersededByPlan', fn () => $this->supersededByPlan ? [
                 'id' => $this->supersededByPlan->id,
                 'title' => $this->supersededByPlan->title,

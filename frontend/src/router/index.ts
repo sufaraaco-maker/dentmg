@@ -60,6 +60,11 @@ export const router = createRouter({
           meta: { recent: true },
         },
         {
+          path: 'treatment-plans',
+          name: 'treatment-plans',
+          component: () => import('@/views/TreatmentPlansView.vue'),
+        },
+        {
           path: 'patients/:id/clinical-notes/:noteId',
           name: 'clinical-note-detail',
           component: () => import('@/views/ClinicalNoteDetailView.vue'),

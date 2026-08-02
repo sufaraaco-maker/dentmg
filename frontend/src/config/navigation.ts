@@ -76,10 +76,13 @@ export const navigation: NavItem[] = [
     ],
   },
   {
+    // Was `comingSoon: true` despite Treatment Plan CRUD/routes already working end-to-end
+    // (patient-scoped) — the gap was purely a missing clinic-wide index, now built (same fix as
+    // the Billing entry below, `GET /treatment-plans`).
     labelKey: 'nav.treatmentPlans',
     icon: 'pi pi-clipboard',
+    routeName: 'treatment-plans',
     section: 'clinical',
-    comingSoon: true,
   },
   {
     labelKey: 'nav.inventory',

@@ -78,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('patients/{patient}/treatment-plans', [TreatmentPlanController::class, 'index']);
     Route::post('patients/{patient}/treatment-plans', [TreatmentPlanController::class, 'store']);
+    Route::get('treatment-plans', [TreatmentPlanController::class, 'indexAll']);
     Route::get('treatment-plans/{treatment_plan}', [TreatmentPlanController::class, 'show']);
     Route::put('treatment-plans/{treatment_plan}', [TreatmentPlanController::class, 'update']);
     Route::post('treatment-plans/{treatment_plan}/present', [TreatmentPlanController::class, 'present']);

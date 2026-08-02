@@ -49,6 +49,23 @@ describe('treatmentPlansApi.list', () => {
   })
 })
 
+describe('treatmentPlansApi.listAll', () => {
+  it('requests the clinic-wide, paginated endpoint with the given params', async () => {
+    const page = {
+      data: [],
+      meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
+    }
+    mockedApi.get.mockResolvedValueOnce({ data: page })
+
+    const result = await treatmentPlansApi.listAll({ page: 2, search: 'Implants', status: 'accepted' })
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/treatment-plans', {
+      params: { page: 2, search: 'Implants', status: 'accepted' },
+    })
+    expect(result).toEqual(page)
+  })
+})
+
 describe('treatmentPlansApi.create', () => {
   it('posts to the patient-nested route', async () => {
     const created = makePlan()
