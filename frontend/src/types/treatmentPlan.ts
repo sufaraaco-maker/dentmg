@@ -85,6 +85,14 @@ export interface TreatmentPlanSupersededBySummary {
   status: TreatmentPlanStatus
 }
 
+/** The embedded `patient` shape — only present on the clinic-wide list response (`listAll`), never
+ *  on patient-scoped endpoints which already have the patient in route context. */
+export interface TreatmentPlanPatientSummary {
+  id: string
+  first_name: string
+  last_name: string
+}
+
 export interface TreatmentPlan {
   id: string
   patient_id: string
@@ -110,6 +118,7 @@ export interface TreatmentPlan {
   created_by?: TreatmentPlanUserSummary
   superseded_by_plan?: TreatmentPlanSupersededBySummary | null
   items?: TreatmentPlanItem[]
+  patient?: TreatmentPlanPatientSummary
 }
 
 export interface CreateTreatmentPlanPayload {

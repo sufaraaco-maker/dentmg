@@ -26,6 +26,8 @@ function makeRouter(): Router {
       // eagerly on render, so every test in this file needs a matching route or mounting itself
       // throws, not just the tests that specifically assert on Billing.
       { path: '/invoices', name: 'invoices', component: { template: '<div />' } },
+      // Same fix as Billing above — Treatment Plans is also a real `RouterLink` now.
+      { path: '/treatment-plans', name: 'treatment-plans', component: { template: '<div />' } },
     ],
   })
 }
@@ -76,20 +78,22 @@ describe('AppSidebar role-based visibility', () => {
     expect(wrapper.text()).toContain('Appointments')
   })
 
-  it('renders unbuilt modules as visible "Soon" items, not fake links', async () => {
+  it('renders Dental Chart as an expandable group, not a "Soon" placeholder', async () => {
     const { wrapper } = await mountSidebar('admin')
     expect(wrapper.text()).toContain('Dental Chart')
-    expect(wrapper.text()).toContain('Treatment Plans')
-    expect(wrapper.findAll('.pi-clipboard').length).toBeGreaterThan(0)
-    // Coming-soon items render no navigable target for their own row.
-    const links = wrapper.findAll('a').map((a) => a.text())
-    expect(links.some((text) => text.includes('Treatment Plans'))).toBe(false)
+    expect(wrapper.findAll('.pi-sitemap').length).toBeGreaterThan(0)
   })
 
   it('renders Billing as a real navigable link, not a "Soon" placeholder', async () => {
     const { wrapper } = await mountSidebar('admin')
     const links = wrapper.findAll('a').map((a) => a.text())
     expect(links.some((text) => text.includes('Billing'))).toBe(true)
+  })
+
+  it('renders Treatment Plans as a real navigable link, not a "Soon" placeholder', async () => {
+    const { wrapper } = await mountSidebar('admin')
+    const links = wrapper.findAll('a').map((a) => a.text())
+    expect(links.some((text) => text.includes('Treatment Plans'))).toBe(true)
   })
 })
 

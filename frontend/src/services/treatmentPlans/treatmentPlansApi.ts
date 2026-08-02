@@ -4,8 +4,14 @@ import type {
   CreateTreatmentPlanPayload,
   CreateTreatmentPlanRevisionPayload,
   TreatmentPlan,
+  TreatmentPlanStatus,
   UpdateTreatmentPlanPayload,
 } from '@/types/treatmentPlan'
+
+export interface PaginatedTreatmentPlans {
+  data: TreatmentPlan[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
 
 export const treatmentPlansApi = {
   // GET /api/patients/{patient}/treatment-plans is deliberately not paginated — a patient's
@@ -13,6 +19,16 @@ export const treatmentPlansApi = {
   // as dental-chart-entries/patient-audit-logs.
   async list(patientId: string): Promise<TreatmentPlan[]> {
     const { data } = await api.get<TreatmentPlan[]>(`/patients/${patientId}/treatment-plans`)
+    return data
+  },
+
+  /** Clinic-wide, paginated (mirrors `invoicesApi.listAll()`'s exact shape) — the Sidebar's
+   *  Treatment Plans entry's destination, distinct from `list()` above which stays intentionally
+   *  unpaginated and patient-scoped. */
+  async listAll(
+    params: { page?: number; search?: string; status?: TreatmentPlanStatus } = {},
+  ): Promise<PaginatedTreatmentPlans> {
+    const { data } = await api.get<PaginatedTreatmentPlans>('/treatment-plans', { params })
     return data
   },
 

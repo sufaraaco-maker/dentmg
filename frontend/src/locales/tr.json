@@ -607,6 +607,12 @@
     "loadError": "Tedavi planları yüklenemedi",
     "notFound": "Tedavi planı bulunamadı",
     "forbidden": "Bunu yapma izniniz yok",
+    "index": {
+      "title": "Tedavi Planları",
+      "search": "Plan başlığına veya hasta adına göre ara",
+      "allStatuses": "Tüm Durumlar",
+      "patient": "Hasta"
+    },
     "list": {
       "plan": "Plan",
       "untitled": "Başlıksız Plan",

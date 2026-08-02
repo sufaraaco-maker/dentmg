@@ -607,6 +607,12 @@
     "loadError": "Failed to load treatment plans",
     "notFound": "Treatment plan not found",
     "forbidden": "You don't have permission to do that",
+    "index": {
+      "title": "Treatment Plans",
+      "search": "Search by plan title or patient name",
+      "allStatuses": "All Statuses",
+      "patient": "Patient"
+    },
     "list": {
       "plan": "Plan",
       "untitled": "Untitled Plan",

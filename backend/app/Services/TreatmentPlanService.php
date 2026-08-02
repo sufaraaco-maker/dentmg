@@ -12,6 +12,7 @@ use App\Models\DentalCondition;
 use App\Models\TreatmentPlan;
 use App\Models\TreatmentPlanItem;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,6 +30,29 @@ class TreatmentPlanService
      * administrative/scheduling metadata, not part of the commercial offer itself.
      */
     private const OFFER_FIELDS = ['dental_condition_id', 'tooth_number', 'surfaces', 'quantity', 'unit_cost'];
+
+    /**
+     * Clinic-wide treatment plan list (mirrors `InvoiceService::paginateAll()`'s exact shape and
+     * reasoning) — every other TreatmentPlan endpoint is deliberately patient-scoped and
+     * unpaginated (a single patient's lifetime plan count stays small, per
+     * `TreatmentPlanController::index()`'s own doc comment), but the Sidebar's Treatment Plans
+     * entry needs a real destination across the whole practice, which does need paging.
+     */
+    public function paginateAll(?string $search = null, ?TreatmentPlanStatus $status = null, int $perPage = 15): LengthAwarePaginator
+    {
+        return TreatmentPlan::query()
+            ->when($status, fn ($query) => $query->withStatus($status))
+            ->when($search, fn ($query) => $query->where(fn ($q) => $q
+                ->whereLike('title', "%{$search}%")
+                ->orWhereHas('patient', fn ($p) => $p
+                    ->whereLike('first_name', "%{$search}%")
+                    ->orWhereLike('last_name', "%{$search}%")
+                )
+            ))
+            ->with(['items', 'dentist', 'createdBy', 'patient'])
+            ->latest()
+            ->paginate($perPage);
+    }
 
     /**
      * @param  array<string, mixed>  $data  Must include `patient_id` (set by the controller from
