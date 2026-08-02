@@ -606,6 +606,12 @@
     "loadError": "Failed to load treatment plans",
     "notFound": "Treatment plan not found",
     "forbidden": "You don't have permission to do that",
+    "index": {
+      "title": "Treatment Plans",
+      "search": "Search by plan title or patient name",
+      "allStatuses": "All Statuses",
+      "patient": "Patient"
+    },
     "list": {
       "plan": "Plan",
       "untitled": "Untitled Plan",
@@ -1398,7 +1404,20 @@
       "phiAckHint": "Required before Clinical Notes draft-assist or Treatment Suggestions become available to any user.",
       "saved": "AI Assistant settings saved successfully",
       "saveError": "Failed to save AI Assistant settings",
-      "loadError": "Failed to load AI Assistant settings"
+      "loadError": "Failed to load AI Assistant settings",
+      "apiKeyLabel": "Anthropic API Key",
+      "apiKeyPlaceholder": "sk-ant-...",
+      "apiKeyHint": "Falls back to the server's configured key if none is set here.",
+      "apiKeyConfigured": "API key configured, ending in •••{last4}",
+      "apiKeyReplace": "Replace",
+      "apiKeyRemove": "Remove",
+      "apiKeySave": "Save Key",
+      "apiKeySaved": "API key saved successfully",
+      "apiKeySaveError": "Failed to save the API key",
+      "apiKeyRemoved": "API key removed",
+      "apiKeyRemoveError": "Failed to remove the API key",
+      "apiKeyRemoveConfirmHeader": "Remove API Key",
+      "apiKeyRemoveConfirmMessage": "AI Assistant features will fall back to the server's configured key, if any, or become unavailable. Continue?"
     }
   },
   "account": {

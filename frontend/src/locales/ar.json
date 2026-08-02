@@ -606,6 +606,12 @@
     "loadError": "تعذّر تحميل خطط العلاج",
     "notFound": "خطة العلاج غير موجودة",
     "forbidden": "ليس لديك صلاحية القيام بذلك",
+    "index": {
+      "title": "خطط العلاج",
+      "search": "ابحث بعنوان الخطة أو اسم المريض",
+      "allStatuses": "كل الحالات",
+      "patient": "المريض"
+    },
     "list": {
       "plan": "الخطة",
       "untitled": "خطة بلا عنوان",
@@ -1398,7 +1404,20 @@
       "phiAckHint": "مطلوب قبل إتاحة مساعدة صياغة الملاحظات السريرية أو اقتراحات العلاج لأي مستخدم.",
       "saved": "تم حفظ إعدادات المساعد الذكي بنجاح",
       "saveError": "فشل حفظ إعدادات المساعد الذكي",
-      "loadError": "فشل تحميل إعدادات المساعد الذكي"
+      "loadError": "فشل تحميل إعدادات المساعد الذكي",
+      "apiKeyLabel": "مفتاح Anthropic API",
+      "apiKeyPlaceholder": "sk-ant-...",
+      "apiKeyHint": "في حال عدم إدخال مفتاح هنا، سيُستخدم المفتاح المهيّأ على الخادم إن وُجد.",
+      "apiKeyConfigured": "تم تهيئة مفتاح API، ينتهي بـ •••{last4}",
+      "apiKeyReplace": "استبدال",
+      "apiKeyRemove": "إزالة",
+      "apiKeySave": "حفظ المفتاح",
+      "apiKeySaved": "تم حفظ مفتاح API بنجاح",
+      "apiKeySaveError": "فشل حفظ مفتاح API",
+      "apiKeyRemoved": "تمت إزالة مفتاح API",
+      "apiKeyRemoveError": "فشل إزالة مفتاح API",
+      "apiKeyRemoveConfirmHeader": "إزالة مفتاح API",
+      "apiKeyRemoveConfirmMessage": "ستعتمد ميزات المساعد الذكي على مفتاح الخادم المهيّأ إن وُجد، أو تصبح غير متاحة. هل تريد المتابعة؟"
     }
   },
   "account": {

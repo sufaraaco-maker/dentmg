@@ -31,6 +31,10 @@ class UpdateClinicSettingRequest extends FormRequest
             // enabled without also acknowledging the PHI-bearing features' BAA prerequisite.
             'ai_assistant_enabled' => ['sometimes', 'boolean'],
             'ai_assistant_phi_features_acknowledged' => ['sometimes', 'boolean'],
+            // `sometimes` + `nullable` (ai-assistant-settings-api-key-design.md §5): omitting the
+            // field entirely leaves a previously-saved key untouched; an explicit `null` is the
+            // "Remove key" action. Never `required` — most saves on this screen don't touch it.
+            'ai_assistant_api_key' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }
 }

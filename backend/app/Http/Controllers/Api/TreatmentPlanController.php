@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\TreatmentPlanStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreatmentPlan\CreateTreatmentPlanRevisionRequest;
 use App\Http\Requests\TreatmentPlan\StoreTreatmentPlanRequest;
@@ -34,6 +35,28 @@ class TreatmentPlanController extends Controller
             ->with(self::WITH)
             ->latest()
             ->get();
+
+        return TreatmentPlanResource::collection($plans);
+    }
+
+    /**
+     * Clinic-wide, paginated — the Sidebar's Treatment Plans entry needs a real destination across
+     * every patient (mirrors `InvoiceController::indexAll()`'s exact reasoning), unlike `index()`
+     * above which stays intentionally unpaginated per-patient. Same `viewAny` ability, same
+     * visibility rules.
+     */
+    public function indexAll(Request $request)
+    {
+        $this->authorize('viewAny', TreatmentPlan::class);
+
+        // `tryFrom`, not `from` — an unrecognized value is simply ignored (no filter applied)
+        // rather than a 500, since this is a plain query param, not a validated FormRequest body.
+        $status = $request->filled('status') ? TreatmentPlanStatus::tryFrom($request->string('status')->value()) : null;
+
+        $plans = $this->treatmentPlanService->paginateAll(
+            $request->string('search')->value() ?: null,
+            $status,
+        );
 
         return TreatmentPlanResource::collection($plans);
     }

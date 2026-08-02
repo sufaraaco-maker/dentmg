@@ -606,6 +606,12 @@
     "loadError": "Tedavi planları yüklenemedi",
     "notFound": "Tedavi planı bulunamadı",
     "forbidden": "Bunu yapma izniniz yok",
+    "index": {
+      "title": "Tedavi Planları",
+      "search": "Plan başlığına veya hasta adına göre ara",
+      "allStatuses": "Tüm Durumlar",
+      "patient": "Hasta"
+    },
     "list": {
       "plan": "Plan",
       "untitled": "Başlıksız Plan",
@@ -1398,7 +1404,20 @@
       "phiAckHint": "Klinik Not taslak yardımı veya Tedavi Önerileri herhangi bir kullanıcıya sunulmadan önce gereklidir.",
       "saved": "Yapay Zeka Asistanı ayarları başarıyla kaydedildi",
       "saveError": "Yapay Zeka Asistanı ayarları kaydedilemedi",
-      "loadError": "Yapay Zeka Asistanı ayarları yüklenemedi"
+      "loadError": "Yapay Zeka Asistanı ayarları yüklenemedi",
+      "apiKeyLabel": "Anthropic API Anahtarı",
+      "apiKeyPlaceholder": "sk-ant-...",
+      "apiKeyHint": "Burada bir anahtar girilmezse sunucuda yapılandırılmış anahtar kullanılır.",
+      "apiKeyConfigured": "API anahtarı yapılandırıldı, •••{last4} ile bitiyor",
+      "apiKeyReplace": "Değiştir",
+      "apiKeyRemove": "Kaldır",
+      "apiKeySave": "Anahtarı Kaydet",
+      "apiKeySaved": "API anahtarı başarıyla kaydedildi",
+      "apiKeySaveError": "API anahtarı kaydedilemedi",
+      "apiKeyRemoved": "API anahtarı kaldırıldı",
+      "apiKeyRemoveError": "API anahtarı kaldırılamadı",
+      "apiKeyRemoveConfirmHeader": "API Anahtarını Kaldır",
+      "apiKeyRemoveConfirmMessage": "Yapay Zeka Asistanı özellikleri, varsa sunucuda yapılandırılmış anahtara geri döner veya kullanılamaz hale gelir. Devam edilsin mi?"
     }
   },
   "account": {
