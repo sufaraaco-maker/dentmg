@@ -23,13 +23,12 @@
     "collapse": "طي الشريط الجانبي",
     "expand": "توسيع الشريط الجانبي",
     "favorites": "المفضلة",
-    "recent": "الأخيرة",
     "favorite": "إضافة إلى المفضلة",
     "unfavorite": "إزالة من المفضلة",
     "sections": {
-      "clinical": "سريري",
-      "operations": "عمليات",
-      "insights": "تحليلات",
+      "clinical": "الرعاية السريرية",
+      "operations": "العمليات",
+      "insights": "التحليلات",
       "admin": "الإدارة"
     }
   },

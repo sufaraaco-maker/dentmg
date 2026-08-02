@@ -28,6 +28,7 @@
     "@primeuix/themes": "^2.0.3",
     "@vueuse/core": "^14.4.0",
     "axios": "^1.18.1",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",

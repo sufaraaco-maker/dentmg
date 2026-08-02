@@ -81,7 +81,10 @@ describe('AppSidebar role-based visibility', () => {
   it('renders Dental Chart as an expandable group, not a "Soon" placeholder', async () => {
     const { wrapper } = await mountSidebar('admin')
     expect(wrapper.text()).toContain('Dental Chart')
-    expect(wrapper.findAll('.pi-sitemap').length).toBeGreaterThan(0)
+    // Every nav item renders its Lucide icon as an inline <svg> (icon migration, no PrimeIcons
+    // classes left to assert on) — a generic presence check, same as every other icon assertion
+    // in this file post-migration.
+    expect(wrapper.findAll('svg').length).toBeGreaterThan(0)
   })
 
   it('renders Billing as a real navigable link, not a "Soon" placeholder', async () => {
@@ -126,24 +129,6 @@ describe('AppSidebar favorites', () => {
     await favoriteButtons[0]?.trigger('click')
 
     expect(wrapper.text()).toContain('Favorites')
-  })
-})
-
-describe('AppSidebar recent items', () => {
-  it('shows a Recent group once a visit is recorded', async () => {
-    const { wrapper } = await mountSidebar('admin')
-    expect(wrapper.text()).not.toContain('Recent')
-
-    const { useSidebarPreferencesStore } = await import('@/stores/sidebarPreferences')
-    useSidebarPreferencesStore().recordVisit({
-      routeName: 'patients',
-      params: {},
-      label: 'nav.patients',
-      icon: 'pi pi-users',
-    })
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.text()).toContain('Recent')
   })
 })
 

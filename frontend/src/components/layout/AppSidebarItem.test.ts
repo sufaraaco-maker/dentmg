@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { BarChart3, Calendar, Home, LineChart, Tags, Wallet } from 'lucide-vue-next'
 import AppSidebarItem from './AppSidebarItem.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { NavItem } from '@/config/navigation'
@@ -30,9 +31,9 @@ async function mountItem(item: NavItem, options: { collapsed?: boolean; path?: s
   return { wrapper, router }
 }
 
-const dashboardItem: NavItem = { labelKey: 'nav.dashboard', icon: 'pi pi-home', routeName: 'dashboard' }
+const dashboardItem: NavItem = { labelKey: 'nav.dashboard', icon: Home, routeName: 'dashboard' }
 
-const comingSoonItem: NavItem = { labelKey: 'nav.billing', icon: 'pi pi-wallet', comingSoon: true }
+const comingSoonItem: NavItem = { labelKey: 'nav.billing', icon: Wallet, comingSoon: true }
 
 function setRole(role: UserRole) {
   useAuthStore().user = { id: 'u1', name: 'Test User', email: 'u1@example.com', role }
@@ -40,11 +41,11 @@ function setRole(role: UserRole) {
 
 const appointmentsItem: NavItem = {
   labelKey: 'nav.appointments',
-  icon: 'pi pi-calendar',
+  icon: Calendar,
   routeName: 'appointments',
   children: [
-    { labelKey: 'appointments.nav.board', icon: 'pi pi-calendar', routeName: 'appointments' },
-    { labelKey: 'appointments.nav.types', icon: 'pi pi-tags', routeName: 'appointment-types' },
+    { labelKey: 'appointments.nav.board', icon: Calendar, routeName: 'appointments' },
+    { labelKey: 'appointments.nav.types', icon: Tags, routeName: 'appointment-types' },
   ],
 }
 
@@ -96,16 +97,16 @@ describe('AppSidebarItem', () => {
   it('hides a role-restricted child from a role it does not allow, not just the destination route', async () => {
     const itemWithRestrictedChild: NavItem = {
       labelKey: 'nav.reports',
-      icon: 'pi pi-chart-bar',
+      icon: BarChart3,
       routeName: 'reports',
       children: [
         {
           labelKey: 'reports.nav.production',
-          icon: 'pi pi-chart-line',
+          icon: LineChart,
           routeName: 'appointments',
           roles: ['admin'],
         },
-        { labelKey: 'appointments.nav.board', icon: 'pi pi-calendar', routeName: 'dentist-schedule' },
+        { labelKey: 'appointments.nav.board', icon: Calendar, routeName: 'dentist-schedule' },
       ],
     }
 
@@ -120,12 +121,12 @@ describe('AppSidebarItem', () => {
   it('shows a role-restricted child to a role it does allow', async () => {
     const itemWithRestrictedChild: NavItem = {
       labelKey: 'nav.reports',
-      icon: 'pi pi-chart-bar',
+      icon: BarChart3,
       routeName: 'reports',
       children: [
         {
           labelKey: 'reports.nav.production',
-          icon: 'pi pi-chart-line',
+          icon: LineChart,
           routeName: 'appointments',
           roles: ['admin'],
         },

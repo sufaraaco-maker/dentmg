@@ -102,14 +102,6 @@ notification system in the backend. Scaffolded deliberately as inert UI (per the
 filled in later, not a redesign.
 **Revisit**: when a real notification system exists on the backend.
 
-### `AppSidebarItem.vue` supports only one level of nested children
-`config/navigation.ts`'s `NavItem.children` type technically allows arbitrary nesting, but the renderer
-(`AppSidebarItem.vue`) only renders one level (used today only by "Appointments" → Calendar/Types/Working
-Hours). Deliberately not built recursive since no current or near-term IA item needs a second level, and
-premature recursion would add complexity with no current benefit.
-**Revisit**: only if a future module's navigation genuinely needs two levels of nesting; extend
-`AppSidebarItem.vue` to render itself recursively at that point.
-
 ### `national_id` uniqueness survives soft delete
 A soft-deleted patient's `national_id` can't be reused by a newly-registered patient, because the DB-level unique constraint doesn't exclude soft-deleted rows. Simpler than scoping the constraint, and arguably safer for data integrity, but worth knowing.
 **Revisit**: only if re-registering a previously-deleted patient with the same national ID becomes a real workflow need.
@@ -1043,6 +1035,28 @@ runs):
 
 ## Open (new from `DemoDataSeeder`, 2026-08-01)
 
+### `DemoDataSeeder`'s data volume broke two permanent E2E tests on `main` — pre-existing, unrelated to any later branch
+Found while investigating a CI run on `feature/premium-visual-redesign` (Premium Visual Redesign, Step 3
+sign-off): two E2E tests fail consistently, both before and independent of that branch — confirmed by
+checking `main`'s own last 3 CI runs (`30694772153`, `30692748624`, `30692646064`, all 2026-08-01, all
+after the `DemoDataSeeder` commit `e1f1a32` merged), which show the **exact same two failures**, so this
+is not something introduced by the visual redesign work.
+1. **`appointments.spec.ts:117` ("creates, reschedules, and cancels an appointment")** — times out
+   clicking the List view's first row / the resulting "Edit" button. Most likely cause: the seeder's ~110
+   new patients and their appointments now occupy working-hour slots and/or shift which row is "first" in
+   the List view, which this test's dynamic slot-picking helpers (`ensureWorkingHours`,
+   `pickFirstAvailableSlot`) weren't written against.
+2. **`reports.spec.ts:62` ("admin sees a recorded payment on the Collections report...")** — the freshly
+   recorded test payment's patient name isn't found on the Collections report page. Most likely cause: the
+   Collections `DataTable` paginates at 20 rows (`CollectionsReportView.vue`); the seeder added a large
+   volume of collections rows, so a newly-created row may no longer land on page 1, which
+   `getByText(patient.fullName)` (no pagination-aware wait) doesn't account for.
+**Revisit**: needs its own investigation session against `main` directly (out of scope for the visual
+redesign initiative, which is frontend-presentation-only and did not touch either the Appointments/Reports
+components or `DemoDataSeeder`) — likely fixes are either seeding smaller/isolated E2E fixture data instead
+of sharing the full demo dataset, or making each test explicitly account for pagination/slot availability
+rather than assuming "first row"/"page 1" for a large shared dataset.
+
 ### Four real bugs found while first running the new 110-Arabic-patient demo dataset seeder — RESOLVED before use
 Requested directly (not part of any module's own workflow): a large demo dataset spanning every
 module's status/scenario space, with Arabic-named patients, for manual review of the app as it
@@ -1080,3 +1094,50 @@ end-to-end with zero exceptions; every target status across every module's enum 
 in the resulting data via direct query (Appointments: all 7 statuses; Dental Chart: all 5; Invoices:
 all 3; Lab Cases: all 5; Purchase Orders: all 5 — one of each). Full backend suite re-confirmed
 913/913 passing (zero regressions), PHPStan/Pint clean on the new file.
+
+## Open (new from Premium Visual Redesign, Step 2 — Sidebar, 2026-08-01)
+
+### Two icon systems temporarily coexist (PrimeIcons + Lucide)
+`frontend-visual-redesign-design.md` §4 migrates application-authored icons from PrimeIcons (`pi pi-*`
+classes) to Lucide (`lucide-vue-next` components), app-wide, but split into per-module implementation
+steps rather than one pass (§8). As of Step 3, `config/navigation.ts`, `AppSidebar.vue`,
+`AppSidebarItem.vue`, `CommandPalette.vue`, and `AppHeader.vue` are migrated to Lucide; every other file
+(confirmed via repo-wide grep after Step 3: 62 `.vue` + 2 `.ts` files, one of the two `.ts` hits being
+`iconMap.ts` itself, the migration's own reference doc, the other a test fixture for a not-yet-migrated
+component) still uses PrimeIcons — expected and tracked, not a shipped inconsistency, since no single
+screen mixes both within itself at this point. `primeicons.css` stays imported in `style.css` until the
+last migration step confirms (via the same grep) that no file references `pi pi-*` anymore. PrimeVue's own
+internal component icons (Dialog close, DataTable sort carets, Select/Dropdown chevrons, Menu's own
+default icon rendering, etc.) are explicitly out of scope for this whole initiative (design doc §4) — those
+are irreducible unless PrimeVue itself is reconfigured app-wide, a materially bigger, separate decision.
+**Revisit**: resolves itself as the remaining Step 5 (§8) module-by-module steps land; remove this entry
+once the final step's grep gate passes and `primeicons.css`'s import is dropped.
+
+### `CommandPalette.vue`'s search input had no visible keyboard focus indicator — RESOLVED in Step 3
+Found during Step 2's final keyboard-focus audit (Tab-key trace + computed-style check across the
+Sidebar and Command Palette, requested explicitly before Step 2 sign-off): the `InputText` in
+`CommandPalette.vue` carried `class="border-none !shadow-none !outline-none"` — `!outline-none`
+suppressed the native focus ring, `!shadow-none` removed any PrimeVue focus box-shadow, and `border-none`
+meant PrimeVue's own focus behavior (changing the input's border color to primary/emerald) had no border
+to apply to. Net effect: focusing the field via Tab or via the palette's autofocus-on-open left **zero**
+visible focus indicator — a real WCAG 2.4.7 (Focus Visible) gap, confirmed via `getComputedStyle` in a
+real browser (`outlineStyle: none`, `boxShadow` fully transparent). Pre-dated this redesign (Step 2 only
+touched this component's icon, not these classes) — not introduced by Step 2, but caught by its
+verification pass. The Sidebar itself was audited the same way and was already fine (native `outline:
+auto` reaches every focusable row/button/star, confirmed via real Tab presses, not just `.focus()`).
+**RESOLVED 2026-08-02 (Step 3)**: added `focus-visible:ring-2 focus-visible:ring-primary-400` to the
+search input (keeps the clean borderless resting state, only the keyboard-focus state gains a visible
+emerald ring) and to each result row's button (`focus-visible:outline-none focus-visible:ring-2
+focus-visible:ring-primary-400`), matching the same token used by the Sidebar's own active state.
+
+### Sidebar section default-expand/collapse state not "smart" per the original design note
+`frontend-visual-redesign-design.md` §5 floated auto-collapsing every section except the one containing
+the active route on first load (Linear-style density). Not implemented in Step 2: the current
+`collapsedSections` model (`sidebarPreferences.ts`) stores only "which sections the user explicitly
+collapsed," an empty array meaning either "never touched" or "user manually re-expanded everything" —
+indistinguishable without a second flag, so a first-load heuristic can't reliably avoid overriding a
+user's real choice. Sections still default to all-expanded (pre-existing behavior, unchanged); only the
+expand/collapse *interaction* itself was redesigned (200ms grid-rows transition + rotating chevron, per
+the user's literal ask).
+**Revisit**: only if a smart first-load default is wanted later — needs a separate
+"has the user ever touched section state" boolean alongside `collapsedSections`, not a bigger redesign.

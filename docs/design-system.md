@@ -1,8 +1,10 @@
 # Design System
 
-Status: **Implemented (2026-07-16).** Frozen — the application shell (`docs/modules/layout-architecture.md`)
-plus this token set is now the visual foundation for every future module. Don't redesign the shell or
-reintroduce one-off styles without a critical architectural reason; extend these tokens instead.
+Status: **Implemented (2026-07-16), revised 2026-08-01** for the Premium Visual Redesign
+(`docs/modules/frontend-visual-redesign-design.md`) — the "critical architectural reason" the original
+freeze note below anticipated. §§1–7 below are still the baseline; §9 documents what changed and why. Once
+that redesign reaches Production Ready, this doc is frozen again on the same terms: don't reintroduce
+one-off styles without an equally deliberate reason — extend these tokens instead.
 
 Scope: **Frontend only**, purely visual (typography, color, spacing, radius, elevation, component sizing,
 hover/active states). No backend, database, or API changes; no component API changes.
@@ -138,3 +140,40 @@ stack) across: Arabic (RTL) / English (LTR) × light / dark × desktop (1440px) 
 lint:check`, and `npm run test` (88/88) all pass — see the module's Final Review Report for the full account,
 including two incidental bugs found and fixed along the way (a stale-focus-ring glitch after login, and the
 generic 404 page missing dark-mode/i18n support that `ForbiddenView.vue` already had).
+
+## 9. Premium Visual Redesign Revisions (2026-08-01, in progress)
+
+Full detail in `docs/modules/frontend-visual-redesign-design.md`. Summary of what this pass changes in the
+baseline above:
+
+- **Icon family**: application-authored icons (`config/navigation.ts`, every hand-written `<i class="pi
+  pi-*">`) migrate from PrimeIcons to **Lucide** (`lucide-vue-next`), rendered as components
+  (`<Users :size="20" />`) instead of icon-font classes. See `frontend/src/config/iconMap.ts` for the
+  reviewed one-time mapping of every PrimeIcons class in use to its Lucide equivalent. **PrimeVue's own
+  internal component icons** (Dialog close, DataTable sort carets, Dropdown chevrons, etc.) are unchanged —
+  out of scope, PrimeVue already themes those consistently via Aura.
+- **Motion**: no new custom CSS properties — Tailwind's own built-in duration scale is standardized on
+  instead (`duration-150` for button/link hover, `duration-200` for chevron rotation and group
+  expand/collapse), rather than inventing parallel `--motion-*` tokens for values Tailwind already provides.
+  Every new transition/transform must be reachable by the existing global `prefers-reduced-motion` rule in
+  `style.css`; a `:hover` `transform` (e.g. card lift) additionally needs its own `motion-safe:` prefix, since
+  a bare hover transform isn't a `transition`/`animation` and so isn't caught by that global rule alone.
+- **Sidebar width**: expanded rail `w-72` (288px) → `w-80` (320px). Collapsed rail (`w-[72px]`) unchanged.
+- **Color usage**: still 100% PrimeVue semantic/primitive tokens (no hardcoded hex — §2 unchanged), but
+  dashboard stat cards and category accents now draw from more of Aura's existing color ramps (`blue`,
+  `purple`, `teal`, `orange`) instead of `primary` alone, for the "soft palette" per-card identity requested.
+- **Active nav item**: adds a filled `rounded-xl` background spanning the row (not just a border-tint), a
+  thicker `border-s-4` accent, `font-semibold`, and `shadow-sm` — evolving §6's existing 3px accent bar, not
+  replacing it.
+- **Removed**: the sidebar's "Recent Items" (auto-tracked recently-visited records) feature is deleted
+  entirely, not merely restyled — a deliberate scope decision in the redesign doc, not a baseline change.
+- **Real bug found via browser verification, fixed in `tailwind-base` (not sidebar-scoped)**: raw
+  `<ul>`/`<a>` elements had no reset for native list bullets/indent or link color/underline — since this
+  project intentionally skips Tailwind's full `preflight.css` (§7), nothing had ever suppressed them. This
+  was invisible in Vitest (jsdom doesn't render bullets) and had been present since before this redesign
+  (confirmed via screenshot: the sidebar and the header's breadcrumb trail both rendered bullets/
+  always-underlined blue links pre-fix). Fixed with the same pattern as the existing button reset — `ul,
+  ol { list-style: none; margin: 0; padding: 0; }` and `a { color: inherit; text-decoration: none; }`,
+  added to `style.css`'s `tailwind-base` layer so PrimeVue's own `<ul>`/`<a>` usage (a later cascade layer)
+  is unaffected. This also fixes a latent bug in `AppHeader.vue`'s breadcrumbs, whose `hover:underline`
+  utility was a no-op while links were unconditionally underlined by the browser default.

@@ -23,14 +23,13 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
     "favorites": "Favorites",
-    "recent": "Recent",
     "favorite": "Add to favorites",
     "unfavorite": "Remove from favorites",
     "sections": {
-      "clinical": "Clinical",
+      "clinical": "Clinical Care",
       "operations": "Operations",
       "insights": "Insights",
-      "admin": "Admin"
+      "admin": "Administration"
     }
   },
   "breadcrumbs": {
