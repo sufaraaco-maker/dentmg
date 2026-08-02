@@ -545,9 +545,16 @@ class AiAssistantService
         ]);
     }
 
+    /**
+     * A Settings-managed key (ai-assistant-settings-api-key-design.md §6) takes precedence over the
+     * `.env`-configured `ANTHROPIC_API_KEY` when both are present — otherwise an admin setting a key
+     * in Settings would see no effect and no error, a confusing dead end. The `.env` value keeps
+     * working unchanged for any deployment that never touches the Settings field.
+     */
     private function client(): Client
     {
-        $apiKey = config('services.anthropic.key');
+        $settings = $this->clinicSettingService->current();
+        $apiKey = $settings->ai_assistant_api_key ?: config('services.anthropic.key');
 
         if (blank($apiKey)) {
             throw new AiAssistantUnavailableException;
