@@ -62,6 +62,17 @@ describe('useSuppliersStore.fetchAll', () => {
 
     expect(mockedApi.get).toHaveBeenCalledTimes(1)
   })
+
+  it('sets a translation-key error and clears loading on failure, instead of rejecting', async () => {
+    mockedApi.get.mockRejectedValueOnce(new Error('network down'))
+    const store = useSuppliersStore()
+
+    await store.fetchAll()
+
+    expect(store.error).toBe('inventory.suppliers.loadError')
+    expect(store.loading).toBe(false)
+    expect(store.loaded).toBe(false)
+  })
 })
 
 describe('useSuppliersStore mutations', () => {

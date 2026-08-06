@@ -15,6 +15,7 @@ export const useAppointmentTypesStore = defineStore('appointmentTypes', () => {
   const items = ref<AppointmentType[]>([])
   const loaded = ref(false)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   // Same concurrent-mount race as providers.ts: every consumer (CalendarFilters,
   // AppointmentTypeSelect, ...) calls fetchAll() on its own mount, all before `loaded` flips
@@ -26,11 +27,14 @@ export const useAppointmentTypesStore = defineStore('appointmentTypes', () => {
     if (inFlight) return inFlight
 
     loading.value = true
+    error.value = null
 
     inFlight = (async () => {
       try {
         items.value = await appointmentTypesApi.list()
         loaded.value = true
+      } catch {
+        error.value = 'appointments.types.loadError'
       } finally {
         loading.value = false
         inFlight = null
@@ -61,7 +65,8 @@ export const useAppointmentTypesStore = defineStore('appointmentTypes', () => {
     items.value = []
     loaded.value = false
     loading.value = false
+    error.value = null
   }
 
-  return { items, loaded, loading, fetchAll, create, update, remove, $reset }
+  return { items, loaded, loading, error, fetchAll, create, update, remove, $reset }
 })

@@ -11,6 +11,7 @@ export const useSuppliersStore = defineStore('suppliers', () => {
   const items = ref<Supplier[]>([])
   const loaded = ref(false)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   let inFlight: Promise<void> | null = null
 
@@ -19,12 +20,15 @@ export const useSuppliersStore = defineStore('suppliers', () => {
     if (inFlight) return inFlight
 
     loading.value = true
+    error.value = null
 
     inFlight = (async () => {
       try {
         const { data } = await api.get<Supplier[]>('/suppliers')
         items.value = data
         loaded.value = true
+      } catch {
+        error.value = 'inventory.suppliers.loadError'
       } finally {
         loading.value = false
         inFlight = null
@@ -55,7 +59,8 @@ export const useSuppliersStore = defineStore('suppliers', () => {
     items.value = []
     loaded.value = false
     loading.value = false
+    error.value = null
   }
 
-  return { items, loaded, loading, fetchAll, create, update, deactivate, $reset }
+  return { items, loaded, loading, error, fetchAll, create, update, deactivate, $reset }
 })

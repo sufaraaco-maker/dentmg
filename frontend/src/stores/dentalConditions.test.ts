@@ -70,6 +70,17 @@ describe('useDentalConditionsStore.fetchAll', () => {
     expect(mockedApi.list).toHaveBeenCalledTimes(1)
     expect(store.loaded).toBe(true)
   })
+
+  it('sets a translation-key error and clears loading on failure, instead of rejecting', async () => {
+    mockedApi.list.mockRejectedValueOnce(new Error('network down'))
+    const store = useDentalConditionsStore()
+
+    await store.fetchAll()
+
+    expect(store.error).toBe('dentalChart.conditions.loadError')
+    expect(store.loading).toBe(false)
+    expect(store.loaded).toBe(false)
+  })
 })
 
 describe('useDentalConditionsStore mutations', () => {

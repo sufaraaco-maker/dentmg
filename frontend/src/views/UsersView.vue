@@ -183,6 +183,9 @@ onMounted(fetchUsers)
       :total-records="totalRecords"
       @page="onPage"
     >
+      <template #empty>
+        <span class="text-surface-500 dark:text-surface-400">{{ t('users.empty') }}</span>
+      </template>
       <Column field="name" :header="t('users.name')" />
       <Column field="email" :header="t('users.email')" />
       <Column :header="t('users.role')">

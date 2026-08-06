@@ -11,6 +11,7 @@ export const useLabsStore = defineStore('labs', () => {
   const items = ref<Lab[]>([])
   const loaded = ref(false)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   let inFlight: Promise<void> | null = null
 
@@ -19,12 +20,15 @@ export const useLabsStore = defineStore('labs', () => {
     if (inFlight) return inFlight
 
     loading.value = true
+    error.value = null
 
     inFlight = (async () => {
       try {
         const { data } = await api.get<Lab[]>('/labs')
         items.value = data
         loaded.value = true
+      } catch {
+        error.value = 'laboratory.labs.loadError'
       } finally {
         loading.value = false
         inFlight = null
@@ -55,7 +59,8 @@ export const useLabsStore = defineStore('labs', () => {
     items.value = []
     loaded.value = false
     loading.value = false
+    error.value = null
   }
 
-  return { items, loaded, loading, fetchAll, create, update, deactivate, $reset }
+  return { items, loaded, loading, error, fetchAll, create, update, deactivate, $reset }
 })

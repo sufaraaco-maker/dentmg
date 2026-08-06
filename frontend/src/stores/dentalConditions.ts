@@ -15,6 +15,7 @@ export const useDentalConditionsStore = defineStore('dentalConditions', () => {
   const items = ref<DentalCondition[]>([])
   const loaded = ref(false)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   // Same concurrent-mount race as appointmentTypes.ts: every consumer calls fetchAll() on its
   // own mount, all before `loaded` flips true. Concurrent callers share the one in-flight request.
@@ -25,11 +26,14 @@ export const useDentalConditionsStore = defineStore('dentalConditions', () => {
     if (inFlight) return inFlight
 
     loading.value = true
+    error.value = null
 
     inFlight = (async () => {
       try {
         items.value = await dentalConditionsApi.list()
         loaded.value = true
+      } catch {
+        error.value = 'dentalChart.conditions.loadError'
       } finally {
         loading.value = false
         inFlight = null
@@ -60,7 +64,8 @@ export const useDentalConditionsStore = defineStore('dentalConditions', () => {
     items.value = []
     loaded.value = false
     loading.value = false
+    error.value = null
   }
 
-  return { items, loaded, loading, fetchAll, create, update, remove, $reset }
+  return { items, loaded, loading, error, fetchAll, create, update, remove, $reset }
 })
