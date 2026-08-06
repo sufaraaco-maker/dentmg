@@ -99,8 +99,12 @@ class ReportService
             $query->where('method', $method);
         }
 
+        // Most-recent-first: a real admin viewing this report expects recent activity at the top,
+        // not whatever order Postgres happens to return without an explicit ORDER BY (undefined,
+        // not guaranteed insertion order). Found while diagnosing a genuine E2E flake
+        // (`reports.spec.ts`) that turned out to trace back to this real gap, not a test-only issue.
         /** @var Collection<int, Payment> $payments */
-        $payments = $query->get();
+        $payments = $query->orderByDesc('received_at')->get();
 
         $rows = $payments->map(fn (Payment $payment) => [
             'date' => $payment->received_at->toDateString(),
