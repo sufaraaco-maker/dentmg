@@ -123,6 +123,22 @@ class ReportServiceTest extends TestCase
         $this->assertSame(['2026-06-20', '2026-06-10', '2026-06-05'], array_column($result['rows'], 'date'));
     }
 
+    public function test_collections_breaks_same_day_ties_by_created_at(): void
+    {
+        // `received_at` is deliberately date-only (Payment::$casts), so every payment recorded on
+        // the same calendar day ties on that column alone — this is the actual root cause the
+        // reports.spec.ts E2E flake traced back to (a freshly-recorded payment landing anywhere
+        // among same-day rows, not necessarily page 1). `created_at` breaks the tie.
+        $first = Payment::factory()->create(['received_at' => '2026-06-15', 'amount' => '10.00']);
+        $first->forceFill(['created_at' => '2026-06-15 09:00:00'])->save();
+        $second = Payment::factory()->create(['received_at' => '2026-06-15', 'amount' => '20.00']);
+        $second->forceFill(['created_at' => '2026-06-15 14:00:00'])->save();
+
+        $result = $this->service->collections('2026-06-01', '2026-06-30');
+
+        $this->assertSame(['20.00', '10.00'], array_column($result['rows'], 'amount'));
+    }
+
     public function test_ar_aging_buckets_outstanding_balance_by_days_overdue(): void
     {
         Date::setTestNow('2026-07-28');

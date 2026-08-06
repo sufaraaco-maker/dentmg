@@ -103,8 +103,12 @@ class ReportService
         // not whatever order Postgres happens to return without an explicit ORDER BY (undefined,
         // not guaranteed insertion order). Found while diagnosing a genuine E2E flake
         // (`reports.spec.ts`) that turned out to trace back to this real gap, not a test-only issue.
+        // `received_at` is deliberately date-only (`Payment::$casts`, `PaymentService::create()`
+        // defaults it to `now()->toDateString()`) — every payment recorded the same calendar day
+        // ties under that column alone, so `created_at` (a real timestamp) breaks the tie, still
+        // most-recent-first within a day.
         /** @var Collection<int, Payment> $payments */
-        $payments = $query->orderByDesc('received_at')->get();
+        $payments = $query->orderByDesc('received_at')->orderByDesc('created_at')->get();
 
         $rows = $payments->map(fn (Payment $payment) => [
             'date' => $payment->received_at->toDateString(),
