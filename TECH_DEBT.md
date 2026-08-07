@@ -4,6 +4,26 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### Invoices/Payments patient-scoped list endpoints are still unbounded `->get()` calls
+Found and partially fixed 2026-08-07 during Phase 2.1 (Patient Profile Redesign — Foundation). The
+patient-scoped `GET /patients/{patient}/treatment-plans`, `.../clinical-notes`, `.../invoices`, and
+`.../payments` endpoints were all unpaginated `->get()` calls — a real scalability risk for a
+long-tenured patient's full history loading in one unbounded query, masked today only because each
+tab lazily fetches on click. Phase 2.1 paginated the first two (Treatment Plans, Clinical Notes,
+15/page, `TreatmentPlanController::index()`/`ClinicalNoteController::index()`).
+**Invoices and Payments were deliberately left unpaginated in that same PR** — implementation found a
+real coupling risk the other two don't have: `frontend/src/components/payments/ApplyPaymentDialog.vue`
+reads `invoicesStore.invoicesForPatient()` to populate its "apply this payment to" picker, and
+`frontend/src/components/payments/InvoicePaymentsPanel.vue` reads `paymentsStore.paymentsForInvoice()`
+— both assume the full, unpaginated per-patient set is already in the store. Paginating
+`InvoiceController::index()`/`PaymentController::index()` without first fixing those two would
+silently hide older invoices/payments from them.
+**Revisit**: Phase 2.2 (Billing), which already plans to touch this exact area for the Invoices+
+Payments tab merge (`docs/modules/patient-profile-redesign-design.md` §0/§17). Add pagination to both
+endpoints in the same PR that adds the missing `GET /invoices/{invoice}/payments` endpoint (needed so
+`InvoicePaymentsPanel.vue` stops depending on the full unpaginated patient-level list) and reworks
+`ApplyPaymentDialog.vue`'s invoice picker to not assume a fully-loaded set either.
+
 ### Dashboard "Today's Appointments" stat card counts every appointment ever created, not today's
 Found 2026-08-02 during the Premium Visual Redesign integration verification pass (user report,
 live dev server). `DashboardService::summary()` computes `today_appointments` via

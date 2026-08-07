@@ -20,10 +20,12 @@ class PaymentController extends Controller
     public function __construct(private PaymentService $paymentService) {}
 
     /**
-     * Not paginated (design doc §9) — same documented exception class as Invoices/Treatment Plans:
-     * a single patient's lifetime payment count stays small. No
-     * `GET /api/invoices/{invoice}/payments` (§9/§7) — the frontend filters this list client-side
-     * by `invoice_id` per invoice, the same technique already used for billable treatment plan items.
+     * Not paginated yet — deliberately deferred to Phase 2.2 (Billing), same reasoning as
+     * `InvoiceController::index()`: `InvoicePaymentsPanel.vue` reads
+     * `paymentsStore.paymentsForInvoice()`, derived client-side from this endpoint's full
+     * unpaginated per-patient result (no `GET /api/invoices/{invoice}/payments` exists yet).
+     * Paginating here first would silently hide a patient's older payments from that per-invoice
+     * view. Phase 2.2 adds the missing invoice-scoped endpoint and pagination together.
      */
     public function index(Patient $patient)
     {

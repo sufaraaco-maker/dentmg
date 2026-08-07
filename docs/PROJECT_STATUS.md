@@ -16,8 +16,8 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-07 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out: independently re-verified CI (Backend/Frontend both re-confirmed green on PR #16, not assumed from a pre-filled checklist), diffed PR #16 for conflicts/TODOs/doc accuracy, merged PR #16, tagged the milestone below |
-| **Repo HEAD at time of writing** | `main` at `82c6cb7` (PR #16 merge, itself on top of PR #15's `f3644ec` + PR #14) |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17 recording that merge + the milestone below), then Phase 2 (Patient Profile Redesign) Step 1 analysis + Step 2 design doc, both pending review/approval |
+| **Repo HEAD at time of writing** | `main` at `cccc2c6` (PR #17 merge). The Phase 2 design doc and this update are local, uncommitted working-tree changes pending approval — not yet on `main`. |
 | **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
@@ -118,6 +118,7 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-06 → 2026-08-07 | **Phase 1: Stabilization** (first phase of a new 8-phase product roadmap: Stabilization → Patient Profile → Dashboard 2.0 → Permissions/Audit → SaaS Multi-Tenant → PWA/Mobile → AI Expansion → Launch Prep) implemented on `fix/stabilization-phase-1`. Fixed `appointments.spec.ts` (navigates by the created appointment's real id, not List view's first row) and, across 3 `workflow_dispatch` runs, two separate `reports.spec.ts` root causes found one at a time as each unmasked the next: `ReportService::collections()` had no `ORDER BY` (added most-recent-first + a `created_at` tie-break, since `received_at` is deliberately date-only), then `newPatients()` turned out to sort ascending instead of descending. Also fixed `DashboardService.today_appointments` (PR #14's finding) and a frontend loading/empty-state/error-handling consistency pass (4 stores standardized on the store-owns-error-state pattern, `InvoicesView.vue`'s previously-silent fetch failure closed). Final CI run: **Backend 932/932, Frontend 759/759, E2E 39/39 — zero failures.** |
 | 2026-08-07 | **PR #15** merged (Phase 1 code + this file + `CLAUDE.md`), then **PR #14** merged. `main`'s CI fully green for the first time since 2026-08-01. `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness from §0 reconciled; `TECH_DEBT.md` updated with both resolutions. This file updated for Phase 1 close-out per its own §15 protocol. |
 | 2026-08-07 | **PR #16** merged after an independent final release verification (Backend + Frontend CI re-confirmed green firsthand, not taken on faith; `git merge-tree` confirmed no conflicts with `main`; diff checked for introduced TODO/FIXME — none found). **Milestone: "Phase 1 — Foundation Complete."** Immediate next step: Phase 2 (Patient Profile Redesign) design phase — see §12. |
+| 2026-08-07 | **Phase 2: Patient Profile Redesign — design phase begins.** Step 1 analysis (current hub + all 8 related modules + design system + permissions) approved by the user. Step 2 design doc written: `docs/modules/patient-profile-redesign-design.md` — merges Invoices+Payments into one Billing tab (backend stays split), structured Medical History (Allergies/Conditions/Medications/Notes), a V1 Documents foundation, and a dedicated `PatientActivity` event architecture for Timeline with per-category role-filtering as an explicit security requirement. No implementation code written yet — awaiting design approval per §12. |
 
 ---
 
@@ -206,6 +207,7 @@ onward) — this is a summary of the decisions with the widest blast radius:
 | Google Fonts CDN → self-hosted `.woff2` (2026-07-20-ish) | Removed the last external network dependency on every page load | Implemented |
 | Icon system: PrimeIcons → Lucide, app-wide (Premium Visual Redesign, 2026-08-01) | Restraint + a single consistent icon family, benchmarked against Linear/Raycast | In progress, module-by-module (§6, §9) |
 | **Flagged for Phase 4** (2026-08-07): `UserRole`'s flat 3-value enum will need to become a real role-hierarchy/permission-matrix model (`Owner → Clinic Admin → {Dentist, Assistant, Receptionist, Accountant}`) | This is exactly the "real requirement" `docs/decisions.md`'s 2026-07-11 entry said would justify revisiting the flat-enum decision — not decided yet, needs its own design-approval round when Phase 4 (Advanced Permissions & Audit) starts | Flagged, not decided |
+| **Security Architecture Decision** (2026-08-07): Patient Timeline is built on a dedicated `PatientActivity` event model, never the `Auditable` trail, with Timeline permissions enforced **server-side, per-category**, at query time — a receptionist's `/activities` request must never return `category=clinical` rows, regardless of frontend hiding | Aggregation features are exactly where a stricter per-module read rule (e.g. `ClinicalNotePolicy` barring receptionists) can silently leak if not re-checked at the aggregation point; full detail in `docs/modules/patient-profile-redesign-design.md` §9A, full decision text in `docs/decisions.md` | **Approved with the Phase 2 design (2026-08-07) — binding on Phase 2.6 and any future cross-module aggregation feature** |
 
 ---
 
@@ -402,12 +404,28 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 ## 12. Immediate Next Step
 
-**Phase 1 (Stabilization) is closed** — `main`'s CI is fully green (Backend 932/932, Frontend 759/759, E2E
-39/39, confirmed 2026-08-07 via `workflow_dispatch`). The next step is **starting Phase 2: Patient Profile
-Redesign with its own design phase** — write and get explicit approval on a design doc (unified clinical
-hub: Overview/Medical History/Dental Chart/Treatment Plans/Clinical Notes/Imaging/Laboratory/Billing/
-Documents/Timeline tabs, patient activity timeline, attachment management, tags, advanced in-record search,
-PDF export) before writing any implementation code.
+**Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) implemented,
+CI-pending; Phase 2.2 (Billing) is next.** Step 1 (analysis) and Step 2 (design document,
+`docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
+Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
+(Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/
+OCR yet), and a dedicated `PatientActivity` event architecture for Timeline — formally elevated to a
+**Security Architecture Decision** (design doc §9A, `docs/decisions.md` 2026-08-07 entry): Timeline
+permissions are enforced server-side, per category, never client-side.
+
+Implementation is sequenced into 7 sub-phases (design doc §17), each its own PR, low-risk-first.
+**Phase 2.1 (Foundation) is implemented** on `feature/patient-profile-phase2-1-foundation`: `patients.ts`
+Pinia store (patient-level state only, not a replacement for domain stores like
+`treatmentPlans.ts`/`invoices.ts`), `patientImages.ts` store (Imaging retrofit), pagination added to
+Treatment Plans/Clinical Notes' patient-scoped endpoints (15/page), a config-driven tab list in
+`PatientDetailView.vue`, `EmptyState.vue` (first component in a new `components/common/` folder) retrofitted
+into the touched panels, and the Patients-module Lucide migration. **One scope adjustment found during
+implementation, not planned upfront**: Invoices/Payments pagination was deferred to Phase 2.2 rather than
+shipped in 2.1 — `ApplyPaymentDialog.vue`'s invoice picker and `InvoicePaymentsPanel.vue` both assume the
+full unpaginated per-patient set, a coupling Treatment Plans/Clinical Notes don't share; see the new
+`TECH_DEBT.md` entry. **Billing, Medical History, Laboratory, Documents, and Timeline remain out of scope**
+until Phase 2.2 onward. Tags/labels, in-record search, and PDF export remain named as deferred backlog
+(design doc §19.4), not dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign

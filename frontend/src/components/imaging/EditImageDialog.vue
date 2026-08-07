@@ -8,7 +8,7 @@ import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { updatePatientImage } from '@/services/imaging'
+import { usePatientImagesStore } from '@/stores/patientImages'
 import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { parseLocalDate, toLocalDateString } from '@/lib/date'
 import { TOOTH_CODES, toothDisplayName } from '@/lib/teeth'
@@ -24,6 +24,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const toast = useToast()
+const imagesStore = usePatientImagesStore()
 
 const IMAGE_TYPES: ImageType[] = [
   'intraoral_photo',
@@ -81,7 +82,7 @@ async function submit() {
   errors.value = {}
 
   try {
-    const updated = await updatePatientImage(props.image.id, {
+    const updated = await imagesStore.update(props.image.id, {
       image_type: form.image_type,
       tooth_number: form.tooth_number,
       taken_at: toLocalDateString(form.taken_at),

@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import Slider from 'primevue/slider'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Select from 'primevue/select'
+import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCw, Sun, X, ZoomIn } from 'lucide-vue-next'
 import { useImageObjectUrl } from '@/composables/useImageObjectUrl'
 import { parseLocalDate } from '@/lib/date'
 import type { PatientImage } from '@/types/imaging'
@@ -119,19 +120,15 @@ function close() {
             {{ t('imaging.tooth') }}: {{ current.tooth_number }}
           </span>
         </div>
-        <Button
-          icon="pi pi-times"
-          text
-          rounded
-          severity="contrast"
-          :aria-label="t('common.close')"
-          @click="close"
-        />
+        <Button text rounded severity="contrast" :aria-label="t('common.close')" @click="close">
+          <template #icon="{ class: iconClass }">
+            <X :size="18" :class="iconClass" />
+          </template>
+        </Button>
       </div>
 
       <div class="relative flex flex-1 items-center justify-center gap-4 overflow-hidden px-2">
         <Button
-          icon="pi pi-chevron-left"
           text
           rounded
           severity="contrast"
@@ -139,17 +136,22 @@ function close() {
           :disabled="currentIndex === 0"
           :aria-label="t('imaging.lightbox.previous')"
           @click="goPrev"
-        />
+        >
+          <template #icon="{ class: iconClass }">
+            <ChevronLeft :size="18" :class="iconClass" />
+          </template>
+        </Button>
 
         <div class="flex h-full min-w-0 flex-1 gap-4">
           <div
             class="flex flex-1 items-center justify-center overflow-auto"
             style="touch-action: pan-x pan-y"
           >
-            <i
+            <LoaderCircle
               v-if="currentLoading || !currentObjectUrl"
-              class="pi pi-spin pi-spinner text-3xl text-surface-0"
-            ></i>
+              :size="32"
+              class="animate-spin text-surface-0"
+            />
             <img
               v-else
               :src="currentObjectUrl"
@@ -163,10 +165,11 @@ function close() {
             v-if="compareMode && compareImage"
             class="flex flex-1 items-center justify-center overflow-auto"
           >
-            <i
+            <LoaderCircle
               v-if="compareLoading || !compareObjectUrl"
-              class="pi pi-spin pi-spinner text-3xl text-surface-0"
-            ></i>
+              :size="32"
+              class="animate-spin text-surface-0"
+            />
             <img
               v-else
               :src="compareObjectUrl"
@@ -177,7 +180,6 @@ function close() {
         </div>
 
         <Button
-          icon="pi pi-chevron-right"
           text
           rounded
           severity="contrast"
@@ -185,31 +187,38 @@ function close() {
           :disabled="currentIndex === images.length - 1"
           :aria-label="t('imaging.lightbox.next')"
           @click="goNext"
-        />
+        >
+          <template #icon="{ class: iconClass }">
+            <ChevronRight :size="18" :class="iconClass" />
+          </template>
+        </Button>
       </div>
 
       <div class="flex flex-wrap items-center gap-4 border-t border-surface-0/10 p-3 text-surface-0">
         <div class="flex min-w-40 flex-1 items-center gap-2">
-          <i class="pi pi-sun text-sm"></i>
+          <Sun :size="14" />
           <Slider v-model="brightness" :min="50" :max="150" class="flex-1" />
         </div>
         <div class="flex min-w-40 flex-1 items-center gap-2">
-          <i class="pi pi-circle-fill text-sm"></i>
+          <span class="inline-block size-2.5 rounded-full bg-current" aria-hidden="true"></span>
           <Slider v-model="contrast" :min="50" :max="150" class="flex-1" />
         </div>
         <div class="flex min-w-32 flex-1 items-center gap-2">
-          <i class="pi pi-search-plus text-sm"></i>
+          <ZoomIn :size="14" />
           <Slider v-model="zoom" :min="1" :max="4" :step="0.1" class="flex-1" />
         </div>
         <Button
-          icon="pi pi-refresh"
           text
           rounded
           size="small"
           severity="contrast"
           :aria-label="t('imaging.lightbox.resetAdjustments')"
           @click="resetAdjustments"
-        />
+        >
+          <template #icon="{ class: iconClass }">
+            <RefreshCw :size="16" :class="iconClass" />
+          </template>
+        </Button>
         <div class="flex items-center gap-2">
           <ToggleSwitch v-model="inverted" input-id="lightbox-invert" />
           <label for="lightbox-invert" class="text-sm">{{ t('imaging.lightbox.invert') }}</label>

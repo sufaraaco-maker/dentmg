@@ -9,11 +9,13 @@ import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import Paginator from 'primevue/paginator'
 import Skeleton from 'primevue/skeleton'
+import { Camera, Images } from 'lucide-vue-next'
 import ImageThumbnail from './ImageThumbnail.vue'
 import UploadImagesDialog from './UploadImagesDialog.vue'
 import EditImageDialog from './EditImageDialog.vue'
 import ImageLightbox from './ImageLightbox.vue'
-import { deletePatientImage, fetchPatientImages } from '@/services/imaging'
+import EmptyState from '@/components/common/EmptyState.vue'
+import { usePatientImagesStore } from '@/stores/patientImages'
 import { useAuthStore } from '@/stores/auth'
 import { toLocalDateString } from '@/lib/date'
 import { TOOTH_CODES, toothDisplayName } from '@/lib/teeth'
@@ -22,9 +24,8 @@ import type { ImageType, PatientImage } from '@/types/imaging'
 /**
  * Patient Detail's Imaging tab (design doc §8) — a patient-scoped panel, not a top-level sidebar
  * item (unlike Laboratory/Inventory), since images are always viewed in the context of one patient.
- * No Pinia store: each patient's gallery is fetched directly, mirroring `LabCasesView.vue`'s
- * direct-`api`-call pattern rather than a globally-cached store, since a gallery is inherently
- * paginated per-patient data, not small reference data worth caching app-wide.
+ * Backed by `patientImages.ts` (Phase 2.1, design doc §14.3) — data/loading/error state lives in
+ * the store, filter form-state stays local here (it drives the fetch, it isn't fetched data).
  */
 const props = defineProps<{ patientId: string }>()
 
@@ -32,6 +33,7 @@ const { t } = useI18n()
 const confirm = useConfirm()
 const toast = useToast()
 const auth = useAuthStore()
+const imagesStore = usePatientImagesStore()
 
 // Design doc §5 / Approval Log item 4: admin+dentist+receptionist for create/update, admin-only delete.
 const canWrite = computed(() => auth.isAdmin || auth.isDentist || auth.isReceptionist)
@@ -57,11 +59,11 @@ const toothFilterOptions = [
   ...TOOTH_CODES.map((code) => ({ label: `${code} — ${toothDisplayName(code)}`, value: code })),
 ]
 
-const images = ref<PatientImage[]>([])
-const totalRecords = ref(0)
-const perPage = ref(30)
+const images = computed(() => imagesStore.images)
+const totalRecords = computed(() => imagesStore.meta.total)
+const perPage = computed(() => imagesStore.meta.perPage)
+const loading = computed(() => imagesStore.loading)
 const page = ref(1)
-const loading = ref(false)
 
 const typeFilter = ref<ImageType | null>(null)
 const toothFilter = ref<string | null>(null)
@@ -74,27 +76,18 @@ const lightboxVisible = ref(false)
 const lightboxIndex = ref(0)
 
 async function fetchImages() {
-  loading.value = true
-  try {
-    const { data, meta } = await fetchPatientImages(
-      props.patientId,
-      {
-        image_type: typeFilter.value ?? undefined,
-        tooth_number: toothFilter.value ?? undefined,
-        taken_from: takenFrom.value ? toLocalDateString(takenFrom.value) : undefined,
-        taken_to: takenTo.value ? toLocalDateString(takenTo.value) : undefined,
-      },
-      page.value,
-    )
-    // Defensive against an unexpected response shape (e.g. a proxy/cache serving stale content) —
-    // never let a malformed response corrupt the gallery to a non-array `images.value`.
-    images.value = data ?? []
-    totalRecords.value = meta?.total ?? 0
-    perPage.value = meta?.per_page ?? perPage.value
-  } catch {
+  await imagesStore.fetchForPatient(
+    props.patientId,
+    {
+      image_type: typeFilter.value ?? undefined,
+      tooth_number: toothFilter.value ?? undefined,
+      taken_from: takenFrom.value ? toLocalDateString(takenFrom.value) : undefined,
+      taken_to: takenTo.value ? toLocalDateString(takenTo.value) : undefined,
+    },
+    page.value,
+  )
+  if (imagesStore.error) {
     toast.add({ severity: 'error', summary: t('imaging.loadError'), life: 3000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -124,8 +117,9 @@ function onUploaded() {
   toast.add({ severity: 'success', summary: t('imaging.uploaded'), life: 3000 })
 }
 
-function onUpdated(updated: PatientImage) {
-  images.value = images.value.map((image) => (image.id === updated.id ? updated : image))
+function onUpdated() {
+  // `EditImageDialog` already writes the updated image into `patientImages.ts`'s store state
+  // (§14.3) — `images` here is a computed over that same store, so no local mutation is needed.
   toast.add({ severity: 'success', summary: t('imaging.updated'), life: 3000 })
 }
 
@@ -144,9 +138,7 @@ function askDelete(image: PatientImage) {
     rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
-        await deletePatientImage(image.id)
-        images.value = images.value.filter((item) => item.id !== image.id)
-        totalRecords.value -= 1
+        await imagesStore.remove(image.id)
         toast.add({ severity: 'success', summary: t('imaging.deleted'), life: 3000 })
       } catch {
         toast.add({ severity: 'error', summary: t('imaging.deleteError'), life: 3000 })
@@ -161,13 +153,11 @@ function askDelete(image: PatientImage) {
     <template #title>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span>{{ t('imaging.title') }}</span>
-        <Button
-          v-if="canWrite"
-          :label="t('imaging.upload')"
-          icon="pi pi-camera"
-          size="small"
-          @click="uploadDialogVisible = true"
-        />
+        <Button v-if="canWrite" :label="t('imaging.upload')" size="small" @click="uploadDialogVisible = true">
+          <template #icon="{ class: iconClass }">
+            <Camera :size="16" :class="iconClass" />
+          </template>
+        </Button>
       </div>
     </template>
     <template #content>
@@ -212,7 +202,7 @@ function askDelete(image: PatientImage) {
         <Skeleton v-for="n in 6" :key="n" class="aspect-square w-full" />
       </div>
 
-      <p v-else-if="!images.length" class="text-sm text-surface-500">{{ t('imaging.empty') }}</p>
+      <EmptyState v-else-if="!images.length" :icon="Images" :title="t('imaging.empty')" />
 
       <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         <ImageThumbnail

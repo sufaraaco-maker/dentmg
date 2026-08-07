@@ -10,6 +10,13 @@ import type {
   UpdateTreatmentPlanPayload,
 } from '@/types/treatmentPlan'
 
+interface PatientPageMeta {
+  currentPage: number
+  lastPage: number
+  perPage: number
+  total: number
+}
+
 /**
  * A single id-keyed cache serving both the Patient Treatment Plans tab's list (`plansForPatient`)
  * and the dedicated Plan Detail route's single-resource fetch (`fetchOne`), design doc §9/§11 —
@@ -24,10 +31,18 @@ import type {
  * store is simpler than `appointments.ts`'s `fetchOne`-after-every-mutation workaround: that
  * pattern exists there only because of a documented backend gap (TECH_DEBT.md) this module's API
  * was deliberately designed not to repeat.
+ *
+ * Phase 2.1 (design doc §11/§14.4): the patient-scoped list is now paginated server-side. `cache`
+ * can hold plans from more than one page (e.g. after visiting page 1 then page 2), so
+ * `plansForPatient` can no longer safely derive its result by filtering the *whole* cache — it
+ * would silently merge pages together. `patientPageIds` tracks the ordered id list for whichever
+ * page was *most recently* fetched for that patient; `plansForPatient` reads only that.
  */
 export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
   const cache = reactive(new Map<string, TreatmentPlan>())
-  const loadedPatientIds = reactive(new Set<string>())
+  const patientPageIds = reactive(new Map<string, string[]>())
+  const patientPageMeta = reactive(new Map<string, PatientPageMeta>())
+  const loadedPatientPage = reactive(new Map<string, number>())
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -35,23 +50,40 @@ export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
     cache.set(plan.id, plan)
   }
 
-  /** All cached plans for one patient, most recently created first — backs the Plan List tab. */
+  /** The most recently fetched page's plans for one patient, most recently created first. */
   function plansForPatient(patientId: string): TreatmentPlan[] {
-    return Array.from(cache.values())
-      .filter((plan) => plan.patient_id === patientId)
+    const ids = patientPageIds.get(patientId) ?? []
+    return ids
+      .map((id) => cache.get(id))
+      .filter((plan): plan is TreatmentPlan => !!plan)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
 
-  async function fetchForPatient(patientId: string, force = false): Promise<void> {
-    if (loadedPatientIds.has(patientId) && !force) return
+  /** Pagination metadata for the currently loaded page, for the panel's `Paginator`. */
+  function pageMetaForPatient(patientId: string): PatientPageMeta {
+    return patientPageMeta.get(patientId) ?? { currentPage: 1, lastPage: 1, perPage: 15, total: 0 }
+  }
+
+  async function fetchForPatient(patientId: string, page = 1, force = false): Promise<void> {
+    if (loadedPatientPage.get(patientId) === page && !force) return
 
     loading.value = true
     error.value = null
 
     try {
-      const plans = await treatmentPlansApi.list(patientId)
-      plans.forEach(upsert)
-      loadedPatientIds.add(patientId)
+      const result = await treatmentPlansApi.list(patientId, page)
+      result.data.forEach(upsert)
+      patientPageIds.set(
+        patientId,
+        result.data.map((plan) => plan.id),
+      )
+      patientPageMeta.set(patientId, {
+        currentPage: result.meta.current_page,
+        lastPage: result.meta.last_page,
+        perPage: result.meta.per_page,
+        total: result.meta.total,
+      })
+      loadedPatientPage.set(patientId, page)
     } catch {
       error.value = 'treatmentPlans.loadError'
     } finally {
@@ -65,9 +97,12 @@ export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
     return plan
   }
 
+  /** A new plan always sorts to the top (most recently created) — refreshes page 1 so it's
+   *  immediately visible regardless of which page the patient's list happened to be on. */
   async function create(patientId: string, payload: CreateTreatmentPlanPayload): Promise<TreatmentPlan> {
     const created = await treatmentPlansApi.create(patientId, payload)
     upsert(created)
+    await fetchForPatient(patientId, 1, true)
     return created
   }
 
@@ -83,12 +118,13 @@ export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
     return plan
   }
 
-  /** Auto-rejects sibling `presented` plans server-side (§5/§15 Q3) — refreshes this patient's
-   *  whole list so those siblings' now-stale cached statuses are corrected too, not just this plan. */
+  /** Auto-rejects sibling `presented` plans server-side (§5/§15 Q3) — refreshes the currently
+   *  loaded page of this patient's list so those siblings' now-stale cached statuses are
+   *  corrected too, not just this plan. */
   async function accept(id: string): Promise<TreatmentPlan> {
     const plan = await treatmentPlansApi.accept(id)
     upsert(plan)
-    await fetchForPatient(plan.patient_id, true)
+    await fetchForPatient(plan.patient_id, loadedPatientPage.get(plan.patient_id) ?? 1, true)
     return plan
   }
 
@@ -168,7 +204,9 @@ export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
 
   function $reset() {
     cache.clear()
-    loadedPatientIds.clear()
+    patientPageIds.clear()
+    patientPageMeta.clear()
+    loadedPatientPage.clear()
     loading.value = false
     error.value = null
   }
@@ -178,6 +216,7 @@ export const useTreatmentPlansStore = defineStore('treatmentPlans', () => {
     loading,
     error,
     plansForPatient,
+    pageMetaForPatient,
     fetchForPatient,
     fetchOne,
     create,

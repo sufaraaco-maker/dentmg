@@ -96,6 +96,13 @@ function makePlan(overrides: Partial<TreatmentPlan> = {}): TreatmentPlan {
   }
 }
 
+function makePage(plans: TreatmentPlan[]) {
+  return {
+    data: plans,
+    meta: { current_page: 1, last_page: 1, per_page: 15, total: plans.length },
+  }
+}
+
 function makeRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -128,7 +135,7 @@ beforeEach(() => {
 
 describe('TreatmentPlanDetailView — hydration', () => {
   it('hydrates from the store cache without an extra fetch when already loaded', async () => {
-    mockedPlansApi.list.mockResolvedValue([makePlan()])
+    mockedPlansApi.list.mockResolvedValue(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
     await store.fetchForPatient('patient-1')
 
@@ -188,10 +195,12 @@ describe('TreatmentPlanDetailView — revision relationship', () => {
   })
 
   it('shows a supersedes banner when a cached predecessor points at this plan', async () => {
-    mockedPlansApi.list.mockResolvedValue([
-      makePlan({ id: 'plan-1', title: 'Option A (original)', superseded_by_plan_id: 'plan-2' }),
-      makePlan({ id: 'plan-2', title: 'Option A (revised)', superseded_by_plan_id: null }),
-    ])
+    mockedPlansApi.list.mockResolvedValue(
+      makePage([
+        makePlan({ id: 'plan-1', title: 'Option A (original)', superseded_by_plan_id: 'plan-2' }),
+        makePlan({ id: 'plan-2', title: 'Option A (revised)', superseded_by_plan_id: null }),
+      ]),
+    )
     const store = useTreatmentPlansStore()
     await store.fetchForPatient('patient-1')
 

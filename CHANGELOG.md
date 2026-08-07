@@ -19,9 +19,48 @@ see `docs/roadmap.md` and `TECH_DEBT.md` for current per-module status.
 Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Visual Redesign Steps 1-3
 (PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
-"Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. See
-`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
-now feeds into._
+"Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
+Profile Redesign** design approved 2026-08-07; its first implementation sub-phase, **2.1 (Foundation)**, is
+in this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
+book this file's own per-PR history now feeds into._
+
+### Added — Phase 2.1: Patient Profile Foundation (`feature/patient-profile-phase2-1-foundation`, 2026-08-07)
+- **Context**: first implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
+  `docs/modules/patient-profile-redesign-design.md` for the full design, approved 2026-08-07. Explicitly
+  scoped to architecture/consistency groundwork only: no Billing, Medical History, Laboratory, Documents, or
+  Timeline in this PR — those land in Phase 2.2 onward.
+- **`patients.ts` Pinia store**: closes the one architectural gap Patients had versus every sibling module —
+  `PatientsView.vue`/`PatientDetailView.vue`/`PatientFormDialog.vue` called `@/lib/api` inline before this;
+  now route through a store (list/fetchOne/create/update/remove/audit-logs), patient-level state only, not a
+  replacement for the domain stores (`treatmentPlans.ts`, `invoices.ts`, etc.).
+- **`patientImages.ts` Pinia store**: wraps the existing `services/imaging` functions, giving Imaging the
+  same store-backed reactivity as every other tab. Backend untouched — pure frontend refactor.
+- **Pagination**: `GET /patients/{patient}/treatment-plans` and `.../clinical-notes` are now paginated
+  (15/page) — both were previously unbounded `->get()` calls, a real if previously-undocumented scalability
+  risk for a long-tenured patient. `PatientTreatmentPlansPanel.vue`/`PatientClinicalNotesPanel.vue` gained a
+  real `Paginator`. Invoices/Payments' identical endpoints are deliberately **not** paginated in this PR —
+  `ApplyPaymentDialog.vue`'s invoice picker and `InvoicePaymentsPanel.vue` both assume the full unpaginated
+  set today; Phase 2.2 (Billing) adds the missing invoice-scoped payments endpoint and fixes both together
+  rather than paginating first and breaking them in between. New `TECH_DEBT.md` entry logs the Invoices/
+  Payments half of this as open.
+- **`EmptyState.vue`**: first component in a new `components/common/` folder — no such shared/generic
+  component location existed before (Step 1 analysis confirmed every prior "reusable" pattern in this app
+  was copy-the-convention, not import-a-base-component). Referenced as already built in
+  `frontend-visual-redesign-design.md` §6 but never actually created; retrofit into Imaging/Treatment
+  Plans/Clinical Notes/Patients-list empty states as those files were touched this phase.
+- **Lucide icon migration for the Patients module**: `PatientDetailView.vue`, `PatientsView.vue`, and the
+  Imaging components (`PatientImagingPanel.vue`, `UploadImagesDialog.vue`, `ImageThumbnail.vue`,
+  `ImageLightbox.vue`, `EditImageDialog.vue`) — Patients was next in the migration's own stated rollout
+  order. The shared `InputIcon` search-box glyph and `ConfirmDialog`'s `pi-exclamation-triangle` are
+  deliberately left as-is: both are identical, unmigrated patterns used across a dozen+ other views app-wide,
+  not specific to Patients — changing only here would create a visible inconsistency, not fix one.
+- **`PatientDetailView.vue` tab-list structure cleanup**: extracted a config-driven `tabDefinitions` array
+  (key/label/visibility) so each future tab this redesign adds (Medical History, Laboratory, Billing,
+  Documents, Timeline) extends one array instead of duplicating a `v-if` across both `TabList` and
+  `TabPanels` separately.
+- **Security Architecture Decision** (binding on Phase 2.6 and beyond): Patient Timeline will be built on a
+  dedicated `PatientActivity` event model, not the `Auditable` trail, with permissions enforced server-side
+  per category — see `docs/decisions.md`'s 2026-08-07 entry and the design doc's §9A.
 
 ### Docs — Phase 1 release verification + close-out (`docs/phase-1-closeout`, PR #16, 2026-08-07)
 - Independently re-verified Phase 1 before merging rather than trusting a pre-filled checklist: re-ran and

@@ -37,3 +37,25 @@ export interface PatientAuditLog {
   user: { id: string; name: string } | null
   created_at: string
 }
+
+export interface PatientPayload {
+  first_name: string
+  last_name: string
+  date_of_birth: string | null
+  gender: PatientGender
+  phone: string
+  email: string | null
+  address: string | null
+  national_id: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
+  blood_type: BloodType | null
+  allergies: string | null
+  medical_history: string | null
+  insurance_provider: string | null
+  insurance_number: string | null
+  notes: string | null
+}
+
+export type CreatePatientPayload = PatientPayload
+export type UpdatePatientPayload = PatientPayload

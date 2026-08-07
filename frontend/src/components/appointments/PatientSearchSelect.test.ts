@@ -1,5 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import PatientSearchSelect from './PatientSearchSelect.vue'
 import { api } from '@/lib/api'
 import type { Patient } from '@/types/patient'
@@ -7,6 +8,13 @@ import type { Patient } from '@/types/patient'
 vi.mock('@/lib/api', () => ({
   api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
+
+// PatientSearchSelect always renders `PatientFormDialog` (for its inline "create new patient"
+// flow), even while closed — and that dialog now uses `usePatientsStore()` (Phase 2.1), so every
+// mount here needs an active Pinia instance, not just tests that open the dialog.
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 
 const JANE: Patient = {
   id: 'p1',

@@ -2,12 +2,18 @@ import { api } from '@/lib/api'
 import { rethrowClinicalNoteError } from './errors'
 import type { ClinicalNote, CreateClinicalNotePayload, UpdateClinicalNotePayload } from '@/types/clinicalNote'
 
+export interface PaginatedClinicalNotes {
+  data: ClinicalNote[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
+
 export const clinicalNotesApi = {
-  // GET /api/patients/{patient}/clinical-notes is deliberately not paginated — a patient's
-  // lifetime note count is naturally small, same documented exception class as
-  // treatment-plans/payments/dental-chart-entries.
-  async list(patientId: string): Promise<ClinicalNote[]> {
-    const { data } = await api.get<ClinicalNote[]>(`/patients/${patientId}/clinical-notes`)
+  // Paginated (Phase 2.1, design doc §11/§14.4) — a long-tenured patient's full note history used
+  // to load in one unbounded request; `page` defaults to 1 server-side when omitted.
+  async list(patientId: string, page?: number): Promise<PaginatedClinicalNotes> {
+    const { data } = await api.get<PaginatedClinicalNotes>(`/patients/${patientId}/clinical-notes`, {
+      params: { page },
+    })
     return data
   },
 

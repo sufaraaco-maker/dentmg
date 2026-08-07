@@ -9,7 +9,7 @@ import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { api } from '@/lib/api'
+import { usePatientsStore } from '@/stores/patients'
 import { BLOOD_TYPES, PATIENT_GENDERS, type Patient } from '@/types/patient'
 import { parseLocalDate, toLocalDateString } from '@/lib/date'
 
@@ -25,6 +25,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const toast = useToast()
+const patientsStore = usePatientsStore()
 
 const genderOptions = PATIENT_GENDERS.map((gender) => ({
   value: gender,
@@ -115,11 +116,11 @@ async function onSave() {
 
   try {
     const payload = toPayload()
-    const { data } = props.patient
-      ? await api.put<Patient>(`/patients/${props.patient.id}`, payload)
-      : await api.post<Patient>('/patients', payload)
+    const saved = props.patient
+      ? await patientsStore.update(props.patient.id, payload)
+      : await patientsStore.create(payload)
 
-    emit('saved', data)
+    emit('saved', saved)
     emit('update:visible', false)
   } catch (err: unknown) {
     if ((err as { response?: { status?: number } })?.response?.status === 422) {

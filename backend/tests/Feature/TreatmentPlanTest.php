@@ -47,10 +47,23 @@ class TreatmentPlanTest extends TestCase
         $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/treatment-plans");
 
         $response->assertOk();
-        $this->assertCount(2, $response->json());
-        $this->assertArrayHasKey('estimated_cost', $response->json()[0]);
-        $this->assertArrayHasKey('items', $response->json()[0]);
-        $this->assertArrayHasKey('dentist', $response->json()[0]);
+        $this->assertCount(2, $response->json('data'));
+        $this->assertArrayHasKey('estimated_cost', $response->json('data.0'));
+        $this->assertArrayHasKey('items', $response->json('data.0'));
+        $this->assertArrayHasKey('dentist', $response->json('data.0'));
+    }
+
+    public function test_a_patients_treatment_plan_list_is_paginated(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        TreatmentPlan::factory()->count(20)->create(['patient_id' => $patient->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/treatment-plans");
+
+        $response->assertOk();
+        $this->assertCount(15, $response->json('data'));
+        $this->assertSame(20, $response->json('meta.total'));
     }
 
     public function test_list_includes_the_computed_estimated_cost_from_non_cancelled_items(): void
@@ -64,7 +77,7 @@ class TreatmentPlanTest extends TestCase
         $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/treatment-plans");
 
         $response->assertOk();
-        $this->assertSame('200.00', $response->json()[0]['estimated_cost']);
+        $this->assertSame('200.00', $response->json('data.0.estimated_cost'));
     }
 
     // ---- store ----------------------------------------------------------------------------
