@@ -4,6 +4,26 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### Dashboard "Today's Appointments" stat card counts every appointment ever created, not today's
+Found 2026-08-02 during the Premium Visual Redesign integration verification pass (user report,
+live dev server). `DashboardService::summary()` computes `today_appointments` via
+`countIfExists('appointments')`, which is `DB::table('appointments')->count()` — an **unfiltered
+count of the entire `appointments` table**, no date scoping at all. Confirmed identical on `main`
+(pre-existing, not introduced by any of the three recent PRs — AI Assistant API key, Treatment
+Plans clinic-wide list, or the visual redesign merge). Reproduction: with 51 appointments seeded
+across the demo dataset's full date range, the "مواعيد اليوم" / "Today's Appointments" stat card
+shows `51`, not the count of appointments whose date is today.
+**Expected behavior** (to confirm before fixing, not assumed): the card should show only
+appointments scheduled for the current calendar day — i.e. filtered by `start_at`'s date matching
+`Date::today()` — mirroring how `monthlyRevenue()` right below it in the same file already scopes
+by a date range (`startOfMonth()`/`endOfMonth()`) rather than an unbounded count. Historical/all-time
+appointment count is a different, currently-unrequested stat, not what the label promises.
+**Revisit**: separate branch/PR, scoped to `DashboardService::summary()`'s `today_appointments`
+calculation only. Needs its own test coverage (a `DashboardServiceTest`/`DashboardControllerTest`
+case seeding appointments both inside and outside today's date, asserting only today's are counted)
+since none currently exists for this stat's correctness — the existing tests only assert the field's
+presence/shape, not its value against seeded data.
+
 ### Backend test suite never exercises real PostgreSQL — migrations can silently be un-runnable in production
 `backend/phpunit.xml` forces `DB_CONNECTION=sqlite`/`DB_DATABASE=:memory:` for every test run (`RefreshDatabase`
 included). Found 2026-07-26: `2026_07_25_000001_create_payments_table.php` declared a self-referencing foreign
@@ -81,19 +101,6 @@ is actually requested — design a dedicated procedure-pricing catalog then (lik
 pricing table referencing a tenant-shared procedure list), rather than continuing to extend
 `dental_conditions`. Do not build speculatively before then, per the same "don't build ahead of a real need"
 principle already applied to Multi-Branch below.
-
-### Sidebar "Treatment Plans" item is still `comingSoon` (no patient-agnostic index page)
-`config/navigation.ts`'s top-level "Treatment Plans" nav entry (`labelKey: 'nav.treatmentPlans'`) is
-marked `comingSoon: true` even though the module itself is implemented and reachable — Treatment
-Plans lives on `PatientDetailView`'s own tab (`PatientTreatmentPlansPanel.vue`, routed via
-`treatment-plan-detail`), the same pattern Dental Chart uses for its chart view. There is no
-patient-agnostic Treatment Plans list/reporting screen for the sidebar item to point to, so it stays
-a placeholder rather than linking to a route that doesn't exist.
-**Revisit**: once there's a defined need for a clinic-wide Treatment Plans list (e.g. "all pending
-plans awaiting patient decision" or a reporting view spanning patients), design and build a
-dedicated index page and flip this entry from `comingSoon: true` to a real `routeName`, mirroring
-how Dental Conditions' catalog screen was added under Dental Chart. Not implemented speculatively
-now — no such cross-patient view has been requested yet.
 
 ### Header notifications is inert UI (no notification backend)
 `AppHeader.vue`'s bell icon opens a popover that always reads "No notifications yet" — there is no
@@ -331,6 +338,13 @@ is real (if rare) even on CI's native runner, not unique to the local Windows Do
 pre-existing/unrelated to this module.
 
 ## Resolved
+
+### Sidebar "Treatment Plans" item is still `comingSoon` (no patient-agnostic index page) — resolved 2026-08-02 (PR #12)
+Fixed via a clinic-wide `GET /treatment-plans` index (`TreatmentPlanController::indexAll`,
+`TreatmentPlanService::paginateAll`) and `TreatmentPlansView.vue`, mirroring the identical fix
+already applied to Billing (`GET /invoices`). Sidebar entry now points at a real
+`routeName: 'treatment-plans'` instead of `comingSoon: true`. 928/928 backend + 763/763 frontend
+tests green, browser-verified (light/dark/RTL) with real seeded data.
 
 ### System-Wide Production Gate (resolved 2026-07-18)
 Full pre-launch audit and hardening pass across the whole system (not scoped to one module), per
