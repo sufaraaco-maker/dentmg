@@ -75,7 +75,12 @@ describe('BillingSummaryCard — rendering', () => {
 
   it('renders "No Activity" status for a patient with no invoices', async () => {
     mockedApi.get.mockResolvedValueOnce(
-      makeSummary({ status: 'no_activity', invoice_count: 0, total_invoiced: '0.00', outstanding_balance: '0.00' }),
+      makeSummary({
+        status: 'no_activity',
+        invoice_count: 0,
+        total_invoiced: '0.00',
+        outstanding_balance: '0.00',
+      }),
     )
     const wrapper = await mountCard()
 

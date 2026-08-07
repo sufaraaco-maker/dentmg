@@ -193,7 +193,9 @@ onMounted(() => {
         :aria-label="t('patients.tabSwitcher.label')"
       >
         <template #option="{ option }">{{ t(option.labelKey) }}</template>
-        <template #value="{ value }">{{ t(visibleTabs.find((tab) => tab.key === value)?.labelKey ?? '') }}</template>
+        <template #value="{ value }">{{
+          t(visibleTabs.find((tab) => tab.key === value)?.labelKey ?? '')
+        }}</template>
       </Select>
       <TabPanels>
         <TabPanel value="overview">

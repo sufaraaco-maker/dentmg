@@ -5,9 +5,9 @@ namespace App\Services;
 use App\Enums\InvoiceStatus;
 use App\Models\BillingSetting;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\Payment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Patient-level Billing tab hero/summary stat (design doc §6.3/§8/§11.4, Phase 2.2). Deliberately
@@ -30,7 +30,10 @@ class BillingSummaryService
         // Only `issued` invoices count toward totals — draft is not yet a real financial
         // commitment, void is cancelled and frozen at void time. Matches ReportService::arAging()'s
         // existing precedent of scoping balance calculations to issued invoices only.
-        $itemTotals = InvoiceItem::query()
+        // `DB::table()`, not `InvoiceItem::query()`: this is a pure aggregate over an alias shape
+        // that doesn't correspond to any real model attribute — a plain query builder returns a
+        // stdClass here, not a typed (and therefore falsely-property-checked) `InvoiceItem`.
+        $itemTotals = DB::table('invoice_items')
             ->join('invoices', 'invoices.id', '=', 'invoice_items.invoice_id')
             ->where('invoices.patient_id', $patientId)
             ->where('invoices.status', InvoiceStatus::Issued->value)
