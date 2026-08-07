@@ -18,8 +18,19 @@ see `docs/roadmap.md` and `TECH_DEBT.md` for current per-module status.
 
 Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Visual Redesign Steps 1-3
 (PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
-PR #15 (+ PR #14) — see that entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated
-status book this file's own per-PR history now feeds into._
+PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
+"Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. See
+`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
+now feeds into._
+
+### Docs — Phase 1 release verification + close-out (`docs/phase-1-closeout`, PR #16, 2026-08-07)
+- Independently re-verified Phase 1 before merging rather than trusting a pre-filled checklist: re-ran and
+  confirmed Backend + Frontend CI green firsthand, confirmed zero merge conflicts with `main`
+  (`git merge-tree`), confirmed no TODO/FIXME introduced by the diff.
+- Reconciled the staleness `docs/PROJECT_STATUS.md`'s own §0 had flagged: this file's "Unreleased" section
+  (missing PR #11-13), `docs/roadmap.md`/`PROJECT_CONTEXT.md`'s stale "Reports/Settings not yet merged"
+  claims, and a new `docs/decisions.md` entry flagging the role-hierarchy question for Phase 4.
+- Tagged the milestone: **Phase 1 — Foundation Complete.**
 
 ### Fixed — Phase 1: Stabilization (`fix/stabilization-phase-1`, PR #15, 2026-08-07; + PR #14, docs-only)
 - **Context**: first phase of a new 8-phase roadmap (Stabilization → Patient Profile redesign → Dashboard

@@ -16,8 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-07 |
-| **Updated by** | Claude Code — Phase 1 (Stabilization) close-out: implemented, CI-verified (`workflow_dispatch`, 3 runs), merged PR #15 + PR #14, reconciled `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness found in this file's first version |
-| **Repo HEAD at time of writing** | `main` at `37e46cb` (PR #14 merge, itself on top of PR #15's `f3644ec`) |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out: independently re-verified CI (Backend/Frontend both re-confirmed green on PR #16, not assumed from a pre-filled checklist), diffed PR #16 for conflicts/TODOs/doc accuracy, merged PR #16, tagged the milestone below |
+| **Repo HEAD at time of writing** | `main` at `82c6cb7` (PR #16 merge, itself on top of PR #15's `f3644ec` + PR #14) |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -116,6 +117,7 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-04 | This file's first version authored. `main`'s last 5 CI runs all E2E-red (Backend/Frontend green) — found and diagnosed, not yet fixed. Repo-root `CLAUDE.md` added as this file's auto-loaded enforcement mechanism. |
 | 2026-08-06 → 2026-08-07 | **Phase 1: Stabilization** (first phase of a new 8-phase product roadmap: Stabilization → Patient Profile → Dashboard 2.0 → Permissions/Audit → SaaS Multi-Tenant → PWA/Mobile → AI Expansion → Launch Prep) implemented on `fix/stabilization-phase-1`. Fixed `appointments.spec.ts` (navigates by the created appointment's real id, not List view's first row) and, across 3 `workflow_dispatch` runs, two separate `reports.spec.ts` root causes found one at a time as each unmasked the next: `ReportService::collections()` had no `ORDER BY` (added most-recent-first + a `created_at` tie-break, since `received_at` is deliberately date-only), then `newPatients()` turned out to sort ascending instead of descending. Also fixed `DashboardService.today_appointments` (PR #14's finding) and a frontend loading/empty-state/error-handling consistency pass (4 stores standardized on the store-owns-error-state pattern, `InvoicesView.vue`'s previously-silent fetch failure closed). Final CI run: **Backend 932/932, Frontend 759/759, E2E 39/39 — zero failures.** |
 | 2026-08-07 | **PR #15** merged (Phase 1 code + this file + `CLAUDE.md`), then **PR #14** merged. `main`'s CI fully green for the first time since 2026-08-01. `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness from §0 reconciled; `TECH_DEBT.md` updated with both resolutions. This file updated for Phase 1 close-out per its own §15 protocol. |
+| 2026-08-07 | **PR #16** merged after an independent final release verification (Backend + Frontend CI re-confirmed green firsthand, not taken on faith; `git merge-tree` confirmed no conflicts with `main`; diff checked for introduced TODO/FIXME — none found). **Milestone: "Phase 1 — Foundation Complete."** Immediate next step: Phase 2 (Patient Profile Redesign) design phase — see §12. |
 
 ---
 
@@ -179,6 +181,7 @@ Sourced directly from `gh pr list --state all` (15 PRs total, all merged) — no
 | 13 | `feature/premium-visual-redesign` | Premium Visual Redesign Steps 1–3 | Design tokens, Sidebar/Header/Command Palette polish, Lucide icon migration begun | **Merged** 2026-08-02 |
 | 14 | `docs/dashboard-today-appointments-bug` | Doc-only: log the Dashboard bug + close the Treatment Plans tech-debt item | No code changes | **Merged** 2026-08-07 |
 | 15 | `fix/stabilization-phase-1` | Phase 1 (Stabilization) of the new 8-phase roadmap | Restored fully green `main` CI (2 `reports.spec.ts` root causes + `appointments.spec.ts`), fixed `Dashboard.today_appointments`, frontend loading/empty/error-handling consistency pass, added this file + `CLAUDE.md` | **Merged** 2026-08-07 (`f3644ec`) |
+| 16 | `docs/phase-1-closeout` | Docs-only: reconcile `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness, full Phase 1 close-out in this file | No code changes | **Merged** 2026-08-07 (`82c6cb7`), after independent CI/conflict/TODO re-verification — see §2 |
 
 ---
 
