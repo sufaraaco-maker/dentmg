@@ -224,3 +224,35 @@ revisiting the flat-enum decision.
 
 **Status**: Flagged, not decided. Needs its own design-approval round when Phase 4 starts — not designed
 speculatively now. See `docs/PROJECT_STATUS.md` §5 for current roadmap-phase status.
+
+## 2026-08-07 — Patient Timeline: dedicated event model, not `Auditable`; permissions enforced server-side, per-category
+
+While designing Phase 2 (Patient Profile Redesign)'s Timeline tab — a cross-module activity feed spanning
+Appointments, Treatment Plans, Clinical Notes, Billing, Payments, Imaging, Laboratory, and Documents — two
+decisions were made and explicitly designated as binding beyond this one feature, not local implementation
+detail:
+
+1. **Timeline is built on a dedicated `PatientActivity` event table, not the existing `Auditable`
+   trail/`PatientAuditLog`.** `Auditable` answers "what changed on this row" (field-level diffs, JSON-based,
+   already noted elsewhere as inefficient for aggregate queries); Timeline needs to answer "what happened to
+   this patient" (cross-module, filterable, paginated, and a plausible future input to notifications and AI
+   summaries) — a materially different shape that a change-diff log can't cleanly serve. `PatientActivity`
+   rows are written by domain events each module's service dispatches at its key lifecycle moments, kept
+   decoupled from the 8 module services themselves via a single listener.
+2. **Timeline permissions are enforced server-side, per category, at query time — never client-side, never
+   inherited from "the user could already open the patient's hub."** A naive "show all activity for this
+   patient" query would leak `category=clinical` entries (Clinical Notes-derived events) to a receptionist,
+   even though `ClinicalNotePolicy` already bars receptionists from Clinical Notes entirely — a real
+   permission leak, not a hypothetical one, since the underlying data already has a stricter read rule than
+   the hub itself. `GET /patients/{patient}/activities` must filter out any category the requesting user's
+   role fails that category's owning Policy for, before rows leave the database.
+
+**Why elevated to a decisions-log entry** (rather than left as design-doc detail): both rulings generalize —
+any future feature that aggregates or surfaces cross-module patient data (a search-everything feature, a
+cross-module dashboard widget, a future AI summarizer reading `PatientActivity` rows) inherits the same
+per-source, server-side permission-recheck requirement. Full detail, including the enforcement/testing
+requirement, lives in `docs/modules/patient-profile-redesign-design.md` §9-§9A (design authority for this
+feature) — this entry is the durable pointer for future modules that hit the same class of problem.
+
+**Status**: Approved with the design (design review approved 2026-08-07). Binding on all Phase 2.6 (Timeline)
+implementation and on any later feature that aggregates cross-module patient data.
