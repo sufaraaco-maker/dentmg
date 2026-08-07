@@ -15,36 +15,35 @@
 
 | | |
 |---|---|
-| **Last updated** | 2026-08-04 |
-| **Updated by** | Claude Code, full-repo audit (git log/PRs/CI + `PROJECT_CONTEXT.md`, `TECH_DEBT.md`, `CHANGELOG.md`, `docs/roadmap.md`, `docs/decisions.md`, `docs/modules/*`) |
-| **Repo HEAD at time of writing** | `5aebb88` on `feature/premium-visual-redesign` (local); `origin/main` at `687710d` (PR #13 merge) |
-| **Confidence** | High for anything sourced from git/GitHub (PR list, CI runs, commit history) and from `TECH_DEBT.md`/`CHANGELOG.md`'s own detailed entries. Lower — flagged inline — for anything this report had to reconcile because the existing docs had drifted from actual repo state (see §"Known documentation staleness found while building this report"). |
+| **Last updated** | 2026-08-07 |
+| **Updated by** | Claude Code — Phase 1 (Stabilization) close-out: implemented, CI-verified (`workflow_dispatch`, 3 runs), merged PR #15 + PR #14, reconciled `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness found in this file's first version |
+| **Repo HEAD at time of writing** | `main` at `37e46cb` (PR #14 merge, itself on top of PR #15's `f3644ec`) |
+| **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
 
-## 0. Known documentation staleness found while building this report
+## 0. Known documentation staleness found while building this report — RESOLVED 2026-08-07
 
-Building this report required cross-checking `PROJECT_CONTEXT.md`, `docs/roadmap.md`, and `CHANGELOG.md`
-against actual `git log`/GitHub PR state, because the user asked this report to rely on the real repo, not
-just repeat what other docs claim. Three real discrepancies were found — this is exactly the kind of drift
-this new living document is meant to prevent going forward:
+This file's first version (2026-08-04) found 3 real discrepancies in the older docs, from cross-checking
+`PROJECT_CONTEXT.md`/`docs/roadmap.md`/`CHANGELOG.md` against actual `git log`/GitHub PR state. All three
+are now closed, as part of Phase 1 (Stabilization)'s own close-out — this section is kept as a record of
+what the drift looked like and how it happened, since the whole point of this file is to stop it recurring
+silently:
 
-1. **`CHANGELOG.md`'s "Unreleased" section is stale by 3 merged PRs.** It documents up through PR #10
-   (Frontend Nav Shell, 2026-07-31) but has no entries for PR #11 (AI Assistant Settings-managed API key,
-   merged 2026-08-02), PR #12 (Treatment Plans clinic-wide list, merged 2026-08-02), or PR #13 (Premium
-   Visual Redesign Steps 1-3, merged 2026-08-02).
-2. **`docs/roadmap.md` and `PROJECT_CONTEXT.md` both say Reports and Settings are "not yet merged to
-   `main`."** This is false as of this report — `gh pr list` confirms PR #7 (Reports) merged 2026-07-28 and
-   PR #8 (Settings) merged 2026-07-30. Likely cause: the prose was written same-day as CI confirmation,
-   before the merge itself, and never revisited after.
-3. **CI on `main` is currently red**, and none of the three docs above mention it: the last 5 `CI` workflow
-   runs on `main` (through the PR #13 merge commit) all show the **E2E job failing** while Backend and
-   Frontend jobs stay green. Root cause is already correctly diagnosed in `TECH_DEBT.md`'s "`DemoDataSeeder`'s
-   data volume broke two permanent E2E tests on `main`" entry (2026-08-01) but that entry is still open, not
-   resolved — see §9 and §12 below.
+1. **`CHANGELOG.md`'s "Unreleased" section was stale by 3 merged PRs** (PR #11-13, merged 2026-08-02, had no
+   entries). **Fixed 2026-08-07**: entries added for PR #11-15.
+2. **`docs/roadmap.md` and `PROJECT_CONTEXT.md` both said Reports and Settings were "not yet merged to
+   `main`"** — false; both merged 2026-07-28/30. **Fixed 2026-08-07**: both docs corrected (`PROJECT_CONTEXT.md`
+   via an appended status-update paragraph, matching its own established "don't rewrite history, append
+   corrections" convention).
+3. **CI on `main` was red** (E2E job failing since 2026-08-01, Backend/Frontend green) — root cause was
+   already correctly diagnosed in `TECH_DEBT.md` but not yet fixed. **Fixed 2026-08-07** via PR #15 — see
+   §2/§9/§12 for the full fix (it took 2 separate backend bugs, found one at a time as each unmasked the
+   next, confirmed via 3 `workflow_dispatch` runs).
 
-This report's Modules table (§3) and PR history (§4) reflect the **actual** state (verified via `gh`), not
-the stale prose in the other docs. Those docs should be corrected as a follow-up — see §11.
+**Root cause of the drift itself**: all 3 PRs behind item 1, plus PR #14/#15, landed in a short, high-velocity
+window (2026-08-01 → 2026-08-07) — exactly the kind of burst this file's own §15 protocol exists to keep
+docs synchronized through, rather than after the fact.
 
 ---
 
@@ -80,9 +79,10 @@ an optional AI assistant layer — without the bloat of a multi-specialty hospit
 roadmap (Dashboard → AI Assistant) is merged to `main`; 12 of them meet this project's own "Production
 Ready ✅" bar (backend + frontend + full test suite + CI-confirmed permanent Playwright E2E spec). Three
 modules (Treatment Plans, Billing, Payments) are functionally complete and merged but still lack a permanent
-E2E suite, so they sit just below that bar (see §3, §9). Focus has since shifted to a cross-cutting,
-frontend-only visual/UX redesign initiative (currently mid-flight, see §6), while CI on `main` itself is
-**currently red** on its E2E job due to an open, already-diagnosed test-data regression (see §0, §9, §12).
+E2E suite, so they sit just below that bar (see §3, §9). Two post-roadmap initiatives are now running in
+parallel: a frontend-only visual/UX redesign (mid-flight, see §6) and a new 8-phase product roadmap toward
+SaaS readiness, whose **Phase 1 (Stabilization) closed 2026-08-07** — `main`'s CI is **fully green**
+(Backend/Frontend/E2E) for the first time since 2026-08-01 (see §2, §9, §12).
 
 ---
 
@@ -112,24 +112,26 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-07-31 | **PR #9** merges AI Assistant (Dashboard Insights / Smart Search / Writing Reports enabled-eligible; Clinical Notes draft-assist / Treatment Suggestions built but disabled-by-default behind a BAA-acknowledgment gate). Original 17-module roadmap now fully merged to `main`. Frontend UX & Navigation Redesign initiative kicks off. |
 | 2026-08-01 | **PR #10** merges Frontend Nav Shell Phase 1 (Sidebar redesign, Header breadcrumbs, Command Palette, keyboard shortcuts, a small approved `GET /invoices` backend exception). `DemoDataSeeder` (110 Arabic-named patients across every module's scenarios) merged same day — this later becomes the root cause of the still-open E2E regression on `main` (see §9, §12). |
 | 2026-08-02 | **PR #11** merges AI Assistant Settings-managed Anthropic API key. **PR #12** merges Treatment Plans clinic-wide list (fixes the long-standing `comingSoon` sidebar placeholder). **PR #13** merges Premium Visual Redesign Steps 1–3 (design tokens, Sidebar section-grouping + Lucide icon migration begun, Header/Command Palette polish) — supersedes the original Phase 2 (Dashboard) plan and pulls pieces of Phase 4 forward as mandatory acceptance criteria. |
-| 2026-08-02 (open) | **PR #14** opened — docs-only: logs a real, newly-found `DashboardService.today_appointments` bug (unfiltered `COUNT(*)`, not scoped to today) and marks the Treatment Plans `comingSoon` tech-debt item resolved (by PR #12). Not yet merged. |
-| 2026-08-04 (today) | This report authored. `main`'s last 5 CI runs are all E2E-red (Backend/Frontend green) — unresolved, see §9/§12. |
+| 2026-08-02 | **PR #14** opened — docs-only: logs a real, newly-found `DashboardService.today_appointments` bug (unfiltered `COUNT(*)`, not scoped to today) and marks the Treatment Plans `comingSoon` tech-debt item resolved (by PR #12). |
+| 2026-08-04 | This file's first version authored. `main`'s last 5 CI runs all E2E-red (Backend/Frontend green) — found and diagnosed, not yet fixed. Repo-root `CLAUDE.md` added as this file's auto-loaded enforcement mechanism. |
+| 2026-08-06 → 2026-08-07 | **Phase 1: Stabilization** (first phase of a new 8-phase product roadmap: Stabilization → Patient Profile → Dashboard 2.0 → Permissions/Audit → SaaS Multi-Tenant → PWA/Mobile → AI Expansion → Launch Prep) implemented on `fix/stabilization-phase-1`. Fixed `appointments.spec.ts` (navigates by the created appointment's real id, not List view's first row) and, across 3 `workflow_dispatch` runs, two separate `reports.spec.ts` root causes found one at a time as each unmasked the next: `ReportService::collections()` had no `ORDER BY` (added most-recent-first + a `created_at` tie-break, since `received_at` is deliberately date-only), then `newPatients()` turned out to sort ascending instead of descending. Also fixed `DashboardService.today_appointments` (PR #14's finding) and a frontend loading/empty-state/error-handling consistency pass (4 stores standardized on the store-owns-error-state pattern, `InvoicesView.vue`'s previously-silent fetch failure closed). Final CI run: **Backend 932/932, Frontend 759/759, E2E 39/39 — zero failures.** |
+| 2026-08-07 | **PR #15** merged (Phase 1 code + this file + `CLAUDE.md`), then **PR #14** merged. `main`'s CI fully green for the first time since 2026-08-01. `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness from §0 reconciled; `TECH_DEBT.md` updated with both resolutions. This file updated for Phase 1 close-out per its own §15 protocol. |
 
 ---
 
 ## 3. Modules
 
-Status column reflects **actual verified state** (git/GitHub), which in two cases (Reports, Settings)
-corrects stale "not yet merged" prose still sitting in `docs/roadmap.md`/`PROJECT_CONTEXT.md` — see §0.
+Status column reflects **actual verified state** (git/GitHub) — matches `docs/roadmap.md`/`PROJECT_CONTEXT.md`
+as of the 2026-08-07 reconciliation, see §0.
 
 | Module | Status | Backend | Frontend | Tests | Docs | Notes |
 |---|---|---|---|---|---|---|
-| Dashboard | Done (with one open bug) | ✅ `DashboardService` | ✅ `DashboardView` + widgets | Covered by `DashboardTest` | `docs/modules/dashboard.md` | `today_appointments` stat is an unscoped `COUNT(*)`, not date-filtered — real bug, logged in open PR #14, fix not yet built (§9, §12). |
+| Dashboard | Done | ✅ `DashboardService` | ✅ `DashboardView` + widgets | Covered by `DashboardTest` | `docs/modules/dashboard.md` | `today_appointments` was an unscoped `COUNT(*)` — **fixed 2026-08-07** (PR #15), now properly date-scoped with a regression test. |
 | Authentication | Done | ✅ Sanctum SPA cookie auth | ✅ `LoginView` | ✅ | `docs/modules/authentication.md` | Rate-limited (5/60s per email+IP). |
 | Users | Done | ✅ CRUD, soft delete | ✅ `UsersView` | ✅ | `docs/modules/users.md` | Self-delete blocked; admin-only write. |
 | Roles & Permissions | Done | ✅ `UserRole` backed enum | ✅ role-gated UI | ✅ | `docs/modules/roles-permissions.md` | 3 roles (admin/dentist/receptionist); deliberately not a `spatie/laravel-permission` table model. |
 | Patients | Done | ✅ CRUD + `Auditable` | ✅ `PatientsView`/`PatientDetailView` | ✅ | `docs/modules/patients.md` | `patient_code` (`P-00001`), `pg_trgm` search indexes. |
-| Appointments | **Production Ready ✅** (`v1.0.0-appointments`, 2026-07-20) | ✅ full CRUD + status-machine + slot logic | ✅ Calendar Board (Day/Week/Month/List) | 13/13 E2E (2026-07-20 tag) | `docs/modules/appointments.md` | `appointments.spec.ts` is one of the two E2E tests **currently broken on `main`** since `DemoDataSeeder` (2026-08-01) — regression, not a fresh gap (§9/§12). |
+| Appointments | **Production Ready ✅** (`v1.0.0-appointments`, 2026-07-20) | ✅ full CRUD + status-machine + slot logic | ✅ Calendar Board (Day/Week/Month/List) | 13/13 E2E at 2026-07-20 tag; `appointments.spec.ts`'s `DemoDataSeeder` regression **fixed 2026-08-07** (PR #15) | `docs/modules/appointments.md` | Was CI-red since 2026-08-01, now green — see §9/§12. |
 | Dental Chart | **Production Ready ✅** (merged 2026-07-22) | ✅ odontogram entries, condition catalog | ✅ 52-tooth FDI schematic, Accessible List view | 347/347 backend + 428/428 frontend + 16/16 E2E | `docs/modules/dental-chart.md` | 98/98 en/ar/tr parity at closure. |
 | Treatment Plans | Merged (PR #1, 2026-07-25; clinic-wide list added PR #12, 2026-08-02) — **not yet at "Production Ready" bar** | ✅ plan/item lifecycle | ✅ per-patient tabs + new clinic-wide `TreatmentPlansView` | 505/505 backend + 541/541 frontend at original merge; **no permanent E2E suite** (open, §9) | `docs/modules/treatment-plans.md`, `-design.md` | Reuses `dental_conditions` as V1 pricing catalog — flagged as revisit-when-multi-tenant (§9). |
 | Billing | Merged (PR #1, 2026-07-25) — **weakest module on test coverage** | ✅ Invoice lifecycle | ✅ Invoice tab/detail | 65/65 backend **unit-only** (no Feature-test suite); **no E2E suite** | `docs/modules/billing-design.md` — **final `modules/billing.md` doc still missing** | Both gaps open in `TECH_DEBT.md`, not silently dropped. |
@@ -138,7 +140,7 @@ corrects stale "not yet merged" prose still sitting in `docs/roadmap.md`/`PROJEC
 | Inventory | **Production Ready ✅** (PR #4, 2026-07-27) | ✅ catalogs + immutable stock ledger + PO lifecycle | ✅ Suppliers/Supplies/PO views + Low Stock widget | 771/771 backend (68 module-specific) + 19 new frontend + 20/20 E2E | `docs/modules/inventory-design.md` | On-hand quantity always computed live from the ledger, never stored. |
 | Laboratory | **Production Ready ✅** (PR #5, 2026-07-27) | ✅ Lab catalog + LabCase lifecycle | ✅ Labs/LabCases views + printable slip | 815/815 backend (58 module-specific) + 627/627 frontend + E2E green | `docs/modules/laboratory-design.md` | Has the same latent `BelongsToPatient` SQL-error bug as Imaging had (unfixed here — see §9). |
 | Imaging | **Production Ready ✅** (PR #6, 2026-07-28) | ✅ `PatientImage`, authenticated streaming | ✅ Imaging tab + non-destructive lightbox | 834/834 backend (19 module-specific) + 637/637 frontend + 27/27 E2E | `docs/modules/imaging-design.md` | DICOM/CBCT, hardware capture, persistent annotation explicitly out of V1 scope. |
-| Reports | **Production Ready ✅** (PR #7, **merged** 2026-07-28 — corrects stale "not merged" prose elsewhere, §0) | ✅ `ReportService`, 6 live reports, CSV export | ✅ Reports nav group + 6 views | 855/855 backend (21 module-specific) + 652/652 frontend + 29/29 E2E | `docs/modules/reports-design.md` | `reports.spec.ts` is the **other** E2E test currently broken on `main` since `DemoDataSeeder` (§9/§12). |
+| Reports | **Production Ready ✅** (PR #7, merged 2026-07-28) | ✅ `ReportService`, 6 live reports, CSV export | ✅ Reports nav group + 6 views | 855/855 backend + 652/652 frontend + 29/29 E2E at merge; `reports.spec.ts`'s `DemoDataSeeder` regression (2 separate ordering bugs: Collections, New Patients) **fixed 2026-08-07** (PR #15) | `docs/modules/reports-design.md` | Was CI-red since 2026-08-01, now green — see §9/§12. |
 | Settings | **Production Ready ✅** (PR #8, **merged** 2026-07-30 — corrects stale "not merged" prose elsewhere, §0) | ✅ `ClinicSetting`, `BillingSetting` API, My Account | ✅ Settings views + header avatar menu | 877/877 backend (22 module-specific) + 672/672 frontend + 32/32 E2E | `docs/modules/settings-design.md` | Multi-branch, clinic logo upload, notification settings deliberately out of V1. |
 | AI Assistant | **Production Ready ✅** (PR #9, 2026-07-31; extended by PR #11, 2026-08-02) | ✅ gated service layer, `AiInteractionLog` | ✅ Dashboard Insights/Smart Search/Report writing + Settings API-key UI | 905/905 backend + 694/694 frontend + 34/34 E2E at PR #9; +additional tests in PR #11 | `docs/modules/ai-assistant-design.md`, `-settings-api-key-design.md` | See §7 for full detail — fails closed with no API key configured; PHI-touching features shipped disabled by design. |
 
@@ -158,8 +160,7 @@ full narrative):
 
 ## 4. Pull Requests History
 
-Sourced directly from `gh pr list --state all` (14 PRs total, 13 merged, 1 open) — not from prose in other
-docs, several of which (see §0) hadn't been updated to reflect the last 3 merges.
+Sourced directly from `gh pr list --state all` (15 PRs total, all merged) — not from prose in other docs.
 
 | # | Branch | Goal | Key changes | Merge status |
 |---|---|---|---|---|
@@ -176,7 +177,8 @@ docs, several of which (see §0) hadn't been updated to reflect the last 3 merge
 | 11 | `feature/ai-assistant-api-key` | Settings-managed Anthropic API key | Encrypted key column, `AiAssistantService::client()` prefers it over `.env` | **Merged** 2026-08-02 |
 | 12 | `feature/treatment-plans-clinic-index` | Clinic-wide Treatment Plans list | `GET /treatment-plans`, `TreatmentPlansView.vue`, fixes stale `comingSoon` nav | **Merged** 2026-08-02 (`c94c9f3`) |
 | 13 | `feature/premium-visual-redesign` | Premium Visual Redesign Steps 1–3 | Design tokens, Sidebar/Header/Command Palette polish, Lucide icon migration begun | **Merged** 2026-08-02 |
-| 14 | `docs/dashboard-today-appointments-bug` | Doc-only: log the Dashboard bug + close the Treatment Plans tech-debt item | No code changes | **Open** (not yet merged) |
+| 14 | `docs/dashboard-today-appointments-bug` | Doc-only: log the Dashboard bug + close the Treatment Plans tech-debt item | No code changes | **Merged** 2026-08-07 |
+| 15 | `fix/stabilization-phase-1` | Phase 1 (Stabilization) of the new 8-phase roadmap | Restored fully green `main` CI (2 `reports.spec.ts` root causes + `appointments.spec.ts`), fixed `Dashboard.today_appointments`, frontend loading/empty/error-handling consistency pass, added this file + `CLAUDE.md` | **Merged** 2026-08-07 (`f3644ec`) |
 
 ---
 
@@ -200,6 +202,7 @@ onward) — this is a summary of the decisions with the widest blast radius:
 | **PWA & mobile-first UI** (standing principle, 2026-07-27) | Every new screen responsive/touch-ready/PWA-installable from first implementation | Applies to every module's design phase going forward |
 | Google Fonts CDN → self-hosted `.woff2` (2026-07-20-ish) | Removed the last external network dependency on every page load | Implemented |
 | Icon system: PrimeIcons → Lucide, app-wide (Premium Visual Redesign, 2026-08-01) | Restraint + a single consistent icon family, benchmarked against Linear/Raycast | In progress, module-by-module (§6, §9) |
+| **Flagged for Phase 4** (2026-08-07): `UserRole`'s flat 3-value enum will need to become a real role-hierarchy/permission-matrix model (`Owner → Clinic Admin → {Dentist, Assistant, Receptionist, Accountant}`) | This is exactly the "real requirement" `docs/decisions.md`'s 2026-07-11 entry said would justify revisiting the flat-enum decision — not decided yet, needs its own design-approval round when Phase 4 (Advanced Permissions & Audit) starts | Flagged, not decided |
 
 ---
 
@@ -289,12 +292,12 @@ first, event-ready, a dedicated future integrations layer) that is explicitly **
 
 | File | Description |
 |---|---|
-| `PROJECT_CONTEXT.md` | The original architecture/stack/philosophy brief plus a running "Current Status" narrative. Historically the project's primary source of truth; per §0, its status prose has started to drift (doesn't yet mention PRs #11–#13). |
-| `ARCHITECTURE_REVIEW.md` | A single point-in-time architecture review (dated 2026-07-11, pre-first-commit), covering Dashboard/Auth/Users/Roles. Has an **uncommitted local edit** as of this report — see §11. |
-| `CHANGELOG.md` | Full chronological, per-module change history. Comprehensive and detailed through PR #10; stale after that (§0). |
-| `TECH_DEBT.md` | Deliberately-deferred work, one entry per item, each naming its own revisit condition. The single most detailed, most current diagnostic record in the repo — actively maintained through PR #13-era entries. |
+| `PROJECT_CONTEXT.md` | The original architecture/stack/philosophy brief plus a "Current Status" narrative, frozen as a historical record as of a 2026-08-07 status-update paragraph pointing to this file for anything current (§0's drift, now corrected). |
+| `ARCHITECTURE_REVIEW.md` | A single point-in-time architecture review (dated 2026-07-11, pre-first-commit), covering Dashboard/Auth/Users/Roles. |
+| `CHANGELOG.md` | Full chronological, per-module change history. Current through PR #15 as of 2026-08-07. |
+| `TECH_DEBT.md` | Deliberately-deferred work, one entry per item, each naming its own revisit condition. The single most detailed, most current diagnostic record in the repo — actively maintained through PR #15-era entries. |
 | `README.md` | Quick-start: Docker Compose commands, service endpoints. |
-| This file (`docs/PROJECT_STATUS.md`) | New as of 2026-08-04 — the living cross-reference this report itself establishes. |
+| This file (`docs/PROJECT_STATUS.md`) | Since 2026-08-04 — the living, continuously-updated single source of truth for project status; enforced every session by repo-root `CLAUDE.md`. |
 
 ### `docs/`
 
@@ -305,7 +308,7 @@ first, event-ready, a dedicated future integrations layer) that is explicitly **
 | `api-guidelines.md` | REST/API conventions (error shapes, resource wrapping, pagination). |
 | `coding-standards.md` | PSR-12/Pint/PHPStan/testing conventions. |
 | `decisions.md` | The full chronological Architecture Decisions log (§5 is a summary of this). |
-| `roadmap.md` | Per-module status table — per §0, currently stale on Reports/Settings merge status. |
+| `roadmap.md` | Per-module status table; points to this file for the new 8-phase roadmap rather than duplicating it. |
 | `deployment.md` | Production runbook: Docker/nginx/SSL topology, backup/restore procedure (rehearsed end-to-end 2026-07-20). |
 | `design-system.md` | Typography, tokens, visual language — marked "frozen" pre-Premium-Redesign; that redesign is the anticipated exception to the freeze. |
 | `demo-guide.md` | How to run the stack, demo credentials, seeded sample data walkthrough. |
@@ -331,14 +334,14 @@ first, event-ready, a dedicated future integrations layer) that is explicitly **
 
 ## 9. Technical Debt
 
-Full detail lives in `TECH_DEBT.md` (1,143 lines, one dated entry per finding, each with its own revisit
-condition) — this is the current **Open** set, prioritized by this report's own judgment of real-world
-impact, not by the order they appear in that file.
+Full detail lives in `TECH_DEBT.md` (one dated entry per finding, each with its own revisit condition) —
+this is the current **Open** set, prioritized by this report's own judgment of real-world impact, not by the
+order they appear in that file. The two former top items — **CI red on `main`** and **`DashboardService.
+today_appointments`** — were both resolved 2026-08-07 via PR #15 (see §2, §12, and `TECH_DEBT.md`'s own
+RESOLVED notes on both entries); nothing has replaced them as High priority.
 
 | Item | Priority | Why deferred |
 |---|---|---|
-| **CI on `main` is currently red** — `appointments.spec.ts` and `reports.spec.ts` E2E tests broken by `DemoDataSeeder`'s data volume (large patient/appointment/collections volume shifts "first row"/"page 1" assumptions) | **High** — active, current, affects every future PR's CI signal | Diagnosed 2026-08-01, not yet fixed; needs its own investigation session, deliberately out of scope for the visual-redesign work that surfaced it |
-| **`DashboardService.today_appointments` is an unscoped `COUNT(*)`**, not filtered to today | **High** — a visibly wrong number on the main landing screen | Found 2026-08-02, documented via open PR #14, fix intentionally deferred to its own PR with its own test coverage |
 | No permanent E2E suite for Billing, Payments, or Treatment Plans | **Medium** — these 3 modules are otherwise fully functional and unit/feature-tested | Every other module got its E2E suite built in its own implementation pass; these three were built before that convention solidified |
 | Billing has no backend Feature-test suite (unit-only) and no final `modules/billing.md` doc | **Medium** | Same root cause as above — predates the now-standard "tests + final doc before Done" bar |
 | Backend test suite never exercises real PostgreSQL (forced to SQLite via `phpunit.xml`) | **Medium** — already caused one real production-breaking migration bug to go undetected for a full day (Payments' self-referencing FK) | No CI job runs `migrate:fresh` against a real Postgres service container yet |
@@ -365,12 +368,12 @@ directional, not precise.
 |---|---|---|
 | **Backend** | 17/17 roadmap modules implemented, layered consistently (Migration → Model → Service → Policy → Controller), Larastan level 5 clean on every CI run. Weakest points: no real-Postgres migration CI check, one known unfixed SQL-error bug in Laboratory, `dental_conditions` pricing catalog is a known-temporary shape. | **85%** |
 | **Frontend** | Consistent component/store/service layering across every module, full i18n parity discipline, a real (if mid-flight) design system. Bundle-size and remaining icon-migration work are the visible gaps; component-test depth varies by module (some modules only have store/service tests, no per-component tests). | **80%** |
-| **Testing** | Backend and frontend unit/feature suites are extensive and consistently green. **But**: 3 modules lack any E2E coverage, and CI's E2E job is **currently failing on `main` right now** — a real, live gap, not a historical one. | **70%** |
-| **Documentation** | Unusually thorough by most projects' standards (a design doc + final doc pattern, a dedicated decisions log, a dedicated tech-debt log) — but §0 found real staleness in 3 places, which is exactly what this new file is meant to fix going forward. | **75%** |
+| **Testing** | Backend and frontend unit/feature suites are extensive and consistently green; CI's E2E job is now fully green too (39/39, as of 2026-08-07). Remaining gap: 3 modules (Billing, Payments, Treatment Plans) still lack any E2E coverage. | **80%** |
+| **Documentation** | Unusually thorough (a design doc + final doc pattern, a dedicated decisions log, a dedicated tech-debt log); the 3 staleness gaps §0 found (2026-08-04) were reconciled 2026-08-07, and this file's §15 protocol + `CLAUDE.md` now exist specifically to keep it from recurring. | **85%** |
 | **Security** | Sanctum SPA auth, rate limiting (login + general API), encrypted-at-rest API key, audit logging on sensitive models, policy-gated authorization checked at API + frontend router layers, AI module fails closed. Gaps: no malware/virus scanning on uploaded images, no S3/offsite backup yet. | **80%** |
 | **Architecture** | Modular monolith, consistent service-layer discipline, a real (and enforced) datetime-handling standard, explicit SaaS multi-tenant and PWA/mobile-first principles checked at every module's design phase since 2026-07-27. | **90%** |
 | **Maintainability** | PSR-12/Pint/ESLint/Prettier all CI-enforced; `TECH_DEBT.md` and `docs/decisions.md` actively prevent debt from being silently forgotten. Some documentation-sync discipline has slipped recently (§0) — the direct motivation for this file. | **80%** |
-| **Production Readiness** | System-Wide Production Gate closed 2026-07-20 (rate limiting, hardened Docker/nginx/SSL, rehearsed backup/restore, CI/CD). But: **CI is red on `main` right now**, no offsite backup, 3 modules below the project's own E2E bar, one visibly-wrong Dashboard number. Not yet ready to onboard a real clinic without addressing those. | **65%** |
+| **Production Readiness** | System-Wide Production Gate closed 2026-07-20 (rate limiting, hardened Docker/nginx/SSL, rehearsed backup/restore, CI/CD). `main`'s CI is fully green again (2026-08-07) and the Dashboard number is fixed. Remaining gaps: no offsite backup, 3 modules below the project's own E2E bar. Not yet ready to onboard a real clinic without addressing those. | **72%** |
 
 ---
 
@@ -381,39 +384,35 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Fix the two `DemoDataSeeder`-broken E2E tests** (`appointments.spec.ts`, `reports.spec.ts`) | CI on `main` has been red for 3+ days; every subsequent PR merges without a trustworthy E2E signal, against this project's own stated "CI is the verification authority" convention | High — blocks confident merging | Small (a few hours — root cause already diagnosed in `TECH_DEBT.md`) | None |
-| 2 | **Fix `DashboardService.today_appointments`** (scope the `COUNT(*)` to today) | Visibly wrong number on the primary landing screen for every role | High — user-facing correctness bug | Small | None — already documented in open PR #14 |
-| 3 | **Merge PR #14** (docs-only, tech-debt log update) | Trivial, already reviewed-ready, keeps `TECH_DEBT.md` in sync | Medium (unblocks accurate tech-debt state) | Trivial | None |
-| 4 | **Reconcile `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md`** against actual merged-PR state (§0) | Prevents the next session from re-deriving this same drift from scratch | Medium | Small | None |
-| 5 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
-| 6 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
-| 7 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
-| 8 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active, user-prioritized initiative | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
-| 9 | **Add a real-Postgres migration-verification CI step** | Already caused one production-breaking bug to hide behind 643 passing SQLite tests for a full day | Medium | Small (one new CI job step, not the full suite) | None |
-| 10 | **Provision S3/offsite backup** | Local-disk-only backup doesn't survive VPS loss | Medium, escalates to High before real clinic onboarding | Small (config-only — code path already exists, commented out) | Choice of provider (Backblaze B2 / Wasabi / AWS S3) |
-| 11 | **App-wide PWA manifest + service worker** | Every module has been built "PWA-ready" but nothing is installable yet | Low–Medium | Medium | None |
-| 12 | **`vue-i18n` runtime-only build + message precompilation** | ~84 KB gzip bundle-size win, app-wide | Low | Small–Medium (needs careful 3-locale regression pass) | None |
-| 13 | **Codebase-wide PrimeVue `id`→`inputId` accessibility sweep** | Real but narrow a11y gap, fixed piecemeal so far | Low | Small | None |
+| 1 | **Phase 2: Patient Profile Redesign — design phase** | Next item in the 8-phase roadmap's stated execution priority; unified clinical hub (Overview/Medical History/Dental Chart/Treatment Plans/Clinical Notes/Imaging/Laboratory/Billing/Documents/Timeline tabs), patient activity timeline, attachment management, tags, advanced in-record search, PDF export | High — the roadmap's own next priority | Large (multi-step; needs its own design doc + approval round before implementation, per this project's standard workflow) | None blocking |
+| 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
+| 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
+| 4 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
+| 5 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
+| 6 | **Add a real-Postgres migration-verification CI step** | Already caused one production-breaking bug to hide behind 643 passing SQLite tests for a full day | Medium | Small (one new CI job step, not the full suite) | None |
+| 7 | **Provision S3/offsite backup** | Local-disk-only backup doesn't survive VPS loss | Medium, escalates to High before real clinic onboarding | Small (config-only — code path already exists, commented out) | Choice of provider (Backblaze B2 / Wasabi / AWS S3) |
+| 8 | **App-wide PWA manifest + service worker** | Every module has been built "PWA-ready" but nothing is installable yet; also roadmap Phase 6 | Low–Medium | Medium | None |
+| 9 | **`vue-i18n` runtime-only build + message precompilation** | ~84 KB gzip bundle-size win, app-wide | Low | Small–Medium (needs careful 3-locale regression pass) | None |
+| 10 | **Codebase-wide PrimeVue `id`→`inputId` accessibility sweep** | Real but narrow a11y gap, fixed piecemeal so far | Low | Small | None |
 
 ---
 
 ## 12. Immediate Next Step
 
-**Fix the two `DemoDataSeeder`-broken E2E tests on `main`** (`appointments.spec.ts:117` and
-`reports.spec.ts:62`), then merge PR #14.
+**Phase 1 (Stabilization) is closed** — `main`'s CI is fully green (Backend 932/932, Frontend 759/759, E2E
+39/39, confirmed 2026-08-07 via `workflow_dispatch`). The next step is **starting Phase 2: Patient Profile
+Redesign with its own design phase** — write and get explicit approval on a design doc (unified clinical
+hub: Overview/Medical History/Dental Chart/Treatment Plans/Clinical Notes/Imaging/Laboratory/Billing/
+Documents/Timeline tabs, patient activity timeline, attachment management, tags, advanced in-record search,
+PDF export) before writing any implementation code.
 
-**Why this, not something else, right now**: every other candidate next-step (continuing the Premium Visual
-Redesign, closing the Billing/Payments/Treatment-Plans E2E gap, fixing the Dashboard bug) produces new code
-that will itself be verified by CI — and CI's E2E job has been failing on `main` since 2026-08-01, for a
-root cause this project's own `TECH_DEBT.md` has already fully diagnosed (seeded-data volume breaking
-"first row"/"page 1" assumptions in two tests, not an application defect). Per this project's own established
-practice — "CI is the verification authority, not local runs" — landing new work on top of a red `main` means
-the next several PRs will each re-discover the same two pre-existing failures and have to re-prove they're
-unrelated, exactly the kind of repeated diagnostic work `TECH_DEBT.md` exists to avoid. This is also the
-smallest, most self-contained item on the list (root cause already known, likely fixes already named in
-§9/§12's source entry), so it clears the way for everything else with the least overhead. Merging PR #14
-right after is nearly free (docs-only, already marked test-plan N/A) and keeps `TECH_DEBT.md` accurate for
-whoever picks up the fix.
+**Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
+`main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign
+immediately after Stabilization (§11 item 1), and it's large enough (new tabs, IA changes, several genuinely
+new features) that starting implementation without a design-approval round first would break from the
+two-phase workflow every prior module has followed. Competing candidates (Billing/Payments/Treatment-Plans
+E2E gap, remaining Premium Visual Redesign steps, S3 backup) are all real but lower-priority per the
+roadmap's own stated order — see §11 for the full list.
 
 ---
 
@@ -421,12 +420,11 @@ whoever picks up the fix.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **CI stays red long enough that a real regression slips through unnoticed** among the "known, pre-existing" E2E failures | Medium | High | Fix the two known failures promptly (§12) rather than let the red state become normalized |
-| **Local-disk-only backup + VPS loss** before a real clinic is onboarded | Low (no real clinic yet) → rising | High if it happens | Provision S3/offsite storage before onboarding (§11 item 10) |
-| **Documentation drift recurring** the same way it did for `CHANGELOG.md`/`roadmap.md` (§0), silently, if this new file isn't actually kept current | Medium without discipline | Medium (erodes trust in docs, wastes future re-derivation effort) | This file's own "How to keep this file alive" section (§14) + the standing instruction now saved to memory |
-| **Laboratory's unfixed `BelongsToPatient` bug** gets exercised in production once `treatment_plan_item_id` is actually used on a Lab Case | Low today (unexercised), rises as usage grows | Medium (500 crash, not data corruption) | Apply Imaging's already-existing fix pattern (§11 item 7) |
+| **Local-disk-only backup + VPS loss** before a real clinic is onboarded | Low (no real clinic yet) → rising | High if it happens | Provision S3/offsite storage before onboarding (§11 item 7) |
+| **Documentation drift recurring** the same way it did 2026-08-01→07 (§0), silently, if this file isn't actually kept current through the next high-velocity burst | Medium without discipline | Medium (erodes trust in docs, wastes future re-derivation effort) — already happened once, in the exact window this file itself was being built | §15's protocol + repo-root `CLAUDE.md` (auto-loaded every session) — the real test is whether Phase 2's own PRs keep this file current *during*, not after |
+| **Laboratory's unfixed `BelongsToPatient` bug** gets exercised in production once `treatment_plan_item_id` is actually used on a Lab Case | Low today (unexercised), rises as usage grows | Medium (500 crash, not data corruption) | Apply Imaging's already-existing fix pattern (§11 item 4) |
 | **`dental_conditions` reused as a global pricing catalog** becomes a real constraint once multi-tenant/insurance pricing is needed | Low near-term (V1 is single-org by design) | Medium, contained (a planned, not accidental, migration) | Already flagged with its own revisit condition (§9); don't build the dedicated catalog speculatively before then |
-| **Billing's thinner test coverage** (unit-only, no E2E) hides a regression a later module's refactor introduces | Medium | Medium | Prioritize Billing's Feature-test suite + E2E spec (§11 items 5–6) |
+| **Billing's thinner test coverage** (unit-only, no E2E) hides a regression a later module's refactor introduces | Medium | Medium | Prioritize Billing's Feature-test suite + E2E spec (§11 items 2–3) |
 | **PHI exposure via AI Assistant** if a clinic enables Clinical Notes draft-assist/Treatment Suggestions without an actual signed BAA | Low (requires explicit admin acknowledgment) | High if it happens | Gate is already enforced in code (`ai_assistant_phi_features_acknowledged`); this is a process/legal risk (admin must actually have a BAA before checking that box), not a code gap |
 
 ---
@@ -450,16 +448,29 @@ Billing in particular is thinner than everything built after it. The Laboratory 
 the `dental_conditions`-as-pricing-catalog choice are both *known* debt with named revisit conditions, not
 silent gaps — which is exactly the right way to carry debt, but they're still debt.
 
-**What actually concerns this report most is not any single module — it's the last few days.** In the rush
+**Update, 2026-08-07**: the crack named below when this file was first written has been closed. In the rush
 of landing PR #11, #12, and #13 within one calendar day (2026-08-02), the documentation-sync discipline that
 held for the prior three weeks visibly slipped: `CHANGELOG.md` stopped being updated, `roadmap.md` and
-`PROJECT_CONTEXT.md` both still assert things that are no longer true, and — more materially — CI on `main`
-has been quietly red for three straight days on a diagnosed-but-unfixed issue. None of this is a crisis; the
-underlying application code is fine, and the root causes are already understood. But it's the first visible
-crack in a pattern that had otherwise been remarkably consistent, and it's worth naming plainly rather than
-smoothing over: **the project's own quality bar slipped exactly when velocity peaked.** The immediate next
-step (§12) exists specifically to close that crack before more work stacks on top of it. This file's ongoing
-maintenance (§14 below) is this report's attempt to make sure the next high-velocity day doesn't reopen it.
+`PROJECT_CONTEXT.md` both asserted things that were no longer true, and CI on `main` sat red for six days on
+a diagnosed-but-unfixed issue. Phase 1 (Stabilization) closed all of it — `main`'s CI is fully green again,
+and the documentation gaps are reconciled. Worth being honest about the fix itself, not just claiming
+success: the E2E fix alone took **three separate `workflow_dispatch` runs** to actually land, because the
+first attempted fix (an `ORDER BY` on `received_at`) was real but incomplete — it took CI's own signal to
+surface that `received_at` is date-only and ties needed a secondary sort key, and then a *third* run to find
+`newPatients()`'s independent, previously-masked ordering bug. That's the system working as designed, not a
+failure: each fix was verified on real CI before being trusted, exactly the discipline this project's own
+history (§5, `TECH_DEBT.md`) has repeatedly shown pays off. The real test of whether the underlying lesson
+stuck isn't this cleanup — it's whether Phase 2's own PRs keep `docs/PROJECT_STATUS.md` current *during*
+the work, not after, the next time velocity picks up. `CLAUDE.md` and this file's §15 exist specifically to
+make that automatic rather than a hope.
+
+**Original assessment (2026-08-04), preserved for context**: the documentation-sync discipline that held for
+the prior three weeks visibly slipped — `CHANGELOG.md` stopped being updated, `roadmap.md` and
+`PROJECT_CONTEXT.md` both asserted things that were no longer true, and CI on `main` had been quietly red
+for three straight days on a diagnosed-but-unfixed issue. None of this was a crisis; the underlying
+application code was fine, and the root causes were already understood. But it was the first visible crack
+in a pattern that had otherwise been remarkably consistent, worth naming plainly rather than smoothing
+over: **the project's own quality bar slipped exactly when velocity peaked.**
 
 ---
 

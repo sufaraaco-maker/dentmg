@@ -4,19 +4,76 @@ All notable changes to DentalSuite are documented here. Format is chronological,
 
 ## Unreleased
 
-_`main` is at `v1.0.0-appointments` (release tag not yet bumped). Dental Chart, Treatment Plans, Billing,
-Payments, Clinical Notes, Inventory, Laboratory, and Imaging are all merged to `main` (Dental Chart
-2026-07-22; Treatment Plans/Billing/Payments 2026-07-25 via PR #1, plus a same-day concurrency fix via
-PR #2; Clinical Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via PR #4, merge commit `bf2592f`;
-Laboratory 2026-07-27 via PR #5, merge commit `bac6ae1`; Imaging 2026-07-28 via PR #6, merge commit
-`2b1fb45`) but not yet re-tagged. Clinical Notes, Inventory, Laboratory, and Imaging each shipped their
-own permanent E2E suite and are confirmed Production Ready. Reports (`feature/reports`, below) is
-CI-confirmed Production Ready (GitHub Actions `workflow_dispatch` run `30326106755`, 2026-07-28) but
-not yet merged to `main`.
+_`main` is at `v1.0.0-appointments` (release tag not yet bumped). Every module on the original 17-module
+roadmap is merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/Payments 2026-07-25 via PR #1,
+plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via
+PR #4; Laboratory 2026-07-27 via PR #5; Imaging 2026-07-28 via PR #6; **Reports 2026-07-28 via PR #7**;
+**Settings 2026-07-30 via PR #8**; AI Assistant 2026-07-31 via PR #9) but `main` is not yet re-tagged.
+Clinical Notes, Inventory, Laboratory, Imaging, Reports, Settings, and AI Assistant each shipped their own
+permanent E2E suite and are confirmed Production Ready.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
-bar as Appointments/Dental Chart/Clinical Notes/Inventory/Laboratory/Imaging — see `docs/roadmap.md` and
-`TECH_DEBT.md` for current per-module status._
+bar as the modules above; Treatment Plans gained a clinic-wide list (PR #12) but is in the same position —
+see `docs/roadmap.md` and `TECH_DEBT.md` for current per-module status.
+
+Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Visual Redesign Steps 1-3
+(PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
+PR #15 (+ PR #14) — see that entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated
+status book this file's own per-PR history now feeds into._
+
+### Fixed — Phase 1: Stabilization (`fix/stabilization-phase-1`, PR #15, 2026-08-07; + PR #14, docs-only)
+- **Context**: first phase of a new 8-phase roadmap (Stabilization → Patient Profile redesign → Dashboard
+  2.0 → Permissions/Audit → SaaS Multi-Tenant → PWA/Mobile → AI Expansion → Launch Prep) — see
+  `docs/PROJECT_STATUS.md` for the full mapping of what already exists vs. what each later phase needs.
+- **Restored a fully green `main`**: CI's E2E job had been red since 2026-08-01 (`DemoDataSeeder`'s ~110
+  seeded patients broke two tests' "first row"/"page 1" assumptions, per the diagnosis already logged in
+  `TECH_DEBT.md`). `appointments.spec.ts` now navigates to the appointment it just created by the real id
+  from the `POST` response, not the List view's first row. `reports.spec.ts` needed two separate backend
+  fixes, found one at a time as each unmasked the next: `ReportService::collections()` had no `ORDER BY` at
+  all (added most-recent-first, then a `created_at` tie-break once same-day `received_at` ties — that
+  column is deliberately date-only — still landed the test's own fresh payment off page 1); and
+  `newPatients()` did have an `ORDER BY`, but ascending, so a newly-registered patient sorted to the
+  report's *last* page. Both are genuine correctness fixes for the reports themselves, not test-only
+  workarounds — confirmed via `workflow_dispatch` across 3 runs, final run fully green (Backend 932/932,
+  Frontend 759/759, E2E 39/39).
+- **Fixed `DashboardService.today_appointments`**: was an unscoped `COUNT(*)` over the whole `appointments`
+  table, not date-filtered — logged in PR #14, fixed here with the same full-day-bounds convention
+  `ReportService` already uses.
+- **Frontend consistency pass**: a missing loading indicator (`DentistScheduleView.vue`), two missing
+  `#empty` DataTable slots (`PatientsView.vue`/`UsersView.vue`, previously falling back to PrimeVue's
+  untranslated default text), one previously-silent fetch failure (`InvoicesView.vue`'s bare
+  `try`/`finally` with no `catch`), and four stores (`appointmentTypes`/`dentalConditions`/`suppliers`/
+  `labs`) whose `fetchAll()` had no error handling at all — standardized onto the same store-owns-error-
+  state pattern `appointments.ts`/`invoices.ts`/`treatmentPlans.ts`/`payments.ts` already used, each with a
+  new regression test.
+- **Docs**: adds `docs/PROJECT_STATUS.md` (living status book, single source of truth for project status
+  going forward) and `CLAUDE.md` (auto-loaded operational playbook enforcing it every session).
+
+### Added — AI Assistant Settings-managed Anthropic API key (`feature/ai-assistant-api-key`, PR #11, 2026-08-02)
+- Admins can set/replace/remove the Anthropic API key from **Settings → AI Assistant** instead of only via
+  `backend/.env` (which remains a working fallback). Key is `encrypted` at rest on `ClinicSetting`; the API
+  only ever returns a `configured` boolean + last-4 characters, never the key itself; explicitly excluded
+  from the audit trail (`AuditLogService::EXCLUDED_KEYS`). `AiAssistantService::client()` prefers the
+  Settings-stored key when present. 926/926 backend + 749/749 frontend tests green at merge; see
+  `docs/modules/ai-assistant-settings-api-key-design.md`.
+
+### Added — Treatment Plans clinic-wide list (`feature/treatment-plans-clinic-index`, PR #12, 2026-08-02)
+- Fixes a real gap: the Treatment Plans sidebar entry had been stuck on a stale `comingSoon` flag despite
+  the module being fully production-ready since PR #1 — there was no clinic-wide list route to point it at,
+  only per-patient tabs. New `GET /treatment-plans` (`TreatmentPlanController::indexAll`, paginated,
+  searchable by plan title or patient name, filterable by status) + `TreatmentPlansView.vue`, mirroring
+  `InvoicesView.vue`'s own server-paginated pattern from the identical prior fix to Billing's nav. 928/928
+  backend + 763/763 frontend tests green at merge.
+
+### Added — Premium Visual Redesign, Steps 1-3 (`feature/premium-visual-redesign`, PR #13, 2026-08-02)
+- Amends the original Frontend UX & Navigation Redesign plan: removes "Recent Items" entirely (decided with
+  user), replaces the old Phase 2 (Dashboard) scope with a fully-specified premium redesign (not yet
+  built), and starts an app-wide **PrimeIcons → Lucide** icon migration (68 distinct icon classes across
+  ~66 files), done module-by-module to contain risk rather than in one pass. Design thesis: "premium" comes
+  from restraint + consistent spacing/motion + one accent treatment, not decoration — stays within the
+  existing "100% PrimeVue semantic tokens, no hardcoded hex" rule. Steps 1-3 cover foundation design
+  tokens, Sidebar section-grouping + partial icon migration, and Header/Command Palette polish. 928/928
+  backend + 755/755 frontend tests green at merge; see `docs/modules/frontend-visual-redesign-design.md`.
 
 ### Added — Frontend UX & Navigation Redesign, Phase 1: Navigation Shell (`feature/frontend-nav-shell`, 2026-07-31)
 - **Context**: with every module on the original roadmap Production Ready ✅ (including Settings and AI

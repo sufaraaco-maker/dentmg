@@ -392,6 +392,20 @@ after the first fix. Final run (`30605056813`) is fully green: **Backend 905/905
 E2E 34/34 — zero failures.** Follows the standard module workflow: Design → Backend → Frontend →
 Tests → CI → Documentation → PR.
 
+**Status update (2026-08-07)**: Reports (named above by its `feature/reports` branch, CI-confirmed
+2026-07-28) merged to `main` via PR #7 the same day; Settings (`feature/settings`, CI-confirmed 2026-07-30)
+merged via PR #8 the same day — neither paragraph above was updated after those merges, the same
+never-updated-after-the-fact gap the 2026-07-27 correction above already documents for Treatment Plans/
+Billing/Payments. AI Assistant was extended by PR #11 (2026-08-02, Settings-managed encrypted Anthropic API
+key). Frontend UX & Navigation Redesign Phase 1 (PR #10), Treatment Plans' clinic-wide list (PR #12), and
+Premium Visual Redesign Steps 1-3 (PR #13) also merged 2026-08-01/02. **Phase 1 (Stabilization) of a new
+post-roadmap 8-phase plan closed 2026-08-07** via PR #15 — restored a fully green `main` (E2E had been red
+since 2026-08-01), fixed a real `Dashboard.today_appointments` bug, closed a frontend consistency pass.
+**`docs/PROJECT_STATUS.md` is now the living, continuously-updated status book** — see it (and
+`CLAUDE.md`, the operational playbook that enforces keeping it current) rather than this section for
+anything current; this file remains the architecture/stack/philosophy reference plus historical narrative
+up to this point.
+
 See `docs/roadmap.md` for current per-module status.
 
 **Frontend UX & Navigation Redesign** (see `docs/modules/frontend-ux-redesign.md`). With every module

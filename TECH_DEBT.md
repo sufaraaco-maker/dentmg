@@ -24,6 +24,13 @@ case seeding appointments both inside and outside today's date, asserting only t
 since none currently exists for this stat's correctness — the existing tests only assert the field's
 presence/shape, not its value against seeded data.
 
+**RESOLVED 2026-08-07** (Phase 1: Stabilization, PR #15): replaced `countIfExists('appointments')` with a
+dedicated `todayAppointments()` method, scoped to `start_at` full-day bounds (`Date::today()`, same
+`whereBetween` convention `ReportService`'s own date-range queries already use — a bare `Y-m-d` upper bound
+would silently exclude rows with a time-of-day suffix). New `DashboardTest` case seeds appointments both
+inside and outside today's date, asserting only today's are counted — closes the exact test-coverage gap
+named above. Confirmed via `workflow_dispatch`: Backend 932/932.
+
 ### Backend test suite never exercises real PostgreSQL — migrations can silently be un-runnable in production
 `backend/phpunit.xml` forces `DB_CONNECTION=sqlite`/`DB_DATABASE=:memory:` for every test run (`RefreshDatabase`
 included). Found 2026-07-26: `2026_07_25_000001_create_payments_table.php` declared a self-referencing foreign
@@ -1070,6 +1077,24 @@ redesign initiative, which is frontend-presentation-only and did not touch eithe
 components or `DemoDataSeeder`) — likely fixes are either seeding smaller/isolated E2E fixture data instead
 of sharing the full demo dataset, or making each test explicitly account for pagination/slot availability
 rather than assuming "first row"/"page 1" for a large shared dataset.
+
+**RESOLVED 2026-08-07** (Phase 1: Stabilization, PR #15): fixed both, per the "make each test account for
+it" direction above plus one deeper root cause the fix uncovered:
+1. `appointments.spec.ts` now captures the created appointment's own `id` from the real `POST` response and
+   navigates straight to its detail route, instead of assuming it's the List view's first row — correct
+   regardless of how much other data shares the current week.
+2. `reports.spec.ts` needed two separate backend fixes, found one at a time as each unmasked the next:
+   `ReportService::collections()` had no `ORDER BY` at all (undefined row order) — added most-recent-first,
+   then a `created_at` tie-break once same-day `received_at` values (that column is deliberately date-only)
+   still left the test's own fresh payment off page 1. Then `newPatients()` turned out to have an
+   `ORDER BY` all along, but ascending (oldest first) — a newly-registered patient sorted to the report's
+   *last* page instead of its first. Both are genuine correctness fixes for the reports themselves (a real
+   admin viewing either report wants recent activity at the top), not test-only workarounds.
+
+Confirmed via the GitHub Actions API across 3 `workflow_dispatch` runs on `fix/stabilization-phase-1` — each
+run's E2E failure pointed at exactly one of the above, fixed, re-run, next one surfaced. Final run
+(`31195490171`): **Backend 932/932, Frontend 759/759, E2E 39/39 — zero failures, zero flaky.** `main`'s CI
+is fully green again for the first time since 2026-08-01.
 
 ### Four real bugs found while first running the new 110-Arabic-patient demo dataset seeder — RESOLVED before use
 Requested directly (not part of any module's own workflow): a large demo dataset spanning every

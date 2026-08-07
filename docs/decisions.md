@@ -212,3 +212,15 @@ explicitly documented with a reason here, the same way this file already documen
 legitimate local-time exception. Every new module must use `frontend/src/lib/date.ts`'s helpers directly;
 no module may invent its own date/timezone handling.
 **Status**: Agreed with user. Standing rule for every module from Step 5 onward.
+
+## 2026-08-07 — Role hierarchy flagged for Phase 4, not yet decided
+
+While mapping a new 8-phase product roadmap (Phase 1: Stabilization → ... → Phase 8: Launch Prep) onto the
+existing codebase before starting Phase 1's implementation, Phase 4 ("Advanced Permissions & Audit")
+requests a role hierarchy — `Owner → Clinic Admin → {Dentist, Assistant, Receptionist, Accountant}` — that
+`UserRole`'s current flat 3-value backed enum (`admin`/`dentist`/`receptionist`, see the 2026-07-11 entry
+above) cannot represent. This is exactly the "real requirement" that entry named as the condition for
+revisiting the flat-enum decision.
+
+**Status**: Flagged, not decided. Needs its own design-approval round when Phase 4 starts — not designed
+speculatively now. See `docs/PROJECT_STATUS.md` §5 for current roadmap-phase status.
