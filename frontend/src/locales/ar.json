@@ -188,8 +188,10 @@
       "imaging": "الأشعة والصور",
       "treatmentPlans": "خطط العلاج",
       "clinicalNotes": "الملاحظات السريرية",
-      "invoices": "الفواتير",
-      "payments": "المدفوعات"
+      "billing": "الفوترة"
+    },
+    "tabSwitcher": {
+      "label": "تبديل القسم"
     },
     "sections": {
       "demographics": "البيانات الشخصية",
@@ -233,6 +235,28 @@
       "title": "المدفوعات",
       "new": "تسجيل دفعة",
       "empty": "لا توجد مدفوعات مسجّلة لهذا المريض بعد."
+    },
+    "billingPanel": {
+      "loadError": "فشل تحميل ملخص الفوترة",
+      "outstandingBalance": "الرصيد المستحق",
+      "totalInvoiced": "إجمالي الفواتير",
+      "totalPaid": "إجمالي المدفوعات",
+      "invoiceCount": "عدد الفواتير",
+      "lastPaymentDate": "تاريخ آخر دفعة",
+      "never": "لا يوجد",
+      "statuses": {
+        "paid": "مدفوع",
+        "partial": "مدفوع جزئيًا",
+        "overdue": "متأخر",
+        "no_activity": "لا يوجد نشاط"
+      },
+      "switcher": {
+        "label": "قسم الفوترة",
+        "invoices": "الفواتير",
+        "payments": "المدفوعات",
+        "paymentHistory": "سجل المدفوعات"
+      },
+      "paymentHistoryTitle": "سجل المدفوعات"
     }
   },
   "appointments": {

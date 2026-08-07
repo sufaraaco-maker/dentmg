@@ -188,8 +188,10 @@
       "imaging": "Görüntüleme",
       "treatmentPlans": "Tedavi Planları",
       "clinicalNotes": "Klinik Notlar",
-      "invoices": "Faturalar",
-      "payments": "Ödemeler"
+      "billing": "Faturalandırma"
+    },
+    "tabSwitcher": {
+      "label": "Bölüm değiştir"
     },
     "sections": {
       "demographics": "Demografi",
@@ -233,6 +235,28 @@
       "title": "Ödemeler",
       "new": "Ödeme Kaydet",
       "empty": "Bu hasta için henüz ödeme kaydedilmedi."
+    },
+    "billingPanel": {
+      "loadError": "Faturalandırma özeti yüklenemedi",
+      "outstandingBalance": "Bakiye",
+      "totalInvoiced": "Toplam Faturalandırılan",
+      "totalPaid": "Toplam Ödenen",
+      "invoiceCount": "Fatura Sayısı",
+      "lastPaymentDate": "Son Ödeme Tarihi",
+      "never": "Hiç",
+      "statuses": {
+        "paid": "Ödendi",
+        "partial": "Kısmi",
+        "overdue": "Gecikmiş",
+        "no_activity": "Hareket Yok"
+      },
+      "switcher": {
+        "label": "Faturalandırma bölümü",
+        "invoices": "Faturalar",
+        "payments": "Ödemeler",
+        "paymentHistory": "Ödeme Geçmişi"
+      },
+      "paymentHistoryTitle": "Ödeme Geçmişi"
     }
   },
   "appointments": {

@@ -20,11 +20,47 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 (PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
-Profile Redesign** design approved 2026-08-07; its first implementation sub-phase, **2.1 (Foundation)**, is
-in this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
-book this file's own per-PR history now feeds into._
+Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
+is this file's newest entry below, implemented and pending its own PR. See `docs/PROJECT_STATUS.md` for the
+living, continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.1: Patient Profile Foundation (`feature/patient-profile-phase2-1-foundation`, 2026-08-07)
+### Added — Phase 2.2: Billing (`feature/patient-profile-phase2-2-billing`, 2026-08-08)
+- **Context**: second implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
+  `docs/modules/patient-profile-redesign-design.md` §4/§5.2/§17. Merges the separate Invoices and
+  Payments patient-detail tabs into one **Billing** tab; resolves the Invoices/Payments pagination debt
+  Phase 2.1 deliberately deferred (`TECH_DEBT.md`).
+- **`PatientBillingPanel.vue`**: new Billing tab shell — hosts `BillingSummaryCard.vue` (Outstanding
+  Balance hero + Total Invoiced/Total Paid/Invoice Count/Last Payment Date summary row) and a
+  `SelectButton` switching between Invoices, Payments (both reused as-is from Phase 2.1/earlier — zero
+  edits), and a Payment History placeholder (`FutureFeaturePlaceholder.vue` — the real
+  `ActivityTimeline.vue`-backed feature lands in Phase 2.6).
+- **`GET /patients/{patient}/billing-summary`**: new aggregate endpoint (`BillingSummaryService`),
+  computed entirely via SQL `SUM`/`COUNT`/`MAX`/`EXISTS` (design doc §11.4 — no Invoice/Payment rows
+  hydrated). A standalone service, not added to `InvoiceService`/`PaymentService`, since the aggregate
+  spans both domains equally.
+- **Invoices/Payments pagination resolved**: `InvoiceController::index()`/`PaymentController::index()`
+  now `->paginate(15)`, mirroring Treatment Plans/Clinical Notes. New `GET /invoices/{invoice}/payments`
+  endpoint (`PaymentController::forInvoice()`, via the existing `Invoice::payments()` relation) replaces
+  `InvoicePaymentsPanel.vue`'s former client-side filter of the full patient payment list.
+  `ApplyPaymentDialog.vue`'s invoice picker now calls a new `invoicesApi.listIssued()` (`?status=issued`
+  filter on the same endpoint) instead of the now-paginated store getter, so it still sees every issued
+  invoice regardless of page. `invoices.ts`/`payments.ts` stores reworked to the same
+  `patientPageIds`/`patientPageMeta`/`loadedPatientPage` pagination shape `treatmentPlans.ts` already
+  established in Phase 2.1; `payments.ts` gained a second, independent page-tracking slice for
+  invoice-scoped payments (a patient's payments and one invoice's payments are different pagination
+  axes).
+- **Mobile dropdown tab switcher**: `PatientDetailView.vue` previously had no `<768px` fallback for its
+  `TabList` — added now since Billing's tab-count change (two tabs collapsing into one) was the trigger
+  named in the design doc's §17 2.2 scope.
+- **One new deliberate trade-off, logged in `TECH_DEBT.md`**: `PatientInvoicesPanel.vue`/
+  `PatientPaymentsPanel.vue` are reused unchanged inside the Billing tab, so they show only page 1 (no
+  `Paginator`) there — a patient with more than 15 invoices/payments can't see older ones from the
+  Billing tab in this sub-phase.
+- **Tests**: backend 952 (Pint clean); frontend 832, type-check/lint clean. i18n: `ar`/`en`/`tr` key
+  parity confirmed (no automated check exists in this repo — verified manually per `docs/PROJECT_STATUS.md`
+  §12/§5).
+
+### Added — Phase 2.1: Patient Profile Foundation (`feature/patient-profile-phase2-1-foundation`, merged via PR #18, 2026-08-07)
 - **Context**: first implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
   `docs/modules/patient-profile-redesign-design.md` for the full design, approved 2026-08-07. Explicitly
   scoped to architecture/consistency groundwork only: no Billing, Medical History, Laboratory, Documents, or

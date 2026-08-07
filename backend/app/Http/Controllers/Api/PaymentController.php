@@ -8,6 +8,7 @@ use App\Http\Requests\Payment\RefundPaymentRequest;
 use App\Http\Requests\Payment\StorePaymentRequest;
 use App\Http\Requests\Payment\UpdatePaymentRequest;
 use App\Http\Resources\PaymentResource;
+use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Services\PaymentService;
@@ -20,12 +21,8 @@ class PaymentController extends Controller
     public function __construct(private PaymentService $paymentService) {}
 
     /**
-     * Not paginated yet — deliberately deferred to Phase 2.2 (Billing), same reasoning as
-     * `InvoiceController::index()`: `InvoicePaymentsPanel.vue` reads
-     * `paymentsStore.paymentsForInvoice()`, derived client-side from this endpoint's full
-     * unpaginated per-patient result (no `GET /api/invoices/{invoice}/payments` exists yet).
-     * Paginating here first would silently hide a patient's older payments from that per-invoice
-     * view. Phase 2.2 adds the missing invoice-scoped endpoint and pagination together.
+     * Paginated (Phase 2.2, design doc §11/§14.4 — deferred from Phase 2.1, see TECH_DEBT.md's
+     * now-resolved entry): 15/page, same convention as `InvoiceController::index()`.
      */
     public function index(Patient $patient)
     {
@@ -35,7 +32,25 @@ class PaymentController extends Controller
             ->forPatient($patient->id)
             ->with(self::WITH)
             ->latest('received_at')
-            ->get();
+            ->paginate(15);
+
+        return PaymentResource::collection($payments);
+    }
+
+    /**
+     * Payments applied to one specific invoice (TECH_DEBT.md, Phase 2.2) — via `Invoice::payments()`
+     * (an existing `HasMany`), not a new scope; the FK relation already expresses exactly this
+     * query. Replaces `InvoicePaymentsPanel.vue`'s former client-side filter of the full
+     * patient-level payment list. Paginated, same 15/page convention as `index()` above.
+     */
+    public function forInvoice(Invoice $invoice)
+    {
+        $this->authorize('viewAny', Payment::class);
+
+        $payments = $invoice->payments()
+            ->with(self::WITH)
+            ->latest('received_at')
+            ->paginate(15);
 
         return PaymentResource::collection($payments);
     }
