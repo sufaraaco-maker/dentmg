@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import IconField from 'primevue/iconfield'
@@ -21,6 +22,7 @@ import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from '@/types/invo
  */
 const { t, locale } = useI18n()
 const router = useRouter()
+const toast = useToast()
 
 const invoices = ref<Invoice[]>([])
 const totalRecords = ref(0)
@@ -41,6 +43,10 @@ async function fetchInvoices() {
     invoices.value = data.data
     totalRecords.value = data.meta.total
     perPage.value = data.meta.per_page
+  } catch {
+    // Previously silent — a failed fetch left the DataTable's own empty state showing, visually
+    // indistinguishable from "no invoices exist" (see docs/PROJECT_STATUS.md Phase 1 audit).
+    toast.add({ severity: 'error', summary: t('invoices.loadError'), life: 3000 })
   } finally {
     loading.value = false
   }

@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
+import Skeleton from 'primevue/skeleton'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
@@ -51,7 +52,12 @@ watch(
 
     <DentistSelect v-if="auth.isAdmin" v-model="selectedDentistId" class="max-w-xs" />
 
-    <Card v-if="!selectedDentistId">
+    <!-- Admin: while providers.fetchAll() is still in flight, the dentist list (and therefore
+         selectedDentistId's auto-pick above) is empty for the same reason "no dentists exist"
+         would be — a skeleton distinguishes "still loading" from that genuine empty state. -->
+    <Skeleton v-if="auth.isAdmin && providers.loading && !selectedDentistId" height="12rem" />
+
+    <Card v-else-if="!selectedDentistId">
       <template #content>
         <p class="text-surface-600 dark:text-surface-300">
           {{ t('appointments.schedule.selectDentistPrompt') }}

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\User;
@@ -76,5 +77,20 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/dashboard/summary');
 
         $response->assertJson(['today_appointments' => 0]);
+    }
+
+    public function test_summary_today_appointments_is_scoped_to_today_not_the_whole_table(): void
+    {
+        $user = User::factory()->create();
+        Appointment::factory()->count(2)->create(['start_at' => Date::today()->copy()->setTime(9, 0)]);
+        Appointment::factory()->create(['start_at' => Date::today()->copy()->setTime(23, 59)]);
+        // Same-table rows outside today — must not be counted (this is the exact bug PR #14 logged:
+        // an unscoped COUNT(*) over the whole appointments table).
+        Appointment::factory()->create(['start_at' => Date::today()->copy()->subDay()->setTime(9, 0)]);
+        Appointment::factory()->create(['start_at' => Date::today()->copy()->addDay()->setTime(9, 0)]);
+
+        $response = $this->actingAs($user)->getJson('/api/dashboard/summary');
+
+        $response->assertJson(['today_appointments' => 3]);
     }
 }

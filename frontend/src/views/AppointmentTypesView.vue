@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
@@ -74,13 +74,17 @@ function confirmDelete(type: AppointmentType) {
   })
 }
 
-onMounted(async () => {
-  try {
-    await store.fetchAll()
-  } catch {
-    toast.add({ severity: 'error', summary: t('appointments.types.loadError'), life: 3000 })
-  }
-})
+onMounted(() => store.fetchAll())
+
+// `fetchAll()` now catches and stores the error itself (docs/PROJECT_STATUS.md Phase 1 audit —
+// standardizing on the store-owns-error-state pattern already used by appointments.ts/etc.) rather
+// than rejecting, so this watches the store's own error state instead of a local try/catch.
+watch(
+  () => store.error,
+  (error) => {
+    if (error) toast.add({ severity: 'error', summary: t(error), life: 3000 })
+  },
+)
 </script>
 
 <template>

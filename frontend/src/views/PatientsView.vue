@@ -152,6 +152,9 @@ onMounted(() => {
       @page="onPage"
       @row-click="({ data }) => viewPatient(data)"
     >
+      <template #empty>
+        <span class="text-surface-500 dark:text-surface-400">{{ t('patients.empty') }}</span>
+      </template>
       <Column field="patient_code" :header="t('patients.code')" style="width: 8rem" />
       <Column field="full_name" :header="t('patients.name')" />
       <Column field="phone" :header="t('patients.phone')" />

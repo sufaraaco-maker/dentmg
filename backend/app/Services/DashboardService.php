@@ -18,7 +18,7 @@ class DashboardService
     {
         return [
             'total_patients' => $this->countIfExists('patients'),
-            'today_appointments' => $this->countIfExists('appointments'),
+            'today_appointments' => $this->todayAppointments(),
             'monthly_revenue' => $this->monthlyRevenue(),
         ];
     }
@@ -41,5 +41,23 @@ class DashboardService
     private function countIfExists(string $table): int
     {
         return Schema::hasTable($table) ? DB::table($table)->count() : 0;
+    }
+
+    /**
+     * Full-day bounds, not a bare Y-m-d string (same convention as ReportService's date-range
+     * queries): `whereBetween` compares as strings on some drivers, so a bare upper bound would
+     * silently exclude any row whose stored value carries a time-of-day suffix.
+     */
+    private function todayAppointments(): int
+    {
+        if (! Schema::hasTable('appointments')) {
+            return 0;
+        }
+
+        $today = Date::today()->toDateString();
+
+        return DB::table('appointments')
+            ->whereBetween('start_at', ["{$today} 00:00:00", "{$today} 23:59:59"])
+            ->count();
     }
 }

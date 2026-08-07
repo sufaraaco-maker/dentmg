@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ToothSurface from './ToothSurface.vue'
 import { useDentalConditionsStore } from '@/stores/dentalConditions'
@@ -36,13 +36,17 @@ const groupedConditions = computed(() =>
   })).filter((group) => group.conditions.length > 0),
 )
 
-onMounted(async () => {
-  try {
-    await store.fetchAll()
-  } catch {
-    loadError.value = true
-  }
-})
+onMounted(() => store.fetchAll())
+
+// `fetchAll()` now catches and stores the error itself (docs/PROJECT_STATUS.md Phase 1 audit —
+// standardizing on the store-owns-error-state pattern) rather than rejecting, so this watches the
+// store's own error state instead of a local try/catch.
+watch(
+  () => store.error,
+  (error) => {
+    loadError.value = error !== null
+  },
+)
 </script>
 
 <template>

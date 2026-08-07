@@ -99,8 +99,16 @@ class ReportService
             $query->where('method', $method);
         }
 
+        // Most-recent-first: a real admin viewing this report expects recent activity at the top,
+        // not whatever order Postgres happens to return without an explicit ORDER BY (undefined,
+        // not guaranteed insertion order). Found while diagnosing a genuine E2E flake
+        // (`reports.spec.ts`) that turned out to trace back to this real gap, not a test-only issue.
+        // `received_at` is deliberately date-only (`Payment::$casts`, `PaymentService::create()`
+        // defaults it to `now()->toDateString()`) — every payment recorded the same calendar day
+        // ties under that column alone, so `created_at` (a real timestamp) breaks the tie, still
+        // most-recent-first within a day.
         /** @var Collection<int, Payment> $payments */
-        $payments = $query->get();
+        $payments = $query->orderByDesc('received_at')->orderByDesc('created_at')->get();
 
         $rows = $payments->map(fn (Payment $payment) => [
             'date' => $payment->received_at->toDateString(),
@@ -274,10 +282,15 @@ class ReportService
      */
     public function newPatients(string $dateFrom, string $dateTo): array
     {
+        // Most-recent-first, matching collections()'s convention: an admin checking "who registered
+        // recently" wants the newest registrations at the top, not on the report's last page (this
+        // report's DataTable paginates at 20 rows). Ascending order previously buried the newest
+        // patient past page 1 once enough rows existed — the second half of the same root cause the
+        // reports.spec.ts E2E flake traced back to.
         /** @var Collection<int, Patient> $patients */
         $patients = Patient::query()
             ->whereBetween('created_at', ["{$dateFrom} 00:00:00", "{$dateTo} 23:59:59"])
-            ->orderBy('created_at')
+            ->orderByDesc('created_at')
             ->get();
 
         $rows = $patients->map(fn (Patient $patient) => [

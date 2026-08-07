@@ -169,6 +169,15 @@ test.describe('appointments', () => {
     await dismissDatePickerPopover(page)
     await pickFirstAvailableSlot(dialog)
 
+    // Capture the created appointment's own id from the real API response instead of assuming
+    // it lands on any particular row/page of the List view afterwards — with `DemoDataSeeder`'s
+    // ~110 seeded patients (and their own appointments) sharing the same current-week range, "the
+    // first row" is no longer reliably *this* appointment (see TECH_DEBT.md's `DemoDataSeeder`
+    // entry). Listening for the real `POST /appointments` response is deterministic regardless of
+    // how much other data shares the same week.
+    const createResponsePromise = page.waitForResponse(
+      (res) => res.request().method() === 'POST' && res.url().includes('/appointments'),
+    )
     await page.getByRole('button', { name: 'Save' }).click()
     // `Locator.isVisible()` doesn't wait/retry — it checks once and returns immediately, so it
     // was racing the save request and reporting failure before the toast had a chance to render.
@@ -181,13 +190,11 @@ test.describe('appointments', () => {
       const dialogText = await dialog.innerText().catch(() => '(dialog not found)')
       throw new Error(`Save did not succeed. Dialog contents:\n${dialogText}`)
     }
+    const { id: createdAppointmentId } = await (await createResponsePromise).json()
 
-    // Reschedule via the List view's most recently created row.
-    await page.goto('/appointments')
-    await page.getByRole('button', { name: 'List', exact: true }).click()
-    const firstRow = page.locator('table tbody tr').first()
-    await expect(firstRow).toBeVisible({ timeout: 10_000 })
-    await firstRow.click()
+    // Navigate straight to the created appointment's own detail page instead of the List view's
+    // "first row" — immune to how many other appointments share the current week (see above).
+    await page.goto(`/appointments/${createdAppointmentId}`)
 
     await page.getByRole('button', { name: 'Edit' }).click()
     // The dialog always opens on the Patient tab (`AppointmentDialog.vue`'s `visible` watcher
