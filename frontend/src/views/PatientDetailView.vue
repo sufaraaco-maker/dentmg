@@ -15,10 +15,11 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import { api } from '@/lib/api'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { usePatientsStore } from '@/stores/patients'
 import { parseLocalDate, parseServerDateTime } from '@/lib/date'
-import type { Patient, PatientAuditLog } from '@/types/patient'
+import type { Patient } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
@@ -34,11 +35,34 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const auth = useAuthStore()
+const patientsStore = usePatientsStore()
 
 // Design doc §10/§15 Decision D: receptionists have NO access to Clinical Notes at all — the tab
 // itself must not render for them, not just its write actions, matching `ClinicalNotePolicy`'s
 // `viewAny` exactly (defense in depth: the backend still enforces this regardless of this check).
 const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
+
+/**
+ * Config-driven tab list (Phase 2.1 structure cleanup, design doc §17 2.1) — each future tab this
+ * redesign adds (Medical History, Laboratory, Billing, Documents, Timeline) extends this array for
+ * its label/visibility instead of duplicating a `v-if` in both `TabList` and `TabPanels`
+ * separately, the way `clinicalNotes` had to before this. `TabPanel` content still can't be
+ * generalized the same way — each panel hosts a genuinely different component with different
+ * props — so `TabPanels` below stays explicit per tab, but reads the same `visible` flag from here
+ * rather than re-deriving it.
+ */
+const tabDefinitions = computed(() => [
+  { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
+  { key: 'appointments', labelKey: 'patients.tabs.appointments', visible: true },
+  { key: 'dentalChart', labelKey: 'patients.tabs.dentalChart', visible: true },
+  { key: 'imaging', labelKey: 'patients.tabs.imaging', visible: true },
+  { key: 'treatmentPlans', labelKey: 'patients.tabs.treatmentPlans', visible: true },
+  { key: 'clinicalNotes', labelKey: 'patients.tabs.clinicalNotes', visible: canAccessClinicalNotes.value },
+  { key: 'invoices', labelKey: 'patients.tabs.invoices', visible: true },
+  { key: 'payments', labelKey: 'patients.tabs.payments', visible: true },
+])
+
+const visibleTabs = computed(() => tabDefinitions.value.filter((tab) => tab.visible))
 
 function formatDate(value: string) {
   return parseLocalDate(value).toLocaleDateString(locale.value)
@@ -59,14 +83,13 @@ const patient = ref<Patient | null>(null)
 const loading = ref(true)
 const dialogVisible = ref(false)
 
-const auditLogs = ref<PatientAuditLog[]>([])
-const auditLoading = ref(false)
+const auditLogs = computed(() => patientsStore.auditLogsForPatient(patientId.value))
+const auditLoading = computed(() => patientsStore.auditLoading)
 
 async function fetchPatient() {
   loading.value = true
   try {
-    const { data } = await api.get<Patient>(`/patients/${patientId.value}`)
-    patient.value = data
+    patient.value = await patientsStore.fetchOne(patientId.value)
   } finally {
     loading.value = false
   }
@@ -75,13 +98,7 @@ async function fetchPatient() {
 async function fetchAuditLogs() {
   if (!auth.isAdmin) return
 
-  auditLoading.value = true
-  try {
-    const { data } = await api.get<{ data: PatientAuditLog[] }>(`/patients/${patientId.value}/audit-logs`)
-    auditLogs.value = data.data
-  } finally {
-    auditLoading.value = false
-  }
+  await patientsStore.fetchAuditLogs(patientId.value)
 }
 
 function onSaved(updated: Patient) {
@@ -100,7 +117,7 @@ function confirmDelete() {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await api.delete(`/patients/${patientId.value}`)
+        await patientsStore.remove(patientId.value)
         toast.add({ severity: 'success', summary: t('patients.deleted'), life: 3000 })
         router.push({ name: 'patients' })
       } catch {
@@ -120,27 +137,33 @@ onMounted(() => {
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <Button icon="pi pi-arrow-left" text rounded @click="router.push({ name: 'patients' })" />
+        <Button text rounded @click="router.push({ name: 'patients' })">
+          <template #icon="{ class: iconClass }">
+            <ArrowLeft :size="18" :class="iconClass" />
+          </template>
+        </Button>
         <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
           {{ patient?.full_name ?? t('patients.title') }}
         </h1>
         <Tag v-if="patient" :value="patient.patient_code" severity="secondary" />
       </div>
       <div v-if="patient" class="flex gap-2">
-        <Button
-          v-if="canManage"
-          :label="t('common.edit')"
-          icon="pi pi-pencil"
-          @click="dialogVisible = true"
-        />
+        <Button v-if="canManage" :label="t('common.edit')" @click="dialogVisible = true">
+          <template #icon="{ class: iconClass }">
+            <Pencil :size="16" :class="iconClass" />
+          </template>
+        </Button>
         <Button
           v-if="canDelete"
           :label="t('common.delete')"
-          icon="pi pi-trash"
           severity="danger"
           outlined
           @click="confirmDelete"
-        />
+        >
+          <template #icon="{ class: iconClass }">
+            <Trash2 :size="16" :class="iconClass" />
+          </template>
+        </Button>
       </div>
     </div>
 
@@ -148,14 +171,7 @@ onMounted(() => {
 
     <Tabs v-else-if="patient" value="overview">
       <TabList>
-        <Tab value="overview">{{ t('patients.tabs.overview') }}</Tab>
-        <Tab value="appointments">{{ t('patients.tabs.appointments') }}</Tab>
-        <Tab value="dentalChart">{{ t('patients.tabs.dentalChart') }}</Tab>
-        <Tab value="imaging">{{ t('patients.tabs.imaging') }}</Tab>
-        <Tab value="treatmentPlans">{{ t('patients.tabs.treatmentPlans') }}</Tab>
-        <Tab v-if="canAccessClinicalNotes" value="clinicalNotes">{{ t('patients.tabs.clinicalNotes') }}</Tab>
-        <Tab value="invoices">{{ t('patients.tabs.invoices') }}</Tab>
-        <Tab value="payments">{{ t('patients.tabs.payments') }}</Tab>
+        <Tab v-for="tab in visibleTabs" :key="tab.key" :value="tab.key">{{ t(tab.labelKey) }}</Tab>
       </TabList>
       <TabPanels>
         <TabPanel value="overview">

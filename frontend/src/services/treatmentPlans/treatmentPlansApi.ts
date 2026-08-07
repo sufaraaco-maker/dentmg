@@ -14,11 +14,12 @@ export interface PaginatedTreatmentPlans {
 }
 
 export const treatmentPlansApi = {
-  // GET /api/patients/{patient}/treatment-plans is deliberately not paginated — a patient's
-  // lifetime plan count is naturally small (design doc §9/§13), same documented exception class
-  // as dental-chart-entries/patient-audit-logs.
-  async list(patientId: string): Promise<TreatmentPlan[]> {
-    const { data } = await api.get<TreatmentPlan[]>(`/patients/${patientId}/treatment-plans`)
+  // Paginated (Phase 2.1, design doc §11/§14.4) — a long-tenured patient's full plan history used
+  // to load in one unbounded request; `page` defaults to 1 server-side when omitted.
+  async list(patientId: string, page?: number): Promise<PaginatedTreatmentPlans> {
+    const { data } = await api.get<PaginatedTreatmentPlans>(`/patients/${patientId}/treatment-plans`, {
+      params: { page },
+    })
     return data
   },
 

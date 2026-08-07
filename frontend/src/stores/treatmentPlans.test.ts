@@ -55,6 +55,21 @@ function makePlan(overrides: Partial<TreatmentPlan> = {}): TreatmentPlan {
   }
 }
 
+function makePage(
+  plans: TreatmentPlan[],
+  overrides: Partial<{ current_page: number; last_page: number; per_page: number; total: number }> = {},
+) {
+  return {
+    data: plans,
+    meta: {
+      current_page: overrides.current_page ?? 1,
+      last_page: overrides.last_page ?? 1,
+      per_page: overrides.per_page ?? 15,
+      total: overrides.total ?? plans.length,
+    },
+  }
+}
+
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.clearAllMocks()
@@ -62,17 +77,18 @@ beforeEach(() => {
 
 describe('useTreatmentPlansStore.fetchForPatient', () => {
   it('fetches and caches a patient’s plans', async () => {
-    mockedPlansApi.list.mockResolvedValueOnce([makePlan()])
+    mockedPlansApi.list.mockResolvedValueOnce(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
 
     await store.fetchForPatient('patient-1')
 
     expect(store.plansForPatient('patient-1')).toHaveLength(1)
     expect(mockedPlansApi.list).toHaveBeenCalledTimes(1)
+    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1', 1)
   })
 
-  it('skips the network call on a second fetch for the same patient', async () => {
-    mockedPlansApi.list.mockResolvedValue([makePlan()])
+  it('skips the network call on a second fetch for the same patient and page', async () => {
+    mockedPlansApi.list.mockResolvedValue(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
 
     await store.fetchForPatient('patient-1')
@@ -82,13 +98,29 @@ describe('useTreatmentPlansStore.fetchForPatient', () => {
   })
 
   it('refetches when force is true', async () => {
-    mockedPlansApi.list.mockResolvedValue([makePlan()])
+    mockedPlansApi.list.mockResolvedValue(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
 
     await store.fetchForPatient('patient-1')
-    await store.fetchForPatient('patient-1', true)
+    await store.fetchForPatient('patient-1', 1, true)
 
     expect(mockedPlansApi.list).toHaveBeenCalledTimes(2)
+  })
+
+  it('fetches again when a different page is requested', async () => {
+    mockedPlansApi.list.mockResolvedValueOnce(
+      makePage([makePlan()], { current_page: 1, last_page: 2, total: 16 }),
+    )
+    mockedPlansApi.list.mockResolvedValueOnce(
+      makePage([makePlan({ id: 'plan-2' })], { current_page: 2, last_page: 2, total: 16 }),
+    )
+    const store = useTreatmentPlansStore()
+
+    await store.fetchForPatient('patient-1')
+    await store.fetchForPatient('patient-1', 2)
+
+    expect(mockedPlansApi.list).toHaveBeenCalledTimes(2)
+    expect(store.plansForPatient('patient-1').map((p) => p.id)).toEqual(['plan-2'])
   })
 
   it('sets a translation-key error on failure', async () => {
@@ -101,14 +133,14 @@ describe('useTreatmentPlansStore.fetchForPatient', () => {
     expect(store.loading).toBe(false)
   })
 
-  it('plansForPatient only returns that patient’s plans, most recent first', async () => {
+  it('plansForPatient only returns the current page’s plans, most recent first', async () => {
     mockedPlansApi.list.mockImplementation(async (patientId: string) =>
       patientId === 'patient-1'
-        ? [
+        ? makePage([
             makePlan({ id: 'plan-1', created_at: '2026-07-20T09:00:00+00:00' }),
             makePlan({ id: 'plan-2', created_at: '2026-07-22T09:00:00+00:00' }),
-          ]
-        : [makePlan({ id: 'plan-3', patient_id: 'patient-2' })],
+          ])
+        : makePage([makePlan({ id: 'plan-3', patient_id: 'patient-2' })]),
     )
     const store = useTreatmentPlansStore()
 
@@ -117,6 +149,22 @@ describe('useTreatmentPlansStore.fetchForPatient', () => {
 
     const plans = store.plansForPatient('patient-1')
     expect(plans.map((p) => p.id)).toEqual(['plan-2', 'plan-1'])
+  })
+
+  it('pageMetaForPatient reflects the server pagination meta', async () => {
+    mockedPlansApi.list.mockResolvedValueOnce(
+      makePage([makePlan()], { current_page: 1, last_page: 2, per_page: 15, total: 20 }),
+    )
+    const store = useTreatmentPlansStore()
+
+    await store.fetchForPatient('patient-1')
+
+    expect(store.pageMetaForPatient('patient-1')).toEqual({
+      currentPage: 1,
+      lastPage: 2,
+      perPage: 15,
+      total: 20,
+    })
   })
 })
 
@@ -134,14 +182,16 @@ describe('useTreatmentPlansStore.fetchOne', () => {
 })
 
 describe('useTreatmentPlansStore plan mutations', () => {
-  it('create upserts the created plan with no extra fetch', async () => {
+  it('create upserts the created plan and refreshes page 1 so it is immediately visible', async () => {
     mockedPlansApi.create.mockResolvedValueOnce(makePlan())
+    mockedPlansApi.list.mockResolvedValueOnce(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
 
     await store.create('patient-1', { dentist_id: 'dentist-1', title: 'Option A' })
 
     expect(store.cache.get('plan-1')?.title).toBe('Option A')
-    expect(mockedPlansApi.list).not.toHaveBeenCalled()
+    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1', 1)
+    expect(store.plansForPatient('patient-1')).toHaveLength(1)
   })
 
   it('update upserts the response directly', async () => {
@@ -163,19 +213,18 @@ describe('useTreatmentPlansStore plan mutations', () => {
     expect(mockedPlansApi.list).not.toHaveBeenCalled()
   })
 
-  it('accept upserts the response and refreshes the patient list to correct auto-rejected siblings', async () => {
+  it('accept upserts the response and refreshes the currently loaded page to correct auto-rejected siblings', async () => {
     mockedPlansApi.accept.mockResolvedValueOnce(makePlan({ status: 'accepted' }))
-    mockedPlansApi.list.mockResolvedValueOnce([
-      makePlan({ status: 'accepted' }),
-      makePlan({ id: 'plan-2', status: 'rejected' }),
-    ])
+    mockedPlansApi.list.mockResolvedValueOnce(
+      makePage([makePlan({ status: 'accepted' }), makePlan({ id: 'plan-2', status: 'rejected' })]),
+    )
     const store = useTreatmentPlansStore()
 
     await store.accept('plan-1')
 
     expect(store.cache.get('plan-1')?.status).toBe('accepted')
     expect(store.cache.get('plan-2')?.status).toBe('rejected')
-    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1')
+    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1', 1)
   })
 
   it('cancel upserts the response (its own items already reflect the server-side cascade)', async () => {
@@ -257,7 +306,7 @@ describe('useTreatmentPlansStore item mutations', () => {
 
 describe('useTreatmentPlansStore.$reset', () => {
   it('clears the cache and loaded-patient tracking', async () => {
-    mockedPlansApi.list.mockResolvedValueOnce([makePlan()])
+    mockedPlansApi.list.mockResolvedValueOnce(makePage([makePlan()]))
     const store = useTreatmentPlansStore()
     await store.fetchForPatient('patient-1')
 

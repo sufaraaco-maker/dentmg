@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
+import { LoaderCircle, Pencil, Trash2 } from 'lucide-vue-next'
 import { useImageObjectUrl } from '@/composables/useImageObjectUrl'
 import type { PatientImage } from '@/types/imaging'
 
@@ -28,10 +29,11 @@ const { objectUrl, loading } = useImageObjectUrl(source)
       class="absolute inset-0 h-full w-full focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none"
       @click="$emit('click')"
     >
-      <i
+      <LoaderCircle
         v-if="loading || !objectUrl"
-        class="pi pi-spin pi-spinner absolute inset-0 m-auto text-2xl text-surface-400"
-      ></i>
+        :size="24"
+        class="absolute inset-0 m-auto animate-spin text-surface-400"
+      />
       <img
         v-else
         :src="objectUrl"
@@ -53,22 +55,28 @@ const { objectUrl, loading } = useImageObjectUrl(source)
     >
       <Button
         v-if="canEdit"
-        icon="pi pi-pencil"
         size="small"
         rounded
         severity="contrast"
         :aria-label="t('common.edit')"
         @click.stop="$emit('edit')"
-      />
+      >
+        <template #icon="{ class: iconClass }">
+          <Pencil :size="14" :class="iconClass" />
+        </template>
+      </Button>
       <Button
         v-if="canDelete"
-        icon="pi pi-trash"
         size="small"
         rounded
         severity="danger"
         :aria-label="t('common.delete')"
         @click.stop="$emit('delete')"
-      />
+      >
+        <template #icon="{ class: iconClass }">
+          <Trash2 :size="14" :class="iconClass" />
+        </template>
+      </Button>
     </div>
   </div>
 </template>

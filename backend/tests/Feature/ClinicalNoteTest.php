@@ -39,8 +39,21 @@ class ClinicalNoteTest extends TestCase
             $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/clinical-notes");
 
             $response->assertOk();
-            $this->assertCount(2, $response->json());
+            $this->assertCount(2, $response->json('data'));
         }
+    }
+
+    public function test_a_patients_clinical_note_list_is_paginated(): void
+    {
+        $patient = Patient::factory()->create();
+        ClinicalNote::factory()->count(20)->create(['patient_id' => $patient->id]);
+        $actor = User::factory()->admin()->create();
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/clinical-notes");
+
+        $response->assertOk();
+        $this->assertCount(15, $response->json('data'));
+        $this->assertSame(20, $response->json('meta.total'));
     }
 
     public function test_receptionist_cannot_list_clinical_notes(): void

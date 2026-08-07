@@ -213,7 +213,7 @@ GET        /patients/{patient}/summary              # new — last visit, active
                                                       # just to render its stat cards (see §11.4)
 ```
 
-**Existing endpoints, pagination added** (closes existing tech debt at the same time, see §11.2): `GET /patients/{patient}/treatment-plans`, `/clinical-notes`, `/invoices`, `/payments`.
+**Existing endpoints, pagination added** (removes a real, previously-undocumented scalability risk, see §11.2): `GET /patients/{patient}/treatment-plans`, `/clinical-notes`, `/invoices`, `/payments`. **Implementation update (Phase 2.1)**: Treatment Plans/Clinical Notes shipped paginated in Phase 2.1; Invoices/Payments were found mid-implementation to have a real coupling risk (`ApplyPaymentDialog.vue`'s invoice picker, `InvoicePaymentsPanel.vue`) that Treatment Plans/Clinical Notes don't share, so those two are deliberately deferred to Phase 2.2 alongside the Billing merge — see the Phase 2.1 `CHANGELOG.md` entry and the new `TECH_DEBT.md` item.
 
 ## 9. Timeline / `PatientActivity` — design detail
 
@@ -268,7 +268,7 @@ Every "(proposed)" marker above is a default inferred from the closest existing 
 ## 11. Performance Strategy
 
 1. **Lazy loading tabs**: formalized as an explicit rule for every tab, existing and new — no tab's data is fetched until it's first activated, and each store caches its result so re-activating a tab doesn't refetch unless `force` is passed. This is already the de facto behavior of the existing panels; this phase makes it an explicit, documented requirement so the 5 new tabs follow it too.
-2. **Pagination**: added to the 4 existing unpaginated endpoints (Treatment Plans, Clinical Notes, Invoices, Payments — closes an existing, already-logged tech-debt item) and applied by default to every new list endpoint (Medical History sub-lists, Documents, Activities). Default page size 20, using the same `Paginator` UI idiom already established by Imaging (30/page) and the Patients list (15/page).
+2. **Pagination**: added to the 4 existing unpaginated endpoints (Treatment Plans, Clinical Notes shipped in Phase 2.1 at 15/page, matching `PatientService::paginate()`'s convention; Invoices, Payments deferred to Phase 2.2, see the Phase 2.1 implementation note above) and applied by default to every new list endpoint (Medical History sub-lists, Documents, Activities).
 3. **Timeline query strategy**: composite index `(patient_id, occurred_at)` plus `(patient_id, category, occurred_at)`; list rendering never joins back to subject tables (§9.3); role-filtering happens in the query itself, not post-fetch (§9A).
 4. **API response optimization**: two new aggregate-only endpoints — `billing-summary` and the Overview `summary` endpoint — exist specifically so the frontend never has to stitch together 5+ separate tab fetches just to render a handful of stat cards. Both must be implemented as `SUM`/`COUNT`/`MAX` queries, never as "fetch all rows and reduce in PHP."
 
@@ -318,7 +318,7 @@ Sequenced to front-load low-risk foundational work, then well-understood "repeat
 
 | Sub-phase | Scope | Risk |
 |---|---|---|
-| **2.1 Foundation** | `patients.ts` store, standardized `fetchForPatient` pattern documented, `patientImages.ts` store (Imaging retrofit), pagination added to the 4 existing endpoints, Lucide migration for the Patients module, `EmptyState.vue` built and retrofitted | Low — no new features, no new schema |
+| **2.1 Foundation** ✅ done | `patients.ts` store, standardized `fetchForPatient` pattern documented, `patientImages.ts` store (Imaging retrofit), pagination added to Treatment Plans/Clinical Notes (Invoices/Payments deferred to 2.2 — see implementation note above), Lucide migration for the Patients module, `EmptyState.vue` built and retrofitted, `PatientDetailView.vue` tab list made config-driven | Low — no new features, no new schema |
 | **2.2 Billing merge** | `PatientBillingPanel.vue`, `BillingSummaryCard.vue`, `billing-summary` endpoint, mobile dropdown tab switcher (needed now since Billing's merge changes the tab count) | Low-Medium — UI restructure + one new aggregate endpoint |
 | **2.3 Medical History** | New tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of existing free-text `allergies` | Medium — new schema, new policy |
 | **2.4 Laboratory integration** | `Patient::labCases()`, `forPatient` scope on `LabCase`, new patient-scoped route, `patientLabCases` store, `PatientLabCasesPanel.vue` | Low — repeats an existing, well-understood pattern exactly |

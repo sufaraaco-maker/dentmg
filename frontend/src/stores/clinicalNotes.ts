@@ -3,6 +3,13 @@ import { reactive, ref } from 'vue'
 import { clinicalNotesApi } from '@/services/clinicalNotes'
 import type { ClinicalNote, CreateClinicalNotePayload, UpdateClinicalNotePayload } from '@/types/clinicalNote'
 
+interface PatientPageMeta {
+  currentPage: number
+  lastPage: number
+  perPage: number
+  total: number
+}
+
 /**
  * A single id-keyed cache serving both the Patient Clinical Notes tab's list (`notesForPatient`)
  * and the dedicated Note Detail route's single-resource fetch (`fetchOne`) — mirrors
@@ -13,10 +20,16 @@ import type { ClinicalNote, CreateClinicalNotePayload, UpdateClinicalNotePayload
  * Every mutation below upserts the response directly with no follow-up re-fetch, because the
  * backend deliberately returns the full updated `ClinicalNote` (addendums eager-loaded) from every
  * mutation endpoint (design doc §9), same as Treatment Plans/Invoices/Payments.
+ *
+ * Phase 2.1 (design doc §11/§14.4): the patient-scoped list is now paginated server-side — see
+ * `treatmentPlans.ts`'s identical comment for why `notesForPatient` reads `patientPageIds`
+ * (the most recently fetched page's ids) rather than filtering the whole cache.
  */
 export const useClinicalNotesStore = defineStore('clinicalNotes', () => {
   const cache = reactive(new Map<string, ClinicalNote>())
-  const loadedPatientIds = reactive(new Set<string>())
+  const patientPageIds = reactive(new Map<string, string[]>())
+  const patientPageMeta = reactive(new Map<string, PatientPageMeta>())
+  const loadedPatientPage = reactive(new Map<string, number>())
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -24,23 +37,40 @@ export const useClinicalNotesStore = defineStore('clinicalNotes', () => {
     cache.set(note.id, note)
   }
 
-  /** All cached notes for one patient, most recently created first — backs the Notes List tab. */
+  /** The most recently fetched page's notes for one patient, most recently created first. */
   function notesForPatient(patientId: string): ClinicalNote[] {
-    return Array.from(cache.values())
-      .filter((note) => note.patient_id === patientId)
+    const ids = patientPageIds.get(patientId) ?? []
+    return ids
+      .map((id) => cache.get(id))
+      .filter((note): note is ClinicalNote => !!note)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
 
-  async function fetchForPatient(patientId: string, force = false): Promise<void> {
-    if (loadedPatientIds.has(patientId) && !force) return
+  /** Pagination metadata for the currently loaded page, for the panel's `Paginator`. */
+  function pageMetaForPatient(patientId: string): PatientPageMeta {
+    return patientPageMeta.get(patientId) ?? { currentPage: 1, lastPage: 1, perPage: 15, total: 0 }
+  }
+
+  async function fetchForPatient(patientId: string, page = 1, force = false): Promise<void> {
+    if (loadedPatientPage.get(patientId) === page && !force) return
 
     loading.value = true
     error.value = null
 
     try {
-      const notes = await clinicalNotesApi.list(patientId)
-      notes.forEach(upsert)
-      loadedPatientIds.add(patientId)
+      const result = await clinicalNotesApi.list(patientId, page)
+      result.data.forEach(upsert)
+      patientPageIds.set(
+        patientId,
+        result.data.map((note) => note.id),
+      )
+      patientPageMeta.set(patientId, {
+        currentPage: result.meta.current_page,
+        lastPage: result.meta.last_page,
+        perPage: result.meta.per_page,
+        total: result.meta.total,
+      })
+      loadedPatientPage.set(patientId, page)
     } catch {
       error.value = 'clinicalNotes.loadError'
     } finally {
@@ -54,9 +84,12 @@ export const useClinicalNotesStore = defineStore('clinicalNotes', () => {
     return note
   }
 
+  /** A new note always sorts to the top (most recently created) — refreshes page 1 so it's
+   *  immediately visible regardless of which page the patient's list happened to be on. */
   async function create(patientId: string, payload: CreateClinicalNotePayload): Promise<ClinicalNote> {
     const created = await clinicalNotesApi.create(patientId, payload)
     upsert(created)
+    await fetchForPatient(patientId, 1, true)
     return created
   }
 
@@ -86,7 +119,9 @@ export const useClinicalNotesStore = defineStore('clinicalNotes', () => {
 
   function $reset() {
     cache.clear()
-    loadedPatientIds.clear()
+    patientPageIds.clear()
+    patientPageMeta.clear()
+    loadedPatientPage.clear()
     loading.value = false
     error.value = null
   }
@@ -96,6 +131,7 @@ export const useClinicalNotesStore = defineStore('clinicalNotes', () => {
     loading,
     error,
     notesForPatient,
+    pageMetaForPatient,
     fetchForPatient,
     fetchOne,
     create,

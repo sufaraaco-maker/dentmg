@@ -38,14 +38,33 @@ beforeEach(() => {
 })
 
 describe('clinicalNotesApi.list', () => {
-  it('returns the bare array (deliberately not paginated)', async () => {
-    const notes = [makeNote()]
-    mockedApi.get.mockResolvedValueOnce({ data: notes })
+  it('returns the paginated response shape', async () => {
+    const page = {
+      data: [makeNote()],
+      meta: { current_page: 1, last_page: 1, per_page: 15, total: 1 },
+    }
+    mockedApi.get.mockResolvedValueOnce({ data: page })
 
     const result = await clinicalNotesApi.list('patient-1')
 
-    expect(result).toEqual(notes)
-    expect(mockedApi.get).toHaveBeenCalledWith('/patients/patient-1/clinical-notes')
+    expect(result).toEqual(page)
+    expect(mockedApi.get).toHaveBeenCalledWith('/patients/patient-1/clinical-notes', {
+      params: { page: undefined },
+    })
+  })
+
+  it('passes the requested page through', async () => {
+    const page = {
+      data: [],
+      meta: { current_page: 2, last_page: 2, per_page: 15, total: 16 },
+    }
+    mockedApi.get.mockResolvedValueOnce({ data: page })
+
+    await clinicalNotesApi.list('patient-1', 2)
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/patients/patient-1/clinical-notes', {
+      params: { page: 2 },
+    })
   })
 })
 

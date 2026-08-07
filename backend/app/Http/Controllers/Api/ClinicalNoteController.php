@@ -19,6 +19,10 @@ class ClinicalNoteController extends Controller
 
     public function __construct(private ClinicalNoteService $clinicalNoteService) {}
 
+    /**
+     * Paginated (Phase 2.1, design doc §11/§14.4) — every patient-scoped list endpoint is
+     * paginated by default from this phase forward, same 15/page convention used elsewhere.
+     */
     public function index(Patient $patient)
     {
         $this->authorize('viewAny', ClinicalNote::class);
@@ -27,7 +31,7 @@ class ClinicalNoteController extends Controller
             ->forPatient($patient->id)
             ->with(self::WITH)
             ->latest('created_at')
-            ->get();
+            ->paginate(15);
 
         return ClinicalNoteResource::collection($notes);
     }

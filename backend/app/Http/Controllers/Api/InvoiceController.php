@@ -27,8 +27,14 @@ class InvoiceController extends Controller
     public function __construct(private InvoiceService $invoiceService) {}
 
     /**
-     * Not paginated — same documented exception as Treatment Plans/Dental Chart/Patient audit
-     * logs (design doc §9): a single patient's lifetime invoice count stays small.
+     * Not paginated yet — deliberately deferred to Phase 2.2 (Billing), not Phase 2.1
+     * (`patient-profile-redesign-design.md` §11/§14.4 lists this as a Phase 2.1 item, but
+     * implementation found a real coupling risk Treatment Plans/Clinical Notes don't have:
+     * `ApplyPaymentDialog.vue` reads `invoicesStore.invoicesForPatient()` to populate its "apply
+     * this payment to" picker, assuming the full unpaginated set — paginating here without first
+     * addressing that picker would silently hide older invoices from it. Phase 2.2 touches this
+     * exact picker anyway as part of the Billing merge, so the pagination + picker fix land
+     * together instead of paginating first and breaking the picker in between).
      */
     public function index(Patient $patient)
     {

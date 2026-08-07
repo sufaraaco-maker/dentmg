@@ -404,8 +404,8 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 ## 12. Immediate Next Step
 
-**Phase 2: Patient Profile Redesign — design APPROVED 2026-08-07, Phase 2.1 (Foundation) implementation now
-authorized and in progress.** Step 1 (analysis) and Step 2 (design document,
+**Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) implemented,
+CI-pending; Phase 2.2 (Billing) is next.** Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
 (Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/
@@ -414,14 +414,18 @@ OCR yet), and a dedicated `PatientActivity` event architecture for Timeline — 
 permissions are enforced server-side, per category, never client-side.
 
 Implementation is sequenced into 7 sub-phases (design doc §17), each its own PR, low-risk-first.
-**Phase 2.1 (Foundation) is authorized and explicitly scoped**: Patient Pinia store (`patients.ts`,
-patient-level state only — not a replacement for domain stores like `treatmentPlans.ts`/`invoices.ts`),
-`PatientDetailView.vue`/`PatientsView.vue` structure cleanup, `patientImages.ts` store (Imaging retrofit),
-pagination added to the 4 currently-unbounded patient-scoped endpoints (Treatment Plans/Clinical
-Notes/Invoices/Payments), `EmptyState.vue`, and the Patients-module Lucide migration. **Billing, Medical
-History, Laboratory, Documents, and Timeline are explicitly out of scope for 2.1** — those land in Phase 2.2
-onward, starting with Billing. Tags/labels, in-record search, and PDF export remain named as deferred
-backlog (design doc §19.4), not dropped.
+**Phase 2.1 (Foundation) is implemented** on `feature/patient-profile-phase2-1-foundation`: `patients.ts`
+Pinia store (patient-level state only, not a replacement for domain stores like
+`treatmentPlans.ts`/`invoices.ts`), `patientImages.ts` store (Imaging retrofit), pagination added to
+Treatment Plans/Clinical Notes' patient-scoped endpoints (15/page), a config-driven tab list in
+`PatientDetailView.vue`, `EmptyState.vue` (first component in a new `components/common/` folder) retrofitted
+into the touched panels, and the Patients-module Lucide migration. **One scope adjustment found during
+implementation, not planned upfront**: Invoices/Payments pagination was deferred to Phase 2.2 rather than
+shipped in 2.1 — `ApplyPaymentDialog.vue`'s invoice picker and `InvoicePaymentsPanel.vue` both assume the
+full unpaginated per-patient set, a coupling Treatment Plans/Clinical Notes don't share; see the new
+`TECH_DEBT.md` entry. **Billing, Medical History, Laboratory, Documents, and Timeline remain out of scope**
+until Phase 2.2 onward. Tags/labels, in-record search, and PDF export remain named as deferred backlog
+(design doc §19.4), not dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign

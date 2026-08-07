@@ -69,6 +69,13 @@ function makePlan(overrides: Partial<TreatmentPlan> = {}): TreatmentPlan {
   }
 }
 
+function makePage(plans: TreatmentPlan[]) {
+  return {
+    data: plans,
+    meta: { current_page: 1, last_page: 1, per_page: 15, total: plans.length },
+  }
+}
+
 function setRole(role: UserRole) {
   const auth = useAuthStore()
   auth.user = { id: 'u1', name: 'Test User', email: 't@example.com', role }
@@ -104,15 +111,15 @@ beforeEach(() => {
   setActivePinia(createPinia())
   vi.clearAllMocks()
   mockedProvidersApi.listAll.mockResolvedValue([])
-  mockedPlansApi.list.mockResolvedValue([])
+  mockedPlansApi.list.mockResolvedValue(makePage([]))
 })
 
 describe('PatientTreatmentPlansPanel — data loading', () => {
-  it("fetches this patient's plans on mount", async () => {
+  it("fetches this patient's plans (page 1) on mount", async () => {
     setRole('dentist')
     await mountPanel('patient-1')
 
-    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1')
+    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-1', 1)
   })
 
   it('re-fetches when patientId changes', async () => {
@@ -121,7 +128,7 @@ describe('PatientTreatmentPlansPanel — data loading', () => {
     await wrapper.setProps({ patientId: 'patient-2' })
     await flushPromises()
 
-    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-2')
+    expect(mockedPlansApi.list).toHaveBeenCalledWith('patient-2', 1)
   })
 
   it('shows the empty state when the patient has no plans', async () => {
@@ -133,7 +140,7 @@ describe('PatientTreatmentPlansPanel — data loading', () => {
 
   it('renders the list table once plans are loaded', async () => {
     setRole('dentist')
-    mockedPlansApi.list.mockResolvedValue([makePlan()])
+    mockedPlansApi.list.mockResolvedValue(makePage([makePlan()]))
     const { wrapper } = await mountPanel('patient-1')
 
     expect(wrapper.text()).toContain('Option A')
@@ -175,7 +182,11 @@ describe('PatientTreatmentPlansPanel — dialog wiring', () => {
     expect(dialog.props('patientId')).toBe('patient-1')
   })
 
-  it('closes the dialog on save without an extra list() refetch (relies on the shared cache)', async () => {
+  it('closes the dialog on save (the emitted plan is already saved+cached by the dialog itself)', async () => {
+    // The dialog's own `saved` handler is what calls `treatmentPlansStore.create()` (and, since
+    // Phase 2.1, the page-1 refresh that follows it — see treatmentPlans.test.ts for that
+    // coverage). Emitting `saved` directly here, as this test does, bypasses that submit flow
+    // entirely — it only exercises the panel's own reaction to the event, not `create()` itself.
     setRole('dentist')
     const { wrapper } = await mountPanel('patient-1')
     expect(mockedPlansApi.list).toHaveBeenCalledTimes(1)
@@ -195,7 +206,7 @@ describe('PatientTreatmentPlansPanel — dialog wiring', () => {
 describe('PatientTreatmentPlansPanel — navigation', () => {
   it('navigates to the Plan Detail route when a row is clicked', async () => {
     setRole('dentist')
-    mockedPlansApi.list.mockResolvedValue([makePlan()])
+    mockedPlansApi.list.mockResolvedValue(makePage([makePlan()]))
     const { wrapper, router } = await mountPanel('patient-1')
     const push = vi.spyOn(router, 'push')
 

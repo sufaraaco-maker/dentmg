@@ -26,6 +26,12 @@ class TreatmentPlanController extends Controller
 
     public function __construct(private TreatmentPlanService $treatmentPlanService) {}
 
+    /**
+     * Paginated (Phase 2.1, design doc §11/§14.4) — a long-tenured patient's full plan history
+     * used to load in one unbounded query; every patient-scoped list endpoint is paginated by
+     * default from this phase forward, same 15/page convention as `indexAll()` below and
+     * `PatientService::paginate()`.
+     */
     public function index(Patient $patient)
     {
         $this->authorize('viewAny', TreatmentPlan::class);
@@ -34,16 +40,15 @@ class TreatmentPlanController extends Controller
             ->forPatient($patient->id)
             ->with(self::WITH)
             ->latest()
-            ->get();
+            ->paginate(15);
 
         return TreatmentPlanResource::collection($plans);
     }
 
     /**
      * Clinic-wide, paginated — the Sidebar's Treatment Plans entry needs a real destination across
-     * every patient (mirrors `InvoiceController::indexAll()`'s exact reasoning), unlike `index()`
-     * above which stays intentionally unpaginated per-patient. Same `viewAny` ability, same
-     * visibility rules.
+     * every patient (mirrors `InvoiceController::indexAll()`'s exact reasoning). Same `viewAny`
+     * ability, same visibility rules, same pagination convention as `index()` above.
      */
     public function indexAll(Request $request)
     {

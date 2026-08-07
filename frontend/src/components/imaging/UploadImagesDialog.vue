@@ -8,7 +8,8 @@ import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { uploadImages } from '@/services/imaging'
+import { Images, X } from 'lucide-vue-next'
+import { usePatientImagesStore } from '@/stores/patientImages'
 import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { toLocalDateString } from '@/lib/date'
 import { TOOTH_CODES, toothDisplayName } from '@/lib/teeth'
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const toast = useToast()
+const imagesStore = usePatientImagesStore()
 
 const IMAGE_TYPES: ImageType[] = [
   'intraoral_photo',
@@ -115,7 +117,7 @@ async function submit() {
   errors.value = {}
 
   try {
-    const images = await uploadImages(props.patientId, {
+    const images = await imagesStore.upload(props.patientId, {
       images: form.files,
       image_type: form.image_type,
       tooth_number: form.tooth_number,
@@ -162,7 +164,7 @@ async function submit() {
           @dragleave.prevent="isDraggingOver = false"
           @drop.prevent="onDrop"
         >
-          <i class="pi pi-images text-3xl text-surface-400"></i>
+          <Images :size="32" class="text-surface-400" />
           <p class="text-sm text-surface-500">{{ t('imaging.dropHint') }}</p>
           <div class="flex gap-2">
             <Button
@@ -194,13 +196,16 @@ async function submit() {
             <span class="truncate">{{ file.name }}</span>
             <Button
               type="button"
-              icon="pi pi-times"
               text
               rounded
               size="small"
               :aria-label="t('common.remove')"
               @click="removeFile(index)"
-            />
+            >
+              <template #icon="{ class: iconClass }">
+                <X :size="14" :class="iconClass" />
+              </template>
+            </Button>
           </li>
         </ul>
       </div>

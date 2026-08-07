@@ -11,17 +11,14 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
-import { api } from '@/lib/api'
+import { Pencil, Plus, Trash2, Users } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { usePatientsStore } from '@/stores/patients'
 import { askSmartSearch } from '@/services/aiAssistant/aiAssistantApi'
 import type { Patient } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
 import AiQuestionBox from '@/components/aiAssistant/AiQuestionBox.vue'
-
-interface PaginatedPatients {
-  data: Patient[]
-  meta: { current_page: number; last_page: number; per_page: number; total: number }
-}
+import EmptyState from '@/components/common/EmptyState.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -29,32 +26,19 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const auth = useAuthStore()
+const patientsStore = usePatientsStore()
 
 const canManage = ['admin', 'receptionist'].includes(auth.user?.role ?? '')
 const canDelete = auth.isAdmin
 
-const patients = ref<Patient[]>([])
-const totalRecords = ref(0)
-const perPage = ref(15)
 const page = ref(1)
 const search = ref('')
-const loading = ref(false)
 
 const dialogVisible = ref(false)
 const editingPatient = ref<Patient | null>(null)
 
-async function fetchPatients() {
-  loading.value = true
-  try {
-    const { data } = await api.get<PaginatedPatients>('/patients', {
-      params: { search: search.value || undefined, page: page.value },
-    })
-    patients.value = data.data
-    totalRecords.value = data.meta.total
-    perPage.value = data.meta.per_page
-  } finally {
-    loading.value = false
-  }
+function fetchPatients() {
+  return patientsStore.fetchList({ search: search.value, page: page.value })
 }
 
 function onPage(event: { page: number }) {
@@ -98,7 +82,7 @@ function confirmDelete(patient: Patient) {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await api.delete(`/patients/${patient.id}`)
+        await patientsStore.remove(patient.id)
         toast.add({ severity: 'success', summary: t('patients.deleted'), life: 3000 })
         await fetchPatients()
       } catch {
@@ -127,7 +111,11 @@ onMounted(() => {
       <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
         {{ t('patients.title') }}
       </h1>
-      <Button v-if="canManage" :label="t('patients.new')" icon="pi pi-plus" @click="openCreateDialog" />
+      <Button v-if="canManage" :label="t('patients.new')" @click="openCreateDialog">
+        <template #icon="{ class: iconClass }">
+          <Plus :size="16" :class="iconClass" />
+        </template>
+      </Button>
     </div>
 
     <IconField class="max-w-sm">
@@ -142,18 +130,18 @@ onMounted(() => {
     />
 
     <DataTable
-      :value="patients"
-      :loading="loading"
+      :value="patientsStore.listItems"
+      :loading="patientsStore.listLoading"
       lazy
       paginator
-      :rows="perPage"
-      :total-records="totalRecords"
+      :rows="patientsStore.listMeta.perPage"
+      :total-records="patientsStore.listMeta.total"
       class="cursor-pointer"
       @page="onPage"
       @row-click="({ data }) => viewPatient(data)"
     >
       <template #empty>
-        <span class="text-surface-500 dark:text-surface-400">{{ t('patients.empty') }}</span>
+        <EmptyState :icon="Users" :title="t('patients.empty')" />
       </template>
       <Column field="patient_code" :header="t('patients.code')" style="width: 8rem" />
       <Column field="full_name" :header="t('patients.name')" />
@@ -166,15 +154,16 @@ onMounted(() => {
       <Column :header="t('patients.actions')" style="width: 8rem">
         <template #body="{ data }">
           <div class="flex gap-2" @click.stop>
-            <Button v-if="canManage" icon="pi pi-pencil" text rounded @click="openEditDialog(data)" />
-            <Button
-              v-if="canDelete"
-              icon="pi pi-trash"
-              text
-              rounded
-              severity="danger"
-              @click="confirmDelete(data)"
-            />
+            <Button v-if="canManage" text rounded @click="openEditDialog(data)">
+              <template #icon="{ class: iconClass }">
+                <Pencil :size="16" :class="iconClass" />
+              </template>
+            </Button>
+            <Button v-if="canDelete" text rounded severity="danger" @click="confirmDelete(data)">
+              <template #icon="{ class: iconClass }">
+                <Trash2 :size="16" :class="iconClass" />
+              </template>
+            </Button>
           </div>
         </template>
       </Column>
