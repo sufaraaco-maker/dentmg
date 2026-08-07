@@ -282,10 +282,15 @@ class ReportService
      */
     public function newPatients(string $dateFrom, string $dateTo): array
     {
+        // Most-recent-first, matching collections()'s convention: an admin checking "who registered
+        // recently" wants the newest registrations at the top, not on the report's last page (this
+        // report's DataTable paginates at 20 rows). Ascending order previously buried the newest
+        // patient past page 1 once enough rows existed — the second half of the same root cause the
+        // reports.spec.ts E2E flake traced back to.
         /** @var Collection<int, Patient> $patients */
         $patients = Patient::query()
             ->whereBetween('created_at', ["{$dateFrom} 00:00:00", "{$dateTo} 23:59:59"])
-            ->orderBy('created_at')
+            ->orderByDesc('created_at')
             ->get();
 
         $rows = $patients->map(fn (Patient $patient) => [

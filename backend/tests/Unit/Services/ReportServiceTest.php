@@ -199,6 +199,24 @@ class ReportServiceTest extends TestCase
         $this->assertSame(2, $result['summary']['total']);
     }
 
+    public function test_new_patients_rows_are_ordered_most_recent_first(): void
+    {
+        // Deliberately created out of chronological order — a passing assertion can only mean the
+        // query itself sorts. Previously ascending (oldest first), which buried a newly-registered
+        // patient past this report's own paginated DataTable's first page once enough rows existed
+        // (the second half of the same reports.spec.ts E2E flake collections() already fixed).
+        Patient::factory()->create(['created_at' => '2026-06-10']);
+        Patient::factory()->create(['created_at' => '2026-06-20']);
+        Patient::factory()->create(['created_at' => '2026-06-05']);
+
+        $result = $this->service->newPatients('2026-06-01', '2026-06-30');
+
+        $this->assertSame(
+            ['2026-06-20', '2026-06-10', '2026-06-05'],
+            array_column($result['rows'], 'registered_at'),
+        );
+    }
+
     /**
      * A charge line equal to `$balance` with no payment against it — `balance_due` is then exactly
      * `$balance` (an unpaid `0.00` charge is the simplest way to build the "fully paid, must be
