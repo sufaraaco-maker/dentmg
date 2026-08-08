@@ -16,8 +16,8 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18, and now Phase 2.2 (Billing) implemented on `feature/patient-profile-phase2-2-billing` (backend + frontend green locally: 952 backend tests, 832 frontend tests), pending its own PR |
-| **Repo HEAD at time of writing** | `main` at `21af360` (PR #18 merge: Phase 2.1 — Patient Profile Foundation). A separate docs-only PR #19 (Phase 2.1 close-out) is open but not yet merged as of this writing — this update was authored from `main` before PR #19 landed, so it folds that close-out's content in directly rather than assuming it; expect to reconcile a merge conflict on this file if PR #19 merges first. |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18, its docs close-out merged via PR #19, and Phase 2.2 (Billing) implemented on `feature/patient-profile-phase2-2-billing` (backend + frontend green: 952 backend tests, 832 frontend tests) |
+| **Repo HEAD at time of writing** | `main` at `d9b277f` (PR #19 merge: Phase 2.1 docs close-out, on top of `21af360`'s PR #18 merge). Phase 2.2 (PR #20) is CI-green and pending merge. |
 | **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18.** |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
@@ -406,7 +406,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 **Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to
 `main` via PR #18 (2026-08-07); Phase 2.2 (Billing) is implemented on
-`feature/patient-profile-phase2-2-billing`, green locally, pending its own PR; Phase 2.3 (Medical
+`feature/patient-profile-phase2-2-billing` (PR #20), CI-green, pending merge; Phase 2.3 (Medical
 History) is next.** Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
@@ -425,7 +425,7 @@ new `components/common/` folder) retrofitted into the touched panels, and the Pa
 migration. One scope adjustment found during implementation: Invoices/Payments pagination was deferred
 to Phase 2.2 — see that entry below for the resolution.
 
-**Phase 2.2 (Billing), implemented, pending PR**: the former separate Invoices/Payments tabs collapse
+**Phase 2.2 (Billing), implemented on PR #20, CI-green, pending merge**: the former separate Invoices/Payments tabs collapse
 into one **Billing** tab (`PatientBillingPanel.vue`) with an Outstanding Balance hero + summary row
 (`BillingSummaryCard.vue`, fed by a new `GET /patients/{patient}/billing-summary` aggregate endpoint —
 `BillingSummaryService`, SQL-aggregate-only per design doc §11.4) and a `SelectButton` switching
@@ -443,9 +443,9 @@ clean. **One new deliberate trade-off logged in `TECH_DEBT.md`**: since `Patient
 `PatientPaymentsPanel.vue` are reused unchanged, they show only page 1 (no `Paginator`) inside the
 Billing tab.
 
-**Billing, Medical History, Laboratory, Documents, and Timeline remain out of scope** until their
-respective sub-phases (2.3 onward). Tags/labels, in-record search, and PDF export remain named as
-deferred backlog (design doc §19.4), not dropped.
+**Medical History, Laboratory, Documents, and Timeline remain out of scope** until their respective
+sub-phases (2.3 onward). Tags/labels, in-record search, and PDF export remain named as deferred
+backlog (design doc §19.4), not dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign
