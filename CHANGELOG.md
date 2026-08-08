@@ -22,9 +22,55 @@ PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
-merged via **PR #24** (2026-08-08, `9de50fb`) — this file's newest entry below. See
+merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** implemented on
+`feature/patient-profile-phase2-5-documents`, opened as a PR — this file's newest entry below. See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR
 history now feeds into._
+
+### Added — Phase 2.5: Documents (`feature/patient-profile-phase2-5-documents`, implemented 2026-08-08)
+- **Context**: fifth implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
+  `docs/modules/patient-documents-redesign-design.md` (this sub-phase's own drill-down design doc,
+  produced by auditing the actual current codebase rather than assuming the umbrella doc's §5.2/§6/§7/
+  §8/§10/§12/§17 outline needed no verification). Closes the gap the umbrella doc named: a generic
+  patient-documents foundation (model, upload/download, metadata, categories) — versioning, sharing,
+  advanced per-document permissions, and OCR remain explicitly out of scope.
+- **`PatientDocument`** (new model: UUID PK, `SoftDeletes`, `Auditable`, `belongsTo(Patient)`,
+  `belongsTo(User, 'uploaded_by')`) + **`Patient::documents()`** (new `hasMany` relation) + a new
+  `patient_documents` migration (`category`, `title`, `original_filename`, `disk`/`path`/`mime_type`/
+  `file_size`, `notes` — no `thumbnail_path`/`width`/`height`, those are Imaging-specific).
+- **`DocumentCategory`** enum: `consent_form | insurance | referral | clinical_summary |
+  correspondence | other` — drops the originally-proposed `lab_report` in favor of `clinical_summary`
+  (design doc §7/§16 decision 1) to avoid reading as "where lab results go" now that Laboratory
+  (Phase 2.4) already owns that workflow via `LabCase`.
+- **`GET/POST patients/{patient}/documents`, `GET documents/{id}/file` (named
+  `patient-documents.file`), `PUT/DELETE documents/{id}`** — patient-scoped only (design doc §16
+  decision 4): unlike Laboratory, there was no pre-existing flat `GET /documents` endpoint to
+  reconcile with, so this never adds one.
+- **`PatientDocumentService`** clones `PatientImageService`'s Storage-disk convention exactly
+  (resolve `config('filesystems.default')` once per call, store it explicitly per row, soft-delete
+  only — the underlying file is never removed from storage on delete) minus thumbnail generation
+  (generic documents don't need it). **One file per upload, not a batch** — a small, deliberate
+  deviation from `PatientImageService`'s shared-metadata batch convention: a document's title is
+  naturally per-file, so batching would force an awkward shared title across unrelated files.
+- **`PatientDocumentPolicy`** clones `PatientImagePolicy` exactly (design doc §9/§16 decision 2):
+  `viewAny`/`view` all staff, `create`/`update` Admin+Dentist+Receptionist, `delete` Admin-only.
+  Auto-discovered via Laravel's naming convention — no `Gate::policy()` registration needed.
+- **`patientDocuments.ts`** (Pinia store) — same id-keyed cache + per-patient page-tracking shape as
+  `patientLabCases.ts`, the standard convention every patient-scoped tab uses.
+- **`PatientDocumentsPanel.vue`** (new Documents tab, appended last after `billing` — design doc §8.1/
+  §16 decision 3, matching the umbrella doc's administrative-tabs IA grouping) — read/write: upload
+  via `AttachmentUpload.vue` (generalized from `UploadImagesDialog.vue`'s dropzone, single-file),
+  edit metadata via `EditDocumentDialog.vue`, list via `AttachmentList.vue` — a row list (mirroring
+  `PatientLabCasesPanel.vue`'s card-row convention) rather than Imaging's photo grid, since a
+  document's title/category/filename metadata is the primary identifying information.
+- **Permissions**: no new roles — `PatientDocumentPolicy` is the only new authorization surface,
+  fully specced in the design doc's §9 (approved as recommended, no deviations).
+- **i18n**: `patients.tabs.documents`, `patients.documentsPanel.*`, and a top-level `documents.*`
+  namespace added in `ar`/`en`/`tr`; 31/31 keys verified programmatically across all three locales.
+- **Tests**: backend +13 (upload/permissions/index-filter/update/delete/streaming) — full suite
+  1020/1020 green, Pint clean. Frontend +21 new tests (10 `patientDocuments.ts` store tests, 10
+  `PatientDocumentsPanel.vue` tests, +1 `PatientDetailView.test.ts` tab-rendering assertion) — full
+  suite 915/915 green, type-check/ESLint/Prettier clean.
 
 ### Added — Phase 2.4: Laboratory (`feature/patient-profile-phase2-4-laboratory`, merged 2026-08-08 via PR #24)
 - **Context**: fourth implementation sub-phase of Phase 2 (Patient Profile Redesign) — see

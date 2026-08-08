@@ -2,13 +2,58 @@
 
 | | |
 |---|---|
-| **Status** | **Draft — awaiting user approval.** Step 1 (current-state audit) complete; this doc proposes a spec for Step 2. No implementation has started — per this project's two-phase workflow, none will until §16's decisions are resolved. |
+| **Status** | **Approved and implemented 2026-08-08.** All 5 decisions in §16 were approved by the user as recommended (drop `lab_report` for `clinical_summary`, clone `PatientImagePolicy` exactly, tab last after Billing, patient-scoped-only route, clone `PatientImageService`'s storage-disk convention). Implemented on `feature/patient-profile-phase2-5-documents`, opened as a PR — see `docs/PROJECT_STATUS.md` §12 for current merge status. |
 | **Roadmap position** | Phase 2 (Patient Profile Redesign), sub-phase 2.5 of 7 — see `docs/PROJECT_STATUS.md` §12 and `docs/modules/patient-profile-redesign-design.md` §17. Follows 2.1 (Foundation, PR #18), 2.2 (Billing, PR #20), 2.3 (Medical History, PR #22), 2.4 (Laboratory, PR #24) — all merged to `main`. |
 | **Governing decisions inherited** | §0 item 3 and §9A of `docs/modules/patient-profile-redesign-design.md` are binding here unchanged — nothing in this doc revisits them. This doc is a **drill-down**, not a replacement: the umbrella doc's §5.2/§6/§7/§8/§10/§12/§17 already sketch this sub-phase in outline; this doc verifies that outline against the actual code on `main` today and turns it into an implementable spec. |
 | **Analysis basis** | Direct inspection of every Documents-adjacent backend/frontend file on `main` (post-PR #25, commit `21f594a`) — confirmed nothing Documents-related exists yet — plus the one real precedent for a patient-owned file entity, the Imaging module (`PatientImage`), read end-to-end: model, migration, service, controller, policy, routes, and frontend store. Also read the umbrella `patient-profile-redesign-design.md`'s Documents sections verbatim and `patient-laboratory-redesign-design.md` as this doc's structural template. **Not** an assumption that the umbrella doc's 2.5 outline still matches current code — see §1 for what that audit confirmed. |
 | **Author** | Claude Code, for user review. Every recommendation below is a proposal, not a decision — see §16 for the explicit approval list. |
 
 ---
+
+## Implementation Summary (added post-implementation, 2026-08-08)
+
+All 5 §16 decisions approved as recommended — no deviations. Implemented essentially as specced in
+§3-§11, with two small implementation-time judgment calls this doc's §4/§5 left open:
+
+- **§16 decisions 1-5**: all implemented exactly as recommended — `clinical_summary` category (not
+  `lab_report`), `PatientDocumentPolicy` auto-discovered with the exact `PatientImagePolicy` role
+  split, Documents tab appended last (after `billing`, matching `PatientDetailView.vue`'s existing
+  tab order), `GET/POST patients/{patient}/documents` + `GET documents/{id}/file` +
+  `PUT/DELETE documents/{id}` with no flat counterpart, and `PatientDocumentService::upload()`
+  resolves `config('filesystems.default')` once per call and stores it on the row exactly like
+  `PatientImageService`.
+- **§4.1/§6 relation/scope**: `Patient::documents()` and `PatientDocument::scopeForPatient()` added
+  exactly as specced (§1.4 finding 1's flagged gap).
+- **§9 policy registration**: confirmed auto-discovered, no `Gate::policy()` call added to
+  `AppServiceProvider.php` (§1.4 finding 2's flagged gap resolved as predicted).
+- **Judgment call not pinned by this doc: one file per upload, not a batch.** §4.3/§4.5 described
+  cloning `PatientImageService`'s upload pattern without settling batch-vs-single explicitly. Imaging
+  batches because a set of exposures from one visit genuinely shares one `image_type`/`taken_at`; a
+  document's title is naturally per-file, so a batch would force an awkward shared title across
+  unrelated files. `StorePatientDocumentRequest` takes a single `file`, not `files[]` — a small,
+  deliberate deviation from `StorePatientImageRequest`'s convention, documented inline in both the
+  Form Request and `PatientDocumentService`.
+- **Judgment call not pinned by this doc: `AttachmentList.vue` is a row list, not a photo grid.**
+  §4.5 described it as "generalized from `ImageThumbnail.vue`'s grid-cell pattern," which this
+  implementation follows for the *single-item component* shape, but renders as a row (mirroring
+  `PatientLabCasesPanel.vue`'s card-row list) rather than `PatientImagingPanel.vue`'s photo grid —
+  a document's title/category/filename metadata is the primary identifying information, unlike
+  Imaging's uniformly-visual photos, so a row reads better. Documented inline in the component.
+- **§9 permission matrix implemented in `PatientDocumentController`/`PatientDocumentPolicy`**: no new
+  policy methods beyond the 5 cloned from `PatientImagePolicy`.
+- **§10 pagination**: 15/page on the new endpoint, matching every other patient-scoped list.
+- **§11 i18n**: `patients.tabs.documents`, `patients.documentsPanel.*` (panel-local: title/upload/
+  empty), and a top-level `documents.*` namespace (shared field labels + `documents.categories.*`) —
+  31/31 keys verified programmatically across `ar`/`en`/`tr`.
+- **§13 Testing**: backend +13 tests (1020/1020 total, Pint clean; PHPStan's pre-existing local-only
+  `casts()`-model false positives confirmed unrelated — no `PatientDocument`/`DocumentCategory`
+  findings at all). Frontend +21 tests (10 `patientDocuments.ts` store tests, 10
+  `PatientDocumentsPanel.vue` tests, +1 `PatientDetailView.test.ts` tab-rendering assertion) — full
+  suite 915/915 green, type-check/ESLint/Prettier clean (re-verified against a stashed clean
+  baseline: 249 pre-existing flagged files codebase-wide, unrelated to this phase; this branch nets
+  to 247 after also fixing 2 pre-existing drift files it happened to touch).
+- **§14**: landed as one PR, as proposed (not split).
+- **§15**: no new deferrals — Timeline remains the only tab not yet started after this phase.
 
 ## 0. Why this doc exists separately from the umbrella design doc
 
