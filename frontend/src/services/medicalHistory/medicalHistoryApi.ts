@@ -64,7 +64,10 @@ export const medicalHistoryApi = {
     return data
   },
 
-  async updateCondition(id: string, payload: UpdateMedicalConditionPayload): Promise<PatientMedicalCondition> {
+  async updateCondition(
+    id: string,
+    payload: UpdateMedicalConditionPayload,
+  ): Promise<PatientMedicalCondition> {
     const { data } = await api.put<PatientMedicalCondition>(`/medical-conditions/${id}`, payload)
     return data
   },
@@ -73,7 +76,10 @@ export const medicalHistoryApi = {
     await api.delete(`/medical-conditions/${id}`)
   },
 
-  async listMedications(patientId: string, page?: number): Promise<PaginatedMedicalHistory<PatientMedication>> {
+  async listMedications(
+    patientId: string,
+    page?: number,
+  ): Promise<PaginatedMedicalHistory<PatientMedication>> {
     const { data } = await api.get<PaginatedMedicalHistory<PatientMedication>>(
       `/patients/${patientId}/medications`,
       { params: { page } },

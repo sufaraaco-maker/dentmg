@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, and Phase 2.3 (Medical History) implemented on `feature/patient-profile-phase2-3-medical-history` — backend (998/998 tests, Pint clean) and frontend (867/867 tests, type-check/lint clean) verified locally; **not yet committed, pushed, or opened as a PR** — awaiting the user's local review per their explicit instruction before any git action |
-| **Repo HEAD at time of writing** | `main` at `43ca5c7` (PR #20 merge: Phase 2.2 — Billing, on top of `d9b277f`'s PR #19 merge). Phase 2.3's changes exist only in the local working tree on `feature/patient-profile-phase2-3-medical-history`, not yet committed. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) implemented 2026-08-08, pending review/PR.** |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, and Phase 2.3 (Medical History) implemented and opened as **PR #22** — backend (998/998 tests, Pint clean) and frontend (867/867 tests, type-check/ESLint clean) verified locally; PR #22's first CI run caught one real Pint issue and 7 genuinely non-Prettier-compliant new files (a gap the initial local verification missed due to a flawed `git stash` comparison — see §12), both fixed in a follow-up commit, CI re-running. **Not merged** — stopped for the user's review per their explicit instruction |
+| **Repo HEAD at time of writing** | `main` at `43ca5c7` (PR #20 merge: Phase 2.2 — Billing, on top of `d9b277f`'s PR #19 merge). Phase 2.3's changes are on `feature/patient-profile-phase2-3-medical-history`, committed and pushed, open as PR #22 — not yet merged. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) implemented 2026-08-08, open as PR #22, awaiting review.** |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -119,7 +119,7 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-07 | **PR #15** merged (Phase 1 code + this file + `CLAUDE.md`), then **PR #14** merged. `main`'s CI fully green for the first time since 2026-08-01. `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness from §0 reconciled; `TECH_DEBT.md` updated with both resolutions. This file updated for Phase 1 close-out per its own §15 protocol. |
 | 2026-08-07 | **PR #16** merged after an independent final release verification (Backend + Frontend CI re-confirmed green firsthand, not taken on faith; `git merge-tree` confirmed no conflicts with `main`; diff checked for introduced TODO/FIXME — none found). **Milestone: "Phase 1 — Foundation Complete."** Immediate next step: Phase 2 (Patient Profile Redesign) design phase — see §12. |
 | 2026-08-07 | **Phase 2: Patient Profile Redesign — design phase begins.** Step 1 analysis (current hub + all 8 related modules + design system + permissions) approved by the user. Step 2 design doc written: `docs/modules/patient-profile-redesign-design.md` — merges Invoices+Payments into one Billing tab (backend stays split), structured Medical History (Allergies/Conditions/Medications/Notes), a V1 Documents foundation, and a dedicated `PatientActivity` event architecture for Timeline with per-category role-filtering as an explicit security requirement. No implementation code written yet — awaiting design approval per §12. |
-| 2026-08-08 | **Phase 2.3 (Medical History) implemented** on `feature/patient-profile-phase2-3-medical-history` — see §12 for full detail and the new `CHANGELOG.md` entry. Confirmed the "(proposed)" permission default the design doc's §10/§19 flagged for Medical History (view = all staff, write = Admin + Dentist) by implementation, matching `DentalChartEntryPolicy`'s closest existing pattern rather than inventing a new one. Backend 998/998 tests green (Pint clean); frontend 867/867 tests green, type-check/lint clean (local Prettier flags the same 235 pre-existing files it already flags on `main` before this branch's changes — confirmed via `git stash`, an environment-only drift, not a regression). Not yet committed/pushed/opened as a PR — stopped for the user's local review per their explicit instruction. |
+| 2026-08-08 | **Phase 2.3 (Medical History) implemented and opened as PR #22** on `feature/patient-profile-phase2-3-medical-history` — see §12 for full detail and the new `CHANGELOG.md` entry. Confirmed the "(proposed)" permission default the design doc's §10/§19 flagged for Medical History (view = all staff, write = Admin + Dentist) by implementation, matching `DentalChartEntryPolicy`'s closest existing pattern rather than inventing a new one. Backend 998/998 tests green (Pint clean); frontend 867/867 tests green, type-check/ESLint clean. PR #22's first CI run caught a real Pint `php_unit_method_casing` issue and 7 genuinely non-Prettier-compliant new files that an earlier flawed local `git stash`-based verification had missed — both fixed, branch re-verified to match `origin/main`'s exact 235-file pre-existing baseline (via a proper `git worktree` comparison), pushed as a follow-up commit. Not merged — stopped for the user's review per their explicit instruction. |
 
 ---
 
@@ -455,14 +455,27 @@ that migrates any non-empty legacy `patients.allergies` text into one best-effor
 patient (`patients.allergies` kept, deprecated, not dropped this phase — design doc §7), a `medicalHistory.ts`
 Pinia store + `MedicalHistoryPanel.vue` (three presentational list components + one create/edit dialog per
 entity), a new `medicalHistory` tab in `PatientDetailView.vue` right after Overview (design doc §4 tab
-order), and full `ar`/`en`/`tr` i18n parity. Backend: 998/998 tests green (Pint clean; PHPStan's
-`forPatient()`/`User::$role`/`$name` findings on the new files are the same pre-existing local-only false
-positives already confirmed on unmodified files like `ClinicalNoteController` — see `TECH_DEBT.md`). Frontend:
-867/867 tests green, type-check/lint clean (local `prettier --check` flags the same 235 files it already flags on
-unmodified `main`, confirmed via `git stash` — an environment-only version drift, not a regression). **Not
-yet committed, pushed, or opened as a PR** — the user's own instructions for this sub-phase explicitly said
-to stop at PR-readiness and wait for their local review before any git action, so this row will be updated
-again once that happens.
+order), and full `ar`/`en`/`tr` i18n parity (verified programmatically: 48/48 keys match across `ar`/`en`/`tr`).
+Backend: 998/998 tests green (Pint clean; PHPStan's `forPatient()`/`User::$role`/`$name` findings on the new
+files are the same pre-existing local-only false positives already confirmed on unmodified files like
+`ClinicalNoteController` — see `TECH_DEBT.md`). Frontend: 867/867 tests green, type-check/ESLint clean.
+
+**One real formatting gap found by CI, not local checks, and fixed**: PR #22's first CI run failed two jobs
+in under a minute — Backend Pint flagged `tests/Unit/Policies/MedicalHistoryPolicyTest.php` for
+`php_unit_method_casing` (three test method names mixed `viewAny` mid-identifier into otherwise-snake_case
+names, e.g. `test_allergy_viewAny_and_view_are_open_to_all_roles`), and Frontend's Format check flagged 7 of
+this phase's own new files as genuinely non-Prettier-compliant. **The earlier local verification claiming
+these were all "pre-existing, confirmed via `git stash`" was itself flawed**: `git stash` without `-u` does
+not stash untracked files, so the new `medicalHistory` files stayed present in both the "before" and "after"
+comparisons, making that comparison meaningless for judging whether *those specific new files* were
+compliant — it only validly covered modifications to already-tracked files (e.g. `PatientDetailView.vue`,
+which CI's Format check did **not** flag, confirming that file's pre-existing-drift claim was actually
+correct). Both issues fixed directly: the three test methods renamed to pure snake_case
+(`test_allergy_view_any_...`), the 7 files run through `prettier --write`. Re-verified with a proper
+`git worktree add ... origin/main` baseline check: this branch's `format:check` now reports **exactly 235**
+files — identical to real `origin/main`'s own count — confirming zero net-new Prettier issues remain, not
+just an assumption. All local checks (998/998 backend, 867/867 frontend, type-check, ESLint, Pint) re-run
+clean after the fix; pushed as a follow-up commit to PR #22, CI re-running.
 
 **Laboratory, Documents, and Timeline remain out of scope** until their respective sub-phases (2.4 onward).
 Tags/labels, in-record search, and PDF export remain named as deferred backlog (design doc §19.4), not

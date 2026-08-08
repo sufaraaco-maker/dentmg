@@ -90,7 +90,9 @@ describe('medicalHistoryApi medications', () => {
 
     await medicalHistoryApi.listMedications('patient-1')
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/patients/patient-1/medications', { params: { page: undefined } })
+    expect(mockedApi.get).toHaveBeenCalledWith('/patients/patient-1/medications', {
+      params: { page: undefined },
+    })
   })
 
   it('createMedication posts to the patient-nested route', async () => {

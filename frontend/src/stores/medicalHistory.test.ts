@@ -133,9 +133,7 @@ describe('useMedicalHistoryStore.fetchForPatient', () => {
 
 describe('useMedicalHistoryStore allergies mutations', () => {
   it('createAllergy refreshes page 1 so the new row is immediately visible', async () => {
-    mockedApi.listAllergies
-      .mockResolvedValueOnce(page([]))
-      .mockResolvedValueOnce(page([makeAllergy()]))
+    mockedApi.listAllergies.mockResolvedValueOnce(page([])).mockResolvedValueOnce(page([makeAllergy()]))
     mockedApi.createAllergy.mockResolvedValueOnce(makeAllergy())
 
     const store = useMedicalHistoryStore()
@@ -174,9 +172,7 @@ describe('useMedicalHistoryStore allergies mutations', () => {
 
 describe('useMedicalHistoryStore conditions mutations', () => {
   it('createCondition refreshes page 1', async () => {
-    mockedApi.listConditions
-      .mockResolvedValueOnce(page([]))
-      .mockResolvedValueOnce(page([makeCondition()]))
+    mockedApi.listConditions.mockResolvedValueOnce(page([])).mockResolvedValueOnce(page([makeCondition()]))
     mockedApi.createCondition.mockResolvedValueOnce(makeCondition())
 
     const store = useMedicalHistoryStore()
@@ -212,9 +208,7 @@ describe('useMedicalHistoryStore conditions mutations', () => {
 
 describe('useMedicalHistoryStore medications mutations', () => {
   it('createMedication refreshes page 1', async () => {
-    mockedApi.listMedications
-      .mockResolvedValueOnce(page([]))
-      .mockResolvedValueOnce(page([makeMedication()]))
+    mockedApi.listMedications.mockResolvedValueOnce(page([])).mockResolvedValueOnce(page([makeMedication()]))
     mockedApi.createMedication.mockResolvedValueOnce(makeMedication())
 
     const store = useMedicalHistoryStore()

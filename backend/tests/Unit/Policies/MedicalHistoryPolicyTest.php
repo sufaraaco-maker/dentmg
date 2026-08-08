@@ -37,7 +37,7 @@ class MedicalHistoryPolicyTest extends TestCase
 
     // ---- Direct policy-method calls, exhaustive per model -----------------------------------
 
-    public function test_allergy_viewAny_and_view_are_open_to_all_roles(): void
+    public function test_allergy_view_any_and_view_are_open_to_all_roles(): void
     {
         $allergy = PatientAllergy::factory()->create();
 
@@ -68,7 +68,7 @@ class MedicalHistoryPolicyTest extends TestCase
         $this->assertFalse($this->policy->delete($receptionist, $allergy));
     }
 
-    public function test_medical_condition_viewAny_and_view_are_open_to_all_roles(): void
+    public function test_medical_condition_view_any_and_view_are_open_to_all_roles(): void
     {
         $condition = PatientMedicalCondition::factory()->create();
 
@@ -99,7 +99,7 @@ class MedicalHistoryPolicyTest extends TestCase
         $this->assertFalse($this->policy->delete($receptionist, $condition));
     }
 
-    public function test_medication_viewAny_and_view_are_open_to_all_roles(): void
+    public function test_medication_view_any_and_view_are_open_to_all_roles(): void
     {
         $medication = PatientMedication::factory()->create();
 

@@ -14,7 +14,10 @@ defineProps<{
   canWrite: boolean
 }>()
 
-const emit = defineEmits<{ edit: [condition: PatientMedicalCondition]; delete: [condition: PatientMedicalCondition] }>()
+const emit = defineEmits<{
+  edit: [condition: PatientMedicalCondition]
+  delete: [condition: PatientMedicalCondition]
+}>()
 
 const { t, locale } = useI18n()
 

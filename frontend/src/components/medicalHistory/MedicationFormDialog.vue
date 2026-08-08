@@ -109,7 +109,8 @@ async function submit() {
     emit('update:visible', false)
   } catch (err: unknown) {
     if ((err as { response?: { status?: number } })?.response?.status === 422) {
-      errors.value = (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
+      errors.value =
+        (err as { response: { data: { errors?: Record<string, string[]> } } }).response.data.errors ?? {}
     } else {
       toast.add({ severity: 'error', summary: t('medicalHistory.dialog.saveError'), life: 3000 })
     }
@@ -166,7 +167,13 @@ async function submit() {
           <label class="text-sm text-surface-700 dark:text-surface-200">{{
             t('medicalHistory.medications.endDate')
           }}</label>
-          <DatePicker v-model="form.end_date" date-format="yy-mm-dd" show-icon fluid :invalid="!!errors.end_date" />
+          <DatePicker
+            v-model="form.end_date"
+            date-format="yy-mm-dd"
+            show-icon
+            fluid
+            :invalid="!!errors.end_date"
+          />
           <Message v-if="errors.end_date" severity="error" size="small">{{ errors.end_date[0] }}</Message>
         </div>
       </div>
@@ -179,7 +186,9 @@ async function submit() {
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('medicalHistory.dialog.notes') }}</label>
+        <label class="text-sm text-surface-700 dark:text-surface-200">{{
+          t('medicalHistory.dialog.notes')
+        }}</label>
         <Textarea v-model="form.notes" rows="3" auto-resize maxlength="2000" />
       </div>
 
