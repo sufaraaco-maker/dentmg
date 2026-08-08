@@ -108,6 +108,11 @@ class Patient extends Model
         return $this->hasMany(PatientDocument::class);
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(PatientActivity::class);
+    }
+
     public function medicalConditions(): HasMany
     {
         return $this->hasMany(PatientMedicalCondition::class);

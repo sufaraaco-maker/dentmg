@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\PatientActivityOccurred;
 use App\Models\Patient;
 use App\Models\PatientDocument;
 use App\Models\User;
@@ -61,7 +62,7 @@ class PatientDocumentService
             throw new \RuntimeException('Failed to store the uploaded document.');
         }
 
-        return PatientDocument::create([
+        $document = PatientDocument::create([
             'patient_id' => $patient->id,
             'uploaded_by' => $uploader->id,
             'category' => $metadata['category'],
@@ -73,5 +74,11 @@ class PatientDocumentService
             'file_size' => $file->getSize(),
             'notes' => $metadata['notes'] ?? null,
         ]);
+
+        event(new PatientActivityOccurred(
+            $document, $uploader, 'document.uploaded', 'documents', "Document uploaded: {$document->title}",
+        ));
+
+        return $document;
     }
 }

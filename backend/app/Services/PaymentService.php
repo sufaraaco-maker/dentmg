@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\Payment\InvalidPaymentOperationException;
 use App\Exceptions\Payment\PaymentRefundExceedsRemainingBalanceException;
 use App\Models\BillingSetting;
@@ -35,7 +36,7 @@ class PaymentService
 
         $method = $data['method'] instanceof PaymentMethod ? $data['method'] : PaymentMethod::from($data['method']);
 
-        return Payment::create([
+        $payment = Payment::create([
             'patient_id' => $data['patient_id'],
             'invoice_id' => $invoiceId,
             'refunded_payment_id' => null,
@@ -49,6 +50,13 @@ class PaymentService
             'received_at' => $data['received_at'] ?? now()->toDateString(),
             'created_by_id' => $actor->id,
         ]);
+
+        event(new PatientActivityOccurred(
+            $payment, $actor, 'payment.recorded', 'billing',
+            "Payment of {$payment->currency_code} {$amount} recorded",
+        ));
+
+        return $payment;
     }
 
     /**
@@ -126,7 +134,7 @@ class PaymentService
                 throw new PaymentRefundExceedsRemainingBalanceException($remaining);
             }
 
-            return Payment::create([
+            $refund = Payment::create([
                 'patient_id' => $locked->patient_id,
                 'invoice_id' => $locked->invoice_id,
                 'refunded_payment_id' => $locked->id,
@@ -138,6 +146,13 @@ class PaymentService
                 'received_at' => now()->toDateString(),
                 'created_by_id' => $actor->id,
             ]);
+
+            event(new PatientActivityOccurred(
+                $refund, $actor, 'payment.refunded', 'billing',
+                "Payment of {$refund->currency_code} {$amount} refunded",
+            ));
+
+            return $refund;
         });
     }
 

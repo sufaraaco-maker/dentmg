@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\MedicalHistoryController;
+use App\Http\Controllers\Api\PatientActivityController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientImageController;
@@ -194,6 +195,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('documents/{patient_document}/file', [PatientDocumentController::class, 'file'])->name('patient-documents.file');
     Route::put('documents/{patient_document}', [PatientDocumentController::class, 'update']);
     Route::delete('documents/{patient_document}', [PatientDocumentController::class, 'destroy']);
+
+    // Patient Profile's Timeline tab (Phase 2.6a). Read-only — activity rows are written only by
+    // RecordsPatientActivity, never via a user-facing endpoint.
+    Route::get('patients/{patient}/activities', [PatientActivityController::class, 'index']);
 
     Route::get('reports/production', [ReportController::class, 'production']);
     Route::get('reports/collections', [ReportController::class, 'collections']);
