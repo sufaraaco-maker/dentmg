@@ -8,14 +8,22 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { usePaymentsStore } from '@/stores/payments'
 import { useInvoicesStore } from '@/stores/invoices'
+import { invoicesApi } from '@/services/invoices'
 import { isPaymentError } from '@/services/payments'
 import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
+import type { Invoice } from '@/types/invoice'
 import type { Payment } from '@/types/payment'
 
 /**
  * Applies a currently-unapplied payment to a specific issued invoice (backend design doc §3/§8) —
  * allowed exactly once, full-amount only. Lists only the patient's `issued` invoices, since that's
  * the only status PaymentService::apply() accepts.
+ *
+ * Fetches directly via `invoicesApi.listIssued()` (TECH_DEBT.md, Phase 2.2) rather than reading
+ * `invoicesStore.invoicesForPatient()` — that getter now only reflects the patient's
+ * most-recently-viewed page (invoices are paginated as of Phase 2.2), which would silently hide an
+ * older issued invoice from this picker. This dialog's data isn't shared with any other component,
+ * so a small dialog-local fetch is simpler than routing it through the store.
  */
 const props = defineProps<{
   visible: boolean
@@ -35,15 +43,13 @@ const invoicesStore = useInvoicesStore()
 const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
 const selectedInvoiceId = ref<string | null>(null)
+const issuedInvoices = ref<Invoice[]>([])
 
 const invoiceOptions = computed(() =>
-  invoicesStore
-    .invoicesForPatient(props.payment.patient_id)
-    .filter((invoice) => invoice.status === 'issued')
-    .map((invoice) => ({
-      label: `${invoice.invoice_number} — ${invoice.balance_due ?? invoice.total ?? '0.00'} ${invoice.currency_code}`,
-      value: invoice.id,
-    })),
+  issuedInvoices.value.map((invoice) => ({
+    label: `${invoice.invoice_number} — ${invoice.balance_due ?? invoice.total ?? '0.00'} ${invoice.currency_code}`,
+    value: invoice.id,
+  })),
 )
 
 watch(
@@ -52,7 +58,7 @@ watch(
     if (!visible) return
     errors.value = {}
     selectedInvoiceId.value = null
-    await invoicesStore.fetchForPatient(props.payment.patient_id)
+    issuedInvoices.value = await invoicesApi.listIssued(props.payment.patient_id)
   },
   { immediate: true },
 )

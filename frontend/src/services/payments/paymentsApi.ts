@@ -8,11 +8,28 @@ import type {
   UpdatePaymentPayload,
 } from '@/types/payment'
 
+export interface PaginatedPayments {
+  data: Payment[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
+
 export const paymentsApi = {
-  // GET /api/patients/{patient}/payments is deliberately not paginated — a patient's lifetime
-  // payment count stays small (backend design doc §9), same documented exception class as Invoices.
-  async list(patientId: string): Promise<Payment[]> {
-    const { data } = await api.get<Payment[]>(`/patients/${patientId}/payments`)
+  // Paginated (Phase 2.2, design doc §11/§14.4 — deferred from Phase 2.1, see TECH_DEBT.md's
+  // now-resolved entry): 15/page, same convention as `invoicesApi.list()`.
+  async list(patientId: string, page?: number): Promise<PaginatedPayments> {
+    const { data } = await api.get<PaginatedPayments>(`/patients/${patientId}/payments`, {
+      params: { page },
+    })
+    return data
+  },
+
+  /** Payments applied to one specific invoice (TECH_DEBT.md, Phase 2.2) — backs
+   *  `InvoicePaymentsPanel.vue` directly, replacing its former client-side filter of the full
+   *  patient-level payment list. */
+  async listForInvoice(invoiceId: string, page?: number): Promise<PaginatedPayments> {
+    const { data } = await api.get<PaginatedPayments>(`/invoices/${invoiceId}/payments`, {
+      params: { page },
+    })
     return data
   },
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingSettingController;
+use App\Http\Controllers\Api\BillingSummaryController;
 use App\Http\Controllers\Api\ClinicalNoteController;
 use App\Http\Controllers\Api\ClinicSettingController;
 use App\Http\Controllers\Api\DashboardController;
@@ -98,6 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('patients/{patient}/treatment-plan-items/billable', [InvoiceController::class, 'billableTreatmentPlanItems']);
 
+    Route::get('patients/{patient}/billing-summary', [BillingSummaryController::class, 'show']);
+
     Route::get('patients/{patient}/invoices', [InvoiceController::class, 'index']);
     Route::post('patients/{patient}/invoices', [InvoiceController::class, 'store']);
     Route::get('invoices', [InvoiceController::class, 'indexAll']);
@@ -106,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue']);
     Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
     Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::get('invoices/{invoice}/payments', [PaymentController::class, 'forInvoice']);
 
     Route::post('invoices/{invoice}/items', [InvoiceItemController::class, 'store']);
     Route::put('invoice-items/{invoice_item}', [InvoiceItemController::class, 'update']);

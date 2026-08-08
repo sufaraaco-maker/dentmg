@@ -6,6 +6,7 @@ import DataTable from 'primevue/datatable'
 import PatientDetailView from './PatientDetailView.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
+import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Patient } from '@/types/patient'
 import type { UserRole } from '@/types/user'
@@ -82,7 +83,7 @@ async function mountView(role: UserRole) {
   const wrapper = mount(PatientDetailView, {
     global: {
       plugins: [router],
-      stubs: { PatientAppointmentsPanel: true, PatientDentalChartPanel: true },
+      stubs: { PatientAppointmentsPanel: true, PatientDentalChartPanel: true, PatientBillingPanel: true },
     },
   })
   await flushPromises()
@@ -120,6 +121,24 @@ describe('PatientDetailView — tabs', () => {
     const panel = wrapper.findComponent(PatientDentalChartPanel)
     expect(panel.exists()).toBe(true)
     expect(panel.props('patientId')).toBe('patient-1')
+  })
+
+  it('renders PatientBillingPanel, scoped to the current patient, in the merged Billing tab (Phase 2.2)', async () => {
+    const wrapper = await mountView('admin')
+    await clickTab(wrapper, 'Billing')
+    await flushPromises()
+
+    const panel = wrapper.findComponent(PatientBillingPanel)
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('patientId')).toBe('patient-1')
+  })
+
+  it('no longer has separate Invoices/Payments tabs (collapsed into Billing)', async () => {
+    const wrapper = await mountView('admin')
+    const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
+    expect(tabLabels).not.toContain('Invoices')
+    expect(tabLabels).not.toContain('Payments')
+    expect(tabLabels).toContain('Billing')
   })
 })
 

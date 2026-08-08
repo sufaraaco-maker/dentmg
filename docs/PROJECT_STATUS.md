@@ -15,9 +15,9 @@
 
 | | |
 |---|---|
-| **Last updated** | 2026-08-07 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17 recording that merge + the milestone below), then Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) implementation, and PR #18 merge — Phase 2.2 (Billing) is next |
-| **Repo HEAD at time of writing** | `main` at `21af360` (PR #18 merge: Phase 2.1 — Patient Profile Foundation). |
+| **Last updated** | 2026-08-08 |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18, its docs close-out merged via PR #19, and Phase 2.2 (Billing) implemented on `feature/patient-profile-phase2-2-billing` (backend + frontend green: 952 backend tests, 832 frontend tests) |
+| **Repo HEAD at time of writing** | `main` at `d9b277f` (PR #19 merge: Phase 2.1 docs close-out, on top of `21af360`'s PR #18 merge). Phase 2.2 (PR #20) is CI-green and pending merge. |
 | **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18.** |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
@@ -389,7 +389,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.2: Billing tab (Patient Profile Redesign)** | Next sub-phase per the approved design doc's §17 sequencing; merges Invoices+Payments into one tab (Outstanding Balance hero, summary cards, `SelectButton` switcher), adds full pagination to both plus the missing invoice-scoped payments endpoint | High — the roadmap's own next priority | Medium (scope approved 2026-08-07; design doc + `TECH_DEBT.md` already name the concrete pagination/endpoint work) | Phase 2.1 (merged, PR #18) |
+| 1 | **Phase 2.3: Medical History (Patient Profile Redesign)** | Next sub-phase per the approved design doc's §17 sequencing, once Phase 2.2 (Billing) merges: new tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of the existing free-text `allergies` field | High — the roadmap's own next priority | Medium | Phase 2.2 (Billing) merged |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
 | 4 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
@@ -404,43 +404,54 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 ## 12. Immediate Next Step
 
-**Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to `main`
-via PR #18 (2026-08-07, merge commit `21af360`); Phase 2.2 (Billing) starts now.** Step 1 (analysis) and
-Step 2 (design document, `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing
-decisions: merge Invoices+Payments into one Billing tab (backend stays split), a structured Medical History
-foundation (Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no
-versioning/sharing/OCR yet), and a dedicated `PatientActivity` event architecture for Timeline — formally
-elevated to a **Security Architecture Decision** (design doc §9A, `docs/decisions.md` 2026-08-07 entry):
-Timeline permissions are enforced server-side, per category, never client-side.
+**Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to
+`main` via PR #18 (2026-08-07); Phase 2.2 (Billing) is implemented on
+`feature/patient-profile-phase2-2-billing` (PR #20), CI-green, pending merge; Phase 2.3 (Medical
+History) is next.** Step 1 (analysis) and Step 2 (design document,
+`docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
+Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
+(Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/
+OCR yet), and a dedicated `PatientActivity` event architecture for Timeline — formally elevated to a
+**Security Architecture Decision** (design doc §9A, `docs/decisions.md` 2026-08-07 entry): Timeline
+permissions are enforced server-side, per category, never client-side.
 
 Implementation is sequenced into 7 sub-phases (design doc §17), each its own PR, low-risk-first.
-**Phase 2.1 (Foundation) shipped in PR #18**: `patients.ts` Pinia store (patient-level state only, not a
-replacement for domain stores like `treatmentPlans.ts`/`invoices.ts`), `patientImages.ts` store (Imaging
-retrofit), pagination added to Treatment Plans/Clinical Notes' patient-scoped endpoints (15/page), a
-config-driven tab list in `PatientDetailView.vue`, `EmptyState.vue` (first component in a new
-`components/common/` folder) retrofitted into the touched panels, and the Patients-module Lucide migration.
-Backend + Frontend CI green both pre-merge and on `main` post-merge; E2E skipped per project convention.
-**One scope adjustment found during implementation, not planned upfront**: Invoices/Payments pagination was
-deferred to Phase 2.2 rather than shipped in 2.1 — `ApplyPaymentDialog.vue`'s invoice picker and
-`InvoicePaymentsPanel.vue` both assume the full unpaginated per-patient set, a coupling Treatment
-Plans/Clinical Notes don't share; see the `TECH_DEBT.md` entry (revisit: Phase 2.2). This was reviewed and
-confirmed the right call — a partial pagination rollout in 2.1 risked regressions in exactly those two
-components.
 
-**Phase 2.2 (Billing) scope, approved 2026-08-07**: Patient Billing tab (merges Invoices+Payments per the
-design doc's governing decision) with an Outstanding Balance hero, billing summary cards, and a
-`SelectButton` switcher across Invoices / Payments / Payment History; full pagination for both
-invoices and payments, including the missing invoice-scoped payments endpoint and the
-`ApplyPaymentDialog.vue`/`InvoicePaymentsPanel.vue` rework named above. `InvoiceService`/`PaymentService`
-are not to be modified except where a clear technical need arises. Follows the same
-Route → Scope → Store → Panel pattern as every prior tab. **Out of scope for 2.2**: Medical History,
-Timeline, Documents, Laboratory — those remain later sub-phases per the design doc's §17 sequencing.
+**Phase 2.1 (Foundation), merged via PR #18**: `patients.ts` Pinia store (patient-level state only, not
+a replacement for domain stores like `treatmentPlans.ts`/`invoices.ts`), `patientImages.ts` store
+(Imaging retrofit), pagination added to Treatment Plans/Clinical Notes' patient-scoped endpoints
+(15/page), a config-driven tab list in `PatientDetailView.vue`, `EmptyState.vue` (first component in a
+new `components/common/` folder) retrofitted into the touched panels, and the Patients-module Lucide
+migration. One scope adjustment found during implementation: Invoices/Payments pagination was deferred
+to Phase 2.2 — see that entry below for the resolution.
+
+**Phase 2.2 (Billing), implemented on PR #20, CI-green, pending merge**: the former separate Invoices/Payments tabs collapse
+into one **Billing** tab (`PatientBillingPanel.vue`) with an Outstanding Balance hero + summary row
+(`BillingSummaryCard.vue`, fed by a new `GET /patients/{patient}/billing-summary` aggregate endpoint —
+`BillingSummaryService`, SQL-aggregate-only per design doc §11.4) and a `SelectButton` switching
+between Invoices/Payments (both **reused as-is**, zero edits, per §5.1) and a Payment History
+placeholder (`FutureFeaturePlaceholder.vue` — the real Timeline-backed feature isn't buildable until
+Phase 2.6). Resolves Phase 2.1's deferred pagination debt: `InvoiceController::index()`/
+`PaymentController::index()` now paginate (15/page); the new `GET /invoices/{invoice}/payments`
+endpoint replaces `InvoicePaymentsPanel.vue`'s former client-side filter; `ApplyPaymentDialog.vue`'s
+invoice picker now uses a dedicated `?status=issued` fetch instead of the paginated store getter. Also
+adds a mobile (`<768px`) dropdown tab switcher to `PatientDetailView.vue` (previously had none).
+`InvoiceService`/`PaymentService` were **not** modified — the new aggregate lives in a standalone
+`BillingSummaryService` instead, and the new endpoint queries `Invoice::payments()` directly. No DB
+migration needed. Backend: 952 tests green (Pint clean). Frontend: 832 tests green, type-check/lint
+clean. **One new deliberate trade-off logged in `TECH_DEBT.md`**: since `PatientInvoicesPanel.vue`/
+`PatientPaymentsPanel.vue` are reused unchanged, they show only page 1 (no `Paginator`) inside the
+Billing tab.
+
+**Medical History, Laboratory, Documents, and Timeline remain out of scope** until their respective
+sub-phases (2.3 onward). Tags/labels, in-record search, and PDF export remain named as deferred
+backlog (design doc §19.4), not dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign
 immediately after Stabilization (§11 item 1), and it's large enough (new tabs, IA changes, several genuinely
 new features) that starting implementation without a design-approval round first would break from the
-two-phase workflow every prior module has followed. Competing candidates (Billing/Payments/Treatment-Plans
+two-phase workflow every prior module has followed. Competing candidates (Payments/Treatment-Plans
 E2E gap, remaining Premium Visual Redesign steps, S3 backup) are all real but lower-priority per the
 roadmap's own stated order — see §11 for the full list.
 

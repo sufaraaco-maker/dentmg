@@ -188,8 +188,10 @@
       "imaging": "Imaging",
       "treatmentPlans": "Treatment Plans",
       "clinicalNotes": "Clinical Notes",
-      "invoices": "Invoices",
-      "payments": "Payments"
+      "billing": "Billing"
+    },
+    "tabSwitcher": {
+      "label": "Switch section"
     },
     "sections": {
       "demographics": "Demographics",
@@ -233,6 +235,28 @@
       "title": "Payments",
       "new": "Record Payment",
       "empty": "No payments recorded for this patient yet."
+    },
+    "billingPanel": {
+      "loadError": "Failed to load billing summary",
+      "outstandingBalance": "Outstanding Balance",
+      "totalInvoiced": "Total Invoiced",
+      "totalPaid": "Total Paid",
+      "invoiceCount": "Invoice Count",
+      "lastPaymentDate": "Last Payment Date",
+      "never": "Never",
+      "statuses": {
+        "paid": "Paid",
+        "partial": "Partial",
+        "overdue": "Overdue",
+        "no_activity": "No Activity"
+      },
+      "switcher": {
+        "label": "Billing section",
+        "invoices": "Invoices",
+        "payments": "Payments",
+        "paymentHistory": "Payment History"
+      },
+      "paymentHistoryTitle": "Payment History"
     }
   },
   "appointments": {

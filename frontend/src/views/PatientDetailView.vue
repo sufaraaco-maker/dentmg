@@ -15,6 +15,7 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
+import Select from 'primevue/select'
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { usePatientsStore } from '@/stores/patients'
@@ -26,8 +27,7 @@ import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChar
 import PatientImagingPanel from '@/components/imaging/PatientImagingPanel.vue'
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
 import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
-import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
-import PatientPaymentsPanel from '@/components/payments/PatientPaymentsPanel.vue'
+import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -44,12 +44,16 @@ const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
 
 /**
  * Config-driven tab list (Phase 2.1 structure cleanup, design doc §17 2.1) — each future tab this
- * redesign adds (Medical History, Laboratory, Billing, Documents, Timeline) extends this array for
- * its label/visibility instead of duplicating a `v-if` in both `TabList` and `TabPanels`
- * separately, the way `clinicalNotes` had to before this. `TabPanel` content still can't be
- * generalized the same way — each panel hosts a genuinely different component with different
- * props — so `TabPanels` below stays explicit per tab, but reads the same `visible` flag from here
- * rather than re-deriving it.
+ * redesign adds (Medical History, Laboratory, Documents, Timeline) extends this array for its
+ * label/visibility instead of duplicating a `v-if` in both `TabList` and `TabPanels` separately,
+ * the way `clinicalNotes` had to before this. `TabPanel` content still can't be generalized the
+ * same way — each panel hosts a genuinely different component with different props — so
+ * `TabPanels` below stays explicit per tab, but reads the same `visible` flag from here rather
+ * than re-deriving it.
+ *
+ * Phase 2.2: the former separate `invoices`/`payments` entries collapse into one `billing` entry
+ * (design doc §0/§3/§4) — `PatientBillingPanel.vue` now composes the two reused-as-is panels
+ * internally via its own `SelectButton` switcher, instead of them being sibling tabs here.
  */
 const tabDefinitions = computed(() => [
   { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
@@ -58,11 +62,15 @@ const tabDefinitions = computed(() => [
   { key: 'imaging', labelKey: 'patients.tabs.imaging', visible: true },
   { key: 'treatmentPlans', labelKey: 'patients.tabs.treatmentPlans', visible: true },
   { key: 'clinicalNotes', labelKey: 'patients.tabs.clinicalNotes', visible: canAccessClinicalNotes.value },
-  { key: 'invoices', labelKey: 'patients.tabs.invoices', visible: true },
-  { key: 'payments', labelKey: 'patients.tabs.payments', visible: true },
+  { key: 'billing', labelKey: 'patients.tabs.billing', visible: true },
 ])
 
 const visibleTabs = computed(() => tabDefinitions.value.filter((tab) => tab.visible))
+
+// Mobile dropdown switcher (design doc §17 2.2 — "needed now since Billing's merge changes the tab
+// count"): this view had no <768px fallback for its `TabList` before Phase 2.2. `activeTab` drives
+// both the desktop `TabList` and this `Select`, via `Tabs`' controlled `v-model:value`.
+const activeTab = ref('overview')
 
 function formatDate(value: string) {
   return parseLocalDate(value).toLocaleDateString(locale.value)
@@ -169,10 +177,26 @@ onMounted(() => {
 
     <Skeleton v-if="loading" height="20rem" />
 
-    <Tabs v-else-if="patient" value="overview">
-      <TabList>
-        <Tab v-for="tab in visibleTabs" :key="tab.key" :value="tab.key">{{ t(tab.labelKey) }}</Tab>
-      </TabList>
+    <Tabs v-else-if="patient" v-model:value="activeTab">
+      <div class="hidden md:block">
+        <TabList>
+          <Tab v-for="tab in visibleTabs" :key="tab.key" :value="tab.key">{{ t(tab.labelKey) }}</Tab>
+        </TabList>
+      </div>
+      <Select
+        v-model="activeTab"
+        class="md:hidden"
+        :options="visibleTabs"
+        option-label="labelKey"
+        option-value="key"
+        fluid
+        :aria-label="t('patients.tabSwitcher.label')"
+      >
+        <template #option="{ option }">{{ t(option.labelKey) }}</template>
+        <template #value="{ value }">{{
+          t(visibleTabs.find((tab) => tab.key === value)?.labelKey ?? '')
+        }}</template>
+      </Select>
       <TabPanels>
         <TabPanel value="overview">
           <div class="grid grid-cols-1 gap-4 pt-2 lg:grid-cols-2">
@@ -292,15 +316,9 @@ onMounted(() => {
           </div>
         </TabPanel>
 
-        <TabPanel value="invoices">
+        <TabPanel value="billing">
           <div class="pt-2">
-            <PatientInvoicesPanel :patient-id="patientId" />
-          </div>
-        </TabPanel>
-
-        <TabPanel value="payments">
-          <div class="pt-2">
-            <PatientPaymentsPanel :patient-id="patientId" />
+            <PatientBillingPanel :patient-id="patientId" />
           </div>
         </TabPanel>
       </TabPanels>

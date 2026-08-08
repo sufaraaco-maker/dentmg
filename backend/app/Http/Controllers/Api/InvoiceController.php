@@ -27,24 +27,26 @@ class InvoiceController extends Controller
     public function __construct(private InvoiceService $invoiceService) {}
 
     /**
-     * Not paginated yet — deliberately deferred to Phase 2.2 (Billing), not Phase 2.1
-     * (`patient-profile-redesign-design.md` §11/§14.4 lists this as a Phase 2.1 item, but
-     * implementation found a real coupling risk Treatment Plans/Clinical Notes don't have:
-     * `ApplyPaymentDialog.vue` reads `invoicesStore.invoicesForPatient()` to populate its "apply
-     * this payment to" picker, assuming the full unpaginated set — paginating here without first
-     * addressing that picker would silently hide older invoices from it. Phase 2.2 touches this
-     * exact picker anyway as part of the Billing merge, so the pagination + picker fix land
-     * together instead of paginating first and breaking the picker in between).
+     * Paginated (Phase 2.2, design doc §11/§14.4 — deferred from Phase 2.1, see TECH_DEBT.md's
+     * now-resolved entry): 15/page, same convention as every other patient-scoped list endpoint.
+     * `?status=` optionally narrows to one status (e.g. `issued`) — used by
+     * `ApplyPaymentDialog.vue`'s invoice picker (`invoicesApi.listIssued()`), which needs every
+     * issued invoice for a patient regardless of pagination, not just whatever's on the current
+     * page. `tryFrom`, not `from` — an unrecognized value is ignored (no filter applied) rather
+     * than a 500, same convention as `indexAll()` below.
      */
-    public function index(Patient $patient)
+    public function index(Request $request, Patient $patient)
     {
         $this->authorize('viewAny', Invoice::class);
 
+        $status = $request->filled('status') ? InvoiceStatus::tryFrom($request->string('status')->value()) : null;
+
         $invoices = Invoice::query()
             ->forPatient($patient->id)
+            ->when($status, fn ($query, InvoiceStatus $status) => $query->withStatus($status))
             ->with(self::WITH)
             ->latest()
-            ->get();
+            ->paginate($status ? 100 : 15);
 
         return InvoiceResource::collection($invoices);
     }

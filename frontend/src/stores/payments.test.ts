@@ -7,6 +7,7 @@ import type { Payment } from '@/types/payment'
 vi.mock('@/services/payments', () => ({
   paymentsApi: {
     list: vi.fn(),
+    listForInvoice: vi.fn(),
     record: vi.fn(),
     get: vi.fn(),
     update: vi.fn(),
@@ -38,6 +39,21 @@ function makePayment(overrides: Partial<Payment> = {}): Payment {
   }
 }
 
+function makePage(
+  payments: Payment[],
+  overrides: Partial<{ current_page: number; last_page: number; per_page: number; total: number }> = {},
+) {
+  return {
+    data: payments,
+    meta: {
+      current_page: overrides.current_page ?? 1,
+      last_page: overrides.last_page ?? 1,
+      per_page: overrides.per_page ?? 15,
+      total: overrides.total ?? payments.length,
+    },
+  }
+}
+
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.clearAllMocks()
@@ -45,17 +61,17 @@ beforeEach(() => {
 
 describe('usePaymentsStore.fetchForPatient', () => {
   it('fetches and caches a patient’s payments', async () => {
-    mockedApi.list.mockResolvedValueOnce([makePayment()])
+    mockedApi.list.mockResolvedValueOnce(makePage([makePayment()]))
     const store = usePaymentsStore()
 
     await store.fetchForPatient('patient-1')
 
     expect(store.paymentsForPatient('patient-1')).toHaveLength(1)
-    expect(mockedApi.list).toHaveBeenCalledTimes(1)
+    expect(mockedApi.list).toHaveBeenCalledWith('patient-1', 1)
   })
 
-  it('skips the network call on a second fetch for the same patient', async () => {
-    mockedApi.list.mockResolvedValue([makePayment()])
+  it('skips the network call on a second fetch for the same patient and page', async () => {
+    mockedApi.list.mockResolvedValue(makePage([makePayment()]))
     const store = usePaymentsStore()
 
     await store.fetchForPatient('patient-1')
@@ -65,11 +81,11 @@ describe('usePaymentsStore.fetchForPatient', () => {
   })
 
   it('refetches when force is true', async () => {
-    mockedApi.list.mockResolvedValue([makePayment()])
+    mockedApi.list.mockResolvedValue(makePage([makePayment()]))
     const store = usePaymentsStore()
 
     await store.fetchForPatient('patient-1')
-    await store.fetchForPatient('patient-1', true)
+    await store.fetchForPatient('patient-1', 1, true)
 
     expect(mockedApi.list).toHaveBeenCalledTimes(2)
   })
@@ -83,17 +99,15 @@ describe('usePaymentsStore.fetchForPatient', () => {
     expect(store.error).toBe('payments.loadError')
     expect(store.loading).toBe(false)
   })
-})
 
-describe('usePaymentsStore.paymentsForPatient / paymentsForInvoice', () => {
-  it('paymentsForPatient only returns that patient’s payments, most recently received first', async () => {
+  it('paymentsForPatient only returns the current page’s payments, most recently received first', async () => {
     mockedApi.list.mockImplementation(async (patientId: string) =>
       patientId === 'patient-1'
-        ? [
+        ? makePage([
             makePayment({ id: 'payment-1', received_at: '2026-07-01' }),
             makePayment({ id: 'payment-2', received_at: '2026-07-20' }),
-          ]
-        : [makePayment({ id: 'payment-3', patient_id: 'patient-2' })],
+          ])
+        : makePage([makePayment({ id: 'payment-3', patient_id: 'patient-2' })]),
     )
     const store = usePaymentsStore()
 
@@ -103,28 +117,84 @@ describe('usePaymentsStore.paymentsForPatient / paymentsForInvoice', () => {
     expect(store.paymentsForPatient('patient-1').map((p) => p.id)).toEqual(['payment-2', 'payment-1'])
   })
 
-  it('paymentsForInvoice filters by invoice_id only', async () => {
-    mockedApi.list.mockResolvedValueOnce([
-      makePayment({ id: 'payment-1', invoice_id: 'invoice-1' }),
-      makePayment({ id: 'payment-2', invoice_id: null }),
-    ])
+  it('pageMetaForPatient reflects the server pagination meta', async () => {
+    mockedApi.list.mockResolvedValueOnce(
+      makePage([makePayment()], { current_page: 1, last_page: 2, per_page: 15, total: 20 }),
+    )
     const store = usePaymentsStore()
 
     await store.fetchForPatient('patient-1')
 
+    expect(store.pageMetaForPatient('patient-1')).toEqual({
+      currentPage: 1,
+      lastPage: 2,
+      perPage: 15,
+      total: 20,
+    })
+  })
+})
+
+describe('usePaymentsStore.fetchForInvoice / paymentsForInvoice', () => {
+  it('fetches and caches an invoice’s payments independently of the patient list', async () => {
+    mockedApi.listForInvoice.mockResolvedValueOnce(
+      makePage([makePayment({ id: 'payment-1', invoice_id: 'invoice-1' })]),
+    )
+    const store = usePaymentsStore()
+
+    await store.fetchForInvoice('invoice-1')
+
     expect(store.paymentsForInvoice('invoice-1').map((p) => p.id)).toEqual(['payment-1'])
+    expect(mockedApi.list).not.toHaveBeenCalled()
+  })
+
+  it('skips the network call on a second fetch for the same invoice and page', async () => {
+    mockedApi.listForInvoice.mockResolvedValue(makePage([makePayment({ invoice_id: 'invoice-1' })]))
+    const store = usePaymentsStore()
+
+    await store.fetchForInvoice('invoice-1')
+    await store.fetchForInvoice('invoice-1')
+
+    expect(mockedApi.listForInvoice).toHaveBeenCalledTimes(1)
+  })
+
+  it('pageMetaForInvoice reflects the server pagination meta', async () => {
+    mockedApi.listForInvoice.mockResolvedValueOnce(
+      makePage([makePayment({ invoice_id: 'invoice-1' })], { current_page: 1, last_page: 2, total: 20 }),
+    )
+    const store = usePaymentsStore()
+
+    await store.fetchForInvoice('invoice-1')
+
+    expect(store.pageMetaForInvoice('invoice-1')).toEqual({
+      currentPage: 1,
+      lastPage: 2,
+      perPage: 15,
+      total: 20,
+    })
   })
 })
 
 describe('usePaymentsStore mutations', () => {
-  it('record upserts the created payment with no extra fetch', async () => {
+  it('record upserts the created payment and refreshes page 1 of the patient list', async () => {
     mockedApi.record.mockResolvedValueOnce(makePayment())
+    mockedApi.list.mockResolvedValueOnce(makePage([makePayment()]))
     const store = usePaymentsStore()
 
     await store.record('patient-1', { method: 'cash', amount: 100 })
 
     expect(store.cache.get('payment-1')?.amount).toBe('100.00')
-    expect(mockedApi.list).not.toHaveBeenCalled()
+    expect(mockedApi.list).toHaveBeenCalledWith('patient-1', 1)
+  })
+
+  it('record also refreshes the invoice-scoped page when recorded against an invoice', async () => {
+    mockedApi.record.mockResolvedValueOnce(makePayment({ invoice_id: 'invoice-1' }))
+    mockedApi.list.mockResolvedValueOnce(makePage([makePayment({ invoice_id: 'invoice-1' })]))
+    mockedApi.listForInvoice.mockResolvedValueOnce(makePage([makePayment({ invoice_id: 'invoice-1' })]))
+    const store = usePaymentsStore()
+
+    await store.record('patient-1', { invoice_id: 'invoice-1', method: 'cash', amount: 100 })
+
+    expect(mockedApi.listForInvoice).toHaveBeenCalledWith('invoice-1', 1)
   })
 
   it('update upserts the response directly', async () => {
@@ -152,6 +222,9 @@ describe('usePaymentsStore mutations', () => {
     mockedApi.get.mockResolvedValueOnce(
       makePayment({ id: 'payment-1', remaining_refundable_amount: '60.00' }),
     )
+    mockedApi.list.mockResolvedValueOnce(
+      makePage([makePayment({ id: 'payment-1', remaining_refundable_amount: '60.00' })]),
+    )
     const store = usePaymentsStore()
 
     const refund = await store.refund('payment-1', { amount: 40 })
@@ -160,6 +233,19 @@ describe('usePaymentsStore mutations', () => {
     expect(store.cache.get('payment-2')?.amount).toBe('-40.00')
     expect(mockedApi.get).toHaveBeenCalledWith('payment-1')
     expect(store.cache.get('payment-1')?.remaining_refundable_amount).toBe('60.00')
+    expect(mockedApi.list).toHaveBeenCalledWith('patient-1', 1)
+  })
+
+  it('refund also refreshes the invoice-scoped page when the original was applied to an invoice', async () => {
+    mockedApi.refund.mockResolvedValueOnce(makePayment({ id: 'payment-2', invoice_id: 'invoice-1' }))
+    mockedApi.get.mockResolvedValueOnce(makePayment({ id: 'payment-1', invoice_id: 'invoice-1' }))
+    mockedApi.list.mockResolvedValueOnce(makePage([makePayment({ invoice_id: 'invoice-1' })]))
+    mockedApi.listForInvoice.mockResolvedValueOnce(makePage([makePayment({ invoice_id: 'invoice-1' })]))
+    const store = usePaymentsStore()
+
+    await store.refund('payment-1', { amount: 40 })
+
+    expect(mockedApi.listForInvoice).toHaveBeenCalledWith('invoice-1', 1)
   })
 
   it('remove deletes the payment from the cache', async () => {
@@ -175,8 +261,8 @@ describe('usePaymentsStore mutations', () => {
 })
 
 describe('usePaymentsStore.$reset', () => {
-  it('clears the cache and loaded-patient tracking', async () => {
-    mockedApi.list.mockResolvedValueOnce([makePayment()])
+  it('clears the cache and loaded-patient/invoice tracking', async () => {
+    mockedApi.list.mockResolvedValueOnce(makePage([makePayment()]))
     const store = usePaymentsStore()
     await store.fetchForPatient('patient-1')
 

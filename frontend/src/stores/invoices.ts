@@ -9,6 +9,13 @@ import type {
   UpdateInvoicePayload,
 } from '@/types/invoice'
 
+interface PatientPageMeta {
+  currentPage: number
+  lastPage: number
+  perPage: number
+  total: number
+}
+
 /**
  * A single id-keyed cache serving both the Patient Invoices tab's list (`invoicesForPatient`) and
  * the dedicated Invoice Detail route's single-resource fetch (`fetchOne`) — mirrors
@@ -17,10 +24,17 @@ import type {
  * follow-up re-fetch, because the backend deliberately returns the full updated `Invoice` (items
  * eager-loaded) from every mutation endpoint, including item removal (backend design doc §9, a
  * deliberate divergence from Treatment Plan Items' `204`).
+ *
+ * Phase 2.2 (TECH_DEBT.md's now-resolved entry): the patient-scoped list is now paginated
+ * server-side, same `patientPageIds`/`patientPageMeta`/`loadedPatientPage` shape as
+ * `treatmentPlans.ts` — `cache` can hold invoices from more than one page, so
+ * `invoicesForPatient` reads only the most-recently-fetched page's id list, not the whole cache.
  */
 export const useInvoicesStore = defineStore('invoices', () => {
   const cache = reactive(new Map<string, Invoice>())
-  const loadedPatientIds = reactive(new Set<string>())
+  const patientPageIds = reactive(new Map<string, string[]>())
+  const patientPageMeta = reactive(new Map<string, PatientPageMeta>())
+  const loadedPatientPage = reactive(new Map<string, number>())
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -28,23 +42,40 @@ export const useInvoicesStore = defineStore('invoices', () => {
     cache.set(invoice.id, invoice)
   }
 
-  /** All cached invoices for one patient, most recently created first — backs the Invoice List tab. */
+  /** The most recently fetched page's invoices for one patient, most recently created first. */
   function invoicesForPatient(patientId: string): Invoice[] {
-    return Array.from(cache.values())
-      .filter((invoice) => invoice.patient_id === patientId)
+    const ids = patientPageIds.get(patientId) ?? []
+    return ids
+      .map((id) => cache.get(id))
+      .filter((invoice): invoice is Invoice => !!invoice)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
 
-  async function fetchForPatient(patientId: string, force = false): Promise<void> {
-    if (loadedPatientIds.has(patientId) && !force) return
+  /** Pagination metadata for the currently loaded page, for the panel's `Paginator`. */
+  function pageMetaForPatient(patientId: string): PatientPageMeta {
+    return patientPageMeta.get(patientId) ?? { currentPage: 1, lastPage: 1, perPage: 15, total: 0 }
+  }
+
+  async function fetchForPatient(patientId: string, page = 1, force = false): Promise<void> {
+    if (loadedPatientPage.get(patientId) === page && !force) return
 
     loading.value = true
     error.value = null
 
     try {
-      const invoices = await invoicesApi.list(patientId)
-      invoices.forEach(upsert)
-      loadedPatientIds.add(patientId)
+      const result = await invoicesApi.list(patientId, page)
+      result.data.forEach(upsert)
+      patientPageIds.set(
+        patientId,
+        result.data.map((invoice) => invoice.id),
+      )
+      patientPageMeta.set(patientId, {
+        currentPage: result.meta.current_page,
+        lastPage: result.meta.last_page,
+        perPage: result.meta.per_page,
+        total: result.meta.total,
+      })
+      loadedPatientPage.set(patientId, page)
     } catch {
       error.value = 'invoices.loadError'
     } finally {
@@ -58,9 +89,12 @@ export const useInvoicesStore = defineStore('invoices', () => {
     return invoice
   }
 
+  /** A new invoice always sorts to the top (most recently created) — refreshes page 1 so it's
+   *  immediately visible regardless of which page the patient's list happened to be on. */
   async function create(patientId: string, payload: CreateInvoicePayload = {}): Promise<Invoice> {
     const created = await invoicesApi.create(patientId, payload)
     upsert(created)
+    await fetchForPatient(patientId, 1, true)
     return created
   }
 
@@ -114,7 +148,9 @@ export const useInvoicesStore = defineStore('invoices', () => {
 
   function $reset() {
     cache.clear()
-    loadedPatientIds.clear()
+    patientPageIds.clear()
+    patientPageMeta.clear()
+    loadedPatientPage.clear()
     loading.value = false
     error.value = null
   }
@@ -124,6 +160,7 @@ export const useInvoicesStore = defineStore('invoices', () => {
     loading,
     error,
     invoicesForPatient,
+    pageMetaForPatient,
     fetchForPatient,
     fetchOne,
     create,

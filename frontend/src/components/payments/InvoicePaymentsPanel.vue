@@ -13,10 +13,10 @@ import type { Invoice } from '@/types/invoice'
 import type { Payment } from '@/types/payment'
 
 /**
- * Invoice Detail's Payments panel (backend design doc §11) — payments applied to this invoice,
- * filtered client-side from the patient's full payment list (no
- * `GET /api/invoices/{invoice}/payments` exists, §9/§7). "Record Payment" is only offered while
- * the invoice is `issued` (the only status `PaymentService` accepts a direct/apply target).
+ * Invoice Detail's Payments panel (backend design doc §11) — payments applied to this invoice, via
+ * the dedicated `GET /invoices/{invoice}/payments` endpoint (TECH_DEBT.md, Phase 2.2 — replaces the
+ * former client-side filter of the patient's full payment list). "Record Payment" is only offered
+ * while the invoice is `issued` (the only status `PaymentService` accepts a direct/apply target).
  */
 const props = defineProps<{ invoice: Invoice }>()
 
@@ -30,8 +30,8 @@ const canRecord = computed(() => canWrite.value && props.invoice.status === 'iss
 const payments = computed(() => paymentsStore.paymentsForInvoice(props.invoice.id))
 
 watch(
-  () => props.invoice.patient_id,
-  (patientId) => paymentsStore.fetchForPatient(patientId),
+  () => props.invoice.id,
+  (invoiceId) => paymentsStore.fetchForInvoice(invoiceId),
   { immediate: true },
 )
 

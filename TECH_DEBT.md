@@ -24,6 +24,30 @@ endpoints in the same PR that adds the missing `GET /invoices/{invoice}/payments
 `InvoicePaymentsPanel.vue` stops depending on the full unpaginated patient-level list) and reworks
 `ApplyPaymentDialog.vue`'s invoice picker to not assume a fully-loaded set either.
 
+**RESOLVED 2026-08-08** (Phase 2.2, Billing): `InvoiceController::index()`/`PaymentController::index()`
+now `->paginate(15)` (mirroring Treatment Plans/Clinical Notes exactly); the new
+`GET /invoices/{invoice}/payments` endpoint (`PaymentController::forInvoice()`, via `Invoice::payments()`)
+replaces `InvoicePaymentsPanel.vue`'s former client-side filter; `ApplyPaymentDialog.vue`'s invoice
+picker now calls the new `invoicesApi.listIssued()` (a `?status=issued`-filtered fetch, independent of
+pagination) instead of reading the store's paginated `invoicesForPatient()`. `invoices.ts`/`payments.ts`
+stores reworked to the same `patientPageIds`/`patientPageMeta`/`loadedPatientPage` shape Treatment
+Plans/Clinical Notes already use. See the new entry below for one deliberate trade-off this fix
+introduced.
+
+### Billing tab's Invoices/Payments sub-panels only ever show page 1 (no `Paginator` UI)
+Introduced 2026-08-08 during Phase 2.2 (Billing) as a direct consequence of the fix above.
+`PatientBillingPanel.vue` reuses `PatientInvoicesPanel.vue`/`PatientPaymentsPanel.vue` **as-is**
+(design doc §5.1: "reused as-is" — zero edits) inside its `SelectButton`-switched Invoices/Payments
+sections. Neither panel hosts a `Paginator` (unlike `PatientTreatmentPlansPanel.vue`/
+`PatientClinicalNotesPanel.vue`, which gained one in Phase 2.1) — now that their backing endpoints are
+paginated (15/page), a patient with more than 15 invoices or payments has no way to see older ones from
+inside the Billing tab. Deliberately accepted rather than fixed in the same PR, since adding a
+`Paginator` to both is itself a real UI change to components explicitly scoped as "reused unchanged"
+this sub-phase — logged immediately rather than left to be rediscovered.
+**Revisit**: whichever future phase next substantively touches either panel (or a dedicated follow-up
+if none does soon) — add a `Paginator`, mirroring `PatientTreatmentPlansPanel.vue`'s existing pattern
+(`page` ref, `pageMetaForPatient`, `@page` handler, `Paginator v-if="pageMeta.total > pageMeta.perPage"`).
+
 ### Dashboard "Today's Appointments" stat card counts every appointment ever created, not today's
 Found 2026-08-02 during the Premium Visual Redesign integration verification pass (user report,
 live dev server). `DashboardService::summary()` computes `today_appointments` via

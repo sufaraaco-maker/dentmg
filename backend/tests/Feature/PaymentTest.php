@@ -41,7 +41,59 @@ class PaymentTest extends TestCase
         $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/payments");
 
         $response->assertOk();
-        $this->assertCount(2, $response->json());
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_a_patients_payment_list_is_paginated(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        Payment::factory()->count(20)->create(['patient_id' => $patient->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/payments");
+
+        $response->assertOk();
+        $this->assertCount(15, $response->json('data'));
+        $this->assertSame(20, $response->json('meta.total'));
+    }
+
+    // ---- invoice-scoped index (Phase 2.2 — TECH_DEBT.md's now-resolved entry) -------------------
+
+    public function test_guest_cannot_list_an_invoices_payments(): void
+    {
+        $invoice = Invoice::factory()->issued()->create();
+
+        $response = $this->getJson("/api/invoices/{$invoice->id}/payments");
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_an_invoices_payment_list_is_scoped_to_that_invoice_only(): void
+    {
+        $actor = User::factory()->dentist()->create();
+        $patient = Patient::factory()->create();
+        $invoice = Invoice::factory()->issued()->create(['patient_id' => $patient->id]);
+        $otherInvoice = Invoice::factory()->issued()->create(['patient_id' => $patient->id]);
+        Payment::factory()->count(2)->create(['patient_id' => $patient->id, 'invoice_id' => $invoice->id]);
+        Payment::factory()->create(['patient_id' => $patient->id, 'invoice_id' => $otherInvoice->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/invoices/{$invoice->id}/payments");
+
+        $response->assertOk();
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_an_invoices_payment_list_is_paginated(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $invoice = Invoice::factory()->issued()->create();
+        Payment::factory()->count(20)->create(['patient_id' => $invoice->patient_id, 'invoice_id' => $invoice->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/invoices/{$invoice->id}/payments");
+
+        $response->assertOk();
+        $this->assertCount(15, $response->json('data'));
+        $this->assertSame(20, $response->json('meta.total'));
     }
 
     // ---- store ----------------------------------------------------------------------------------
