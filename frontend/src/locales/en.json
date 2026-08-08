@@ -190,7 +190,8 @@
       "laboratory": "Laboratory",
       "treatmentPlans": "Treatment Plans",
       "clinicalNotes": "Clinical Notes",
-      "billing": "Billing"
+      "billing": "Billing",
+      "documents": "Documents"
     },
     "tabSwitcher": {
       "label": "Switch section"
@@ -264,6 +265,11 @@
         "paymentHistory": "Payment History"
       },
       "paymentHistoryTitle": "Payment History"
+    },
+    "documentsPanel": {
+      "title": "Documents",
+      "upload": "Upload Document",
+      "empty": "No documents for this patient yet."
     }
   },
   "medicalHistory": {
@@ -1350,6 +1356,37 @@
       "compare": "Compare",
       "selectCompare": "Select image to compare",
       "resetAdjustments": "Reset adjustments"
+    }
+  },
+  "documents": {
+    "file": "File",
+    "chooseFile": "Choose File",
+    "dropHint": "Drag and drop a file here, or choose a file / use your camera",
+    "title": "Title",
+    "category": "Category",
+    "notes": "Notes",
+    "allCategories": "All Categories",
+    "confirmUpload": "Upload",
+    "uploadTitle": "Upload Document",
+    "editTitle": "Edit Document",
+    "download": "Download",
+    "fieldRequired": "This field is required.",
+    "loadError": "Failed to load documents.",
+    "uploadError": "Failed to upload document.",
+    "updateError": "Failed to update document.",
+    "deleteError": "Failed to delete document.",
+    "uploaded": "Document uploaded.",
+    "updated": "Document updated.",
+    "deleted": "Document deleted.",
+    "deleteConfirmHeader": "Delete Document",
+    "deleteConfirmMessage": "Delete this document? This cannot be undone.",
+    "categories": {
+      "consent_form": "Consent Form",
+      "insurance": "Insurance",
+      "referral": "Referral",
+      "clinical_summary": "Clinical Summary",
+      "correspondence": "Correspondence",
+      "other": "Other"
     }
   },
   "reports": {

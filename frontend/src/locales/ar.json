@@ -190,7 +190,8 @@
       "laboratory": "المختبر",
       "treatmentPlans": "خطط العلاج",
       "clinicalNotes": "الملاحظات السريرية",
-      "billing": "الفوترة"
+      "billing": "الفوترة",
+      "documents": "المستندات"
     },
     "tabSwitcher": {
       "label": "تبديل القسم"
@@ -264,6 +265,11 @@
         "paymentHistory": "سجل المدفوعات"
       },
       "paymentHistoryTitle": "سجل المدفوعات"
+    },
+    "documentsPanel": {
+      "title": "المستندات",
+      "upload": "رفع مستند",
+      "empty": "لا توجد مستندات لهذا المريض بعد."
     }
   },
   "medicalHistory": {
@@ -1350,6 +1356,37 @@
       "compare": "مقارنة",
       "selectCompare": "اختر صورة للمقارنة",
       "resetAdjustments": "إعادة ضبط التعديلات"
+    }
+  },
+  "documents": {
+    "file": "الملف",
+    "chooseFile": "اختر ملفًا",
+    "dropHint": "اسحب وأفلت ملفًا هنا، أو اختر ملفًا / استخدم الكاميرا",
+    "title": "العنوان",
+    "category": "الفئة",
+    "notes": "ملاحظات",
+    "allCategories": "جميع الفئات",
+    "confirmUpload": "رفع",
+    "uploadTitle": "رفع مستند",
+    "editTitle": "تعديل المستند",
+    "download": "تنزيل",
+    "fieldRequired": "هذا الحقل مطلوب.",
+    "loadError": "فشل تحميل المستندات.",
+    "uploadError": "فشل رفع المستند.",
+    "updateError": "فشل تحديث المستند.",
+    "deleteError": "فشل حذف المستند.",
+    "uploaded": "تم رفع المستند.",
+    "updated": "تم تحديث المستند.",
+    "deleted": "تم حذف المستند.",
+    "deleteConfirmHeader": "حذف المستند",
+    "deleteConfirmMessage": "حذف هذا المستند؟ لا يمكن التراجع عن هذا الإجراء.",
+    "categories": {
+      "consent_form": "نموذج موافقة",
+      "insurance": "تأمين",
+      "referral": "إحالة",
+      "clinical_summary": "ملخص سريري",
+      "correspondence": "مراسلات",
+      "other": "أخرى"
     }
   },
   "reports": {

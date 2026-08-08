@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, Phase 2.3 (Medical History) implemented, reviewed, and merged via **PR #22** (`aa704b6`), docs close-out via **PR #23** (`f417f05`), **Phase 2.4 (Laboratory) design phase** (audited actual current Laboratory code on `main`, produced `docs/modules/patient-laboratory-redesign-design.md`, surfaced a real dormant `BelongsToPatient` SQL bug and a read/write-tab product question), **all 5 of that doc's §16 decisions approved by the user as recommended**, **Phase 2.4 implemented** on `feature/patient-profile-phase2-4-laboratory` — Backend 1007/1007 tests green (Pint clean), Frontend 894/894 tests green (type-check/ESLint/Prettier clean) — opened as **PR #24**, independently re-verified against GitHub's live state (`state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, both CI checks `SUCCESS`, E2E skipping as expected on `pull_request`) before merging, then **merged 2026-08-08 (`9de50fb`)**; `main`'s own post-merge CI run (`31268707960`) confirmed fully green — Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`; docs close-out via **PR #25** (`21f594a`), and **Phase 2.5 (Documents) design phase started** — audited actual current code on `main` (confirmed no `PatientDocument` model/migration/route/store/component exists, and no tab placeholder either — a full build, not a flip-a-flag job), read the Imaging module's `PatientImage` end-to-end as the one existing patient-owned-file precedent, produced `docs/modules/patient-documents-redesign-design.md` with 5 decisions in its §16 awaiting user approval (category-taxonomy overlap with Laboratory, permission matrix, tab position, route shape, storage-disk convention). |
-| **Repo HEAD at time of writing** | `main` at `21f594a` (PR #25 merge: docs close-out for Phase 2.4 — Laboratory, on top of `9de50fb`'s PR #24 merge). |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) merged 2026-08-08 via PR #22. Phase 2.4 (Laboratory) merged 2026-08-08 via PR #24.** **Phase 2.5 (Documents) design-drafted 2026-08-08**, awaiting user approval — see `docs/modules/patient-documents-redesign-design.md`. |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, Phase 2.3 (Medical History) implemented, reviewed, and merged via **PR #22** (`aa704b6`), docs close-out via **PR #23** (`f417f05`), **Phase 2.4 (Laboratory) design phase** (audited actual current Laboratory code on `main`, produced `docs/modules/patient-laboratory-redesign-design.md`, surfaced a real dormant `BelongsToPatient` SQL bug and a read/write-tab product question), **all 5 of that doc's §16 decisions approved by the user as recommended**, **Phase 2.4 implemented** on `feature/patient-profile-phase2-4-laboratory` — Backend 1007/1007 tests green (Pint clean), Frontend 894/894 tests green (type-check/ESLint/Prettier clean) — opened as **PR #24**, independently re-verified against GitHub's live state (`state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, both CI checks `SUCCESS`, E2E skipping as expected on `pull_request`) before merging, then **merged 2026-08-08 (`9de50fb`)**; `main`'s own post-merge CI run (`31268707960`) confirmed fully green — Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`; docs close-out via **PR #25** (`21f594a`), **Phase 2.5 (Documents) design phase** (audited actual current code on `main`, confirmed no `PatientDocument` model/migration/route/store/component exists and no tab placeholder either — a full build, not a flip-a-flag job — read the Imaging module's `PatientImage` end-to-end as the one existing patient-owned-file precedent, produced `docs/modules/patient-documents-redesign-design.md`), merged via **PR #26** (`b9adab8`), **all 5 of that doc's §16 decisions approved by the user as recommended**, and **Phase 2.5 implemented** on `feature/patient-profile-phase2-5-documents` — Backend 1020/1020 tests green (Pint clean), Frontend 915/915 tests green (type-check/ESLint/Prettier clean) — opened as **PR #27**. |
+| **Repo HEAD at time of writing** | `main` at `b9adab8` (PR #26 merge: Phase 2.5 — Documents design phase, on top of `21f594a`'s PR #25 merge). Phase 2.5's implementation is on `feature/patient-profile-phase2-5-documents`, open as **PR #27** — not yet merged. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) merged 2026-08-08 via PR #22. Phase 2.4 (Laboratory) merged 2026-08-08 via PR #24.** **Phase 2.5 (Documents) design-approved and implemented 2026-08-08**, opening as **PR #27** — see `docs/modules/patient-documents-redesign-design.md`. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -164,7 +164,7 @@ full narrative):
 
 ## 4. Pull Requests History
 
-Sourced directly from `gh pr list --state all` (15 PRs total, all merged) — not from prose in other docs.
+Sourced directly from `gh pr list --state all` (27 PRs total as of this update; #27 open, all others merged) — not from prose in other docs.
 
 | # | Branch | Goal | Key changes | Merge status |
 |---|---|---|---|---|
@@ -192,6 +192,9 @@ Sourced directly from `gh pr list --state all` (15 PRs total, all merged) — no
 | 22 | `feature/patient-profile-phase2-3-medical-history` | Phase 2.3 — Medical History | Structured Allergies/Medical Conditions/Medications tab, `MedicalHistoryService`/`Policy`/`Controller`, legacy-column backfill | **Merged** 2026-08-08 (`aa704b6`) |
 | 23 | `docs/phase2.3-closeout-pr22` | Docs-only: close out PR #22, record Phase 2.4 design-phase start | No code changes | **Merged** 2026-08-08 (`f417f05`) |
 | 24 | `feature/patient-profile-phase2-4-laboratory` | Phase 2.4 — Laboratory | Patient-scoped `Patient::labCases()`/`forPatient` scope, `PatientLabCasesPanel.vue` (read/write), fixed the dormant `BelongsToPatient` SQL bug in Laboratory's Form Requests | **Merged** 2026-08-08 (`9de50fb`) |
+| 25 | `docs/phase2.4-closeout-pr24` | Docs-only: close out PR #24, record post-merge CI confirmation | No code changes | **Merged** 2026-08-08 (`21f594a`) |
+| 26 | `docs/phase2.5-documents-design` | Docs-only: Phase 2.5 (Documents) design phase — audit + drill-down design doc | No code changes | **Merged** 2026-08-08 (`b9adab8`) |
+| 27 | `feature/patient-profile-phase2-5-documents` | Phase 2.5 — Documents | `PatientDocument` model/service/policy/controller (patient-scoped only), `PatientDocumentsPanel.vue` (read/write), `DocumentCategory` enum | **Open** — CI pending |
 
 ---
 
@@ -399,7 +402,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.5: Documents integration (Patient Profile Redesign)** | Next sub-phase per the umbrella design doc's §17 sequencing; drill-down design doc drafted (`docs/modules/patient-documents-redesign-design.md`) — **awaiting user approval on its §16 decision list** before implementation starts, per the two-phase workflow | High — the roadmap's own next priority | Medium (new schema, new generalized components) | Design doc's §16 approved first |
+| 1 | **Phase 2.6: Timeline integration (Patient Profile Redesign)** | Next sub-phase per the umbrella design doc's §17 sequencing, now that Phase 2.5 (Documents) is implemented — needs its own design-approval round first (no approved design yet, per the two-phase workflow); governed by the **Security Architecture Decision** (§5) requiring server-side, per-category permission enforcement | High — the roadmap's own next priority | Medium–Large (new `PatientActivity` event model, cross-module aggregation) | None blocking |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
 | 4 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
@@ -418,19 +421,11 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 **Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to
 `main` via PR #18 (2026-08-07); Phase 2.2 (Billing) merged via PR #20 (2026-08-08); Phase 2.3
 (Medical History) merged via PR #22 (2026-08-08); Phase 2.4 (Laboratory) merged via PR #24
-(2026-08-08, `9de50fb`) — see `docs/modules/patient-laboratory-redesign-design.md` for the full spec.
-Phase 2.5 (Documents) is now in its own Design Phase** (started 2026-08-08) — see
-`docs/modules/patient-documents-redesign-design.md` for the full spec, produced by auditing the
-actual current codebase (confirmed: no `PatientDocument` model/migration/route/store/component
-exists, and unlike Billing/Treatment Plans there isn't even a `comingSoon` tab stub to build on —
-this is a full build). That audit also resolved four things the umbrella doc's outline left
-under-specified: the proposed `lab_report` category overlaps conceptually with the now-shipped
-Laboratory module (recommend `clinical_summary` instead), the permission matrix should clone
-`PatientImagePolicy` exactly (auto-discovered, no `Gate::policy()` registration needed), the route
-is patient-scoped-only with no flat `GET /documents` counterpart (Documents has no pre-existing flat
-endpoint to reconcile with, unlike Laboratory), and the storage-disk convention should be an exact
-clone of `PatientImageService`'s resolve-once-per-batch pattern. **Implementation has not started
-and will not until the user reviews and approves that design doc's §16 decision list.** Step 1
+(2026-08-08, `9de50fb`); Phase 2.5 (Documents) design-approved (all 5 §16 decisions accepted as
+recommended) and implemented on `feature/patient-profile-phase2-5-documents`, opened as **PR #27**
+— see `docs/modules/patient-documents-redesign-design.md` for the full spec.
+Phase 2.6 (Timeline) is next but has no approved design yet** — per the two-phase workflow every
+prior sub-phase has followed, it is not yet safe to start coding it. Step 1
 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
@@ -529,9 +524,36 @@ re-confirmed against GitHub's live PR/CI state before merging (not taken on a pa
 merged 2026-08-08 (`9de50fb`)**; `main`'s own post-merge CI run (`31268707960`) confirmed fully green —
 Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`.
 
-**Documents and Timeline remain out of scope** until their respective sub-phases (2.5 onward). Laboratory is
-no longer in that list — see the entry above. Tags/labels, in-record search, and PDF export remain named as
-deferred backlog (design doc §19.4), not dropped.
+**Phase 2.5 (Documents), design-approved and implemented 2026-08-08** on
+`feature/patient-profile-phase2-5-documents` (design doc: `docs/modules/patient-documents-redesign-design.md`,
+produced by auditing the actual codebase — confirmed nothing Documents-related existed yet, and unlike
+Billing/Treatment Plans there wasn't even a `comingSoon` tab stub to build on): `PatientDocument` model
+(UUID PK, `SoftDeletes`, `Auditable`) + `Patient::documents()` relation, a new `DocumentCategory` enum
+(`consent_form | insurance | referral | clinical_summary | correspondence | other` — drops the
+originally-proposed `lab_report` in favor of `clinical_summary` per §16 decision 1, to avoid overlap
+with the now-shipped Laboratory module), patient-scoped-only routes (`GET/POST patients/{patient}/documents`,
+`GET documents/{id}/file`, `PUT/DELETE documents/{id}` — no flat `GET /documents` counterpart, per §16
+decision 4: unlike Laboratory there was no pre-existing flat endpoint to reconcile with),
+`PatientDocumentService` cloning `PatientImageService`'s Storage-disk convention exactly minus thumbnail
+generation, `PatientDocumentPolicy` cloning `PatientImagePolicy` exactly (auto-discovered, no
+`Gate::policy()` registration — per §16 decision 2), `patientDocuments.ts` store (same Map-cache/pagination
+shape as `patientLabCases.ts`), and a new **read/write** `documents` tab (`PatientDocumentsPanel.vue`,
+appended last after `billing` — per §16 decision 3), with upload via `AttachmentUpload.vue` (generalized
+from `UploadImagesDialog.vue`'s dropzone, **one file per upload, not a batch** — a document's title is
+naturally per-file, unlike Imaging's shared-metadata batch of same-visit exposures) and a row-list
+`AttachmentList.vue` (mirrors `PatientLabCasesPanel.vue`'s card-row convention rather than Imaging's photo
+grid, since a document's title/category/filename metadata is the primary identifying information). No new
+roles — `PatientDocumentPolicy` is the only new authorization surface, fully specced and approved. Backend:
+1020/1020 tests green (1007 + 13 new, Pint clean). Frontend: 915/915 tests green (894 + 21 new: 10
+`patientDocuments.ts` store tests, 10 `PatientDocumentsPanel.vue` tests, +1 `PatientDetailView.test.ts`
+tab-rendering assertion), type-check/ESLint/Prettier clean (re-verified against a stashed clean baseline: 249 pre-existing
+flagged files codebase-wide, this branch nets to 247 after also fixing 2 pre-existing drift files it
+happened to touch — no regression). i18n: `patients.tabs.documents`, `patients.documentsPanel.*`, and a
+top-level `documents.*` namespace, 31/31 keys verified programmatically across `ar`/`en`/`tr`. Opened as
+**PR #27** — CI pending at time of writing.
+
+**Timeline remains out of scope** until its own sub-phase (2.6). Tags/labels, in-record search, and PDF
+export remain named as deferred backlog (design doc §19.4), not dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign
