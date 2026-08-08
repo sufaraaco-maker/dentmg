@@ -9,6 +9,7 @@ import PatientAppointmentsPanel from '@/components/appointments/PatientAppointme
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
 import PatientLabCasesPanel from '@/components/laboratory/PatientLabCasesPanel.vue'
+import PatientDocumentsPanel from '@/components/documents/PatientDocumentsPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Patient } from '@/types/patient'
 import type { UserRole } from '@/types/user'
@@ -91,6 +92,7 @@ async function mountView(role: UserRole) {
         PatientBillingPanel: true,
         MedicalHistoryPanel: true,
         PatientLabCasesPanel: true,
+        PatientDocumentsPanel: true,
       },
     },
   })
@@ -175,6 +177,20 @@ describe('PatientDetailView — tabs', () => {
     expect(tabLabels).not.toContain('Invoices')
     expect(tabLabels).not.toContain('Payments')
     expect(tabLabels).toContain('Billing')
+  })
+
+  it('renders PatientDocumentsPanel, scoped to the current patient, as the last tab after Billing (Phase 2.5)', async () => {
+    const wrapper = await mountView('admin')
+    await clickTab(wrapper, 'Documents')
+    await flushPromises()
+
+    const panel = wrapper.findComponent(PatientDocumentsPanel)
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('patientId')).toBe('patient-1')
+
+    const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
+    expect(tabLabels.at(-2)).toBe('Billing')
+    expect(tabLabels.at(-1)).toBe('Documents')
   })
 })
 

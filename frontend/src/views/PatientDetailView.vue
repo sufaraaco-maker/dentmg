@@ -27,6 +27,7 @@ import PatientAppointmentsPanel from '@/components/appointments/PatientAppointme
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientImagingPanel from '@/components/imaging/PatientImagingPanel.vue'
 import PatientLabCasesPanel from '@/components/laboratory/PatientLabCasesPanel.vue'
+import PatientDocumentsPanel from '@/components/documents/PatientDocumentsPanel.vue'
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
 import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
@@ -65,6 +66,11 @@ const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
  * support tabs; this is the smallest change that honors that without reordering `appointments`,
  * which stays a standalone tab until Phase 2.6 retires it into Timeline. All staff can read
  * (matches `LabCasePolicy::viewAny`, open to all roles — not the narrower `clinicalNotes` shape).
+ *
+ * Phase 2.5: `documents` added last, after `billing` (patient-documents-redesign-design.md §8.1) —
+ * matches the umbrella doc's IA rationale grouping Billing/Documents as administrative tabs, and
+ * requires no reordering since `billing` was already the last entry. All staff can read (matches
+ * `PatientDocumentPolicy::viewAny`, open to all roles).
  */
 const tabDefinitions = computed(() => [
   { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
@@ -76,6 +82,7 @@ const tabDefinitions = computed(() => [
   { key: 'treatmentPlans', labelKey: 'patients.tabs.treatmentPlans', visible: true },
   { key: 'clinicalNotes', labelKey: 'patients.tabs.clinicalNotes', visible: canAccessClinicalNotes.value },
   { key: 'billing', labelKey: 'patients.tabs.billing', visible: true },
+  { key: 'documents', labelKey: 'patients.tabs.documents', visible: true },
 ])
 
 const visibleTabs = computed(() => tabDefinitions.value.filter((tab) => tab.visible))
@@ -344,6 +351,12 @@ onMounted(() => {
         <TabPanel value="billing">
           <div class="pt-2">
             <PatientBillingPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="documents">
+          <div class="pt-2">
+            <PatientDocumentsPanel :patient-id="patientId" />
           </div>
         </TabPanel>
       </TabPanels>

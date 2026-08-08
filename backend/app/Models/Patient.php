@@ -103,6 +103,11 @@ class Patient extends Model
         return $this->hasMany(LabCase::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(PatientDocument::class);
+    }
+
     public function medicalConditions(): HasMany
     {
         return $this->hasMany(PatientMedicalCondition::class);

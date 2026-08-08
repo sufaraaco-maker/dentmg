@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\MedicalHistoryController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
@@ -185,6 +186,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('images/{patient_image}/thumbnail', [PatientImageController::class, 'thumbnail'])->name('patient-images.thumbnail');
     Route::put('images/{patient_image}', [PatientImageController::class, 'update']);
     Route::delete('images/{patient_image}', [PatientImageController::class, 'destroy']);
+
+    // Patient Profile's Documents tab (Phase 2.5). Patient-scoped only — design doc §4.1/§16
+    // decision 4, no flat GET /documents counterpart.
+    Route::get('patients/{patient}/documents', [PatientDocumentController::class, 'index']);
+    Route::post('patients/{patient}/documents', [PatientDocumentController::class, 'store']);
+    Route::get('documents/{patient_document}/file', [PatientDocumentController::class, 'file'])->name('patient-documents.file');
+    Route::put('documents/{patient_document}', [PatientDocumentController::class, 'update']);
+    Route::delete('documents/{patient_document}', [PatientDocumentController::class, 'destroy']);
 
     Route::get('reports/production', [ReportController::class, 'production']);
     Route::get('reports/collections', [ReportController::class, 'collections']);

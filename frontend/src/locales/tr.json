@@ -190,7 +190,8 @@
       "laboratory": "Laboratuvar",
       "treatmentPlans": "Tedavi Planları",
       "clinicalNotes": "Klinik Notlar",
-      "billing": "Faturalandırma"
+      "billing": "Faturalandırma",
+      "documents": "Belgeler"
     },
     "tabSwitcher": {
       "label": "Bölüm değiştir"
@@ -264,6 +265,11 @@
         "paymentHistory": "Ödeme Geçmişi"
       },
       "paymentHistoryTitle": "Ödeme Geçmişi"
+    },
+    "documentsPanel": {
+      "title": "Belgeler",
+      "upload": "Belge Yükle",
+      "empty": "Bu hasta için henüz belge yok."
     }
   },
   "medicalHistory": {
@@ -1350,6 +1356,37 @@
       "compare": "Karşılaştır",
       "selectCompare": "Karşılaştırılacak görseli seçin",
       "resetAdjustments": "Ayarları Sıfırla"
+    }
+  },
+  "documents": {
+    "file": "Dosya",
+    "chooseFile": "Dosya Seç",
+    "dropHint": "Bir dosyayı buraya sürükleyip bırakın veya dosya seçin / kameranızı kullanın",
+    "title": "Başlık",
+    "category": "Kategori",
+    "notes": "Notlar",
+    "allCategories": "Tüm Kategoriler",
+    "confirmUpload": "Yükle",
+    "uploadTitle": "Belge Yükle",
+    "editTitle": "Belgeyi Düzenle",
+    "download": "İndir",
+    "fieldRequired": "Bu alan zorunludur.",
+    "loadError": "Belgeler yüklenemedi.",
+    "uploadError": "Belge yüklenemedi.",
+    "updateError": "Belge güncellenemedi.",
+    "deleteError": "Belge silinemedi.",
+    "uploaded": "Belge yüklendi.",
+    "updated": "Belge güncellendi.",
+    "deleted": "Belge silindi.",
+    "deleteConfirmHeader": "Belgeyi Sil",
+    "deleteConfirmMessage": "Bu belge silinsin mi? Bu işlem geri alınamaz.",
+    "categories": {
+      "consent_form": "Onam Formu",
+      "insurance": "Sigorta",
+      "referral": "Sevk",
+      "clinical_summary": "Klinik Özet",
+      "correspondence": "Yazışma",
+      "other": "Diğer"
     }
   },
   "reports": {
