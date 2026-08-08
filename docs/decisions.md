@@ -280,7 +280,7 @@ doesn't change how any *other* module's policy resolves, and doesn't introduce a
 abstraction (no base class, no trait, no generic "multi-model policy" concept) — just three lines pointing
 three models at one class.
 
-**Status**: Implemented with Phase 2.3 (not yet merged — see `docs/PROJECT_STATUS.md` §12). Establishes the
+**Status**: Implemented with Phase 2.3, merged via PR #22 (2026-08-08) — see `docs/PROJECT_STATUS.md` §12. Establishes the
 precedent for any future entity cluster (à la Medical History's three tables) that the design phase decides
 should share one policy: register it explicitly in `AppServiceProvider`, don't split into N near-identical
 policy classes just to keep auto-discovery working.
