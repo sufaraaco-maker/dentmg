@@ -91,7 +91,9 @@ Timeline (`PatientActivity`) is a **new, additive, read-mostly aggregation layer
 
 ## 5. Per-Service Event Inventory (recommended first-cut, addresses umbrella doc §19's named risk)
 
-Read directly from each service's actual public methods (not assumed) — recommend firing an activity event at exactly these points, one per row:
+Read directly from each service's actual public methods (not assumed) — recommend firing an activity event at exactly these points, one per row.
+
+**Correction found during implementation prep (post-approval)**: the category column below was originally a single `clinical` value covering Treatment Plans, Clinical Notes, and Medical History. Verifying each subject's real `viewAny()` before writing §7's `CATEGORY_SUBJECT_MAP` found this was wrong: `TreatmentPlanPolicy::viewAny()` and `MedicalHistoryPolicy::viewAny()` both return `true` (all staff), but `ClinicalNotePolicy::viewAny()` is `Admin`/`Dentist`-only — three subject types under one category with three different permission rules is exactly the leak §9A exists to prevent, just relocated from query-time to category-design-time. Split into `treatment_plans`, `clinical_notes`, and `medical_history` below, each mapping 1:1 to its real owning policy, so §7's per-category-check mechanism is actually correct. No event types, methods, or other categories changed — `billing` (`Invoice`/`Payment`, both `viewAny: true`) and `appointments` (single subject) were checked and don't have this problem.
 
 | Service | Method | Event / `event_type` | `category` |
 |---|---|---|---|
@@ -101,19 +103,19 @@ Read directly from each service's actual public methods (not assumed) — recomm
 | | `complete()` | `appointment.completed` | `appointments` |
 | | `cancel()` | `appointment.cancelled` | `appointments` |
 | | `markNoShow()` | `appointment.no_show` | `appointments` |
-| `TreatmentPlanService` | `present()` | `treatment_plan.presented` | `clinical` |
-| | `accept()` | `treatment_plan.accepted` | `clinical` |
-| | `reject()` | `treatment_plan.rejected` | `clinical` |
-| | `complete()` | `treatment_plan.completed` | `clinical` |
-| | `cancel()` | `treatment_plan.cancelled` | `clinical` |
-| `ClinicalNoteService` | `sign()` | `clinical_note.signed` | `clinical` |
+| `TreatmentPlanService` | `present()` | `treatment_plan.presented` | `treatment_plans` |
+| | `accept()` | `treatment_plan.accepted` | `treatment_plans` |
+| | `reject()` | `treatment_plan.rejected` | `treatment_plans` |
+| | `complete()` | `treatment_plan.completed` | `treatment_plans` |
+| | `cancel()` | `treatment_plan.cancelled` | `treatment_plans` |
+| `ClinicalNoteService` | `sign()` | `clinical_note.signed` | `clinical_notes` |
 | `InvoiceService` | `issue()` | `invoice.issued` | `billing` |
 | | `void()` | `invoice.voided` | `billing` |
 | `PaymentService` | `record()` | `payment.recorded` | `billing` |
 | | `refund()` | `payment.refunded` | `billing` |
-| `MedicalHistoryService` | `addAllergy()` | `medical_history.allergy_added` | `clinical` |
-| | `addCondition()` | `medical_history.condition_added` | `clinical` |
-| | `addMedication()` | `medical_history.medication_added` | `clinical` |
+| `MedicalHistoryService` | `addAllergy()` | `medical_history.allergy_added` | `medical_history` |
+| | `addCondition()` | `medical_history.condition_added` | `medical_history` |
+| | `addMedication()` | `medical_history.medication_added` | `medical_history` |
 | `LabCaseService` | `send()` | `lab_case.sent` | `laboratory` |
 | | `receive()` | `lab_case.received` | `laboratory` |
 | | `qualityCheck()` | `lab_case.quality_checked` | `laboratory` |
@@ -131,8 +133,10 @@ patient_activities
   event_type     (string, e.g. "invoice.issued" — plain column, one-line PHP
                    enum/const change to add a case, matching every other
                    status-string column in this codebase)
-  category       (string, e.g. "clinical" | "appointments" | "billing" |
-                   "imaging" | "laboratory" | "documents" — denormalized at
+  category       (string — one of "appointments" | "treatment_plans" |
+                   "clinical_notes" | "billing" | "medical_history" |
+                   "laboratory" | "imaging" | "documents", each mapping 1:1
+                   to one real Policy's viewAny() per §7 — denormalized at
                    write time so §7's per-category filter is a plain
                    WHERE IN, never a prefix/LIKE match on event_type)
   subject_type, subject_id  (polymorphic — the underlying Appointment/
@@ -154,7 +158,7 @@ No `updated_at`/`deleted_at` — activity rows are immutable, append-only facts,
 
 ## 7. Permission Enforcement Mechanism (resolves §0 item 3 — the load-bearing decision)
 
-**Recommend**: a static `CATEGORY_SUBJECT_MAP` constant on `PatientActivityPolicy` — `category => fully-qualified subject model class` (e.g. `'clinical' => ClinicalNote::class`, `'billing' => Invoice::class`, `'laboratory' => LabCase::class`, `'imaging' => PatientImage::class`, `'documents' => PatientDocument::class`, `'appointments' => Appointment::class`). At query time, `PatientActivityController::index()` computes the allowed-categories list **once per request** — `array_filter(array_keys(CATEGORY_SUBJECT_MAP), fn ($category) => $actor->can('viewAny', CATEGORY_SUBJECT_MAP[$category]))` — then adds a single `whereIn('category', $allowedCategories)` to the query.
+**Recommend**: a static `CATEGORY_SUBJECT_MAP` constant on `PatientActivityPolicy` — `category => fully-qualified subject model class`, **one category per real policy, never a category spanning two policies with different rules** (the reason for §5's correction): `'appointments' => Appointment::class`, `'treatment_plans' => TreatmentPlan::class`, `'clinical_notes' => ClinicalNote::class`, `'billing' => Invoice::class` (`Payment::class`'s `viewAny()` is identically `true`, so either subject class works as the category's representative), `'medical_history' => PatientAllergy::class` (one of `MedicalHistoryPolicy`'s three covered models — all three share one policy, so any is representative), `'laboratory' => LabCase::class`, `'imaging' => PatientImage::class`, `'documents' => PatientDocument::class`. At query time, `PatientActivityController::index()` computes the allowed-categories list **once per request** — `array_filter(array_keys(CATEGORY_SUBJECT_MAP), fn ($category) => $actor->can('viewAny', CATEGORY_SUBJECT_MAP[$category]))` — then adds a single `whereIn('category', $allowedCategories)` to the query.
 
 This resolves the exact tension §0 item 3 named:
 - **Correctness, no drift**: it calls each category's *real* owning policy's actual `viewAny()` — e.g. `$actor->can('viewAny', ClinicalNote::class)` literally invokes `ClinicalNotePolicy::viewAny()`, the same method every other Clinical Notes read-check already uses. If that policy's role rule ever changes, Timeline's filtering changes with it automatically — no separate role map to fall out of sync.
@@ -191,8 +195,8 @@ New keys: `patients.tabs.timeline`, `patients.timelinePanel.*` (empty state, cat
 
 ## 13. Testing Strategy
 
-- **Backend**: one dispatch test per §5 event (asserting the service method fires the right event class with the right subject — "worth a test per event, not just per controller," per umbrella doc §18), Feature tests for `GET /activities` pagination/category-filter/date-range, and **the security-critical test §9A itself mandates**: a receptionist-role request to `/activities` for a patient with clinical-category activity must never return those rows, asserted directly against the response body — not inferred from a 403 or from UI hiding.
-- **Frontend**: Vitest tests for a `patientActivities.ts` store (or a lighter fetch-only composable, since Timeline has no mutation actions — see §16 decision 7), `ActivityTimeline.vue` rendering/pagination/category-filter tests, and Playwright E2E per umbrella doc §18: role-based tab visibility, and a receptionist session confirmed not to see clinical-category entries end-to-end (not just unit-tested).
+- **Backend**: one dispatch test per §5 event (asserting the service method fires the right event class with the right subject — "worth a test per event, not just per controller," per umbrella doc §18), Feature tests for `GET /activities` pagination/category-filter/date-range, and **the security-critical test §9A itself mandates**: a receptionist-role request to `/activities` for a patient with `clinical_notes`-category activity must never return those rows, asserted directly against the response body — not inferred from a 403 or from UI hiding.
+- **Frontend**: Vitest tests for a `patientActivities.ts` store (or a lighter fetch-only composable, since Timeline has no mutation actions — see §16 decision 7), `ActivityTimeline.vue` rendering/pagination/category-filter tests, and Playwright E2E per umbrella doc §18: role-based tab visibility, and a receptionist session confirmed not to see `clinical_notes`-category entries end-to-end (not just unit-tested).
 
 ## 14. Implementation Sub-phases (proposed)
 
