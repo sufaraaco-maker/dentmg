@@ -21,10 +21,10 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
-is this file's newest entry below, implemented and pending its own PR. See `docs/PROJECT_STATUS.md` for the
-living, continuously-updated status book this file's own per-PR history now feeds into._
+merged via **PR #20** — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living,
+continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.2: Billing (`feature/patient-profile-phase2-2-billing`, 2026-08-08)
+### Added — Phase 2.2: Billing (`feature/patient-profile-phase2-2-billing`, merged via PR #20, 2026-08-08)
 - **Context**: second implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
   `docs/modules/patient-profile-redesign-design.md` §4/§5.2/§17. Merges the separate Invoices and
   Payments patient-detail tabs into one **Billing** tab; resolves the Invoices/Payments pagination debt

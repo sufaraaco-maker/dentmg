@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved 2026-08-07.** Phase 2.1 (Foundation) merged via PR #18 (2026-08-07). Phase 2.2 (Billing) implemented 2026-08-08, pending its own PR. Phase 2.3 (Medical History) is next. §0's decisions and §9A's Security Architecture Decision are binding on every sub-phase below. |
+| **Status** | **Approved 2026-08-07.** Phase 2.1 (Foundation) merged via PR #18 (2026-08-07). Phase 2.2 (Billing) merged via PR #20 (2026-08-08). Phase 2.3 (Medical History) is next. §0's decisions and §9A's Security Architecture Decision are binding on every sub-phase below. |
 | **Roadmap position** | 8-phase post-Stabilization roadmap, Phase 2 (see `docs/PROJECT_STATUS.md` §11-12) |
 | **Author** | Claude Code, in collaboration with the user (decisions in §0 were specified directly, not inferred) |
 | **Analysis basis** | Full audit of the current `PatientDetailView.vue` hub, all 8 target modules' backend/frontend integration points, and the design-system/component/permission layer — see the Step 1 findings this doc formalizes |
