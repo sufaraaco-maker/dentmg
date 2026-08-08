@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18, its docs close-out merged via PR #19, and Phase 2.2 (Billing) implemented on `feature/patient-profile-phase2-2-billing` (backend + frontend green: 952 backend tests, 832 frontend tests) |
-| **Repo HEAD at time of writing** | `main` at `d9b277f` (PR #19 merge: Phase 2.1 docs close-out, on top of `21af360`'s PR #18 merge). Phase 2.2 (PR #20) is CI-green and pending merge. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18.** |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), and Phase 2.2 (Billing) merged via PR #20 — independently re-verified: Backend/Frontend CI green pre-merge, `main`'s post-merge CI re-confirmed green (Backend/Frontend/E2E all passed, E2E runs on push-to-main unlike the PR trigger) |
+| **Repo HEAD at time of writing** | `main` at `43ca5c7` (PR #20 merge: Phase 2.2 — Billing, on top of `d9b277f`'s PR #19 merge). |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20.** |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -389,7 +389,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.3: Medical History (Patient Profile Redesign)** | Next sub-phase per the approved design doc's §17 sequencing, once Phase 2.2 (Billing) merges: new tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of the existing free-text `allergies` field | High — the roadmap's own next priority | Medium | Phase 2.2 (Billing) merged |
+| 1 | **Phase 2.3: Medical History (Patient Profile Redesign)** | Next sub-phase per the approved design doc's §17 sequencing, now that Phase 2.2 (Billing) has merged: new tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of the existing free-text `allergies` field | High — the roadmap's own next priority | Medium | None blocking |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
 | 4 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
@@ -405,9 +405,8 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 ## 12. Immediate Next Step
 
 **Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to
-`main` via PR #18 (2026-08-07); Phase 2.2 (Billing) is implemented on
-`feature/patient-profile-phase2-2-billing` (PR #20), CI-green, pending merge; Phase 2.3 (Medical
-History) is next.** Step 1 (analysis) and Step 2 (design document,
+`main` via PR #18 (2026-08-07); Phase 2.2 (Billing) merged via PR #20 (2026-08-08); Phase 2.3
+(Medical History) is next.** Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
 (Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/
@@ -425,7 +424,7 @@ new `components/common/` folder) retrofitted into the touched panels, and the Pa
 migration. One scope adjustment found during implementation: Invoices/Payments pagination was deferred
 to Phase 2.2 — see that entry below for the resolution.
 
-**Phase 2.2 (Billing), implemented on PR #20, CI-green, pending merge**: the former separate Invoices/Payments tabs collapse
+**Phase 2.2 (Billing), merged 2026-08-08 via PR #20**: the former separate Invoices/Payments tabs collapse
 into one **Billing** tab (`PatientBillingPanel.vue`) with an Outstanding Balance hero + summary row
 (`BillingSummaryCard.vue`, fed by a new `GET /patients/{patient}/billing-summary` aggregate endpoint —
 `BillingSummaryService`, SQL-aggregate-only per design doc §11.4) and a `SelectButton` switching
