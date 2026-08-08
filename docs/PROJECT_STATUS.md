@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, Phase 2.3 (Medical History) implemented, reviewed, and merged via **PR #22** (`aa704b6`), docs close-out via **PR #23** (`f417f05`), **Phase 2.4 (Laboratory) design phase** (audited actual current Laboratory code on `main`, produced `docs/modules/patient-laboratory-redesign-design.md`, surfaced a real dormant `BelongsToPatient` SQL bug and a read/write-tab product question), **all 5 of that doc's §16 decisions approved by the user as recommended**, and **Phase 2.4 implemented** on `feature/patient-profile-phase2-4-laboratory` — Backend 1007/1007 tests green (Pint clean), Frontend 894/894 tests green (type-check/ESLint/Prettier clean). Opening as a PR next; not yet merged. |
-| **Repo HEAD at time of writing** | `main` at `f417f05` (PR #23 merge: docs close-out for Phase 2.3 — Medical History). Phase 2.4's changes are on `feature/patient-profile-phase2-4-laboratory`, committed and about to be pushed — not yet a PR. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) merged 2026-08-08 via PR #22.** **Phase 2.4 (Laboratory) design-approved and implemented 2026-08-08**, opening as a PR next — see `docs/modules/patient-laboratory-redesign-design.md`. |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, Phase 2.3 (Medical History) implemented, reviewed, and merged via **PR #22** (`aa704b6`), docs close-out via **PR #23** (`f417f05`), **Phase 2.4 (Laboratory) design phase** (audited actual current Laboratory code on `main`, produced `docs/modules/patient-laboratory-redesign-design.md`, surfaced a real dormant `BelongsToPatient` SQL bug and a read/write-tab product question), **all 5 of that doc's §16 decisions approved by the user as recommended**, **Phase 2.4 implemented** on `feature/patient-profile-phase2-4-laboratory` — Backend 1007/1007 tests green (Pint clean), Frontend 894/894 tests green (type-check/ESLint/Prettier clean) — opened as **PR #24**, independently re-verified against GitHub's live state (`state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, both CI checks `SUCCESS`, E2E skipping as expected on `pull_request`) before merging, then **merged 2026-08-08 (`9de50fb`)**; `main`'s own post-merge CI run (`31268707960`) confirmed fully green — Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`. |
+| **Repo HEAD at time of writing** | `main` at `9de50fb` (PR #24 merge: Phase 2.4 — Laboratory Patient Profile integration, on top of `f417f05`'s PR #23 merge). |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) merged 2026-08-08 via PR #22. Phase 2.4 (Laboratory) merged 2026-08-08 via PR #24.** Phase 2.5 (Documents) is next but has **no approved design yet** — per the two-phase workflow every prior sub-phase has followed, it is not yet safe to start coding it. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -142,7 +142,7 @@ as of the 2026-08-07 reconciliation, see §0.
 | Payments | Merged (PR #1, 2026-07-25) + concurrency fix (PR #2, same day) | ✅ record/apply/refund | ✅ Payments tab + Invoice Payments panel | 619/619 backend Unit + 22/22 Feature; **no E2E suite** | `docs/modules/payments-design.md` | Refund is a new signed-negative row, never edits the original. |
 | Clinical Notes | **Production Ready ✅** (PR #3, 2026-07-26) | ✅ SOAP, Draft→Signed, addendums | ✅ tab + detail view | 703/703 backend (60 module-specific) + 595/595 frontend + 19/19 E2E | `docs/modules/clinical-notes-design.md` | Receptionist has **no access at all** — deliberate divergence from every other clinical module. |
 | Inventory | **Production Ready ✅** (PR #4, 2026-07-27) | ✅ catalogs + immutable stock ledger + PO lifecycle | ✅ Suppliers/Supplies/PO views + Low Stock widget | 771/771 backend (68 module-specific) + 19 new frontend + 20/20 E2E | `docs/modules/inventory-design.md` | On-hand quantity always computed live from the ledger, never stored. |
-| Laboratory | **Production Ready ✅** (PR #5, 2026-07-27) | ✅ Lab catalog + LabCase lifecycle | ✅ Labs/LabCases views + printable slip | 815/815 backend (58 module-specific) + 627/627 frontend + E2E green | `docs/modules/laboratory-design.md` | Has the same latent `BelongsToPatient` SQL-error bug as Imaging had (unfixed here — see §9). |
+| Laboratory | **Production Ready ✅** (PR #5, 2026-07-27; patient-scoped integration added PR #24, 2026-08-08) | ✅ Lab catalog + LabCase lifecycle | ✅ Labs/LabCases views + printable slip + patient-scoped `laboratory` tab | 1007/1007 backend (58+13 module-specific) + 894/894 frontend + E2E green | `docs/modules/laboratory-design.md`, `docs/modules/patient-laboratory-redesign-design.md` | Former latent `BelongsToPatient` SQL-error bug **fixed 2026-08-08** (PR #24) — see §11's Resolved history / `TECH_DEBT.md`. |
 | Imaging | **Production Ready ✅** (PR #6, 2026-07-28) | ✅ `PatientImage`, authenticated streaming | ✅ Imaging tab + non-destructive lightbox | 834/834 backend (19 module-specific) + 637/637 frontend + 27/27 E2E | `docs/modules/imaging-design.md` | DICOM/CBCT, hardware capture, persistent annotation explicitly out of V1 scope. |
 | Reports | **Production Ready ✅** (PR #7, merged 2026-07-28) | ✅ `ReportService`, 6 live reports, CSV export | ✅ Reports nav group + 6 views | 855/855 backend + 652/652 frontend + 29/29 E2E at merge; `reports.spec.ts`'s `DemoDataSeeder` regression (2 separate ordering bugs: Collections, New Patients) **fixed 2026-08-07** (PR #15) | `docs/modules/reports-design.md` | Was CI-red since 2026-08-01, now green — see §9/§12. |
 | Settings | **Production Ready ✅** (PR #8, **merged** 2026-07-30 — corrects stale "not merged" prose elsewhere, §0) | ✅ `ClinicSetting`, `BillingSetting` API, My Account | ✅ Settings views + header avatar menu | 877/877 backend (22 module-specific) + 672/672 frontend + 32/32 E2E | `docs/modules/settings-design.md` | Multi-branch, clinic logo upload, notification settings deliberately out of V1. |
@@ -190,6 +190,8 @@ Sourced directly from `gh pr list --state all` (15 PRs total, all merged) — no
 | 20 | `feature/patient-profile-phase2-2-billing` | Phase 2.2 — Billing tab | Merges Invoices/Payments tabs into one Billing tab, `GET /patients/{patient}/billing-summary`, pagination debt resolved | **Merged** 2026-08-08 (`43ca5c7`) |
 | 21 | `docs/phase2.2-closeout-pr20` | Docs-only: close out PR #20, record Phase 2.3 scope | No code changes | **Merged** 2026-08-08 (`d4addcb`) |
 | 22 | `feature/patient-profile-phase2-3-medical-history` | Phase 2.3 — Medical History | Structured Allergies/Medical Conditions/Medications tab, `MedicalHistoryService`/`Policy`/`Controller`, legacy-column backfill | **Merged** 2026-08-08 (`aa704b6`) |
+| 23 | `docs/phase2.3-closeout-pr22` | Docs-only: close out PR #22, record Phase 2.4 design-phase start | No code changes | **Merged** 2026-08-08 (`f417f05`) |
+| 24 | `feature/patient-profile-phase2-4-laboratory` | Phase 2.4 — Laboratory | Patient-scoped `Patient::labCases()`/`forPatient` scope, `PatientLabCasesPanel.vue` (read/write), fixed the dormant `BelongsToPatient` SQL bug in Laboratory's Form Requests | **Merged** 2026-08-08 (`9de50fb`) |
 
 ---
 
@@ -397,16 +399,17 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.4: Laboratory integration (Patient Profile Redesign)** | Next sub-phase per the design doc's §17 sequencing, now that Phase 2.3 (Medical History) is implemented and awaiting PR review: `Patient::labCases()`, a `forPatient` scope on `LabCase`, a new patient-scoped route, `patientLabCases` store, `PatientLabCasesPanel.vue` — design doc rates this Low risk, "repeats an existing, well-understood pattern exactly" | High — the roadmap's own next priority | Small–Medium | Phase 2.3's PR merged first |
+| 1 | **Phase 2.5: Documents integration (Patient Profile Redesign)** | Next sub-phase per the umbrella design doc's §17 sequencing, now that Phase 2.4 (Laboratory) is merged — needs its own design-approval round first (no approved design yet, per the two-phase workflow) | High — the roadmap's own next priority | Small–Medium (pending its design doc's actual scope) | Phase 2.4's PR merged first (done — PR #24) |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
-| 4 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
-| 5 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
-| 6 | **Add a real-Postgres migration-verification CI step** | Already caused one production-breaking bug to hide behind 643 passing SQLite tests for a full day | Medium | Small (one new CI job step, not the full suite) | None |
-| 7 | **Provision S3/offsite backup** | Local-disk-only backup doesn't survive VPS loss | Medium, escalates to High before real clinic onboarding | Small (config-only — code path already exists, commented out) | Choice of provider (Backblaze B2 / Wasabi / AWS S3) |
-| 8 | **App-wide PWA manifest + service worker** | Every module has been built "PWA-ready" but nothing is installable yet; also roadmap Phase 6 | Low–Medium | Medium | None |
-| 9 | **`vue-i18n` runtime-only build + message precompilation** | ~84 KB gzip bundle-size win, app-wide | Low | Small–Medium (needs careful 3-locale regression pass) | None |
-| 10 | **Codebase-wide PrimeVue `id`→`inputId` accessibility sweep** | Real but narrow a11y gap, fixed piecemeal so far | Low | Small | None |
+| 4 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
+| 5 | **Add a real-Postgres migration-verification CI step** | Already caused one production-breaking bug to hide behind 643 passing SQLite tests for a full day | Medium | Small (one new CI job step, not the full suite) | None |
+| 6 | **Provision S3/offsite backup** | Local-disk-only backup doesn't survive VPS loss | Medium, escalates to High before real clinic onboarding | Small (config-only — code path already exists, commented out) | Choice of provider (Backblaze B2 / Wasabi / AWS S3) |
+| 7 | **App-wide PWA manifest + service worker** | Every module has been built "PWA-ready" but nothing is installable yet; also roadmap Phase 6 | Low–Medium | Medium | None |
+| 8 | **`vue-i18n` runtime-only build + message precompilation** | ~84 KB gzip bundle-size win, app-wide | Low | Small–Medium (needs careful 3-locale regression pass) | None |
+| 9 | **Codebase-wide PrimeVue `id`→`inputId` accessibility sweep** | Real but narrow a11y gap, fixed piecemeal so far | Low | Small | None |
+
+**Resolved this pass**: the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests (former item #4) was fixed as part of Phase 2.4 (PR #24, 2026-08-08) — see `TECH_DEBT.md`'s Resolved section.
 
 ---
 
@@ -414,17 +417,11 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 **Phase 2: Patient Profile Redesign — design approved 2026-08-07. Phase 2.1 (Foundation) merged to
 `main` via PR #18 (2026-08-07); Phase 2.2 (Billing) merged via PR #20 (2026-08-08); Phase 2.3
-(Medical History) merged via PR #22 (2026-08-08). Phase 2.4 (Laboratory) is now in its own Design
-Phase** (started 2026-08-08) — see `docs/modules/patient-laboratory-redesign-design.md` for the full
-spec, produced by auditing the actual current Laboratory code on `main` rather than assuming the
-umbrella doc's earlier §17 outline still matched it. That audit confirmed the outline's missing
-pieces (`Patient::labCases()`, a `forPatient` scope, a new patient-scoped route, a `patientLabCases`
-store, a `PatientLabCasesPanel.vue`) but also surfaced two things the outline didn't: a confirmed,
-currently-dormant SQL bug (`App\Rules\BelongsToPatient` against `TreatmentPlanItem`, logged in
-`TECH_DEBT.md` since PR #6/2026-07-28) that this phase would make newly reachable in practice, and a
-genuine product question — read-only tab vs. inline create/status-actions — with a recommendation but
-no decision yet. **Implementation has not started and will not until the user reviews and approves
-that design doc's §16 decision list.** Step 1 (analysis) and Step 2 (design document,
+(Medical History) merged via PR #22 (2026-08-08); Phase 2.4 (Laboratory) merged via PR #24
+(2026-08-08, `9de50fb`) — see `docs/modules/patient-laboratory-redesign-design.md` for the full spec.
+Phase 2.5 (Documents) is next but has no approved design yet** — per the two-phase workflow every
+prior sub-phase has followed (design phase → user approval → implementation → final review), it is
+not yet safe to start coding it. Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
 (Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/
@@ -492,7 +489,7 @@ files — identical to real `origin/main`'s own count — confirming zero net-ne
 just an assumption. All local checks (998/998 backend, 867/867 frontend, type-check, ESLint, Pint) re-run
 clean after the fix; pushed as a follow-up commit to PR #22. **CI re-ran fully green**: Backend pass, Frontend pass, E2E skipping (expected — this project's E2E job only runs on push-to-main, not the `pull_request` trigger, per this file's own established convention). The review was then independently re-confirmed against GitHub's live PR/CI state (not taken on faith from a pasted summary) — `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, both CI checks `SUCCESS`. **PR #22 merged 2026-08-08 (`aa704b6`)**; `main`'s own post-merge CI run (`31248165133`) confirmed fully green — Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`.
 
-**Phase 2.4 (Laboratory), design-approved and implemented 2026-08-08** on
+**Phase 2.4 (Laboratory), merged 2026-08-08 via PR #24 (`9de50fb`)**, implemented on
 `feature/patient-profile-phase2-4-laboratory` (design doc: `docs/modules/patient-laboratory-redesign-design.md`,
 produced by re-auditing the actual Laboratory code on `main` rather than trusting this file's/the umbrella
 doc's earlier outline — that audit found the outline incomplete, see that doc's §0): `Patient::labCases()`
@@ -515,7 +512,12 @@ shipping without the fix was ruled out. No new policy, no new permissions, no DB
 type-check/ESLint/Prettier clean on every file this phase touched. One i18n key
 this phase's own design doc didn't name (`laboratory.labCases.loadError`, needed by the store's error path)
 was caught by the frontend test suite locally, before CI — added in the same pass, `ar`/`en`/`tr` parity
-verified.
+verified. Opened as **PR #24**; its CI ran green (Backend pass, Frontend pass, E2E skipping — expected
+on the `pull_request` trigger per this file's established convention). The review was independently
+re-confirmed against GitHub's live PR/CI state before merging (not taken on a pasted summary alone) —
+`state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, both CI checks `SUCCESS`. **PR #24
+merged 2026-08-08 (`9de50fb`)**; `main`'s own post-merge CI run (`31268707960`) confirmed fully green —
+Backend, Frontend, and E2E (all three run on the push-to-main trigger) each `success`.
 
 **Documents and Timeline remain out of scope** until their respective sub-phases (2.5 onward). Laboratory is
 no longer in that list — see the entry above. Tags/labels, in-record search, and PDF export remain named as
@@ -537,7 +539,6 @@ roadmap's own stated order — see §11 for the full list.
 |---|---|---|---|
 | **Local-disk-only backup + VPS loss** before a real clinic is onboarded | Low (no real clinic yet) → rising | High if it happens | Provision S3/offsite storage before onboarding (§11 item 7) |
 | **Documentation drift recurring** the same way it did 2026-08-01→07 (§0), silently, if this file isn't actually kept current through the next high-velocity burst | Medium without discipline | Medium (erodes trust in docs, wastes future re-derivation effort) — already happened once, in the exact window this file itself was being built | §15's protocol + repo-root `CLAUDE.md` (auto-loaded every session) — the real test is whether Phase 2's own PRs keep this file current *during*, not after |
-| **Laboratory's unfixed `BelongsToPatient` bug** gets exercised in production once `treatment_plan_item_id` is actually used on a Lab Case | Low today (unexercised), rises as usage grows | Medium (500 crash, not data corruption) | Apply Imaging's already-existing fix pattern (§11 item 4) |
 | **`dental_conditions` reused as a global pricing catalog** becomes a real constraint once multi-tenant/insurance pricing is needed | Low near-term (V1 is single-org by design) | Medium, contained (a planned, not accidental, migration) | Already flagged with its own revisit condition (§9); don't build the dedicated catalog speculatively before then |
 | **Billing's thinner test coverage** (unit-only, no E2E) hides a regression a later module's refactor introduces | Medium | Medium | Prioritize Billing's Feature-test suite + E2E spec (§11 items 2–3) |
 | **PHI exposure via AI Assistant** if a clinic enables Clinical Notes draft-assist/Treatment Suggestions without an actual signed BAA | Low (requires explicit admin acknowledgment) | High if it happens | Gate is already enforced in code (`ai_assistant_phi_features_acknowledged`); this is a process/legal risk (admin must actually have a BAA before checking that box), not a code gap |
