@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Enums\UserRole;
+use App\Models\PatientAllergy;
+use App\Models\PatientMedicalCondition;
+use App\Models\PatientMedication;
 use App\Models\User;
+use App\Policies\MedicalHistoryPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -42,5 +46,12 @@ class AppServiceProvider extends ServiceProvider
         // a categorically more sensitive scope than any single patient's billing record.
         Gate::define('view-financial-reports', fn (User $user) => $user->role === UserRole::Admin);
         Gate::define('view-operational-reports', fn (User $user) => true);
+
+        // Medical History (Phase 2.3, design doc §6.4): one policy class for all three entities,
+        // registered explicitly since Laravel's naming-convention auto-discovery only maps one
+        // policy per model.
+        Gate::policy(PatientAllergy::class, MedicalHistoryPolicy::class);
+        Gate::policy(PatientMedicalCondition::class, MedicalHistoryPolicy::class);
+        Gate::policy(PatientMedication::class, MedicalHistoryPolicy::class);
     }
 }

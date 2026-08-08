@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { describe, expect, it, vi } from 'vitest'
 import DataTable from 'primevue/datatable'
 import PatientDetailView from './PatientDetailView.vue'
+import MedicalHistoryPanel from '@/components/medicalHistory/MedicalHistoryPanel.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
@@ -83,7 +84,12 @@ async function mountView(role: UserRole) {
   const wrapper = mount(PatientDetailView, {
     global: {
       plugins: [router],
-      stubs: { PatientAppointmentsPanel: true, PatientDentalChartPanel: true, PatientBillingPanel: true },
+      stubs: {
+        PatientAppointmentsPanel: true,
+        PatientDentalChartPanel: true,
+        PatientBillingPanel: true,
+        MedicalHistoryPanel: true,
+      },
     },
   })
   await flushPromises()
@@ -100,6 +106,20 @@ describe('PatientDetailView — tabs', () => {
     const wrapper = await mountView('admin')
     expect(wrapper.text()).toContain('Demographics')
     expect(wrapper.text()).toContain('555-0100')
+  })
+
+  it('renders MedicalHistoryPanel, scoped to the current patient, right after Overview (Phase 2.3)', async () => {
+    const wrapper = await mountView('admin')
+    await clickTab(wrapper, 'Medical History')
+    await flushPromises()
+
+    const panel = wrapper.findComponent(MedicalHistoryPanel)
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('patientId')).toBe('patient-1')
+
+    const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
+    expect(tabLabels[0]).toBe('Overview')
+    expect(tabLabels[1]).toBe('Medical History')
   })
 
   it('renders PatientAppointmentsPanel, prefilled with the current patient, in the Appointments tab', async () => {

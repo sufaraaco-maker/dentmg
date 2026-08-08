@@ -92,4 +92,19 @@ class Patient extends Model
     {
         return $this->hasMany(PatientImage::class);
     }
+
+    public function allergies(): HasMany
+    {
+        return $this->hasMany(PatientAllergy::class);
+    }
+
+    public function medicalConditions(): HasMany
+    {
+        return $this->hasMany(PatientMedicalCondition::class);
+    }
+
+    public function medications(): HasMany
+    {
+        return $this->hasMany(PatientMedication::class);
+    }
 }

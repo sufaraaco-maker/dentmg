@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved 2026-08-07.** Phase 2.1 (Foundation) merged via PR #18 (2026-08-07). Phase 2.2 (Billing) merged via PR #20 (2026-08-08). Phase 2.3 (Medical History) is next. §0's decisions and §9A's Security Architecture Decision are binding on every sub-phase below. |
+| **Status** | **Approved 2026-08-07.** Phase 2.1 (Foundation) merged via PR #18 (2026-08-07). Phase 2.2 (Billing) merged via PR #20 (2026-08-08). Phase 2.3 (Medical History) implemented 2026-08-08 on `feature/patient-profile-phase2-3-medical-history`, not yet merged — see `docs/PROJECT_STATUS.md` §12 for full detail. Phase 2.4 (Laboratory) is next. §0's decisions and §9A's Security Architecture Decision are binding on every sub-phase below. |
 | **Roadmap position** | 8-phase post-Stabilization roadmap, Phase 2 (see `docs/PROJECT_STATUS.md` §11-12) |
 | **Author** | Claude Code, in collaboration with the user (decisions in §0 were specified directly, not inferred) |
 | **Analysis basis** | Full audit of the current `PatientDetailView.vue` hub, all 8 target modules' backend/frontend integration points, and the design-system/component/permission layer — see the Step 1 findings this doc formalizes |
@@ -253,7 +253,7 @@ No unified "can view patient hub" gate — the hub shell always renders; each `T
 | Tab | View | Write | Backing Policy |
 |---|---|---|---|
 | Overview | All staff | Admin + Receptionist (demographics) | `PatientPolicy` (existing) |
-| Medical History | All staff (proposed) | Admin + Dentist (proposed) | `MedicalHistoryPolicy` (new) |
+| Medical History | All staff ✅ implemented as proposed | Admin + Dentist ✅ implemented as proposed | `MedicalHistoryPolicy` (new — one policy for all 3 entities, registered via `Gate::policy()`, see `docs/decisions.md` 2026-08-08) |
 | Dental Chart | All staff | Admin + Dentist | `DentalChartEntryPolicy` (existing) |
 | Treatment Plans | All staff | Admin + Dentist | `TreatmentPlanPolicy` (existing) |
 | Clinical Notes | **Admin + Dentist only** | Admin + Dentist | `ClinicalNotePolicy` (existing — receptionist excluded from read, confirmed) |
@@ -319,8 +319,8 @@ Sequenced to front-load low-risk foundational work, then well-understood "repeat
 | Sub-phase | Scope | Risk |
 |---|---|---|
 | **2.1 Foundation** ✅ done | `patients.ts` store, standardized `fetchForPatient` pattern documented, `patientImages.ts` store (Imaging retrofit), pagination added to Treatment Plans/Clinical Notes (Invoices/Payments deferred to 2.2 — see implementation note above), Lucide migration for the Patients module, `EmptyState.vue` built and retrofitted, `PatientDetailView.vue` tab list made config-driven | Low — no new features, no new schema |
-| **2.2 Billing merge** | `PatientBillingPanel.vue`, `BillingSummaryCard.vue`, `billing-summary` endpoint, mobile dropdown tab switcher (needed now since Billing's merge changes the tab count) | Low-Medium — UI restructure + one new aggregate endpoint |
-| **2.3 Medical History** | New tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of existing free-text `allergies` | Medium — new schema, new policy |
+| **2.2 Billing merge** ✅ done (PR #20) | `PatientBillingPanel.vue`, `BillingSummaryCard.vue`, `billing-summary` endpoint, mobile dropdown tab switcher (needed now since Billing's merge changes the tab count) | Low-Medium — UI restructure + one new aggregate endpoint |
+| **2.3 Medical History** ✅ implemented, PR pending | New tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of existing free-text `allergies` | Medium — new schema, new policy |
 | **2.4 Laboratory integration** | `Patient::labCases()`, `forPatient` scope on `LabCase`, new patient-scoped route, `patientLabCases` store, `PatientLabCasesPanel.vue` | Low — repeats an existing, well-understood pattern exactly |
 | **2.5 Documents** | New table/model/`PatientDocumentService`/`PatientDocumentPolicy`/controller, `AttachmentUpload.vue`/`AttachmentList.vue`, `PatientDocumentsPanel.vue` | Medium — new schema, new generalized components |
 | **2.6 Timeline / `PatientActivity`** | Event abstraction, domain events wired into all 8 modules' services, `RecordsPatientActivity` listener, `activities` endpoint with role-filtering (§9A), `ActivityTimeline.vue`, Timeline tab, Overview quick-stats + recent-activity preview, Billing's Payment History sub-section wired to it | **Highest** — new architecture, touches every module's service, security-critical role-filtering |
@@ -341,6 +341,6 @@ Each sub-phase should land as its own PR, CI-confirmed, following this project's
 ## 19. Risks and Open Questions
 
 1. **Timeline (2.6) is genuinely the hard part.** Wiring domain events into 8 existing services is real, cross-cutting work with room to silently miss an event type — the per-event dispatch tests in §18 exist specifically to catch that, not as boilerplate.
-2. **Three "(proposed)" permission defaults** (§10: Medical History, Imaging write, Documents) need a quick confirm before 2.3/2.5 implementation — not a blocker to approving this doc, but worth resolving before those specific sub-phases start.
-3. **The `allergies` column deprecation** (§7) leaves a temporarily-duplicated concept (old free-text column + new structured table) until a later cleanup phase removes the column — intentional, not an oversight; should get its own `TECH_DEBT.md` entry once 2.3 ships, naming the removal condition explicitly (mirrors how every other deferred item in this codebase is tracked).
+2. **Three "(proposed)" permission defaults** (§10: Medical History, Imaging write, Documents) need a quick confirm before 2.3/2.5 implementation — not a blocker to approving this doc, but worth resolving before those specific sub-phases start. **Medical History's resolved** by Phase 2.3's implementation (2026-08-08): implemented exactly as proposed (view = all staff, write = Admin + Dentist). Imaging write and Documents remain open until 2.5.
+3. **The `allergies` column deprecation** (§7) leaves a temporarily-duplicated concept (old free-text column + new structured table) until a later cleanup phase removes the column — intentional, not an oversight. **`TECH_DEBT.md` entry added 2026-08-08** (Phase 2.3 implementation) naming the removal condition explicitly, per this item's own instruction.
 4. **Explicitly deferred, not forgotten**: tags/labels, in-record search, PDF export (from the original roadmap wording, not decided in §0) stay off this phase's scope — worth a `docs/roadmap.md`/`TECH_DEBT.md` entry pointing at "Phase 2.x or later" once this doc is approved, so they don't quietly vanish from the record the way earlier staleness incidents did (see `docs/PROJECT_STATUS.md` §0's own history of exactly that failure mode).

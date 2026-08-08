@@ -183,6 +183,7 @@
     "confirmDelete": "هل أنت متأكد من حذف {name}؟",
     "tabs": {
       "overview": "نظرة عامة",
+      "medicalHistory": "التاريخ الطبي",
       "appointments": "المواعيد",
       "dentalChart": "مخطط الأسنان",
       "imaging": "الأشعة والصور",
@@ -257,6 +258,70 @@
         "paymentHistory": "سجل المدفوعات"
       },
       "paymentHistoryTitle": "سجل المدفوعات"
+    }
+  },
+  "medicalHistory": {
+    "loadError": "فشل تحميل التاريخ الطبي",
+    "list": {
+      "actions": "الإجراءات"
+    },
+    "dialog": {
+      "notes": "ملاحظات",
+      "fieldRequired": "هذا الحقل مطلوب",
+      "saved": "تم الحفظ بنجاح",
+      "saveError": "فشل الحفظ",
+      "deleted": "تم الحذف بنجاح",
+      "deleteError": "فشل الحذف",
+      "confirmDeleteHeader": "تأكيد الحذف"
+    },
+    "allergies": {
+      "title": "الحساسية",
+      "add": "إضافة حساسية",
+      "empty": "لا توجد حساسية مسجلة لهذا المريض.",
+      "allergen": "مسبب الحساسية",
+      "severity": "الشدة",
+      "severities": {
+        "mild": "خفيفة",
+        "moderate": "متوسطة",
+        "severe": "شديدة"
+      },
+      "reaction": "رد الفعل",
+      "createTitle": "حساسية جديدة",
+      "editTitle": "تعديل الحساسية",
+      "confirmDelete": "هل أنت متأكد أنك تريد حذف الحساسية \"{name}\"؟"
+    },
+    "conditions": {
+      "title": "الحالات الطبية",
+      "add": "إضافة حالة",
+      "empty": "لا توجد حالات طبية مسجلة لهذا المريض.",
+      "conditionName": "الحالة",
+      "status": "الحالة",
+      "statuses": {
+        "active": "نشطة",
+        "resolved": "مُعالَجة",
+        "chronic": "مزمنة"
+      },
+      "diagnosedDate": "تاريخ التشخيص",
+      "createTitle": "حالة طبية جديدة",
+      "editTitle": "تعديل الحالة الطبية",
+      "confirmDelete": "هل أنت متأكد أنك تريد حذف \"{name}\"؟"
+    },
+    "medications": {
+      "title": "الأدوية الحالية",
+      "add": "إضافة دواء",
+      "empty": "لا توجد أدوية مسجلة لهذا المريض.",
+      "medicationName": "الدواء",
+      "dosage": "الجرعة",
+      "frequency": "التكرار",
+      "status": "الحالة",
+      "current": "حالي",
+      "discontinued": "متوقف",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "endDateBeforeStart": "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء",
+      "createTitle": "دواء جديد",
+      "editTitle": "تعديل الدواء",
+      "confirmDelete": "هل أنت متأكد أنك تريد حذف \"{name}\"؟"
     }
   },
   "appointments": {

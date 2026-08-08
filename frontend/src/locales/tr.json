@@ -183,6 +183,7 @@
     "confirmDelete": "{name} adlı hastayı silmek istediğinizden emin misiniz?",
     "tabs": {
       "overview": "Genel Bakış",
+      "medicalHistory": "Tıbbi Geçmiş",
       "appointments": "Randevular",
       "dentalChart": "Diş Şeması",
       "imaging": "Görüntüleme",
@@ -257,6 +258,70 @@
         "paymentHistory": "Ödeme Geçmişi"
       },
       "paymentHistoryTitle": "Ödeme Geçmişi"
+    }
+  },
+  "medicalHistory": {
+    "loadError": "Tıbbi geçmiş yüklenemedi",
+    "list": {
+      "actions": "İşlemler"
+    },
+    "dialog": {
+      "notes": "Notlar",
+      "fieldRequired": "Bu alan zorunludur",
+      "saved": "Başarıyla kaydedildi",
+      "saveError": "Kaydedilemedi",
+      "deleted": "Başarıyla silindi",
+      "deleteError": "Silinemedi",
+      "confirmDeleteHeader": "Silmeyi Onayla"
+    },
+    "allergies": {
+      "title": "Alerjiler",
+      "add": "Alerji Ekle",
+      "empty": "Bu hasta için kayıtlı alerji yok.",
+      "allergen": "Alerjen",
+      "severity": "Şiddet",
+      "severities": {
+        "mild": "Hafif",
+        "moderate": "Orta",
+        "severe": "Şiddetli"
+      },
+      "reaction": "Reaksiyon",
+      "createTitle": "Yeni Alerji",
+      "editTitle": "Alerjiyi Düzenle",
+      "confirmDelete": "\"{name}\" alerjisini silmek istediğinizden emin misiniz?"
+    },
+    "conditions": {
+      "title": "Tıbbi Durumlar",
+      "add": "Durum Ekle",
+      "empty": "Bu hasta için kayıtlı tıbbi durum yok.",
+      "conditionName": "Durum",
+      "status": "Durum",
+      "statuses": {
+        "active": "Aktif",
+        "resolved": "Çözüldü",
+        "chronic": "Kronik"
+      },
+      "diagnosedDate": "Teşhis Tarihi",
+      "createTitle": "Yeni Tıbbi Durum",
+      "editTitle": "Tıbbi Durumu Düzenle",
+      "confirmDelete": "\"{name}\" öğesini silmek istediğinizden emin misiniz?"
+    },
+    "medications": {
+      "title": "Güncel İlaçlar",
+      "add": "İlaç Ekle",
+      "empty": "Bu hasta için kayıtlı ilaç yok.",
+      "medicationName": "İlaç",
+      "dosage": "Doz",
+      "frequency": "Sıklık",
+      "status": "Durum",
+      "current": "Güncel",
+      "discontinued": "Kesildi",
+      "startDate": "Başlangıç Tarihi",
+      "endDate": "Bitiş Tarihi",
+      "endDateBeforeStart": "Bitiş tarihi başlangıç tarihinden önce olamaz",
+      "createTitle": "Yeni İlaç",
+      "editTitle": "İlacı Düzenle",
+      "confirmDelete": "\"{name}\" öğesini silmek istediğinizden emin misiniz?"
     }
   },
   "appointments": {

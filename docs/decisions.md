@@ -256,3 +256,31 @@ feature) — this entry is the durable pointer for future modules that hit the s
 
 **Status**: Approved with the design (design review approved 2026-08-07). Binding on all Phase 2.6 (Timeline)
 implementation and on any later feature that aggregates cross-module patient data.
+
+## 2026-08-08 — One Policy class registered against multiple models via `Gate::policy()`, for Medical History
+
+Phase 2.3 (Medical History)'s design doc explicitly calls for **one** `MedicalHistoryPolicy` governing all
+three new entities (`PatientAllergy`/`PatientMedicalCondition`/`PatientMedication`) — they're one logical
+feature (allergies/conditions/medications are all edited from the same tab, by the same roles), and three
+near-identical policy classes would just be duplication, the same "avoid over-engineering" reasoning already
+behind `MedicalHistoryService` being one service for the same three entities.
+
+The problem: every existing Policy in this codebase relies purely on Laravel's naming-convention
+auto-discovery (`Model` → `App\Policies\{Model}Policy`), confirmed by grepping the whole codebase for
+`Gate::policy(`/`protected $policies` — there is no existing precedent either way, since auto-discovery only
+ever maps **one** policy class per model. Three near-identical policy classes would satisfy auto-discovery
+without any new registration code, but would contradict the design doc's explicit "one policy" call and
+duplicate the same `in_array($actor->role, [Admin, Dentist], true)` logic three times.
+
+**Decision**: keep the single `MedicalHistoryPolicy` class the design doc calls for, and register it
+explicitly for all three models via three `Gate::policy(Model::class, MedicalHistoryPolicy::class)` calls in
+`AppServiceProvider::boot()` (the same file/method that already defines the two Reports `Gate::define()`
+abilities for a similarly no-natural-single-model case). This is additive, explicit registration — it
+doesn't change how any *other* module's policy resolves, and doesn't introduce a new authorization
+abstraction (no base class, no trait, no generic "multi-model policy" concept) — just three lines pointing
+three models at one class.
+
+**Status**: Implemented with Phase 2.3 (not yet merged — see `docs/PROJECT_STATUS.md` §12). Establishes the
+precedent for any future entity cluster (à la Medical History's three tables) that the design phase decides
+should share one policy: register it explicitly in `AppServiceProvider`, don't split into N near-identical
+policy classes just to keep auto-discovery working.

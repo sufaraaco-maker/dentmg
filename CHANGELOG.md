@@ -21,8 +21,46 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
-merged via **PR #20** — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living,
-continuously-updated status book this file's own per-PR history now feeds into._
+merged via **PR #20**; **2.3 (Medical History)** implemented on `feature/patient-profile-phase2-3-medical-history`
+— this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
+book this file's own per-PR history now feeds into._
+
+### Added — Phase 2.3: Medical History (`feature/patient-profile-phase2-3-medical-history`, implemented 2026-08-08)
+- **Context**: third implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
+  `docs/modules/patient-profile-redesign-design.md` §6/§7/§10. Replaces the free-text `patients.allergies`/
+  `patients.medical_history` fields with a structured Medical History tab (Allergies / Medical Conditions /
+  Current Medications).
+- **New tables**: `patient_allergies` (allergen, severity, reaction, notes), `patient_medical_conditions`
+  (condition_name, status, diagnosed_date, notes), `patient_medications` (medication_name, dosage, frequency,
+  is_current, start/end date, notes) — UUID PK, `SoftDeletes`, `Auditable`, `created_by_id`/`updated_by_id`,
+  matching every other clinical-adjacent table's shape.
+- **`MedicalHistoryService`**: one service for all three entities (design doc §6.3 — avoids three
+  near-identical services for what is one logical feature).
+- **`MedicalHistoryPolicy`**: one policy for all three entities — `view`/`viewAny` open to all staff
+  (allergies are front-desk safety-relevant, same reasoning as `DentalChartEntryPolicy`), `create`/`update`/
+  `delete` restricted to Admin + Dentist. Registered against all three models via `Gate::policy()` in
+  `AppServiceProvider`, since Laravel's naming-convention auto-discovery only maps one policy per model —
+  the closest fit to the design doc's explicit "one policy" requirement without inventing a new permission
+  abstraction.
+- **`MedicalHistoryController`**: one controller, 12 endpoints (`GET`/`POST` per section under
+  `patients/{patient}/...`, `PUT`/`DELETE` per record at the top level), paginated at 15/page matching every
+  other new list endpoint this phase (design doc §11.2).
+- **Backfill**: `2026_08_08_000004_backfill_patient_allergies_from_legacy_column` migrates any non-empty
+  legacy `patients.allergies` text into one best-effort `patient_allergies` row per patient. `patients.allergies`
+  itself is kept, deprecated, not dropped this phase (design doc §7); `patients.medical_history` is
+  unaffected — repurposed as the Notes field, no migration needed.
+- **`medicalHistory.ts` Pinia store + `MedicalHistoryPanel.vue`**: one store for all three sections (mirrors
+  the backend's shape), `AllergyList`/`MedicalConditionList`/`MedicationList.vue` presentational list
+  components (`InvoiceListTable.vue` convention) plus one create/edit dialog per entity. New `medicalHistory`
+  tab added to `PatientDetailView.vue` right after Overview, per the design doc §4 tab order — all staff can
+  read, Admin/Dentist can write.
+- **i18n**: full `ar`/`en`/`tr` parity for the new `medicalHistory` namespace (no automated check exists in
+  this repo — verified manually per `docs/PROJECT_STATUS.md` §12/§5).
+- **Tests**: backend +46 Feature/Unit tests (25 CRUD/permission Feature tests, 9 Service unit tests, 9
+  Policy unit tests — including explicit per-model `Gate::policy()` registration checks, since this is the
+  first policy in the codebase registered against more than one model — 3 backfill migration `up()`/`down()`
+  tests) — full suite 998/998 green, Pint clean. Frontend +35 new tests (store, API layer, panel, one added
+  to `PatientDetailView.test.ts`) — full suite 867/867 green, type-check and lint clean.
 
 ### Added — Phase 2.2: Billing (`feature/patient-profile-phase2-2-billing`, merged via PR #20, 2026-08-08)
 - **Context**: second implementation sub-phase of Phase 2 (Patient Profile Redesign) — see

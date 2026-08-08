@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-08 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), and Phase 2.2 (Billing) merged via PR #20 — independently re-verified: Backend/Frontend CI green pre-merge, `main`'s post-merge CI re-confirmed green (Backend/Frontend/E2E all passed, E2E runs on push-to-main unlike the PR trigger) |
-| **Repo HEAD at time of writing** | `main` at `43ca5c7` (PR #20 merge: Phase 2.2 — Billing, on top of `d9b277f`'s PR #19 merge). |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20.** |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, and Phase 2.3 (Medical History) implemented on `feature/patient-profile-phase2-3-medical-history` — backend (998/998 tests, Pint clean) and frontend (867/867 tests, type-check/lint clean) verified locally; **not yet committed, pushed, or opened as a PR** — awaiting the user's local review per their explicit instruction before any git action |
+| **Repo HEAD at time of writing** | `main` at `43ca5c7` (PR #20 merge: Phase 2.2 — Billing, on top of `d9b277f`'s PR #19 merge). Phase 2.3's changes exist only in the local working tree on `feature/patient-profile-phase2-3-medical-history`, not yet committed. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) implemented 2026-08-08, pending review/PR.** |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -119,6 +119,7 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-07 | **PR #15** merged (Phase 1 code + this file + `CLAUDE.md`), then **PR #14** merged. `main`'s CI fully green for the first time since 2026-08-01. `CHANGELOG.md`/`docs/roadmap.md`/`PROJECT_CONTEXT.md` staleness from §0 reconciled; `TECH_DEBT.md` updated with both resolutions. This file updated for Phase 1 close-out per its own §15 protocol. |
 | 2026-08-07 | **PR #16** merged after an independent final release verification (Backend + Frontend CI re-confirmed green firsthand, not taken on faith; `git merge-tree` confirmed no conflicts with `main`; diff checked for introduced TODO/FIXME — none found). **Milestone: "Phase 1 — Foundation Complete."** Immediate next step: Phase 2 (Patient Profile Redesign) design phase — see §12. |
 | 2026-08-07 | **Phase 2: Patient Profile Redesign — design phase begins.** Step 1 analysis (current hub + all 8 related modules + design system + permissions) approved by the user. Step 2 design doc written: `docs/modules/patient-profile-redesign-design.md` — merges Invoices+Payments into one Billing tab (backend stays split), structured Medical History (Allergies/Conditions/Medications/Notes), a V1 Documents foundation, and a dedicated `PatientActivity` event architecture for Timeline with per-category role-filtering as an explicit security requirement. No implementation code written yet — awaiting design approval per §12. |
+| 2026-08-08 | **Phase 2.3 (Medical History) implemented** on `feature/patient-profile-phase2-3-medical-history` — see §12 for full detail and the new `CHANGELOG.md` entry. Confirmed the "(proposed)" permission default the design doc's §10/§19 flagged for Medical History (view = all staff, write = Admin + Dentist) by implementation, matching `DentalChartEntryPolicy`'s closest existing pattern rather than inventing a new one. Backend 998/998 tests green (Pint clean); frontend 867/867 tests green, type-check/lint clean (local Prettier flags the same 235 pre-existing files it already flags on `main` before this branch's changes — confirmed via `git stash`, an environment-only drift, not a regression). Not yet committed/pushed/opened as a PR — stopped for the user's local review per their explicit instruction. |
 
 ---
 
@@ -208,6 +209,7 @@ onward) — this is a summary of the decisions with the widest blast radius:
 | Icon system: PrimeIcons → Lucide, app-wide (Premium Visual Redesign, 2026-08-01) | Restraint + a single consistent icon family, benchmarked against Linear/Raycast | In progress, module-by-module (§6, §9) |
 | **Flagged for Phase 4** (2026-08-07): `UserRole`'s flat 3-value enum will need to become a real role-hierarchy/permission-matrix model (`Owner → Clinic Admin → {Dentist, Assistant, Receptionist, Accountant}`) | This is exactly the "real requirement" `docs/decisions.md`'s 2026-07-11 entry said would justify revisiting the flat-enum decision — not decided yet, needs its own design-approval round when Phase 4 (Advanced Permissions & Audit) starts | Flagged, not decided |
 | **Security Architecture Decision** (2026-08-07): Patient Timeline is built on a dedicated `PatientActivity` event model, never the `Auditable` trail, with Timeline permissions enforced **server-side, per-category**, at query time — a receptionist's `/activities` request must never return `category=clinical` rows, regardless of frontend hiding | Aggregation features are exactly where a stricter per-module read rule (e.g. `ClinicalNotePolicy` barring receptionists) can silently leak if not re-checked at the aggregation point; full detail in `docs/modules/patient-profile-redesign-design.md` §9A, full decision text in `docs/decisions.md` | **Approved with the Phase 2 design (2026-08-07) — binding on Phase 2.6 and any future cross-module aggregation feature** |
+| One `MedicalHistoryPolicy` class registered against 3 models (`PatientAllergy`/`PatientMedicalCondition`/`PatientMedication`) via explicit `Gate::policy()` calls in `AppServiceProvider`, not 3 near-identical policy classes | Laravel's naming-convention auto-discovery only maps one policy per model; the design doc explicitly calls for one policy since the 3 entities are one logical feature — full detail in `docs/decisions.md` | **Implemented with Phase 2.3 (2026-08-08, not yet merged) — sets the precedent for any future entity cluster that should share one policy** |
 
 ---
 
@@ -389,7 +391,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.3: Medical History (Patient Profile Redesign)** | Next sub-phase per the approved design doc's §17 sequencing, now that Phase 2.2 (Billing) has merged: new tables/models/`MedicalHistoryService`/`MedicalHistoryPolicy`/controller, `MedicalHistoryPanel.vue` + 3 list components, data-migration of the existing free-text `allergies` field | High — the roadmap's own next priority | Medium | None blocking |
+| 1 | **Phase 2.4: Laboratory integration (Patient Profile Redesign)** | Next sub-phase per the design doc's §17 sequencing, now that Phase 2.3 (Medical History) is implemented and awaiting PR review: `Patient::labCases()`, a `forPatient` scope on `LabCase`, a new patient-scoped route, `patientLabCases` store, `PatientLabCasesPanel.vue` — design doc rates this Low risk, "repeats an existing, well-understood pattern exactly" | High — the roadmap's own next priority | Small–Medium | Phase 2.3's PR merged first |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
 | 4 | **Fix the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests** | Any `LabCase` create/update that sets `treatment_plan_item_id` will 500-crash in production | Medium (currently unexercised, but a live landmine) | Small (fix already exists in Imaging as a reference) | None |
@@ -442,9 +444,29 @@ clean. **One new deliberate trade-off logged in `TECH_DEBT.md`**: since `Patient
 `PatientPaymentsPanel.vue` are reused unchanged, they show only page 1 (no `Paginator`) inside the
 Billing tab.
 
-**Medical History, Laboratory, Documents, and Timeline remain out of scope** until their respective
-sub-phases (2.3 onward). Tags/labels, in-record search, and PDF export remain named as deferred
-backlog (design doc §19.4), not dropped.
+**Phase 2.3 (Medical History), implemented 2026-08-08 on `feature/patient-profile-phase2-3-medical-history`,
+not yet merged**: three new tables (`patient_allergies`, `patient_medical_conditions`, `patient_medications` —
+UUID PK, `SoftDeletes`, `Auditable`, matching every other clinical-adjacent table), one `MedicalHistoryService`
+and one `MedicalHistoryPolicy` for all three entities (design doc §6.3/§6.4 — avoids three near-identical
+services/policies for what is one logical feature; the policy is registered against all three models via
+`Gate::policy()` in `AppServiceProvider`, since Laravel's naming-convention auto-discovery only maps one
+policy per model), one `MedicalHistoryController` (12 endpoints, paginated at 15/page), a backfill migration
+that migrates any non-empty legacy `patients.allergies` text into one best-effort `patient_allergies` row per
+patient (`patients.allergies` kept, deprecated, not dropped this phase — design doc §7), a `medicalHistory.ts`
+Pinia store + `MedicalHistoryPanel.vue` (three presentational list components + one create/edit dialog per
+entity), a new `medicalHistory` tab in `PatientDetailView.vue` right after Overview (design doc §4 tab
+order), and full `ar`/`en`/`tr` i18n parity. Backend: 998/998 tests green (Pint clean; PHPStan's
+`forPatient()`/`User::$role`/`$name` findings on the new files are the same pre-existing local-only false
+positives already confirmed on unmodified files like `ClinicalNoteController` — see `TECH_DEBT.md`). Frontend:
+867/867 tests green, type-check/lint clean (local `prettier --check` flags the same 235 files it already flags on
+unmodified `main`, confirmed via `git stash` — an environment-only version drift, not a regression). **Not
+yet committed, pushed, or opened as a PR** — the user's own instructions for this sub-phase explicitly said
+to stop at PR-readiness and wait for their local review before any git action, so this row will be updated
+again once that happens.
+
+**Laboratory, Documents, and Timeline remain out of scope** until their respective sub-phases (2.4 onward).
+Tags/labels, in-record search, and PDF export remain named as deferred backlog (design doc §19.4), not
+dropped.
 
 **Why this, not something else, right now**: Phase 1's whole point was to make it safe to build on top of
 `main` again — that's done. The roadmap's own stated execution priority puts Patient Profile Redesign

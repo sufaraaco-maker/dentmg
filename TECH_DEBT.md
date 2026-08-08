@@ -4,6 +4,25 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### `patients.allergies` (legacy free-text column) is deprecated but not dropped
+Introduced 2026-08-08 during Phase 2.3 (Medical History). The structured `patient_allergies` table now
+supersedes the free-text `patients.allergies` column (design doc §7) — a one-time backfill migration
+(`2026_08_08_000004_backfill_patient_allergies_from_legacy_column`) copies any existing non-empty value
+into one best-effort `patient_allergies` row per patient (`allergen` set to the raw text as-is; an admin
+can split it into multiple structured rows manually afterward). The column itself is deliberately **kept,
+not dropped**, this phase — the same "don't do silent, hard-to-reverse column drops" pattern this
+codebase already follows elsewhere (§19 item 3 of the design doc named this as a required tech-debt entry
+before Phase 2.3 could be considered complete).
+**What's still reading/writing the old column**: `PatientController`'s existing CRUD (the `allergies`
+field remains in `Patient::$fillable` and the Patient form/API), and `PatientDetailView.vue`'s Overview
+tab (`patients.sections.medical` card) still displays it read-only alongside the new Medical History tab.
+Both are unchanged by this phase, not newly introduced — the column staying live is what "kept, not
+dropped" means in practice.
+**Revisit**: once the team confirms nothing still writes to `patients.allergies` (i.e., admins/receptionists
+are actually using the new Medical History tab instead of the old free-text field) — remove the field from
+the Patient form/API, stop displaying it on Overview, and drop the column in a dedicated migration. Not
+tied to a specific future phase; a deliberate "revisit when usage data says so," not a scheduled cleanup.
+
 ### Invoices/Payments patient-scoped list endpoints are still unbounded `->get()` calls
 Found and partially fixed 2026-08-07 during Phase 2.1 (Patient Profile Redesign — Foundation). The
 patient-scoped `GET /patients/{patient}/treatment-plans`, `.../clinical-notes`, `.../invoices`, and
