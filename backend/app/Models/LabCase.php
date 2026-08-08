@@ -105,6 +105,14 @@ class LabCase extends Model
     }
 
     /**
+     * Patient Profile integration (Phase 2.4) — same shape as TreatmentPlan::scopeForPatient().
+     */
+    public function scopeForPatient(Builder $query, string $patientId): Builder
+    {
+        return $query->where('patient_id', $patientId);
+    }
+
+    /**
      * Dashboard widget query (design doc §2/§6): due today or overdue, not yet back from the lab.
      */
     public function scopeDueOrOverdue(Builder $query): Builder

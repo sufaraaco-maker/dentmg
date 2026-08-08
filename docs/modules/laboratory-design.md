@@ -17,6 +17,17 @@ trail, including two pre-existing, proven-unrelated E2E issues (a suite-wide rat
 issue affecting `dental-chart.spec.ts`, and the recurring local-only PHPStan container quirk
 already logged against Inventory) surfaced but not caused by this module.
 
+**Update, 2026-08-08 (Phase 2.4, Patient Profile integration)**: this module itself is unchanged —
+`Lab`/`LabCase`/`LabCaseService`/`LabCasePolicy`/`LabPolicy` and the standalone
+`LabsView.vue`/`LabCasesView.vue`/`LabCaseDetailView.vue` pages all still work exactly as designed
+here. What changed is that Lab Cases are now *also* reachable from a patient's own record — a new
+`GET /patients/{patient}/lab-cases` endpoint, `Patient::labCases()`, and a `PatientLabCasesPanel.vue`
+tab in `PatientDetailView.vue` — see `docs/modules/patient-laboratory-redesign-design.md` for that
+integration's own full design and implementation record. One real pre-existing bug in this module's
+own `StoreLabCaseRequest`/`UpdateLabCaseRequest` (`App\Rules\BelongsToPatient` throwing a SQL error
+against `treatment_plan_item_id`, open in `TECH_DEBT.md` since 2026-07-28) was fixed as part of that
+work, not here.
+
 ## Implementation Summary (added at Final Review, 2026-07-27)
 
 **Backend**: `Lab` (admin-managed vendor catalog, mirrors `Supplier` exactly — `is_active`

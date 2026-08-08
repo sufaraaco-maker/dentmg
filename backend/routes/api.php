@@ -176,6 +176,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('lab-cases/{lab_case}/cancel', [LabCaseController::class, 'cancel']);
     Route::apiResource('lab-cases', LabCaseController::class);
 
+    // Patient Profile's Laboratory tab (Phase 2.4).
+    Route::get('patients/{patient}/lab-cases', [LabCaseController::class, 'forPatient']);
+
     Route::get('patients/{patient}/images', [PatientImageController::class, 'index']);
     Route::post('patients/{patient}/images', [PatientImageController::class, 'store']);
     Route::get('images/{patient_image}/file', [PatientImageController::class, 'file'])->name('patient-images.file');

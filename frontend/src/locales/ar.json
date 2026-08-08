@@ -187,6 +187,7 @@
       "appointments": "المواعيد",
       "dentalChart": "مخطط الأسنان",
       "imaging": "الأشعة والصور",
+      "laboratory": "المختبر",
       "treatmentPlans": "خطط العلاج",
       "clinicalNotes": "الملاحظات السريرية",
       "billing": "الفوترة"
@@ -221,6 +222,11 @@
       "title": "خطط العلاج",
       "new": "خطة علاج جديدة",
       "empty": "لا توجد خطط علاج لهذا المريض بعد."
+    },
+    "laboratoryPanel": {
+      "title": "المختبر",
+      "new": "حالة مخبرية جديدة",
+      "empty": "لا توجد حالات مخبرية لهذا المريض بعد."
     },
     "clinicalNotesPanel": {
       "title": "الملاحظات السريرية",
@@ -1270,6 +1276,7 @@
       "fieldRequired": "هذا الحقل مطلوب",
       "createTitle": "حالة مختبر جديدة",
       "createError": "تعذّر إنشاء حالة المختبر",
+      "loadError": "تعذّر تحميل حالات المختبر",
       "deleted": "تم حذف حالة المختبر",
       "deleteError": "تعذّر حذف حالة المختبر",
       "confirmDeleteHeader": "حذف حالة المختبر",

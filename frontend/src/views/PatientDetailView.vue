@@ -26,6 +26,7 @@ import MedicalHistoryPanel from '@/components/medicalHistory/MedicalHistoryPanel
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientImagingPanel from '@/components/imaging/PatientImagingPanel.vue'
+import PatientLabCasesPanel from '@/components/laboratory/PatientLabCasesPanel.vue'
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
 import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
@@ -58,6 +59,12 @@ const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
  * Phase 2.3: `medicalHistory` added right after `overview`, matching the design doc §4 tab order
  * (Overview → Medical History → Dental Chart → ...) — all staff can read (allergies are
  * front-desk safety-relevant), same visibility shape as Dental Chart/Treatment Plans.
+ *
+ * Phase 2.4: `laboratory` added right after `imaging` (patient-laboratory-redesign-design.md §8.1)
+ * — the umbrella doc's own IA grouping puts Imaging/Laboratory together as diagnostic/workflow
+ * support tabs; this is the smallest change that honors that without reordering `appointments`,
+ * which stays a standalone tab until Phase 2.6 retires it into Timeline. All staff can read
+ * (matches `LabCasePolicy::viewAny`, open to all roles — not the narrower `clinicalNotes` shape).
  */
 const tabDefinitions = computed(() => [
   { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
@@ -65,6 +72,7 @@ const tabDefinitions = computed(() => [
   { key: 'appointments', labelKey: 'patients.tabs.appointments', visible: true },
   { key: 'dentalChart', labelKey: 'patients.tabs.dentalChart', visible: true },
   { key: 'imaging', labelKey: 'patients.tabs.imaging', visible: true },
+  { key: 'laboratory', labelKey: 'patients.tabs.laboratory', visible: true },
   { key: 'treatmentPlans', labelKey: 'patients.tabs.treatmentPlans', visible: true },
   { key: 'clinicalNotes', labelKey: 'patients.tabs.clinicalNotes', visible: canAccessClinicalNotes.value },
   { key: 'billing', labelKey: 'patients.tabs.billing', visible: true },
@@ -312,6 +320,12 @@ onMounted(() => {
         <TabPanel value="imaging">
           <div class="pt-2">
             <PatientImagingPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="laboratory">
+          <div class="pt-2">
+            <PatientLabCasesPanel :patient-id="patientId" />
           </div>
         </TabPanel>
 

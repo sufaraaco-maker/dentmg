@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Lab;
 use App\Models\LabCase;
 use App\Models\Patient;
+use App\Models\TreatmentPlan;
+use App\Models\TreatmentPlanItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -85,6 +87,50 @@ class LabCaseTest extends TestCase
         $response->assertStatus(422);
     }
 
+    /**
+     * Phase 2.4 regression test (patient-laboratory-redesign-design.md §5): before this fix,
+     * App\Rules\BelongsToPatient against TreatmentPlanItem threw a real Postgres "column does not
+     * exist" SQL error (500), not a normal 422 validation failure — treatment_plan_items has no
+     * patient_id column. Mirrors PatientImageTest's identical regression test for the same bug,
+     * already fixed there.
+     */
+    public function test_creating_a_lab_case_with_own_patients_treatment_plan_item_succeeds(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        $lab = Lab::factory()->create();
+        $item = TreatmentPlanItem::factory()->create([
+            'treatment_plan_id' => TreatmentPlan::factory()->create(['patient_id' => $patient->id]),
+        ]);
+
+        $response = $this->actingAs($actor)->postJson('/api/lab-cases', [
+            'patient_id' => $patient->id,
+            'lab_id' => $lab->id,
+            'treatment_plan_item_id' => $item->id,
+        ]);
+
+        $response->assertCreated();
+        $this->assertSame($item->id, $response->json('treatment_plan_item_id'));
+    }
+
+    public function test_creating_a_lab_case_rejects_a_treatment_plan_item_belonging_to_another_patient(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        $lab = Lab::factory()->create();
+        $othersItem = TreatmentPlanItem::factory()->create([
+            'treatment_plan_id' => TreatmentPlan::factory()->create(),
+        ]);
+
+        $response = $this->actingAs($actor)->postJson('/api/lab-cases', [
+            'patient_id' => $patient->id,
+            'lab_id' => $lab->id,
+            'treatment_plan_item_id' => $othersItem->id,
+        ]);
+
+        $response->assertStatus(422);
+    }
+
     public function test_receptionist_can_view_a_lab_case(): void
     {
         $actor = User::factory()->create(['role' => 'receptionist']);
@@ -128,6 +174,39 @@ class LabCaseTest extends TestCase
         $response = $this->actingAs($actor)->putJson("/api/lab-cases/{$case->id}", ['shade' => 'B1']);
 
         $response->assertStatus(422)->assertJson(['code' => 'invalid_lab_case_operation']);
+    }
+
+    /** Phase 2.4 regression test (patient-laboratory-redesign-design.md §5) — update-side of the
+     *  same BelongsToPatient/TreatmentPlanItem fix as the create-side tests above. */
+    public function test_updating_a_lab_case_with_own_patients_treatment_plan_item_succeeds(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $case = LabCase::factory()->create();
+        $item = TreatmentPlanItem::factory()->create([
+            'treatment_plan_id' => TreatmentPlan::factory()->create(['patient_id' => $case->patient_id]),
+        ]);
+
+        $response = $this->actingAs($actor)->putJson("/api/lab-cases/{$case->id}", [
+            'treatment_plan_item_id' => $item->id,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame($item->id, $response->json('treatment_plan_item_id'));
+    }
+
+    public function test_updating_a_lab_case_rejects_a_treatment_plan_item_belonging_to_another_patient(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $case = LabCase::factory()->create();
+        $othersItem = TreatmentPlanItem::factory()->create([
+            'treatment_plan_id' => TreatmentPlan::factory()->create(),
+        ]);
+
+        $response = $this->actingAs($actor)->putJson("/api/lab-cases/{$case->id}", [
+            'treatment_plan_item_id' => $othersItem->id,
+        ]);
+
+        $response->assertStatus(422);
     }
 
     // ---- send ------------------------------------------------------------------------------------
@@ -305,5 +384,70 @@ class LabCaseTest extends TestCase
         $response = $this->actingAs($actor)->deleteJson("/api/lab-cases/{$case->id}");
 
         $response->assertForbidden();
+    }
+
+    // ---- patient-scoped index (Phase 2.4, design doc §4.3) ----------------------------------------
+
+    public function test_guest_cannot_list_a_patients_lab_cases(): void
+    {
+        $patient = Patient::factory()->create();
+
+        $response = $this->getJson("/api/patients/{$patient->id}/lab-cases");
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_any_authenticated_role_can_list_a_patients_lab_cases(): void
+    {
+        $actor = User::factory()->create(['role' => 'receptionist']);
+        $patient = Patient::factory()->create();
+        $other = Patient::factory()->create();
+
+        LabCase::factory()->count(2)->create(['patient_id' => $patient->id]);
+        LabCase::factory()->create(['patient_id' => $other->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/lab-cases");
+
+        $response->assertOk();
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_a_patients_lab_case_list_is_paginated(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        LabCase::factory()->count(20)->create(['patient_id' => $patient->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/lab-cases");
+
+        $response->assertOk();
+        $this->assertCount(15, $response->json('data'));
+        $this->assertSame(20, $response->json('meta.total'));
+    }
+
+    public function test_a_patients_lab_case_list_filters_by_status(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        LabCase::factory()->create(['patient_id' => $patient->id]);
+        $sent = LabCase::factory()->sent()->create(['patient_id' => $patient->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/lab-cases?status=sent");
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame($sent->id, $response->json('data.0.id'));
+    }
+
+    public function test_a_patients_lab_case_list_omits_the_redundant_patient_object(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $patient = Patient::factory()->create();
+        LabCase::factory()->create(['patient_id' => $patient->id]);
+
+        $response = $this->actingAs($actor)->getJson("/api/patients/{$patient->id}/lab-cases");
+
+        $response->assertOk();
+        $this->assertArrayNotHasKey('patient', $response->json('data.0'));
     }
 }

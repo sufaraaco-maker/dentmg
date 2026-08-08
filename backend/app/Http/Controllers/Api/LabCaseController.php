@@ -7,6 +7,7 @@ use App\Http\Requests\LabCase\StoreLabCaseRequest;
 use App\Http\Requests\LabCase\UpdateLabCaseRequest;
 use App\Http\Resources\LabCaseResource;
 use App\Models\LabCase;
+use App\Models\Patient;
 use App\Services\LabCaseService;
 use Illuminate\Http\Request;
 
@@ -17,17 +18,42 @@ class LabCaseController extends Controller
 
     public function __construct(private LabCaseService $labCaseService) {}
 
+    /**
+     * Clinic-wide list (the standalone Lab Cases page). No longer accepts `?patient_id=` — that
+     * filter was confirmed unused by any frontend caller (Phase 2.4 audit,
+     * patient-laboratory-redesign-design.md §4.1) and is superseded by the real patient-scoped
+     * route below.
+     */
     public function index(Request $request)
     {
         $this->authorize('viewAny', LabCase::class);
 
         $cases = LabCase::query()
             ->with(self::WITH)
-            ->when($request->query('patient_id'), fn ($query, $patientId) => $query->where('patient_id', $patientId))
             ->when($request->query('lab_id'), fn ($query, $labId) => $query->where('lab_id', $labId))
             ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
             ->latest('created_at')
             ->paginate((int) $request->query('per_page', 20));
+
+        return LabCaseResource::collection($cases);
+    }
+
+    /**
+     * Patient Profile's Laboratory tab (Phase 2.4, design doc §4.3) — paginated at 15/page,
+     * matching every other patient-scoped list added since Phase 2.1. `patient` is omitted from
+     * the eager-load list (unlike index() above): the panel already knows `patientId` from its own
+     * prop, so LabCaseResource's whenLoaded('patient') correctly omits it from the response.
+     */
+    public function forPatient(Request $request, Patient $patient)
+    {
+        $this->authorize('viewAny', LabCase::class);
+
+        $cases = LabCase::query()
+            ->forPatient($patient->id)
+            ->with(['lab', 'dentist'])
+            ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
+            ->latest('created_at')
+            ->paginate(15);
 
         return LabCaseResource::collection($cases);
     }
