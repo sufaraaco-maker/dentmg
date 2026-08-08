@@ -22,12 +22,11 @@ PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
-merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** implemented on
-`feature/patient-profile-phase2-5-documents`, opened as a PR — this file's newest entry below. See
-`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR
-history now feeds into._
+merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
+(2026-08-08, `98ae299`) — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the
+living, continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.5: Documents (`feature/patient-profile-phase2-5-documents`, implemented 2026-08-08)
+### Added — Phase 2.5: Documents (`feature/patient-profile-phase2-5-documents`, merged 2026-08-08 via PR #27)
 - **Context**: fifth implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
   `docs/modules/patient-documents-redesign-design.md` (this sub-phase's own drill-down design doc,
   produced by auditing the actual current codebase rather than assuming the umbrella doc's §5.2/§6/§7/
