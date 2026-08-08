@@ -20,11 +20,12 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 (PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
-Profile Redesign** design approved 2026-08-07; its first implementation sub-phase, **2.1 (Foundation)**, is
-in this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
-book this file's own per-PR history now feeds into._
+Profile Redesign** design approved 2026-08-07; its first implementation sub-phase, **2.1 (Foundation)**,
+merged to `main` via **PR #18** (2026-08-07) — see this file's newest entry below. **Phase 2.2 (Billing)**
+scope approved the same day; implementation starts next. See `docs/PROJECT_STATUS.md` for the living,
+continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.1: Patient Profile Foundation (`feature/patient-profile-phase2-1-foundation`, 2026-08-07)
+### Added — Phase 2.1: Patient Profile Foundation (`feature/patient-profile-phase2-1-foundation`, merged via PR #18, 2026-08-07)
 - **Context**: first implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
   `docs/modules/patient-profile-redesign-design.md` for the full design, approved 2026-08-07. Explicitly
   scoped to architecture/consistency groundwork only: no Billing, Medical History, Laboratory, Documents, or
