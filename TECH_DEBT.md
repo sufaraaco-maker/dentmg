@@ -409,6 +409,23 @@ pre-existing/unrelated to this module.
 
 ## Resolved
 
+### `App\Rules\BelongsToPatient` threw a real SQL error when used against `TreatmentPlanItem` — resolved 2026-08-08 (Phase 2.4, Laboratory Patient Profile integration)
+Originally discovered 2026-07-28 while writing Imaging's own Feature tests: `BelongsToPatient`
+queries `$modelClass::query()->where('id', $value)->where('patient_id', $patientId)->exists()`, but
+`treatment_plan_items` has no `patient_id` column (only `treatment_plan_id` ->
+`treatment_plans.patient_id`) — reproduced against real Postgres as `SQLSTATE[42703]: Undefined
+column`. Fixed for Imaging at the time; `LabCase`'s own `StoreLabCaseRequest`/`UpdateLabCaseRequest`
+carried the identical latent bug, left unfixed because no Laboratory test ever set
+`treatment_plan_item_id` on a request and the standalone `CreateLabCaseDialog.vue` had no UI field
+for it — see `docs/modules/patient-laboratory-redesign-design.md` §5 for the full audit that
+confirmed the bug was still live on `main` and decided this graduated from "dormant" to "must fix
+now" once Laboratory became reachable from a patient's own Treatment Plans-linked context via the
+new Patient Profile tab. **Fixed**: both Form Requests now use the same inline
+`whereHas('treatmentPlan', fn ($q) => $q->where('patient_id', $patientId))` closure Imaging already
+proved correct. **Regression coverage added**: `LabCaseTest.php` gained 4 new tests — same-patient
+`treatment_plan_item_id` accepted on both create and update, cross-patient one rejected with a
+normal 422 (not a 500) on both.
+
 ### Sidebar "Treatment Plans" item is still `comingSoon` (no patient-agnostic index page) — resolved 2026-08-02 (PR #12)
 Fixed via a clinic-wide `GET /treatment-plans` index (`TreatmentPlanController::indexAll`,
 `TreatmentPlanService::paginateAll`) and `TreatmentPlansView.vue`, mirroring the identical fix
@@ -843,27 +860,6 @@ confirms the whole CI pipeline clean: **Backend 815/815, Frontend 627/627, E2E 2
 failures, zero flakes.**
 
 ## Open (new from Imaging module, 2026-07-28)
-
-### `App\Rules\BelongsToPatient` throws a real SQL error when used against `TreatmentPlanItem` — pre-existing bug, also present (unexercised) in Laboratory
-Discovered while writing Imaging's own Feature tests for `treatment_plan_item_id` traceability:
-`BelongsToPatient` queries `$modelClass::query()->where('id', $value)->where('patient_id',
-$patientId)->exists()`, but `treatment_plan_items` has **no `patient_id` column** — confirmed
-directly (`Schema::getColumnListing('treatment_plan_items')` and the migration itself,
-`2026_07_22_000003_create_treatment_plan_items_table.php`, only has `treatment_plan_id`, not
-`patient_id`). Reproduced directly against real Postgres via `tinker`: the query throws
-`SQLSTATE[42703]: Undefined column`. `Lab CaseTest`/`LabCase`'s own
-`StoreLabCaseRequest`/`UpdateLabCaseRequest` use this exact same `BelongsToPatient(TreatmentPlanItem::class,
-...)` call and have the identical latent bug — never caught because no Laboratory test ever set
-`treatment_plan_item_id` on a request. In production, this means **any attempt to create or update a
-Lab Case with a `treatment_plan_item_id` set would 500-crash** instead of validating normally.
-**Fixed for Imaging only** (`StorePatientImageRequest`/`UpdatePatientImageRequest` use an inline
-closure querying via the `treatmentPlan` relation instead — see those files) — deliberately not
-touched in `LabCase`'s own Form Requests here, to keep this branch's diff scoped to Imaging.
-**Revisit**: apply the identical fix to `StoreLabCaseRequest`/`UpdateLabCaseRequest` (swap
-`BelongsToPatient(TreatmentPlanItem::class, ...)` for the same `whereHas('treatmentPlan', ...)`
-closure), and add a Feature test exercising `treatment_plan_item_id` to `LabCaseTest` so this class
-of gap can't recur silently. Low risk, small change — should be done before Laboratory's
-`treatment_plan_item_id` field is ever actually used in practice.
 
 ### DICOM/CBCT, persistent annotation tools, and formal FMX/series grouping are out of V1 scope
 Named explicitly, not silently skipped — design doc §7/§14 (`docs/modules/imaging-design.md`) covers

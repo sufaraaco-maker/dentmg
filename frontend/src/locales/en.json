@@ -187,6 +187,7 @@
       "appointments": "Appointments",
       "dentalChart": "Dental Chart",
       "imaging": "Imaging",
+      "laboratory": "Laboratory",
       "treatmentPlans": "Treatment Plans",
       "clinicalNotes": "Clinical Notes",
       "billing": "Billing"
@@ -221,6 +222,11 @@
       "title": "Treatment Plans",
       "new": "New Treatment Plan",
       "empty": "No treatment plans for this patient yet."
+    },
+    "laboratoryPanel": {
+      "title": "Laboratory",
+      "new": "New Lab Case",
+      "empty": "No lab cases for this patient yet."
     },
     "clinicalNotesPanel": {
       "title": "Clinical Notes",
@@ -1270,6 +1276,7 @@
       "fieldRequired": "This field is required",
       "createTitle": "New Lab Case",
       "createError": "Failed to create lab case",
+      "loadError": "Failed to load lab cases",
       "deleted": "Lab case deleted",
       "deleteError": "Failed to delete lab case",
       "confirmDeleteHeader": "Delete Lab Case",

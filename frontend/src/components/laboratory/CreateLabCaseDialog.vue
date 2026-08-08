@@ -14,14 +14,25 @@ import { api } from '@/lib/api'
 import PatientSearchSelect from '@/components/appointments/PatientSearchSelect.vue'
 import DentistSelect from '@/components/appointments/DentistSelect.vue'
 import { useLabsStore } from '@/stores/labs'
+import { usePatientLabCasesStore } from '@/stores/patientLabCases'
+import { isLabCaseError } from '@/services/laboratory'
 import { useDialogFocusRestore } from '@/composables/useDialogFocusRestore'
 import { TOOTH_CODES, toothDisplayName } from '@/lib/teeth'
 import type { LabCase } from '@/types/laboratory'
 import type { Patient } from '@/types/patient'
 
-/** Creates a new draft Lab Case (design doc §3/§5/§6) — patient/lab are the two fields required
- *  up front; everything else can be filled in or edited later while still Draft. */
-const props = defineProps<{ visible: boolean }>()
+/**
+ * Creates a new draft Lab Case (design doc §3/§5/§6) — patient/lab are the two fields required up
+ * front; everything else can be filled in or edited later while still Draft.
+ *
+ * `patientId` (Phase 2.4, patient-laboratory-redesign-design.md §7 decision 1): optional — when the
+ * standalone Lab Cases page opens this dialog, the patient isn't known yet, so `PatientSearchSelect`
+ * renders as before. When the Patient Profile Laboratory tab opens it, the patient is already fixed
+ * by context, so the search step is skipped and the field is pre-filled — same precedent already set
+ * by `CreateTreatmentPlanDialog.vue`'s own required `patientId` prop for its (always patient-context)
+ * call site.
+ */
+const props = defineProps<{ visible: boolean; patientId?: string }>()
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
@@ -31,6 +42,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 const labsStore = useLabsStore()
+const patientLabCasesStore = usePatientLabCasesStore()
 
 const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
@@ -42,7 +54,7 @@ const toothOptions = TOOTH_CODES.map((code) => ({
 
 function emptyForm() {
   return {
-    patient_id: null as string | null,
+    patient_id: props.patientId ?? (null as string | null),
     lab_id: null as string | null,
     dentist_id: null as string | null,
     tooth_numbers: [] as string[],
@@ -95,8 +107,9 @@ async function submit() {
 
   try {
     const payload = {
-      patient_id: form.patient_id,
-      lab_id: form.lab_id,
+      // Guaranteed non-null past validate() above.
+      patient_id: form.patient_id!,
+      lab_id: form.lab_id!,
       dentist_id: form.dentist_id,
       tooth_numbers: form.tooth_numbers.length ? form.tooth_numbers : null,
       case_type: form.case_type.trim() || null,
@@ -107,11 +120,24 @@ async function submit() {
       tracking_number: form.tracking_number.trim() || null,
     }
 
-    const { data } = await api.post<LabCase>('/lab-cases', payload)
+    // Phase 2.4 (patient-laboratory-redesign-design.md §7 decision 1): when opened with a fixed
+    // patientId (the Patient Profile tab), route the mutation through `patientLabCases.ts` so its
+    // cache picks up the new case immediately — same convention as
+    // `CreateTreatmentPlanDialog.vue` calling `treatmentPlansStore.create()`. The standalone
+    // Lab Cases page (no patientId) keeps calling the API directly, unchanged — it has no
+    // patient-scoped store to update.
+    const data = props.patientId
+      ? await patientLabCasesStore.create(props.patientId, payload)
+      : (await api.post<LabCase>('/lab-cases', payload)).data
 
     emit('created', data)
     emit('update:visible', false)
   } catch (err: unknown) {
+    if (isLabCaseError(err)) {
+      toast.add({ severity: 'error', summary: err.message, life: 4000 })
+      return
+    }
+
     const response = (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })
       ?.response
 
@@ -137,7 +163,7 @@ const activeLabs = computed(() => labsStore.items.filter((lab) => lab.is_active)
     @update:visible="(v) => emit('update:visible', v)"
   >
     <form class="flex flex-col gap-4" @submit.prevent="submit">
-      <div class="flex flex-col gap-2">
+      <div v-if="!patientId" class="flex flex-col gap-2">
         <label class="text-sm text-surface-700 dark:text-surface-200">
           {{ t('laboratory.labCases.patient') }}
         </label>

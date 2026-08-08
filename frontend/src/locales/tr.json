@@ -187,6 +187,7 @@
       "appointments": "Randevular",
       "dentalChart": "Diş Şeması",
       "imaging": "Görüntüleme",
+      "laboratory": "Laboratuvar",
       "treatmentPlans": "Tedavi Planları",
       "clinicalNotes": "Klinik Notlar",
       "billing": "Faturalandırma"
@@ -221,6 +222,11 @@
       "title": "Tedavi Planları",
       "new": "Yeni Tedavi Planı",
       "empty": "Bu hasta için henüz tedavi planı yok."
+    },
+    "laboratoryPanel": {
+      "title": "Laboratuvar",
+      "new": "Yeni Laboratuvar Vakası",
+      "empty": "Bu hasta için henüz laboratuvar vakası yok."
     },
     "clinicalNotesPanel": {
       "title": "Klinik Notlar",
@@ -1270,6 +1276,7 @@
       "fieldRequired": "Bu alan zorunludur",
       "createTitle": "Yeni Laboratuvar Vakası",
       "createError": "Laboratuvar vakası oluşturulamadı",
+      "loadError": "Laboratuvar vakaları yüklenemedi",
       "deleted": "Laboratuvar vakası silindi",
       "deleteError": "Laboratuvar vakası silinemedi",
       "confirmDeleteHeader": "Laboratuvar Vakasını Sil",

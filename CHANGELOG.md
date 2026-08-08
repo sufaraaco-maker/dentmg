@@ -21,10 +21,54 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
-merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08) — this file's newest entry
-below. **2.4 (Laboratory)** is next but has no approved design yet — out of scope until its own design-approval
-round, per the two-phase workflow every prior sub-phase has followed. See `docs/PROJECT_STATUS.md` for the
-living, continuously-updated status book this file's own per-PR history now feeds into._
+merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
+design-approved and implemented 2026-08-08 on `feature/patient-profile-phase2-4-laboratory` — this file's
+newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
+file's own per-PR history now feeds into._
+
+### Added — Phase 2.4: Laboratory (`feature/patient-profile-phase2-4-laboratory`, implemented 2026-08-08)
+- **Context**: fourth implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
+  `docs/modules/patient-laboratory-redesign-design.md` (this sub-phase's own drill-down design doc,
+  produced by auditing the actual current Laboratory code on `main` rather than assuming the umbrella
+  doc's earlier §17 outline still matched it). Closes the gap the umbrella doc's own §2 named: "Laboratory
+  — Not visible from a patient's record at all." The existing standalone Laboratory module (`Lab`/`LabCase`,
+  PR #5, 2026-07-27) is unchanged and untouched — this phase is a patient-scoped integration layered on
+  top of it, not a rebuild.
+- **`Patient::labCases()`** (new `hasMany` relation) and **`LabCase::scopeForPatient()`** (mirrors
+  `TreatmentPlan::scopeForPatient()` exactly) — the two missing pieces the umbrella doc's §6.2/§6.3
+  identified.
+- **`GET /patients/{patient}/lab-cases`** (new, paginated at 15/page via `LabCaseController::forPatient()`)
+  — the Route→Scope→Store→Panel pattern applied identically to how Treatment Plans/Clinical Notes/Imaging
+  already work. The flat `GET /lab-cases` endpoint's `?patient_id=` query filter is removed — confirmed
+  unused by any frontend caller and superseded by this real patient-scoped route (design doc §4.1).
+- **Required fix, not deferred**: `App\Rules\BelongsToPatient`'s real SQL error against `TreatmentPlanItem`
+  (open since PR #6/2026-07-28, see `TECH_DEBT.md`'s now-resolved entry) is fixed in
+  `StoreLabCaseRequest`/`UpdateLabCaseRequest`, using the same `whereHas('treatmentPlan', ...)` pattern
+  already proven correct in Imaging's own Form Requests. 4 new regression tests (`LabCaseTest.php`) cover
+  same-patient acceptance and cross-patient rejection on both create and update.
+- **`patientLabCases.ts`** (Pinia store) — same id-keyed cache + per-patient page-tracking shape as
+  `stores/treatmentPlans.ts`; `create`/`send`/`receive`/`qualityCheck`/`cancel` wrap the existing,
+  unchanged Laboratory endpoints and upsert their responses into the patient-scoped cache.
+- **`PatientLabCasesPanel.vue`** (new Laboratory tab, inserted immediately after Imaging in
+  `PatientDetailView.vue`'s tab order — design doc §8.1) — read/write, per the approved design decision:
+  create a case (pre-filled patient, no search step) and take status-transition actions inline, reusing
+  `LabCaseStatusChip.vue`/`LabCaseActionsBar.vue` as-is. Structured as a card-row list rather than a
+  `DataTable`, deliberately avoiding the row-click/inline-button event-bubbling conflict a `DataTable`
+  would introduce (design doc §4.5).
+- **`CreateLabCaseDialog.vue`** gains an optional `patientId` prop — when set (the new Patient Profile
+  tab), `PatientSearchSelect` is skipped and the create routes through `patientLabCases.ts`'s `create()`
+  instead of the raw endpoint (same precedent `CreateTreatmentPlanDialog.vue` already set); when unset
+  (the standalone Lab Cases page, unchanged), behavior is identical to before.
+- **Permissions**: no new policy, no new roles — `LabCasePolicy`/`LabPolicy` reused entirely unchanged
+  (design doc §9); the new tab is visible to all staff (matches `LabCasePolicy::viewAny`), not gated like
+  Clinical Notes.
+- **i18n**: `patients.tabs.laboratory`, `patients.laboratoryPanel.*`, and `laboratory.labCases.loadError`
+  added in `ar`/`en`/`tr`; all other panel strings reuse the existing `laboratory.labCases.*` namespace.
+- **Tests**: backend +13 (9 patient-scoped-index/pagination/status-filter/response-shape tests, 4
+  `treatment_plan_item_id` regression tests) — full suite 1007/1007 green, Pint clean. Frontend +27 new
+  tests (`patientLabCases.ts` store, `PatientLabCasesPanel.vue`, `CreateLabCaseDialog.vue`'s patientId
+  behavior, +1 `PatientDetailView.test.ts` tab-rendering assertion) — full suite 894/894 green,
+  type-check/ESLint/Prettier clean.
 
 ### Added — Phase 2.3: Medical History (`feature/patient-profile-phase2-3-medical-history`, merged via PR #22, 2026-08-08)
 - **Context**: third implementation sub-phase of Phase 2 (Patient Profile Redesign) — see

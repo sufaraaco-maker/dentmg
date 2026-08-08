@@ -30,7 +30,23 @@ class UpdateLabCaseRequest extends FormRequest
         return [
             'lab_id' => ['sometimes', 'required', 'uuid', 'exists:labs,id'],
             'dentist_id' => ['nullable', 'uuid', 'exists:users,id'],
-            'treatment_plan_item_id' => ['nullable', 'uuid', new BelongsToPatient(TreatmentPlanItem::class, $patientId)],
+
+            // See StoreLabCaseRequest for why this isn't App\Rules\BelongsToPatient (Phase 2.4 fix,
+            // patient-laboratory-redesign-design.md §5).
+            'treatment_plan_item_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($patientId) {
+                    $belongsToPatient = TreatmentPlanItem::query()
+                        ->where('id', $value)
+                        ->whereHas('treatmentPlan', fn ($query) => $query->where('patient_id', $patientId))
+                        ->exists();
+
+                    if (! $belongsToPatient) {
+                        $fail('The selected treatment plan item does not belong to this patient.');
+                    }
+                },
+            ],
             'appointment_id' => ['nullable', 'uuid', new BelongsToPatient(Appointment::class, $patientId)],
 
             'tooth_numbers' => ['nullable', 'array'],

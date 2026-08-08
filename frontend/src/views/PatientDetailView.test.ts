@@ -8,6 +8,7 @@ import MedicalHistoryPanel from '@/components/medicalHistory/MedicalHistoryPanel
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
+import PatientLabCasesPanel from '@/components/laboratory/PatientLabCasesPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Patient } from '@/types/patient'
 import type { UserRole } from '@/types/user'
@@ -89,6 +90,7 @@ async function mountView(role: UserRole) {
         PatientDentalChartPanel: true,
         PatientBillingPanel: true,
         MedicalHistoryPanel: true,
+        PatientLabCasesPanel: true,
       },
     },
   })
@@ -141,6 +143,20 @@ describe('PatientDetailView — tabs', () => {
     const panel = wrapper.findComponent(PatientDentalChartPanel)
     expect(panel.exists()).toBe(true)
     expect(panel.props('patientId')).toBe('patient-1')
+  })
+
+  it('renders PatientLabCasesPanel, scoped to the current patient, right after Imaging (Phase 2.4)', async () => {
+    const wrapper = await mountView('admin')
+    await clickTab(wrapper, 'Laboratory')
+    await flushPromises()
+
+    const panel = wrapper.findComponent(PatientLabCasesPanel)
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('patientId')).toBe('patient-1')
+
+    const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
+    expect(tabLabels[4]).toBe('Imaging')
+    expect(tabLabels[5]).toBe('Laboratory')
   })
 
   it('renders PatientBillingPanel, scoped to the current patient, in the merged Billing tab (Phase 2.2)', async () => {
