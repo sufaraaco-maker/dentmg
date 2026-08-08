@@ -24,7 +24,7 @@ Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via *
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
 (2026-08-08, `98ae299`); **2.6a (Timeline foundation)** implemented on
-`feature/patient-profile-phase2-6a-timeline-foundation`, opened as a PR — this file's newest
+`feature/patient-profile-phase2-6a-timeline-foundation`, opened as **PR #31** — this file's newest
 entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
 file's own per-PR history now feeds into._
 
