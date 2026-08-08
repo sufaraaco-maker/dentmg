@@ -21,11 +21,12 @@ Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Vis
 PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that entry below. **Milestone:
 "Phase 1 — Foundation Complete" (2026-08-07)**, the baseline for all future development. **Phase 2: Patient
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
-merged via **PR #20**; **2.3 (Medical History)** implemented on `feature/patient-profile-phase2-3-medical-history`
-— this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
-book this file's own per-PR history now feeds into._
+merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08) — this file's newest entry
+below. **2.4 (Laboratory)** is next but has no approved design yet — out of scope until its own design-approval
+round, per the two-phase workflow every prior sub-phase has followed. See `docs/PROJECT_STATUS.md` for the
+living, continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.3: Medical History (`feature/patient-profile-phase2-3-medical-history`, implemented 2026-08-08)
+### Added — Phase 2.3: Medical History (`feature/patient-profile-phase2-3-medical-history`, merged via PR #22, 2026-08-08)
 - **Context**: third implementation sub-phase of Phase 2 (Patient Profile Redesign) — see
   `docs/modules/patient-profile-redesign-design.md` §6/§7/§10. Replaces the free-text `patients.allergies`/
   `patients.medical_history` fields with a structured Medical History tab (Allergies / Medical Conditions /
