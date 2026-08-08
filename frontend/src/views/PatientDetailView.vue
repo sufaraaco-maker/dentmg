@@ -22,6 +22,7 @@ import { usePatientsStore } from '@/stores/patients'
 import { parseLocalDate, parseServerDateTime } from '@/lib/date'
 import type { Patient } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
+import MedicalHistoryPanel from '@/components/medicalHistory/MedicalHistoryPanel.vue'
 import PatientAppointmentsPanel from '@/components/appointments/PatientAppointmentsPanel.vue'
 import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChartPanel.vue'
 import PatientImagingPanel from '@/components/imaging/PatientImagingPanel.vue'
@@ -44,19 +45,23 @@ const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
 
 /**
  * Config-driven tab list (Phase 2.1 structure cleanup, design doc §17 2.1) — each future tab this
- * redesign adds (Medical History, Laboratory, Documents, Timeline) extends this array for its
- * label/visibility instead of duplicating a `v-if` in both `TabList` and `TabPanels` separately,
- * the way `clinicalNotes` had to before this. `TabPanel` content still can't be generalized the
- * same way — each panel hosts a genuinely different component with different props — so
- * `TabPanels` below stays explicit per tab, but reads the same `visible` flag from here rather
- * than re-deriving it.
+ * redesign adds (Laboratory, Documents, Timeline) extends this array for its label/visibility
+ * instead of duplicating a `v-if` in both `TabList` and `TabPanels` separately, the way
+ * `clinicalNotes` had to before this. `TabPanel` content still can't be generalized the same way —
+ * each panel hosts a genuinely different component with different props — so `TabPanels` below
+ * stays explicit per tab, but reads the same `visible` flag from here rather than re-deriving it.
  *
  * Phase 2.2: the former separate `invoices`/`payments` entries collapse into one `billing` entry
  * (design doc §0/§3/§4) — `PatientBillingPanel.vue` now composes the two reused-as-is panels
  * internally via its own `SelectButton` switcher, instead of them being sibling tabs here.
+ *
+ * Phase 2.3: `medicalHistory` added right after `overview`, matching the design doc §4 tab order
+ * (Overview → Medical History → Dental Chart → ...) — all staff can read (allergies are
+ * front-desk safety-relevant), same visibility shape as Dental Chart/Treatment Plans.
  */
 const tabDefinitions = computed(() => [
   { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
+  { key: 'medicalHistory', labelKey: 'patients.tabs.medicalHistory', visible: true },
   { key: 'appointments', labelKey: 'patients.tabs.appointments', visible: true },
   { key: 'dentalChart', labelKey: 'patients.tabs.dentalChart', visible: true },
   { key: 'imaging', labelKey: 'patients.tabs.imaging', visible: true },
@@ -283,6 +288,12 @@ onMounted(() => {
                 </DataTable>
               </template>
             </Card>
+          </div>
+        </TabPanel>
+
+        <TabPanel value="medicalHistory">
+          <div class="pt-2">
+            <MedicalHistoryPanel :patient-id="patientId" />
           </div>
         </TabPanel>
 

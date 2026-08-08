@@ -1,0 +1,1 @@
+export { medicalHistoryApi } from './medicalHistoryApi'

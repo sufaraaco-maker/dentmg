@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
+use App\Http\Controllers\Api\MedicalHistoryController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
@@ -68,6 +69,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('dental-chart-entries/{dental_chart_entry}/cancel', [DentalChartEntryController::class, 'cancel']);
     Route::put('dental-chart-entries/{dental_chart_entry}', [DentalChartEntryController::class, 'update']);
     Route::delete('dental-chart-entries/{dental_chart_entry}', [DentalChartEntryController::class, 'destroy']);
+
+    Route::get('patients/{patient}/allergies', [MedicalHistoryController::class, 'indexAllergies']);
+    Route::post('patients/{patient}/allergies', [MedicalHistoryController::class, 'storeAllergy']);
+    Route::put('allergies/{allergy}', [MedicalHistoryController::class, 'updateAllergy']);
+    Route::delete('allergies/{allergy}', [MedicalHistoryController::class, 'destroyAllergy']);
+
+    Route::get('patients/{patient}/medical-conditions', [MedicalHistoryController::class, 'indexConditions']);
+    Route::post('patients/{patient}/medical-conditions', [MedicalHistoryController::class, 'storeCondition']);
+    Route::put('medical-conditions/{medical_condition}', [MedicalHistoryController::class, 'updateCondition']);
+    Route::delete('medical-conditions/{medical_condition}', [MedicalHistoryController::class, 'destroyCondition']);
+
+    Route::get('patients/{patient}/medications', [MedicalHistoryController::class, 'indexMedications']);
+    Route::post('patients/{patient}/medications', [MedicalHistoryController::class, 'storeMedication']);
+    Route::put('medications/{medication}', [MedicalHistoryController::class, 'updateMedication']);
+    Route::delete('medications/{medication}', [MedicalHistoryController::class, 'destroyMedication']);
 
     Route::get('dentists/{user}/working-hours', [DentistWorkingHourController::class, 'index']);
     Route::post('dentists/{user}/working-hours', [DentistWorkingHourController::class, 'store']);

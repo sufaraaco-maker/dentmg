@@ -183,6 +183,7 @@
     "confirmDelete": "Are you sure you want to delete {name}?",
     "tabs": {
       "overview": "Overview",
+      "medicalHistory": "Medical History",
       "appointments": "Appointments",
       "dentalChart": "Dental Chart",
       "imaging": "Imaging",
@@ -257,6 +258,70 @@
         "paymentHistory": "Payment History"
       },
       "paymentHistoryTitle": "Payment History"
+    }
+  },
+  "medicalHistory": {
+    "loadError": "Failed to load medical history",
+    "list": {
+      "actions": "Actions"
+    },
+    "dialog": {
+      "notes": "Notes",
+      "fieldRequired": "This field is required",
+      "saved": "Saved successfully",
+      "saveError": "Failed to save",
+      "deleted": "Deleted successfully",
+      "deleteError": "Failed to delete",
+      "confirmDeleteHeader": "Confirm Delete"
+    },
+    "allergies": {
+      "title": "Allergies",
+      "add": "Add Allergy",
+      "empty": "No allergies on file for this patient.",
+      "allergen": "Allergen",
+      "severity": "Severity",
+      "severities": {
+        "mild": "Mild",
+        "moderate": "Moderate",
+        "severe": "Severe"
+      },
+      "reaction": "Reaction",
+      "createTitle": "New Allergy",
+      "editTitle": "Edit Allergy",
+      "confirmDelete": "Are you sure you want to delete the allergy \"{name}\"?"
+    },
+    "conditions": {
+      "title": "Medical Conditions",
+      "add": "Add Condition",
+      "empty": "No medical conditions on file for this patient.",
+      "conditionName": "Condition",
+      "status": "Status",
+      "statuses": {
+        "active": "Active",
+        "resolved": "Resolved",
+        "chronic": "Chronic"
+      },
+      "diagnosedDate": "Diagnosed Date",
+      "createTitle": "New Medical Condition",
+      "editTitle": "Edit Medical Condition",
+      "confirmDelete": "Are you sure you want to delete \"{name}\"?"
+    },
+    "medications": {
+      "title": "Current Medications",
+      "add": "Add Medication",
+      "empty": "No medications on file for this patient.",
+      "medicationName": "Medication",
+      "dosage": "Dosage",
+      "frequency": "Frequency",
+      "status": "Status",
+      "current": "Current",
+      "discontinued": "Discontinued",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "endDateBeforeStart": "End date cannot be before the start date",
+      "createTitle": "New Medication",
+      "editTitle": "Edit Medication",
+      "confirmDelete": "Are you sure you want to delete \"{name}\"?"
     }
   },
   "appointments": {
