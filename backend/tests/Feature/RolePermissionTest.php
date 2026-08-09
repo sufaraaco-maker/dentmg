@@ -3,25 +3,18 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
  * Phase 4 (Advanced Permissions & Audit) Step 1 — Permissions Foundation. These endpoints are
  * gated by the `manage-permissions` Gate (hardcoded `isAdmin()`, design doc §1.4), not by the
- * matrix they themselves manage.
+ * matrix they themselves manage. The permission catalog is seeded automatically for every
+ * RefreshDatabase test class — see Tests\TestCase::setUp().
  */
 class RolePermissionTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->seed(PermissionSeeder::class);
-    }
 
     public function test_guest_cannot_list_permissions(): void
     {

@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 
@@ -17,41 +16,41 @@ class PurchaseOrderPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('purchase_orders.view');
     }
 
     public function view(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return $actor->hasPermission('purchase_orders.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('purchase_orders.manage');
     }
 
     public function update(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('purchase_orders.manage');
     }
 
     public function place(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('purchase_orders.manage');
     }
 
     public function receive(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('purchase_orders.manage');
     }
 
     public function cancel(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('purchase_orders.manage');
     }
 
     public function delete(User $actor, PurchaseOrder $purchaseOrder): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('purchase_orders.delete');
     }
 }

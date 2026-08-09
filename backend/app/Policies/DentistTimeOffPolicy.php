@@ -10,12 +10,12 @@ class DentistTimeOffPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('dentist_time_off.view');
     }
 
     public function view(User $actor, DentistTimeOff $timeOff): bool
     {
-        return true;
+        return $actor->hasPermission('dentist_time_off.view');
     }
 
     /**
@@ -28,11 +28,11 @@ class DentistTimeOffPolicy
             return false;
         }
 
-        return $actor->isAdmin() || $actor->is($dentist);
+        return $actor->hasPermission('dentist_time_off.manage_any') || $actor->is($dentist);
     }
 
     public function delete(User $actor, DentistTimeOff $timeOff): bool
     {
-        return $actor->isAdmin() || $actor->is($timeOff->dentist);
+        return $actor->hasPermission('dentist_time_off.manage_any') || $actor->is($timeOff->dentist);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Appointment;
 use App\Models\User;
 
@@ -13,12 +12,12 @@ class AppointmentPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('appointments.view');
     }
 
     public function view(User $actor, Appointment $appointment): bool
     {
-        return true;
+        return $actor->hasPermission('appointments.view');
     }
 
     /**
@@ -26,22 +25,22 @@ class AppointmentPolicy
      */
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     public function update(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     public function cancel(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     public function markNoShow(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     /**
@@ -49,7 +48,7 @@ class AppointmentPolicy
      */
     public function confirm(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     /**
@@ -57,7 +56,7 @@ class AppointmentPolicy
      */
     public function checkIn(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('appointments.manage');
     }
 
     /**
@@ -67,8 +66,7 @@ class AppointmentPolicy
      */
     public function start(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true)
-            || $actor->is($appointment->dentist);
+        return $actor->hasPermission('appointments.manage') || $actor->is($appointment->dentist);
     }
 
     /**
@@ -76,12 +74,11 @@ class AppointmentPolicy
      */
     public function complete(User $actor, Appointment $appointment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true)
-            || $actor->is($appointment->dentist);
+        return $actor->hasPermission('appointments.manage') || $actor->is($appointment->dentist);
     }
 
     public function delete(User $actor, Appointment $appointment): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('appointments.delete');
     }
 }

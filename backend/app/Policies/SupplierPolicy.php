@@ -13,26 +13,26 @@ class SupplierPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('suppliers.view');
     }
 
     public function view(User $actor, Supplier $supplier): bool
     {
-        return true;
+        return $actor->hasPermission('suppliers.view');
     }
 
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('suppliers.manage');
     }
 
     public function update(User $actor, Supplier $supplier): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('suppliers.manage');
     }
 
     public function delete(User $actor, Supplier $supplier): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('suppliers.manage');
     }
 }

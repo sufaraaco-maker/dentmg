@@ -12,11 +12,11 @@ class BillingSettingPolicy
 {
     public function view(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('billing_settings.manage');
     }
 
     public function update(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('billing_settings.manage');
     }
 }

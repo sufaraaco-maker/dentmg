@@ -21,11 +21,11 @@ class AiInteractionLogPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('ai_interaction_log.view');
     }
 
     public function view(User $actor, AiInteractionLog $log): bool
     {
-        return $actor->id === $log->user_id || $actor->isAdmin();
+        return $actor->id === $log->user_id || $actor->hasPermission('ai_interaction_log.view_others');
     }
 }

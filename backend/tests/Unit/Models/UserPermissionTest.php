@@ -6,26 +6,18 @@ use App\Enums\UserRole;
 use App\Models\Permission;
 use App\Models\RolePermission;
 use App\Models\User;
-use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
  * Phase 4 (Advanced Permissions & Audit) design doc §1.3 — `User::hasPermission()` is the
- * replacement for raw `$this->role === UserRole::X` checks. This suite covers the lookup and its
- * per-role cache (RolePermission::permissionKeysForRole()) in isolation, before Step 2 wires any
- * of the 27 Policies to actually call it.
+ * replacement for raw `$this->role === UserRole::X` checks, now wired into all 27 Policies
+ * (Step 2). The permission catalog is seeded automatically for every RefreshDatabase test class —
+ * see Tests\TestCase::setUp().
  */
 class UserPermissionTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->seed(PermissionSeeder::class);
-    }
 
     public function test_admin_has_a_permission_seeded_admin_only(): void
     {

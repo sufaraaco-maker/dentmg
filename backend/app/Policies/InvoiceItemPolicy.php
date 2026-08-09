@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\InvoiceItem;
 use App\Models\User;
 
@@ -18,26 +17,26 @@ class InvoiceItemPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('invoice_items.view');
     }
 
     public function view(User $actor, InvoiceItem $invoiceItem): bool
     {
-        return true;
+        return $actor->hasPermission('invoice_items.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoice_items.manage');
     }
 
     public function update(User $actor, InvoiceItem $invoiceItem): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoice_items.manage');
     }
 
     public function delete(User $actor, InvoiceItem $invoiceItem): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoice_items.manage');
     }
 }

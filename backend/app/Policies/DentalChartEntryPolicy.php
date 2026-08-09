@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\DentalChartEntry;
 use App\Models\User;
 
@@ -14,12 +13,12 @@ class DentalChartEntryPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('dental_chart.view');
     }
 
     public function view(User $actor, DentalChartEntry $dentalChartEntry): bool
     {
-        return true;
+        return $actor->hasPermission('dental_chart.view');
     }
 
     /**
@@ -30,22 +29,22 @@ class DentalChartEntryPolicy
      */
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('dental_chart.manage');
     }
 
     public function update(User $actor, DentalChartEntry $dentalChartEntry): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('dental_chart.manage');
     }
 
     public function complete(User $actor, DentalChartEntry $dentalChartEntry): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('dental_chart.manage');
     }
 
     public function cancel(User $actor, DentalChartEntry $dentalChartEntry): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('dental_chart.manage');
     }
 
     /**
@@ -54,6 +53,6 @@ class DentalChartEntryPolicy
      */
     public function delete(User $actor, DentalChartEntry $dentalChartEntry): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('dental_chart.delete');
     }
 }

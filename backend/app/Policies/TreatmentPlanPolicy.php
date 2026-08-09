@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 
@@ -23,17 +22,17 @@ class TreatmentPlanPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('treatment_plans.view');
     }
 
     public function view(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return true;
+        return $actor->hasPermission('treatment_plans.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     /**
@@ -42,37 +41,37 @@ class TreatmentPlanPolicy
      */
     public function update(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function present(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function accept(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function reject(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function start(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function complete(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     public function cancel(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     /**
@@ -81,7 +80,7 @@ class TreatmentPlanPolicy
      */
     public function createRevision(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plans.manage');
     }
 
     /**
@@ -91,6 +90,6 @@ class TreatmentPlanPolicy
      */
     public function delete(User $actor, TreatmentPlan $treatmentPlan): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('treatment_plans.delete');
     }
 }

@@ -40,7 +40,7 @@ class PatientActivityPolicy
 
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('patient_activity.view');
     }
 
     /**

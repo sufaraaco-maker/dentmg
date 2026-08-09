@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Invoice;
 use App\Models\User;
 
@@ -24,17 +23,17 @@ class InvoicePolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('invoices.view');
     }
 
     public function view(User $actor, Invoice $invoice): bool
     {
-        return true;
+        return $actor->hasPermission('invoices.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoices.manage');
     }
 
     /**
@@ -44,17 +43,17 @@ class InvoicePolicy
      */
     public function update(User $actor, Invoice $invoice): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoices.manage');
     }
 
     public function issue(User $actor, Invoice $invoice): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoices.manage');
     }
 
     public function void(User $actor, Invoice $invoice): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('invoices.manage');
     }
 
     /**
@@ -65,6 +64,6 @@ class InvoicePolicy
      */
     public function delete(User $actor, Invoice $invoice): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('invoices.delete');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\PatientAllergy;
 use App\Models\PatientMedicalCondition;
 use App\Models\PatientMedication;
@@ -24,12 +23,12 @@ class MedicalHistoryPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('medical_history.view');
     }
 
     public function view(User $actor, PatientAllergy|PatientMedicalCondition|PatientMedication $record): bool
     {
-        return true;
+        return $actor->hasPermission('medical_history.view');
     }
 
     /**
@@ -37,12 +36,12 @@ class MedicalHistoryPolicy
      */
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('medical_history.manage');
     }
 
     public function update(User $actor, PatientAllergy|PatientMedicalCondition|PatientMedication $record): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('medical_history.manage');
     }
 
     /**
@@ -51,6 +50,6 @@ class MedicalHistoryPolicy
      */
     public function delete(User $actor, PatientAllergy|PatientMedicalCondition|PatientMedication $record): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('medical_history.manage');
     }
 }

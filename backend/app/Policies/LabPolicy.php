@@ -13,26 +13,26 @@ class LabPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('labs.view');
     }
 
     public function view(User $actor, Lab $lab): bool
     {
-        return true;
+        return $actor->hasPermission('labs.view');
     }
 
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('labs.manage');
     }
 
     public function update(User $actor, Lab $lab): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('labs.manage');
     }
 
     public function delete(User $actor, Lab $lab): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('labs.manage');
     }
 }

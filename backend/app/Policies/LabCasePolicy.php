@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\LabCase;
 use App\Models\User;
 
@@ -12,53 +11,53 @@ use App\Models\User;
  * admin+dentist split. send/receive/qualityCheck (status transitions) are admin+receptionist —
  * once prescribed, packaging/shipping/receiving is front-desk logistics, mirroring
  * PurchaseOrderPolicy::place/receive exactly. cancel() stays with admin+dentist since reversing a
- * clinical decision is not a logistics action. Delete is gated tighter (admin-only), matching every
- * prior module's identical stricter-than-everything-else precedent.
+ * clinical decision is not a logistics action. Delete is gated tighter (admin-only), matching
+ * every prior module's identical stricter-than-everything-else precedent.
  */
 class LabCasePolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('lab_cases.view');
     }
 
     public function view(User $actor, LabCase $labCase): bool
     {
-        return true;
+        return $actor->hasPermission('lab_cases.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('lab_cases.prescribe');
     }
 
     public function update(User $actor, LabCase $labCase): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('lab_cases.prescribe');
     }
 
     public function send(User $actor, LabCase $labCase): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('lab_cases.process');
     }
 
     public function receive(User $actor, LabCase $labCase): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('lab_cases.process');
     }
 
     public function qualityCheck(User $actor, LabCase $labCase): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('lab_cases.process');
     }
 
     public function cancel(User $actor, LabCase $labCase): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('lab_cases.prescribe');
     }
 
     public function delete(User $actor, LabCase $labCase): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('lab_cases.delete');
     }
 }

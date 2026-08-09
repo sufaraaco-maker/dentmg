@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\PatientImage;
 use App\Models\User;
 
@@ -18,26 +17,26 @@ class PatientImagePolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('patient_images.view');
     }
 
     public function view(User $actor, PatientImage $patientImage): bool
     {
-        return true;
+        return $actor->hasPermission('patient_images.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist, UserRole::Receptionist], true);
+        return $actor->hasPermission('patient_images.manage');
     }
 
     public function update(User $actor, PatientImage $patientImage): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist, UserRole::Receptionist], true);
+        return $actor->hasPermission('patient_images.manage');
     }
 
     public function delete(User $actor, PatientImage $patientImage): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('patient_images.delete');
     }
 }

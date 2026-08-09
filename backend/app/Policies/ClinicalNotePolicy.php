@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\ClinicalNote;
 use App\Models\User;
 
@@ -21,12 +20,12 @@ class ClinicalNotePolicy
 {
     public function viewAny(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.view');
     }
 
     public function view(User $actor, ClinicalNote $clinicalNote): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.view');
     }
 
     /**
@@ -36,7 +35,7 @@ class ClinicalNotePolicy
      */
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.manage');
     }
 
     /**
@@ -45,17 +44,17 @@ class ClinicalNotePolicy
      */
     public function update(User $actor, ClinicalNote $clinicalNote): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.manage');
     }
 
     public function sign(User $actor, ClinicalNote $clinicalNote): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.manage');
     }
 
     public function addAddendum(User $actor, ClinicalNote $clinicalNote): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('clinical_notes.manage');
     }
 
     /**
@@ -66,6 +65,6 @@ class ClinicalNotePolicy
      */
     public function delete(User $actor, ClinicalNote $clinicalNote): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('clinical_notes.delete');
     }
 }

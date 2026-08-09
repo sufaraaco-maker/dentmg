@@ -12,26 +12,26 @@ class SupplyCategoryPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('supply_categories.view');
     }
 
     public function view(User $actor, SupplyCategory $supplyCategory): bool
     {
-        return true;
+        return $actor->hasPermission('supply_categories.view');
     }
 
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('supply_categories.manage');
     }
 
     public function update(User $actor, SupplyCategory $supplyCategory): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('supply_categories.manage');
     }
 
     public function delete(User $actor, SupplyCategory $supplyCategory): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('supply_categories.manage');
     }
 }

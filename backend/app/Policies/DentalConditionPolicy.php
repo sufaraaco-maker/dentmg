@@ -9,12 +9,12 @@ class DentalConditionPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('dental_conditions.view');
     }
 
     public function view(User $actor, DentalCondition $dentalCondition): bool
     {
-        return true;
+        return $actor->hasPermission('dental_conditions.view');
     }
 
     /**
@@ -23,16 +23,16 @@ class DentalConditionPolicy
      */
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('dental_conditions.manage');
     }
 
     public function update(User $actor, DentalCondition $dentalCondition): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('dental_conditions.manage');
     }
 
     public function delete(User $actor, DentalCondition $dentalCondition): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('dental_conditions.manage');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\TreatmentPlanItem;
 use App\Models\User;
 
@@ -17,32 +16,32 @@ class TreatmentPlanItemPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('treatment_plan_items.view');
     }
 
     public function view(User $actor, TreatmentPlanItem $treatmentPlanItem): bool
     {
-        return true;
+        return $actor->hasPermission('treatment_plan_items.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plan_items.manage');
     }
 
     public function update(User $actor, TreatmentPlanItem $treatmentPlanItem): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plan_items.manage');
     }
 
     public function complete(User $actor, TreatmentPlanItem $treatmentPlanItem): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plan_items.manage');
     }
 
     public function cancel(User $actor, TreatmentPlanItem $treatmentPlanItem): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist], true);
+        return $actor->hasPermission('treatment_plan_items.manage');
     }
 
     /**
@@ -51,6 +50,6 @@ class TreatmentPlanItemPolicy
      */
     public function delete(User $actor, TreatmentPlanItem $treatmentPlanItem): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('treatment_plan_items.delete');
     }
 }
