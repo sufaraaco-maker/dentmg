@@ -35,7 +35,8 @@ permissions over the current 3 roles, a full audit-trail overhaul, simple immuta
 deferred); **Steps 1-2 (Permissions Foundation + Policy refactor)**, **Step 3 (Audit Overhaul)**,
 **Step 4 (Frontend)**, and **Step 5 (E2E + final docs)** all implemented 2026-08-09 on
 `feature/phase4-permissions-foundation` — this file's newest entry below — pushed, **CI fully green
-(Backend/Frontend/E2E, run `31328615397`)**, not yet merged (no PR opened). See `docs/PROJECT_STATUS.md`
+(Backend/Frontend/E2E, run `31328615397`)**, then a full final diff review against `main` (103 files, 14
+points checked) found zero blockers; **PR #37 opened**, not yet merged. See `docs/PROJECT_STATUS.md`
 for the living, continuously-updated status book this file's own per-PR history now feeds into._
 
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, not yet merged)

@@ -55,11 +55,13 @@ fetch-ordering race between the page's initial unfiltered load and an immediatel
 test has passed cleanly at least once locally, with remaining local flakiness matching this environment's
 own already-documented per-request-latency pattern (§9), not application behavior. i18n parity re-verified
 after Step 5 (still 1453/1453/1453, zero drift). `vue-tsc`/ESLint/Prettier clean. Pushed to
-`origin/feature/phase4-permissions-foundation` and CI triggered via `workflow_dispatch` for the authoritative
-Backend/Frontend/E2E signal — not yet merged, no PR opened yet per the user's explicit instruction to review
-the complete diff first. |
-| **Repo HEAD at time of writing** | `main` at `14416e9` (PR #36 merge — Phase 3 docs closeout); Phase 4 Steps 1-5 implemented on `feature/phase4-permissions-foundation`, pushed, CI fully green (Backend/Frontend/E2E — run `31328615397`), not yet merged (no PR opened) — see `docs/modules/phase4-permissions-audit-design.md`. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Phase 4 (Advanced Permissions & Audit) design approved 2026-08-09** — all 5 steps implemented and verified locally on `feature/phase4-permissions-foundation` (Backend 1145/1145, Frontend 969/969, every E2E scenario passing at least once locally), pushed with CI triggered via `workflow_dispatch` — see `docs/modules/phase4-permissions-audit-design.md`. Awaiting CI confirmation and the user's full-diff review before a PR is opened. |
+`origin/feature/phase4-permissions-foundation`, CI triggered via `workflow_dispatch` for the authoritative
+Backend/Frontend/E2E signal, then a full 14-point final diff review (103 files, +5543/-215) against `main`
+found zero blockers — two non-blocking notes recorded (`docs/decisions.md`'s `trustProxies` entry addendum;
+`TECH_DEBT.md`'s new migration-rollback item). **PR #37 opened** per the user's approval following that
+review. |
+| **Repo HEAD at time of writing** | `main` at `14416e9` (PR #36 merge — Phase 3 docs closeout); Phase 4 Steps 1-5 implemented on `feature/phase4-permissions-foundation`, pushed, CI fully green (Backend/Frontend/E2E — run `31328615397`), final diff review clean, **PR #37 opened**, not yet merged — see `docs/modules/phase4-permissions-audit-design.md`. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Phase 4 (Advanced Permissions & Audit) design approved 2026-08-09** — all 5 steps implemented and verified (Backend 1145/1145, Frontend 969/969, every E2E scenario passing at least once locally), CI-confirmed green (`31328615397`), final diff review clean, **PR #37 opened 2026-08-09** — see `docs/modules/phase4-permissions-audit-design.md`. Awaiting PR-level CI + merge. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -491,8 +493,15 @@ note and `TECH_DEBT.md`'s Appointment-audit-log item both updated. Pushed to
 *after* the `page.goto()` that triggers the response — a race a fast environment loses and a slow one
 happens to win, which is exactly why this environment's own local Docker latency isn't this project's
 verification authority for E2E); fixed and **re-run (`31328615397`) fully green — Backend, Frontend, and
-E2E (53/53) all `success`.** **No PR opened yet** — per the user's explicit instruction, next is their own
-review of the complete diff.
+E2E (53/53) all `success`.** Per the user's explicit instruction, a full final diff review followed —
+103 files / 14 commits / +5543/-215 against `main`, checked against 14 points (scope, temp/debug artifacts,
+migrations-from-clean, secrets, `hasPermission()` consistency, audit architecture consistency, API
+contracts, real vs. weakened test assertions, E2E shared-state restoration, i18n parity, doc/code
+consistency, Notification-System scope exclusion, diff size/unnecessary-refactor risk, regression risk) —
+**zero blockers found**, two non-blocking notes recorded (`docs/decisions.md`'s `trustProxies` entry now has
+a rate-limiter-blast-radius addendum; `TECH_DEBT.md` gained a migration-rollback item). User approved;
+**PR #37 opened** (`feature/phase4-permissions-foundation` → `main`). Next: PR-level CI, PR review, merge —
+no new feature work added to Phase 4's scope in the meantime.
 
 *(The narrative below, through the "Phase 3 — Dashboard 2.0" section, is this file's historical record of
 Phase 2/Phase 3's own Immediate-Next-Step reasoning at the time each was written — preserved as history, not

@@ -1244,3 +1244,16 @@ expand/collapse *interaction* itself was redesigned (200ms grid-rows transition 
 the user's literal ask).
 **Revisit**: only if a smart first-load default is wanted later — needs a separate
 "has the user ever touched section state" boolean alongside `collapsedSections`, not a bigger redesign.
+
+## Open (new from Phase 4 — Advanced Permissions & Audit, final diff review before PR #37, 2026-08-09)
+
+### Audit-columns migration's `down()` can fail to roll back if a `login_failed` row exists
+`2026_08_09_150001_add_audit_overhaul_columns_to_audit_logs_table.php` relaxes `audit_logs.auditable_id` to
+nullable in `up()` (needed for `login_failed` rows against an unknown email, which have no resolvable
+target) and re-tightens it to non-null in `down()`. If any `login_failed` row (or a future targetless event
+type) exists when `down()` runs, that `nullable(false)` change fails, since existing `NULL` values violate
+the new constraint. Confirmed by reading the migration directly — not exercised in CI, which only ever
+applies `up()` against a clean DB. Not a blocker for this PR: forward-apply-from-clean is unaffected, and
+no rollback of this specific migration is currently planned or scripted anywhere.
+**Revisit**: only if a real rollback-in-production need arises. Fix would be either dropping/nulling
+existing `login_failed` rows before re-tightening, or accepting that this migration is one-way in practice.

@@ -412,3 +412,10 @@ dockerized nginx, no host-level proxy layer) via `tests/Feature/AuditLogTest.php
 the *production* double-proxy topology itself (`docs/deployment.md`'s host nginx + Certbot) could not be
 exercised from this session — recommend a smoke check (confirm a real client IP, not a loopback address,
 appears in `audit_logs.ip_address`) after the first real production deploy following this change.
+
+**Addendum (2026-08-09, final diff review before PR #37)**: `trustProxies(at: '*')` is app-wide middleware,
+not audit-log-scoped — `AppServiceProvider`'s `RateLimiter::for('api', ...)` also keys off `$request->ip()`,
+so the per-IP API throttle now trusts the same forwarded header the audit log does. Accepted consciously,
+not an oversight: the same single-trusted-proxy bind that makes the IP trustworthy for audit logging makes
+it equally trustworthy for rate-limiting. No action needed unless the deployment topology in
+`docs/deployment.md` ever changes to allow an untrusted path to the app.
