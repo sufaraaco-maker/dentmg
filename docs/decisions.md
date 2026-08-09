@@ -362,8 +362,9 @@ structurally, not just by validation. Full design: `docs/modules/phase4-permissi
 + `AuditLogsView.vue`), full E2E coverage (Step 5) with every scenario passing at least once locally, zero
 regressions across every pre-existing Feature/Policy/component/E2E test. The 2026-08-07 role-hierarchy flag
 stays open, not resolved by this choice — revisit if Phase 5 (SaaS Multi-Tenant Prep) gives it a concrete
-multi-clinic reason to exist. Pushed with CI triggered via `workflow_dispatch`; no PR opened yet, per the
-user's explicit instruction to review the complete diff after CI confirms.
+multi-clinic reason to exist. Pushed with CI triggered via `workflow_dispatch`, then a full final diff
+review against `main` (per the user's explicit instruction) found zero blockers — **merged via PR #37**
+(`0bdf3d8`, 2026-08-09); post-merge CI on `main` fully green (Backend/Frontend/E2E).
 
 ## 2026-08-09 — Phase 4 Step 3: audit writes fail open for the operation, fail closed on sensitive data
 
