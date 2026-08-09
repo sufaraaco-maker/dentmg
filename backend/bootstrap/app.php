@@ -16,6 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->throttleApi();
 
+        // Phase 4 (Advanced Permissions & Audit) Step 3: `docs/deployment.md`'s documented
+        // production topology is client -> host-level nginx (sets X-Forwarded-For/X-Real-IP,
+        // see its "SSL / TLS" section) -> this app's dockerized nginx, bound exclusively to
+        // 127.0.0.1:8000 (never directly internet-facing) -> php-fpm via fastcgi_pass. Trusting
+        // '*' is safe specifically because that bind means the ONLY possible peer connecting to
+        // this app is the host-level reverse proxy — without this, Request::ip() silently
+        // returns that proxy's loopback address for every request, which would make the new
+        // audit-log IP column meaningless rather than merely absent.
+        $middleware->trustProxies(at: '*');
+
         // Laravel's ApplicationBuilder registers a default guest-redirect to route('login')
         // before this callback runs. This app has no 'login' web route (auth is SPA/API-only),
         // so that default crashes with a RouteNotFoundException for any unauthenticated request

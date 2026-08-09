@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Payment;
 use App\Models\User;
 
@@ -16,36 +15,36 @@ class PaymentPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('payments.view');
     }
 
     public function view(User $actor, Payment $payment): bool
     {
-        return true;
+        return $actor->hasPermission('payments.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('payments.manage');
     }
 
     public function update(User $actor, Payment $payment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('payments.manage');
     }
 
     public function apply(User $actor, Payment $payment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('payments.manage');
     }
 
     public function refund(User $actor, Payment $payment): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('payments.manage');
     }
 
     public function delete(User $actor, Payment $payment): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('payments.delete');
     }
 }

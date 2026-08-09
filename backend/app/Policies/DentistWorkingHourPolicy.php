@@ -10,12 +10,12 @@ class DentistWorkingHourPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('dentist_working_hours.view');
     }
 
     public function view(User $actor, DentistWorkingHour $workingHour): bool
     {
-        return true;
+        return $actor->hasPermission('dentist_working_hours.view');
     }
 
     /**
@@ -24,11 +24,11 @@ class DentistWorkingHourPolicy
      */
     public function create(User $actor, User $dentist): bool
     {
-        return $actor->isAdmin() && $dentist->role === UserRole::Dentist;
+        return $actor->hasPermission('dentist_working_hours.manage') && $dentist->role === UserRole::Dentist;
     }
 
     public function delete(User $actor, DentistWorkingHour $workingHour): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('dentist_working_hours.manage');
     }
 }

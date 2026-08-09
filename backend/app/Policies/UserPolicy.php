@@ -11,12 +11,12 @@ class UserPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('users.view');
     }
 
     public function view(User $actor, User $target): bool
     {
-        return true;
+        return $actor->hasPermission('users.view');
     }
 
     /**
@@ -24,16 +24,16 @@ class UserPolicy
      */
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('users.manage');
     }
 
     public function update(User $actor, User $target): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('users.manage');
     }
 
     public function delete(User $actor, User $target): bool
     {
-        return $actor->isAdmin() && $actor->isNot($target);
+        return $actor->hasPermission('users.manage') && $actor->isNot($target);
     }
 }

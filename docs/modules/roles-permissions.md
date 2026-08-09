@@ -1,5 +1,12 @@
 # Roles & Permissions Module
 
+> **ملحوظة (2026-08-09): هذا المستند تجاوزه التنفيذ الفعلي.** الوصف أدناه يعكس النطاق قبل Phase 4
+> (Advanced Permissions & Audit) — نظام أدوار ثابت بلا صلاحيات دقيقة. Phase 4 أضافت طبقة صلاحيات
+> دقيقة (68-entry `permissions` catalog + `role_permissions` matrix قابلة للتعديل من الأدمن) فوق نفس
+> الأدوار الثلاثة، بالإضافة لـ overhaul كامل لـ Audit Trail. المرجع الحالي والكامل هو
+> `docs/modules/phase4-permissions-audit-design.md`؛ هذا الملف يُبقى كسجل تاريخي لقرار الـ enum
+> الأصلي، وليس كوصف لما هو موجود في الكود اليوم.
+
 ## Scope (V1)
 
 نظام أدوار بسيط وثابت (PHP Backed Enum) بدل جداول roles/permissions منفصلة — قرار موثّق مع المستخدم: العيادة عبارة عن منظمة واحدة (Single Organization، لا Multi Tenant)، وثلاثة أدوار كافية لتغطية الاحتياج الفعلي حاليًا. لو ظهرت حاجة فعلية لصلاحيات دقيقة (granular permissions) لاحقًا يُعاد التقييم وقتها.

@@ -17,16 +17,16 @@ class StockMovementPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('stock_movements.view');
     }
 
     public function view(User $actor, StockMovement $stockMovement): bool
     {
-        return true;
+        return $actor->hasPermission('stock_movements.view');
     }
 
     public function create(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('stock_movements.create');
     }
 }

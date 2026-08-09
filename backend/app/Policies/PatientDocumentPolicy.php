@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\PatientDocument;
 use App\Models\User;
 
@@ -17,26 +16,26 @@ class PatientDocumentPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('patient_documents.view');
     }
 
     public function view(User $actor, PatientDocument $patientDocument): bool
     {
-        return true;
+        return $actor->hasPermission('patient_documents.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist, UserRole::Receptionist], true);
+        return $actor->hasPermission('patient_documents.manage');
     }
 
     public function update(User $actor, PatientDocument $patientDocument): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Dentist, UserRole::Receptionist], true);
+        return $actor->hasPermission('patient_documents.manage');
     }
 
     public function delete(User $actor, PatientDocument $patientDocument): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('patient_documents.delete');
     }
 }

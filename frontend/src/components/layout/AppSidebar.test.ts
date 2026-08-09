@@ -28,6 +28,9 @@ function makeRouter(): Router {
       { path: '/invoices', name: 'invoices', component: { template: '<div />' } },
       // Same fix as Billing above — Treatment Plans is also a real `RouterLink` now.
       { path: '/treatment-plans', name: 'treatment-plans', component: { template: '<div />' } },
+      // Phase 4 Step 4 — Permissions and Audit Log are both real `RouterLink`s too.
+      { path: '/permissions', name: 'permissions', component: { template: '<div />' } },
+      { path: '/audit-logs', name: 'audit-logs', component: { template: '<div />' } },
     ],
   })
 }

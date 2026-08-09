@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Supply;
 use App\Models\User;
 
@@ -16,26 +15,26 @@ class SupplyPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('supplies.view');
     }
 
     public function view(User $actor, Supply $supply): bool
     {
-        return true;
+        return $actor->hasPermission('supplies.view');
     }
 
     public function create(User $actor): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('supplies.manage');
     }
 
     public function update(User $actor, Supply $supply): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('supplies.manage');
     }
 
     public function delete(User $actor, Supply $supply): bool
     {
-        return in_array($actor->role, [UserRole::Admin, UserRole::Receptionist], true);
+        return $actor->hasPermission('supplies.manage');
     }
 }

@@ -9,12 +9,12 @@ class AppointmentTypePolicy
 {
     public function viewAny(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('appointment_types.view');
     }
 
     public function view(User $actor, AppointmentType $appointmentType): bool
     {
-        return true;
+        return $actor->hasPermission('appointment_types.view');
     }
 
     /**
@@ -22,16 +22,16 @@ class AppointmentTypePolicy
      */
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('appointment_types.manage');
     }
 
     public function update(User $actor, AppointmentType $appointmentType): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('appointment_types.manage');
     }
 
     public function delete(User $actor, AppointmentType $appointmentType): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('appointment_types.manage');
     }
 }

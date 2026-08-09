@@ -222,8 +222,10 @@ requests a role hierarchy — `Owner → Clinic Admin → {Dentist, Assistant, R
 above) cannot represent. This is exactly the "real requirement" that entry named as the condition for
 revisiting the flat-enum decision.
 
-**Status**: Flagged, not decided. Needs its own design-approval round when Phase 4 starts — not designed
-speculatively now. See `docs/PROJECT_STATUS.md` §5 for current roadmap-phase status.
+**Status**: Flagged, not decided at the time. **Reconsidered 2026-08-09 when Phase 4 actually started** —
+see that date's entry below: the user chose a fine-grained permission layer over the current 3 roles
+instead of this hierarchy. This entry's own flag stays open for a future Phase 5 (SaaS Multi-Tenant)
+revisit, not resolved by that choice. See `docs/PROJECT_STATUS.md` §5 for current roadmap-phase status.
 
 ## 2026-08-07 — Patient Timeline: dedicated event model, not `Auditable`; permissions enforced server-side, per-category
 
@@ -329,3 +331,91 @@ this dashboard's stat cards.
 
 **Status**: Implemented with Dashboard 2.0. Goal-setting itself remains explicitly deferred (named, not
 dropped — see the design doc's §7) — revisit if period-over-period trend proves insufficient in practice.
+
+## 2026-08-09 — Phase 4: fine-grained permissions over the current 3 roles, not a role-hierarchy rewrite
+
+Phase 4 ("Advanced Permissions & Audit") design phase revisited the 2026-08-07 role-hierarchy flag above.
+A ground-truth audit (direct full reads of all 27 Policy classes, not grep-level) found every authorization
+check already funnels through Policies (zero route-level `can:` middleware, 31 controllers calling
+`authorize()`), so the blast radius of a permission-model change is contained rather than scattered. Two
+options were on the table: (a) build the flagged `Owner → Clinic Admin → {Dentist, Assistant, Receptionist,
+Accountant}` hierarchy now, or (b) keep the current 3-role `UserRole` enum and add a fine-grained,
+admin-configurable permission layer on top of it.
+
+**Decision**: (b). A 68-entry permission catalog was derived 1:1 from every Policy's actual current
+behavior (methods sharing an identical role-set within one Policy collapse into one key, e.g.
+`AppointmentPolicy`'s create/update/cancel/confirm/check-in all share `appointments.manage`), stored in a
+new `role_permissions` matrix an admin can edit via a new UI — with zero effective permission change on
+day 1 (the seeded matrix mirrors today's Policies exactly, verified by cross-checking the seeded per-role
+grant counts against an independent manual derivation: admin=68, dentist=36, receptionist=37, all matching).
+Identity/ownership/target-role checks that aren't role checks (e.g. `Appointment::start()`'s
+`$actor->is($appointment->dentist)`, `DentistTimeOff`'s "target user must actually be a dentist"
+validation, `User::delete()`'s self-delete block) are explicitly NOT part of the permission catalog — they
+stay hardcoded in each Policy, unchanged, since they're not role decisions. Two new "meta" capabilities this
+phase introduces — managing the matrix itself, and (Step 3) the general Audit Log viewer — are deliberately
+checked via a hardcoded `isAdmin()` Gate rather than routed through the matrix they themselves gate, and
+`users.manage` can never be revoked from Admin through the matrix API — both close the self-lockout risk
+structurally, not just by validation. Full design: `docs/modules/phase4-permissions-audit-design.md` §1.
+
+**Status**: All 5 steps implemented 2026-08-09 on `feature/phase4-permissions-foundation` — Backend
+1145/1145 tests green (Steps 1-3), Frontend 969/969 tests green (Step 4's `PermissionsView.vue` matrix UI
++ `AuditLogsView.vue`), full E2E coverage (Step 5) with every scenario passing at least once locally, zero
+regressions across every pre-existing Feature/Policy/component/E2E test. The 2026-08-07 role-hierarchy flag
+stays open, not resolved by this choice — revisit if Phase 5 (SaaS Multi-Tenant Prep) gives it a concrete
+multi-clinic reason to exist. Pushed with CI triggered via `workflow_dispatch`; no PR opened yet, per the
+user's explicit instruction to review the complete diff after CI confirms.
+
+## 2026-08-09 — Phase 4 Step 3: audit writes fail open for the operation, fail closed on sensitive data
+
+Before Step 3 (Audit Overhaul) touched `AuditLogService`, a broken audit write (a DB error, a future bug)
+would propagate as an uncaught exception through the `AuditObserver` model event straight into whatever
+business action triggered it — a database outage on `audit_logs` specifically could have taken down
+logins, permission changes, and every Auditable model's create/update/delete alongside it. The user
+required this be fixed explicitly during Step 3, not left as-is.
+
+**Decision**: `AuditLogService::write()` wraps the `AuditLog::create()` call in a try/catch. On failure,
+the exception is logged (`Log::error('Audit log write failed', [...])`, action/auditable_type only — never
+the actual payload, so a redaction bug can't leak sensitive values into the general application log as a
+side effect of the failure path) and swallowed — the underlying login/save/permission-update completes
+normally. This applies uniformly to both the pre-existing model-observer path (20+ Auditable models) and
+the new event path (auth events, `role_permissions_updated`), since both funnel through the same `write()`
+method. The `AuditLog` model's separate immutability guard (`static::updating()`/`static::deleting()`
+throwing `LogicException`) is deliberately NOT swallowed anywhere — it exists specifically to fail loudly
+if code ever tries to mutate an audit row, unlike a failed *write*.
+
+Verified in `tests/Feature/AuditLogTest.php::test_a_failed_audit_write_does_not_break_the_underlying_business_operation`
+by dropping the `audit_logs` table mid-test — the more obvious approach (an actor with a non-existent
+`user_id` to trigger the FK constraint) turned out unreliable, since the test suite runs on SQLite, which
+doesn't enforce FK constraints by default unlike the production Postgres.
+
+**Status**: Implemented with Phase 4 Step 3, 2026-08-09.
+
+## 2026-08-09 — Phase 4 Step 3: Laravel `trustProxies(at: '*')` configured for the documented reverse-proxy topology
+
+Step 3 needed IP capture on `audit_logs` to be meaningful, not decorative — the user's explicit condition
+from Phase 4's design approval was "don't present a forwarded IP as trustworthy if trusted-proxy handling
+isn't actually configured." Auditing `bootstrap/app.php` found zero `trustProxies()` call. Cross-checking
+`docs/deployment.md`'s documented production topology (`host-level nginx --proxy_pass--> dockerized nginx,
+bound exclusively to 127.0.0.1:8000 --fastcgi_pass--> php-fpm`) confirmed the host-level nginx already sets
+`X-Real-IP`/`X-Forwarded-For`/`X-Forwarded-Proto` correctly (its own documented config), and that FastCGI
+forwards all incoming headers through automatically — so the real client IP genuinely reaches PHP today,
+Laravel just never reads it: `Request::ip()` without `trustProxies()` returns `REMOTE_ADDR` only, which at
+the dockerized nginx is always the host-level proxy's own loopback address.
+
+**Decision**: `$middleware->trustProxies(at: '*')` in `bootstrap/app.php`. Trusting `'*'` (not a specific
+IP) is safe specifically because of the documented bind — `nginx` binds exclusively to `127.0.0.1:8000`,
+never directly internet-facing, so the only possible peer connecting to this app is the host-level reverse
+proxy; there is no untrusted network path `'*'` could be exploited through in this topology.
+
+**Status**: Implemented with Phase 4 Step 3, 2026-08-09. Verified against the local dev topology (single
+dockerized nginx, no host-level proxy layer) via `tests/Feature/AuditLogTest.php`'s IP/UA capture test;
+the *production* double-proxy topology itself (`docs/deployment.md`'s host nginx + Certbot) could not be
+exercised from this session — recommend a smoke check (confirm a real client IP, not a loopback address,
+appears in `audit_logs.ip_address`) after the first real production deploy following this change.
+
+**Addendum (2026-08-09, final diff review before PR #37)**: `trustProxies(at: '*')` is app-wide middleware,
+not audit-log-scoped — `AppServiceProvider`'s `RateLimiter::for('api', ...)` also keys off `$request->ip()`,
+so the per-IP API throttle now trusts the same forwarded header the audit log does. Accepted consciously,
+not an oversight: the same single-trusted-proxy bind that makes the IP trustworthy for audit logging makes
+it equally trustworthy for rate-limiting. No action needed unless the deployment topology in
+`docs/deployment.md` ever changes to allow an untrusted path to the app.

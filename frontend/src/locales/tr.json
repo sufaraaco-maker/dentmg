@@ -5,6 +5,8 @@
   "nav": {
     "dashboard": "Panel",
     "users": "Kullanıcılar",
+    "permissions": "Yetkiler",
+    "auditLog": "Denetim Günlüğü",
     "patients": "Hastalar",
     "appointments": "Randevular",
     "dentalChart": "Diş Şeması",
@@ -156,6 +158,237 @@
     "deleteError": "Kullanıcı silinemedi",
     "deleteHeader": "Kullanıcıyı Sil",
     "confirmDelete": "{name} kullanıcısını silmek istediğinizden emin misiniz?"
+  },
+  "permissions": {
+    "title": "Yetkiler",
+    "description": "Her rolün gerçekleştirebileceği işlemleri yapılandırın.",
+    "loadError": "Yetkiler yüklenemedi",
+    "saveError": "Yetkiler kaydedilemedi",
+    "selfLockoutError": "Yönetici rolü her zaman \"Kullanıcıları yönet\" yetkisini korumalıdır.",
+    "saved": "Yetkiler başarıyla kaydedildi",
+    "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var",
+    "save": "Değişiklikleri Kaydet",
+    "discard": "Değişiklikleri Gözardı Et",
+    "permissionColumn": "Yetki",
+    "lockedHint": "Kilitli yetkiler her zaman Yöneticiye verilir ve geri alınamaz",
+    "groups": {
+      "ai_interaction_log": "Yapay Zeka Etkileşim Günlüğü",
+      "appointments": "Randevular",
+      "appointment_types": "Randevu Türleri",
+      "billing_settings": "Faturalama Ayarları",
+      "clinic_settings": "Klinik Ayarları",
+      "clinical_notes": "Klinik Notlar",
+      "dental_chart": "Diş Şeması",
+      "dental_conditions": "Diş Durumları",
+      "dentist_time_off": "Diş Hekimi İzinleri",
+      "dentist_working_hours": "Diş Hekimi Çalışma Saatleri",
+      "invoice_items": "Fatura Kalemleri",
+      "invoices": "Faturalar",
+      "lab_cases": "Laboratuvar Vakaları",
+      "labs": "Laboratuvarlar",
+      "medical_history": "Tıbbi Geçmiş",
+      "patient_activity": "Hasta Etkinliği",
+      "patient_documents": "Hasta Belgeleri",
+      "patient_images": "Hasta Görüntüleri",
+      "patients": "Hastalar",
+      "payments": "Ödemeler",
+      "purchase_orders": "Satın Alma Siparişleri",
+      "stock_movements": "Stok Hareketleri",
+      "suppliers": "Tedarikçiler",
+      "supply_categories": "Malzeme Kategorileri",
+      "supplies": "Malzemeler",
+      "treatment_plan_items": "Tedavi Planı Kalemleri",
+      "treatment_plans": "Tedavi Planları",
+      "users": "Kullanıcılar"
+    },
+    "catalog": {
+      "ai_interaction_log": {
+        "view": "Yapay zeka etkileşim günlüğünü görüntüle",
+        "view_others": "Diğer kullanıcıların yapay zeka etkileşim günlüğünü görüntüle"
+      },
+      "appointments": {
+        "view": "Randevuları görüntüle",
+        "manage": "Randevuları yönet",
+        "delete": "Randevuları sil"
+      },
+      "appointment_types": {
+        "view": "Randevu türlerini görüntüle",
+        "manage": "Randevu türlerini yönet"
+      },
+      "billing_settings": {
+        "manage": "Faturalama ayarlarını yönet"
+      },
+      "clinic_settings": {
+        "view": "Klinik ayarlarını görüntüle",
+        "manage": "Klinik ayarlarını yönet"
+      },
+      "clinical_notes": {
+        "view": "Klinik notları görüntüle",
+        "manage": "Klinik notları yönet",
+        "delete": "Klinik notları sil"
+      },
+      "dental_chart": {
+        "view": "Diş şemasını görüntüle",
+        "manage": "Diş şemasını yönet",
+        "delete": "Diş şeması kayıtlarını sil"
+      },
+      "dental_conditions": {
+        "view": "Diş durumları kataloğunu görüntüle",
+        "manage": "Diş durumları kataloğunu yönet"
+      },
+      "dentist_time_off": {
+        "view": "Diş hekimi izinlerini görüntüle",
+        "manage_any": "Herhangi bir diş hekiminin izinlerini yönet"
+      },
+      "dentist_working_hours": {
+        "view": "Diş hekimi çalışma saatlerini görüntüle",
+        "manage": "Diş hekimi çalışma saatlerini yönet"
+      },
+      "invoice_items": {
+        "view": "Fatura kalemlerini görüntüle",
+        "manage": "Fatura kalemlerini yönet"
+      },
+      "invoices": {
+        "view": "Faturaları görüntüle",
+        "manage": "Faturaları yönet",
+        "delete": "Faturaları sil"
+      },
+      "lab_cases": {
+        "view": "Laboratuvar vakalarını görüntüle",
+        "prescribe": "Laboratuvar vakası reçetele",
+        "process": "Laboratuvar vakalarını işle",
+        "delete": "Laboratuvar vakalarını sil"
+      },
+      "labs": {
+        "view": "Laboratuvarları görüntüle",
+        "manage": "Laboratuvarları yönet"
+      },
+      "medical_history": {
+        "view": "Tıbbi geçmişi görüntüle",
+        "manage": "Tıbbi geçmişi yönet"
+      },
+      "patient_activity": {
+        "view": "Hasta etkinlik zaman çizelgesini görüntüle"
+      },
+      "patient_documents": {
+        "view": "Hasta belgelerini görüntüle",
+        "manage": "Hasta belgelerini yönet",
+        "delete": "Hasta belgelerini sil"
+      },
+      "patient_images": {
+        "view": "Hasta görüntülerini görüntüle",
+        "manage": "Hasta görüntülerini yönet",
+        "delete": "Hasta görüntülerini sil"
+      },
+      "patients": {
+        "view": "Hastaları görüntüle",
+        "manage": "Hastaları yönet",
+        "delete": "Hastaları sil",
+        "view_audit_logs": "Hasta denetim günlüğünü görüntüle"
+      },
+      "payments": {
+        "view": "Ödemeleri görüntüle",
+        "manage": "Ödemeleri yönet",
+        "delete": "Ödemeleri sil"
+      },
+      "purchase_orders": {
+        "view": "Satın alma siparişlerini görüntüle",
+        "manage": "Satın alma siparişlerini yönet",
+        "delete": "Satın alma siparişlerini sil"
+      },
+      "stock_movements": {
+        "view": "Stok hareketlerini görüntüle",
+        "create": "Stok hareketi kaydet"
+      },
+      "suppliers": {
+        "view": "Tedarikçileri görüntüle",
+        "manage": "Tedarikçileri yönet"
+      },
+      "supply_categories": {
+        "view": "Malzeme kategorilerini görüntüle",
+        "manage": "Malzeme kategorilerini yönet"
+      },
+      "supplies": {
+        "view": "Malzeme kataloğunu görüntüle",
+        "manage": "Malzeme kataloğunu yönet"
+      },
+      "treatment_plan_items": {
+        "view": "Tedavi planı kalemlerini görüntüle",
+        "manage": "Tedavi planı kalemlerini yönet",
+        "delete": "Tedavi planı kalemlerini sil"
+      },
+      "treatment_plans": {
+        "view": "Tedavi planlarını görüntüle",
+        "manage": "Tedavi planlarını yönet",
+        "delete": "Tedavi planlarını sil"
+      },
+      "users": {
+        "view": "Kullanıcıları görüntüle",
+        "manage": "Kullanıcıları yönet"
+      }
+    }
+  },
+  "auditLog": {
+    "title": "Denetim Günlüğü",
+    "loadError": "Denetim günlüğü yüklenemedi",
+    "empty": "Denetim günlüğü kaydı bulunamadı",
+    "systemActor": "Sistem",
+    "unknownTarget": "—",
+    "noChanges": "Kayıtlı alan değişikliği yok",
+    "oldValue": "Önce",
+    "newValue": "Sonra",
+    "context": "Bağlam",
+    "filters": {
+      "user": "Kullanıcı",
+      "allUsers": "Tüm kullanıcılar",
+      "resourceType": "Kaynak türü",
+      "allResourceTypes": "Tüm kaynak türleri",
+      "action": "İşlem",
+      "allActions": "Tüm işlemler",
+      "dateFrom": "Başlangıç",
+      "dateTo": "Bitiş",
+      "apply": "Uygula"
+    },
+    "table": {
+      "when": "Zaman",
+      "actor": "İşlemi Yapan",
+      "action": "İşlem",
+      "target": "Hedef",
+      "ipAddress": "IP Adresi"
+    },
+    "actions": {
+      "created": "Oluşturuldu",
+      "updated": "Güncellendi",
+      "deleted": "Silindi",
+      "login_succeeded": "Giriş başarılı",
+      "login_failed": "Giriş başarısız",
+      "logged_out": "Çıkış yapıldı",
+      "role_permissions_updated": "Yetki matrisi güncellendi"
+    },
+    "resourceTypes": {
+      "user": "Kullanıcı",
+      "patient": "Hasta",
+      "patientDocument": "Hasta Belgesi",
+      "labCase": "Laboratuvar Vakası",
+      "patientMedication": "İlaç",
+      "patientMedicalCondition": "Tıbbi Durum",
+      "patientAllergy": "Alerji",
+      "clinicSetting": "Klinik Ayarı",
+      "aiInteractionLog": "Yapay Zeka Etkileşim Kaydı",
+      "patientImage": "Hasta Görüntüsü",
+      "purchaseOrder": "Satın Alma Siparişi",
+      "clinicalNoteAddendum": "Klinik Not Eki",
+      "clinicalNote": "Klinik Not",
+      "treatmentPlanItem": "Tedavi Planı Kalemi",
+      "treatmentPlan": "Tedavi Planı",
+      "payment": "Ödeme",
+      "invoiceItem": "Fatura Kalemi",
+      "invoice": "Fatura",
+      "billingSetting": "Faturalama Ayarı",
+      "dentalChartEntry": "Diş Şeması Kaydı",
+      "appointment": "Randevu",
+      "rolePermission": "Yetki Matrisi"
+    }
   },
   "patients": {
     "title": "Hastalar",

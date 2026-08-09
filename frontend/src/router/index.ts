@@ -158,6 +158,18 @@ export const router = createRouter({
           component: () => import('@/views/ReportsHomeView.vue'),
         },
         {
+          path: 'permissions',
+          name: 'permissions',
+          component: () => import('@/views/PermissionsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
+          path: 'audit-logs',
+          name: 'audit-logs',
+          component: () => import('@/views/AuditLogsView.vue'),
+          meta: { roles: ['admin'] },
+        },
+        {
           path: 'settings',
           name: 'settings',
           component: () => import('@/views/SettingsHomeView.vue'),

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingSettingController;
 use App\Http\Controllers\Api\BillingSummaryController;
@@ -23,10 +24,12 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchaseOrderItemController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\RolePermissionController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplyCategoryController;
@@ -48,6 +51,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/financial-summary', [DashboardController::class, 'financialSummary']);
 
     Route::apiResource('users', UserController::class);
+
+    // Phase 4 (Advanced Permissions & Audit) design doc §1.5 — admin-only (`manage-permissions`
+    // Gate), never routed through the matrix these endpoints themselves manage.
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('role-permissions', [RolePermissionController::class, 'index']);
+    Route::put('role-permissions', [RolePermissionController::class, 'update']);
+
+    // Phase 4 Step 3 design doc §2.6 — the general Audit Log viewer, admin-only.
+    Route::get('audit-logs', [AuditLogController::class, 'index']);
 
     Route::get('patients/{patient}/audit-logs', [PatientController::class, 'auditLogs']);
     Route::apiResource('patients', PatientController::class);

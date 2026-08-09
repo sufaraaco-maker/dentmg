@@ -17,11 +17,11 @@ class ClinicSettingPolicy
 {
     public function view(User $actor): bool
     {
-        return true;
+        return $actor->hasPermission('clinic_settings.view');
     }
 
     public function update(User $actor): bool
     {
-        return $actor->isAdmin();
+        return $actor->hasPermission('clinic_settings.manage');
     }
 }
