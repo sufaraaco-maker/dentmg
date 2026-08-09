@@ -5,6 +5,7 @@ import PatientBillingPanel from './PatientBillingPanel.vue'
 import BillingSummaryCard from './BillingSummaryCard.vue'
 import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
 import PatientPaymentsPanel from '@/components/payments/PatientPaymentsPanel.vue'
+import ActivityTimeline from '@/components/patients/ActivityTimeline.vue'
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -14,7 +15,12 @@ function mountPanel() {
   return mount(PatientBillingPanel, {
     props: { patientId: 'patient-1' },
     global: {
-      stubs: { BillingSummaryCard: true, PatientInvoicesPanel: true, PatientPaymentsPanel: true },
+      stubs: {
+        BillingSummaryCard: true,
+        PatientInvoicesPanel: true,
+        PatientPaymentsPanel: true,
+        ActivityTimeline: true,
+      },
     },
   })
 }
@@ -43,7 +49,7 @@ describe('PatientBillingPanel — shell', () => {
     expect(wrapper.findComponent(PatientInvoicesPanel).exists()).toBe(false)
   })
 
-  it('switches to the Payment History placeholder — no fetch, honest "coming soon" state', async () => {
+  it('switches to Payment History, backed by ActivityTimeline filtered to category="billing"', async () => {
     const wrapper = mountPanel()
     const switcher = wrapper.findComponent({ name: 'SelectButton' })
 
@@ -51,7 +57,8 @@ describe('PatientBillingPanel — shell', () => {
 
     expect(wrapper.findComponent(PatientInvoicesPanel).exists()).toBe(false)
     expect(wrapper.findComponent(PatientPaymentsPanel).exists()).toBe(false)
-    expect(wrapper.text()).toContain('Payment History')
-    expect(wrapper.text()).toContain('Coming soon')
+    const timeline = wrapper.findComponent(ActivityTimeline)
+    expect(timeline.props('patientId')).toBe('patient-1')
+    expect(timeline.props('category')).toBe('billing')
   })
 })

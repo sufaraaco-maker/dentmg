@@ -191,7 +191,8 @@
       "treatmentPlans": "Tedavi Planları",
       "clinicalNotes": "Klinik Notlar",
       "billing": "Faturalandırma",
-      "documents": "Belgeler"
+      "documents": "Belgeler",
+      "timeline": "Zaman Çizelgesi"
     },
     "tabSwitcher": {
       "label": "Bölüm değiştir"
@@ -263,13 +264,30 @@
         "invoices": "Faturalar",
         "payments": "Ödemeler",
         "paymentHistory": "Ödeme Geçmişi"
-      },
-      "paymentHistoryTitle": "Ödeme Geçmişi"
+      }
     },
     "documentsPanel": {
       "title": "Belgeler",
       "upload": "Belge Yükle",
       "empty": "Bu hasta için henüz belge yok."
+    },
+    "timelinePanel": {
+      "overviewTitle": "Son Etkinlik",
+      "empty": "Bu hasta için henüz etkinlik kaydedilmedi.",
+      "loadError": "Etkinlik yüklenemedi",
+      "loadMore": "Daha fazla yükle",
+      "viewAll": "Zaman Çizelgesini Görüntüle",
+      "categories": {
+        "all": "Tümü",
+        "appointments": "Randevular",
+        "treatment_plans": "Tedavi Planları",
+        "clinical_notes": "Klinik Notlar",
+        "billing": "Faturalandırma",
+        "medical_history": "Tıbbi Geçmiş",
+        "laboratory": "Laboratuvar",
+        "imaging": "Görüntüleme",
+        "documents": "Belgeler"
+      }
     }
   },
   "medicalHistory": {
