@@ -36,10 +36,12 @@ deferred); **Steps 1-2 (Permissions Foundation + Policy refactor)**, **Step 3 (A
 **Step 4 (Frontend)**, and **Step 5 (E2E + final docs)** all implemented 2026-08-09 on
 `feature/phase4-permissions-foundation` — this file's newest entry below — pushed, **CI fully green
 (Backend/Frontend/E2E, run `31328615397`)**, then a full final diff review against `main` (103 files, 14
-points checked) found zero blockers; **PR #37 opened**, not yet merged. See `docs/PROJECT_STATUS.md`
-for the living, continuously-updated status book this file's own per-PR history now feeds into._
+points checked) found zero blockers; **merged via PR #37** (`0bdf3d8`, 2026-08-09); post-merge CI on `main`
+(Backend/Frontend/E2E, including the real E2E run) fully green. **Milestone: "Phase 4 — Advanced
+Permissions & Audit Complete."** See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
+book this file's own per-PR history now feeds into._
 
-### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, not yet merged)
+### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
   in a real browser; an admin toggling a permission off persists across reload, takes effect for a
   live receptionist session (the New Patient button disappears), and is audited as
@@ -75,7 +77,7 @@ for the living, continuously-updated status book this file's own per-PR history 
 
 Design doc: `docs/modules/phase4-permissions-audit-design.md` §9/§14. No backend behavior changed.
 
-### Added — Phase 4 Step 4: Frontend (`feature/phase4-permissions-foundation`, not yet merged)
+### Added — Phase 4 Step 4: Frontend (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New admin-only **Permissions** screen (`PermissionsView.vue`): a role×permission matrix (68
   catalog entries grouped by module, one toggle switch per role) editable as a single draft with
   explicit Save/Discard — no per-toggle autosave. The `users.manage` cell on the Admin role renders
@@ -110,7 +112,7 @@ Design doc: `docs/modules/phase4-permissions-audit-design.md` §9/§14. No backe
 Design doc: `docs/modules/phase4-permissions-audit-design.md` §1.6/§2.6/§8/§10. No backend behavior
 changed — Step 4 is frontend-only, consuming the Step 1-3 API surface as-is.
 
-### Added — Phase 4 Step 3: Audit Overhaul (`feature/phase4-permissions-foundation`, not yet merged)
+### Added — Phase 4 Step 3: Audit Overhaul (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - Closes the two critical gaps the design-phase audit found: `User` was not audited, and no
   authentication event was logged anywhere.
 - Additive `audit_logs` migration: `old_values`, `ip_address`, `user_agent`, `context` columns;
@@ -146,7 +148,7 @@ changed — Step 4 is frontend-only, consuming the Step 1-3 API surface as-is.
 Design doc: `docs/modules/phase4-permissions-audit-design.md` §2. See `docs/decisions.md`'s
 2026-08-09 entries for the audit-write fail-open/fail-closed policy and the trusted-proxy fix.
 
-### Added — Phase 4 Steps 1-2: Permissions Foundation + Policy refactor (`feature/phase4-permissions-foundation`, not yet merged)
+### Added — Phase 4 Steps 1-2: Permissions Foundation + Policy refactor (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `permissions` catalog (68 entries) and `role_permissions` matrix, derived 1:1 from a full
   line-by-line read of all 27 Policy classes' actual pre-Phase-4 behavior — day 1, zero effective
   permission change; verified independently (seeded per-role grant counts — admin=68, dentist=36,
