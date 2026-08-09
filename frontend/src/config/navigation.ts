@@ -8,9 +8,11 @@ import {
   Clock,
   Home,
   LineChart,
+  Lock,
   Network,
   Package,
   Palette,
+  ScrollText,
   Send,
   Settings,
   Tags,
@@ -219,6 +221,22 @@ export const navigation: NavItem[] = [
     routeName: 'settings',
     // Every child is admin-only, so this is gated at the top level itself rather than a
     // mixed-visibility group (design doc §7) — unlike Reports, which has some non-admin children.
+    roles: ['admin'],
+    section: 'admin',
+  },
+  {
+    // Phase 4 Step 4 (phase4-permissions-audit-design.md §1.6) — both `manage-permissions` and
+    // `view-audit-logs` are hardcoded isAdmin() Gates (§1.4), matching this nav item's own gate.
+    labelKey: 'nav.permissions',
+    icon: Lock,
+    routeName: 'permissions',
+    roles: ['admin'],
+    section: 'admin',
+  },
+  {
+    labelKey: 'nav.auditLog',
+    icon: ScrollText,
+    routeName: 'audit-logs',
     roles: ['admin'],
     section: 'admin',
   },

@@ -5,6 +5,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users",
+    "permissions": "Permissions",
+    "auditLog": "Audit Log",
     "patients": "Patients",
     "appointments": "Appointments",
     "dentalChart": "Dental Chart",
@@ -156,6 +158,237 @@
     "deleteError": "Failed to delete user",
     "deleteHeader": "Delete User",
     "confirmDelete": "Are you sure you want to delete {name}?"
+  },
+  "permissions": {
+    "title": "Permissions",
+    "description": "Configure which roles can perform each action.",
+    "loadError": "Failed to load permissions",
+    "saveError": "Failed to save permissions",
+    "selfLockoutError": "The Admin role must always retain the \"Manage users\" permission.",
+    "saved": "Permissions saved successfully",
+    "unsavedChanges": "You have unsaved changes",
+    "save": "Save Changes",
+    "discard": "Discard Changes",
+    "permissionColumn": "Permission",
+    "lockedHint": "Locked permissions are always granted to Admin and cannot be revoked",
+    "groups": {
+      "ai_interaction_log": "AI Interaction Log",
+      "appointments": "Appointments",
+      "appointment_types": "Appointment Types",
+      "billing_settings": "Billing Settings",
+      "clinic_settings": "Clinic Settings",
+      "clinical_notes": "Clinical Notes",
+      "dental_chart": "Dental Chart",
+      "dental_conditions": "Dental Conditions",
+      "dentist_time_off": "Dentist Time Off",
+      "dentist_working_hours": "Dentist Working Hours",
+      "invoice_items": "Invoice Items",
+      "invoices": "Invoices",
+      "lab_cases": "Lab Cases",
+      "labs": "Lab Vendors",
+      "medical_history": "Medical History",
+      "patient_activity": "Patient Activity",
+      "patient_documents": "Patient Documents",
+      "patient_images": "Patient Images",
+      "patients": "Patients",
+      "payments": "Payments",
+      "purchase_orders": "Purchase Orders",
+      "stock_movements": "Stock Movements",
+      "suppliers": "Suppliers",
+      "supply_categories": "Supply Categories",
+      "supplies": "Supplies",
+      "treatment_plan_items": "Treatment Plan Items",
+      "treatment_plans": "Treatment Plans",
+      "users": "Users"
+    },
+    "catalog": {
+      "ai_interaction_log": {
+        "view": "View AI interaction log",
+        "view_others": "View others' AI interaction log"
+      },
+      "appointments": {
+        "view": "View appointments",
+        "manage": "Manage appointments",
+        "delete": "Delete appointments"
+      },
+      "appointment_types": {
+        "view": "View appointment types",
+        "manage": "Manage appointment types"
+      },
+      "billing_settings": {
+        "manage": "Manage billing settings"
+      },
+      "clinic_settings": {
+        "view": "View clinic settings",
+        "manage": "Manage clinic settings"
+      },
+      "clinical_notes": {
+        "view": "View clinical notes",
+        "manage": "Manage clinical notes",
+        "delete": "Delete clinical notes"
+      },
+      "dental_chart": {
+        "view": "View dental chart",
+        "manage": "Manage dental chart",
+        "delete": "Delete dental chart entries"
+      },
+      "dental_conditions": {
+        "view": "View dental conditions catalog",
+        "manage": "Manage dental conditions catalog"
+      },
+      "dentist_time_off": {
+        "view": "View dentist time off",
+        "manage_any": "Manage any dentist's time off"
+      },
+      "dentist_working_hours": {
+        "view": "View dentist working hours",
+        "manage": "Manage dentist working hours"
+      },
+      "invoice_items": {
+        "view": "View invoice line items",
+        "manage": "Manage invoice line items"
+      },
+      "invoices": {
+        "view": "View invoices",
+        "manage": "Manage invoices",
+        "delete": "Delete invoices"
+      },
+      "lab_cases": {
+        "view": "View lab cases",
+        "prescribe": "Prescribe lab cases",
+        "process": "Process lab cases",
+        "delete": "Delete lab cases"
+      },
+      "labs": {
+        "view": "View lab vendors",
+        "manage": "Manage lab vendors"
+      },
+      "medical_history": {
+        "view": "View medical history",
+        "manage": "Manage medical history"
+      },
+      "patient_activity": {
+        "view": "View patient activity timeline"
+      },
+      "patient_documents": {
+        "view": "View patient documents",
+        "manage": "Manage patient documents",
+        "delete": "Delete patient documents"
+      },
+      "patient_images": {
+        "view": "View patient images",
+        "manage": "Manage patient images",
+        "delete": "Delete patient images"
+      },
+      "patients": {
+        "view": "View patients",
+        "manage": "Manage patients",
+        "delete": "Delete patients",
+        "view_audit_logs": "View patient audit logs"
+      },
+      "payments": {
+        "view": "View payments",
+        "manage": "Manage payments",
+        "delete": "Delete payments"
+      },
+      "purchase_orders": {
+        "view": "View purchase orders",
+        "manage": "Manage purchase orders",
+        "delete": "Delete purchase orders"
+      },
+      "stock_movements": {
+        "view": "View stock movements",
+        "create": "Record stock movements"
+      },
+      "suppliers": {
+        "view": "View suppliers",
+        "manage": "Manage suppliers"
+      },
+      "supply_categories": {
+        "view": "View supply categories",
+        "manage": "Manage supply categories"
+      },
+      "supplies": {
+        "view": "View supplies catalog",
+        "manage": "Manage supplies catalog"
+      },
+      "treatment_plan_items": {
+        "view": "View treatment plan items",
+        "manage": "Manage treatment plan items",
+        "delete": "Delete treatment plan items"
+      },
+      "treatment_plans": {
+        "view": "View treatment plans",
+        "manage": "Manage treatment plans",
+        "delete": "Delete treatment plans"
+      },
+      "users": {
+        "view": "View users",
+        "manage": "Manage users"
+      }
+    }
+  },
+  "auditLog": {
+    "title": "Audit Log",
+    "loadError": "Failed to load the audit log",
+    "empty": "No audit log entries found",
+    "systemActor": "System",
+    "unknownTarget": "—",
+    "noChanges": "No field changes recorded",
+    "oldValue": "Before",
+    "newValue": "After",
+    "context": "Context",
+    "filters": {
+      "user": "User",
+      "allUsers": "All users",
+      "resourceType": "Resource type",
+      "allResourceTypes": "All resource types",
+      "action": "Action",
+      "allActions": "All actions",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "apply": "Apply"
+    },
+    "table": {
+      "when": "When",
+      "actor": "Actor",
+      "action": "Action",
+      "target": "Target",
+      "ipAddress": "IP Address"
+    },
+    "actions": {
+      "created": "Created",
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "login_succeeded": "Login succeeded",
+      "login_failed": "Login failed",
+      "logged_out": "Logged out",
+      "role_permissions_updated": "Permissions matrix updated"
+    },
+    "resourceTypes": {
+      "user": "User",
+      "patient": "Patient",
+      "patientDocument": "Patient Document",
+      "labCase": "Lab Case",
+      "patientMedication": "Medication",
+      "patientMedicalCondition": "Medical Condition",
+      "patientAllergy": "Allergy",
+      "clinicSetting": "Clinic Setting",
+      "aiInteractionLog": "AI Interaction Log Entry",
+      "patientImage": "Patient Image",
+      "purchaseOrder": "Purchase Order",
+      "clinicalNoteAddendum": "Clinical Note Addendum",
+      "clinicalNote": "Clinical Note",
+      "treatmentPlanItem": "Treatment Plan Item",
+      "treatmentPlan": "Treatment Plan",
+      "payment": "Payment",
+      "invoiceItem": "Invoice Item",
+      "invoice": "Invoice",
+      "billingSetting": "Billing Setting",
+      "dentalChartEntry": "Dental Chart Entry",
+      "appointment": "Appointment",
+      "rolePermission": "Permission Matrix"
+    }
   },
   "patients": {
     "title": "Patients",

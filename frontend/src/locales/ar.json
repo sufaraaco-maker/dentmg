@@ -5,6 +5,8 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "users": "المستخدمون",
+    "permissions": "الصلاحيات",
+    "auditLog": "سجل التدقيق",
     "patients": "المرضى",
     "appointments": "المواعيد",
     "dentalChart": "مخطط الأسنان",
@@ -156,6 +158,237 @@
     "deleteError": "تعذّر حذف المستخدم",
     "deleteHeader": "حذف المستخدم",
     "confirmDelete": "هل أنت متأكد من حذف {name}؟"
+  },
+  "permissions": {
+    "title": "الصلاحيات",
+    "description": "تحديد الإجراءات المسموح بها لكل دور.",
+    "loadError": "تعذّر تحميل الصلاحيات",
+    "saveError": "تعذّر حفظ الصلاحيات",
+    "selfLockoutError": "يجب أن يحتفظ دور المدير دائمًا بصلاحية \"إدارة المستخدمين\".",
+    "saved": "تم حفظ الصلاحيات بنجاح",
+    "unsavedChanges": "لديك تغييرات غير محفوظة",
+    "save": "حفظ التغييرات",
+    "discard": "تجاهل التغييرات",
+    "permissionColumn": "الصلاحية",
+    "lockedHint": "الصلاحيات المقفلة ممنوحة دائمًا للمدير ولا يمكن سحبها",
+    "groups": {
+      "ai_interaction_log": "سجل تفاعل الذكاء الاصطناعي",
+      "appointments": "المواعيد",
+      "appointment_types": "أنواع المواعيد",
+      "billing_settings": "إعدادات الفوترة",
+      "clinic_settings": "إعدادات العيادة",
+      "clinical_notes": "الملاحظات السريرية",
+      "dental_chart": "مخطط الأسنان",
+      "dental_conditions": "حالات الأسنان",
+      "dentist_time_off": "إجازات الأطباء",
+      "dentist_working_hours": "ساعات عمل الأطباء",
+      "invoice_items": "بنود الفاتورة",
+      "invoices": "الفواتير",
+      "lab_cases": "حالات المختبر",
+      "labs": "المختبرات",
+      "medical_history": "التاريخ الطبي",
+      "patient_activity": "نشاط المريض",
+      "patient_documents": "مستندات المريض",
+      "patient_images": "صور المريض",
+      "patients": "المرضى",
+      "payments": "المدفوعات",
+      "purchase_orders": "طلبات الشراء",
+      "stock_movements": "حركات المخزون",
+      "suppliers": "الموردون",
+      "supply_categories": "فئات المستلزمات",
+      "supplies": "المستلزمات",
+      "treatment_plan_items": "بنود خطة العلاج",
+      "treatment_plans": "خطط العلاج",
+      "users": "المستخدمون"
+    },
+    "catalog": {
+      "ai_interaction_log": {
+        "view": "عرض سجل تفاعل الذكاء الاصطناعي",
+        "view_others": "عرض سجل تفاعل الذكاء الاصطناعي للآخرين"
+      },
+      "appointments": {
+        "view": "عرض المواعيد",
+        "manage": "إدارة المواعيد",
+        "delete": "حذف المواعيد"
+      },
+      "appointment_types": {
+        "view": "عرض أنواع المواعيد",
+        "manage": "إدارة أنواع المواعيد"
+      },
+      "billing_settings": {
+        "manage": "إدارة إعدادات الفوترة"
+      },
+      "clinic_settings": {
+        "view": "عرض إعدادات العيادة",
+        "manage": "إدارة إعدادات العيادة"
+      },
+      "clinical_notes": {
+        "view": "عرض الملاحظات السريرية",
+        "manage": "إدارة الملاحظات السريرية",
+        "delete": "حذف الملاحظات السريرية"
+      },
+      "dental_chart": {
+        "view": "عرض مخطط الأسنان",
+        "manage": "إدارة مخطط الأسنان",
+        "delete": "حذف عناصر مخطط الأسنان"
+      },
+      "dental_conditions": {
+        "view": "عرض قائمة حالات الأسنان",
+        "manage": "إدارة قائمة حالات الأسنان"
+      },
+      "dentist_time_off": {
+        "view": "عرض إجازات الأطباء",
+        "manage_any": "إدارة إجازات أي طبيب"
+      },
+      "dentist_working_hours": {
+        "view": "عرض ساعات عمل الأطباء",
+        "manage": "إدارة ساعات عمل الأطباء"
+      },
+      "invoice_items": {
+        "view": "عرض بنود الفاتورة",
+        "manage": "إدارة بنود الفاتورة"
+      },
+      "invoices": {
+        "view": "عرض الفواتير",
+        "manage": "إدارة الفواتير",
+        "delete": "حذف الفواتير"
+      },
+      "lab_cases": {
+        "view": "عرض حالات المختبر",
+        "prescribe": "وصف حالات المختبر",
+        "process": "معالجة حالات المختبر",
+        "delete": "حذف حالات المختبر"
+      },
+      "labs": {
+        "view": "عرض المختبرات",
+        "manage": "إدارة المختبرات"
+      },
+      "medical_history": {
+        "view": "عرض التاريخ الطبي",
+        "manage": "إدارة التاريخ الطبي"
+      },
+      "patient_activity": {
+        "view": "عرض النشاط الزمني للمريض"
+      },
+      "patient_documents": {
+        "view": "عرض مستندات المريض",
+        "manage": "إدارة مستندات المريض",
+        "delete": "حذف مستندات المريض"
+      },
+      "patient_images": {
+        "view": "عرض صور المريض",
+        "manage": "إدارة صور المريض",
+        "delete": "حذف صور المريض"
+      },
+      "patients": {
+        "view": "عرض المرضى",
+        "manage": "إدارة المرضى",
+        "delete": "حذف المرضى",
+        "view_audit_logs": "عرض سجل تدقيق المريض"
+      },
+      "payments": {
+        "view": "عرض المدفوعات",
+        "manage": "إدارة المدفوعات",
+        "delete": "حذف المدفوعات"
+      },
+      "purchase_orders": {
+        "view": "عرض طلبات الشراء",
+        "manage": "إدارة طلبات الشراء",
+        "delete": "حذف طلبات الشراء"
+      },
+      "stock_movements": {
+        "view": "عرض حركات المخزون",
+        "create": "تسجيل حركات المخزون"
+      },
+      "suppliers": {
+        "view": "عرض الموردين",
+        "manage": "إدارة الموردين"
+      },
+      "supply_categories": {
+        "view": "عرض فئات المستلزمات",
+        "manage": "إدارة فئات المستلزمات"
+      },
+      "supplies": {
+        "view": "عرض قائمة المستلزمات",
+        "manage": "إدارة قائمة المستلزمات"
+      },
+      "treatment_plan_items": {
+        "view": "عرض بنود خطة العلاج",
+        "manage": "إدارة بنود خطة العلاج",
+        "delete": "حذف بنود خطة العلاج"
+      },
+      "treatment_plans": {
+        "view": "عرض خطط العلاج",
+        "manage": "إدارة خطط العلاج",
+        "delete": "حذف خطط العلاج"
+      },
+      "users": {
+        "view": "عرض المستخدمين",
+        "manage": "إدارة المستخدمين"
+      }
+    }
+  },
+  "auditLog": {
+    "title": "سجل التدقيق",
+    "loadError": "تعذّر تحميل سجل التدقيق",
+    "empty": "لا توجد سجلات تدقيق",
+    "systemActor": "النظام",
+    "unknownTarget": "—",
+    "noChanges": "لا توجد تغييرات مسجّلة",
+    "oldValue": "قبل",
+    "newValue": "بعد",
+    "context": "السياق",
+    "filters": {
+      "user": "المستخدم",
+      "allUsers": "جميع المستخدمين",
+      "resourceType": "نوع المورد",
+      "allResourceTypes": "جميع أنواع الموارد",
+      "action": "الإجراء",
+      "allActions": "جميع الإجراءات",
+      "dateFrom": "من",
+      "dateTo": "إلى",
+      "apply": "تطبيق"
+    },
+    "table": {
+      "when": "التاريخ والوقت",
+      "actor": "المستخدم المنفّذ",
+      "action": "الإجراء",
+      "target": "الهدف",
+      "ipAddress": "عنوان IP"
+    },
+    "actions": {
+      "created": "تم الإنشاء",
+      "updated": "تم التحديث",
+      "deleted": "تم الحذف",
+      "login_succeeded": "تسجيل دخول ناجح",
+      "login_failed": "فشل تسجيل الدخول",
+      "logged_out": "تسجيل خروج",
+      "role_permissions_updated": "تم تحديث مصفوفة الصلاحيات"
+    },
+    "resourceTypes": {
+      "user": "مستخدم",
+      "patient": "مريض",
+      "patientDocument": "مستند مريض",
+      "labCase": "حالة مختبر",
+      "patientMedication": "دواء",
+      "patientMedicalCondition": "حالة مرضية",
+      "patientAllergy": "حساسية",
+      "clinicSetting": "إعداد العيادة",
+      "aiInteractionLog": "سجل تفاعل الذكاء الاصطناعي",
+      "patientImage": "صورة مريض",
+      "purchaseOrder": "طلب شراء",
+      "clinicalNoteAddendum": "ملحق ملاحظة سريرية",
+      "clinicalNote": "ملاحظة سريرية",
+      "treatmentPlanItem": "بند خطة علاج",
+      "treatmentPlan": "خطة علاج",
+      "payment": "دفعة",
+      "invoiceItem": "بند فاتورة",
+      "invoice": "فاتورة",
+      "billingSetting": "إعداد الفوترة",
+      "dentalChartEntry": "عنصر مخطط الأسنان",
+      "appointment": "موعد",
+      "rolePermission": "مصفوفة الصلاحيات"
+    }
   },
   "patients": {
     "title": "المرضى",
