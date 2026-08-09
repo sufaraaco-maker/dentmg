@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved 2026-08-08.** All 7 decisions in §16 were approved by the user as recommended. A real category-taxonomy conflict was found and fixed pre-implementation (§5's correction note). **2.6a (Foundation) merged via PR #31.** **2.6b (UI) implemented 2026-08-09**, opened as **PR #32** — see `docs/PROJECT_STATUS.md` §12 for current merge status. |
+| **Status** | **Approved 2026-08-08.** All 7 decisions in §16 were approved by the user as recommended. A real category-taxonomy conflict was found and fixed pre-implementation (§5's correction note). **2.6a (Foundation) merged via PR #31. 2.6b (UI) merged via PR #32** (a post-merge-CI-caught E2E test fix via PR #33) — **Phase 2.6 (Timeline), and Phase 2 (Patient Profile Redesign) in full, are complete.** See `docs/PROJECT_STATUS.md` §12 for the full merge/CI record. |
 | **Roadmap position** | Phase 2 (Patient Profile Redesign), sub-phase 2.6 of 7 — the final sub-phase. See `docs/PROJECT_STATUS.md` §12 and `docs/modules/patient-profile-redesign-design.md` §17. Follows 2.1 (Foundation, PR #18), 2.2 (Billing, PR #20), 2.3 (Medical History, PR #22), 2.4 (Laboratory, PR #24), 2.5 (Documents, PR #27) — all merged to `main`. |
 | **Governing decisions inherited** | **§9A of `docs/modules/patient-profile-redesign-design.md` (the Security Architecture Decision) is binding here unchanged and is not revisited anywhere in this doc** — see §0 below for its full text. §0 item 4 and §3's tab-order rationale are also inherited. This doc is a **drill-down**, not a replacement: the umbrella doc's §6/§7/§8/§9/§9A/§10/§15.2/§17 already sketch this sub-phase in unusual detail (more than any prior phase had); this doc verifies that sketch against the actual code on `main` today and resolves the structural decisions it left open. |
 | **Analysis basis** | Direct inspection of every Timeline-adjacent backend/frontend file on `main` (post-PR #28, commit `933ee90`) — confirmed nothing Timeline/`PatientActivity`-related exists yet, confirmed zero event-driven infrastructure exists anywhere in this codebase (no `app/Events`, no `app/Listeners`, no service dispatches any event), and confirmed no queue worker actually runs despite `QUEUE_CONNECTION=redis` being configured (no `ShouldQueue` usage, no queue-worker service in `docker-compose.yml`). Read all 9 candidate services' full public method lists to build the per-service event inventory in §5. Read `App\Models\Concerns\Auditable`/`AuditObserver`/`AuditLog` end-to-end to confirm exactly why it can't serve as Timeline's source, corroborating §9A's own reasoning. Read the umbrella doc's full §9/§9A verbatim and `docs/decisions.md`'s 2026-08-07 entry verbatim. Read `patient-documents-redesign-design.md` as this doc's structural template. |
@@ -93,6 +93,13 @@ All 7 §16 decisions implemented as recommended, plus the pre-implementation cat
 - **i18n**: `patients.tabs.timeline` and a new `patients.timelinePanel.*` block added to all 3
   locales; the now-dead `patients.billingPanel.paymentHistoryTitle` key (no longer referenced by any
   component once `FutureFeaturePlaceholder` was replaced) was removed.
+- **Merged via PR #32** (`70b6ba6`). **Post-merge CI's real E2E run** (PR-triggered runs skip this
+  job by design; only a push to `main` executes it) **caught 2 real bugs in the E2E spec itself**,
+  not application code: `case_number` read from `<h1>` before its async fetch replaced a fallback
+  string, and an unscoped `getByText()` hitting a strict-mode violation across the exact
+  simultaneously-mounted-instances scenario this doc's own store design (above) exists to handle —
+  proof the multi-instance concern was real, not speculative. Fixed and **merged via PR #33**
+  (`83c584b`); post-merge CI green on all three jobs. **Phase 2.6, and Phase 2 in full, complete.**
 
 ## 0. Why this doc exists separately from the umbrella design doc, and what's already binding
 
