@@ -37,7 +37,7 @@ scope.
 | **1. Navigation Shell** | **Done — Production Ready ✅**, merged to `main` via PR #10 (2026-08-01, merge commit `f45110a`) — Sidebar (collapsible sections, Favorites, Recent Items, true recursive nesting), Header (breadcrumbs, global search entry point), Command Palette (`Ctrl+K`), app-wide keyboard shortcuts (`?`, `g`-then-X chords), and a real Billing sidebar destination (`GET /invoices`, one small approved backend exception to the frontend-only scope). 913/913 backend tests (8 new) + 751/751 frontend Vitest tests (30 new), `vue-tsc -b`/ESLint/Prettier clean, permanent E2E suite confirmed 39/39 green on GitHub Actions (`workflow_dispatch` run `30629204011`, after fixing a `vue-tsc -b` build-only type error and three real E2E bugs CI's own runs surfaced — see `TECH_DEBT.md`) |
 | **Premium Visual Redesign, Steps 1-3** | Merged to `main` via PR #13 (2026-08-02) — design tokens, Sidebar redesign + partial PrimeIcons→Lucide icon migration, Header/Command Palette polish. 928/928 backend + 755/755 frontend tests green. |
 | Remaining icon migration (~62 files) | Not started |
-| Dashboard redesign (Premium doc §6) | Not started — see `docs/PROJECT_STATUS.md`'s Phase 3 (Dashboard 2.0) for the current plan |
+| Dashboard redesign (Premium doc §6) | **Superseded 2026-08-09** — implemented as part of roadmap Phase 3 (Dashboard 2.0), see `docs/modules/dashboard-2.0-design.md` and `docs/PROJECT_STATUS.md` |
 | **3. Data Tables System** | Not started |
 | **4. Cross-cutting Polish** | Partially absorbed into Premium Visual Redesign's per-step acceptance criteria |
 

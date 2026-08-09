@@ -13,6 +13,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isReceptionist = computed(() => user.value?.role === 'receptionist')
   /** Create/update/reschedule/cancel/check-in — see docs/modules/appointments-ui-design.md §1.10. */
   const canManageAppointments = computed(() => isAdmin.value || isReceptionist.value)
+  /** Mirrors the backend's `view-financial-reports` Gate (admin-only) — gates Reports' financial
+   *  endpoints and, since Dashboard 2.0, `/dashboard/financial-summary` too. */
+  const canViewFinancials = computed(() => isAdmin.value)
 
   async function login(email: string, password: string) {
     await fetchCsrfCookie()
@@ -44,6 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     isDentist,
     isReceptionist,
     canManageAppointments,
+    canViewFinancials,
     login,
     logout,
     fetchUser,

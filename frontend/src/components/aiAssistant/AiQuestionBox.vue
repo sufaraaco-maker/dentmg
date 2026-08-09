@@ -52,10 +52,14 @@ async function ask() {
 </script>
 
 <template>
-  <Card v-if="aiAssistantStore.loaded && aiAssistantStore.enabled">
+  <Card
+    v-if="aiAssistantStore.loaded && aiAssistantStore.enabled"
+    class="rounded-xl bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-400/10 dark:to-purple-400/10"
+    :pt="{ body: { class: 'p-5' } }"
+  >
     <template #title>
       <div class="flex items-center gap-2">
-        <i class="pi pi-sparkles text-primary" />
+        <i class="pi pi-sparkles text-lg text-primary" />
         <span>{{ title }}</span>
       </div>
     </template>

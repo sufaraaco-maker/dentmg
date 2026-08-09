@@ -284,3 +284,48 @@ three models at one class.
 precedent for any future entity cluster (à la Medical History's three tables) that the design phase decides
 should share one policy: register it explicitly in `AppServiceProvider`, don't split into N near-identical
 policy classes just to keep auto-discovery working.
+
+## 2026-08-09 — Security fix: `/dashboard/summary` split by financial/operational sensitivity
+
+Design-phase audit for Dashboard 2.0 (`docs/modules/dashboard-2.0-design.md` §0) found a real, pre-existing
+authorization gap: `DashboardController::summary()` had no Form Request, no policy check, and no Gate call of
+any kind — any authenticated role could call it. It returned `monthly_revenue`, the same figure
+`reports/collections` already restricts to admins via `Gate::define('view-financial-reports', ...)`
+(`AppServiceProvider.php`). So a receptionist or dentist could already see monthly revenue through the
+Dashboard that they were explicitly blocked from seeing through Reports — the exact class of
+aggregation-point permission leak this project's §9A Security Architecture Decision (Timeline, 2026-08-07)
+was written to guard against, just found in an older endpoint that predates that decision.
+
+**Decision**: split the dashboard payload by the same financial/operational boundary Reports already uses,
+not by adding conditional fields to one endpoint. `GET /dashboard/summary` stays open to every role but now
+carries only operational data (patient/appointment counts, unscheduled-accepted-treatment) — `monthly_revenue`
+is removed from it entirely. A new `GET /dashboard/financial-summary` carries `monthly_revenue` plus new
+production/collections trend and A/R aging data, gated by a `DashboardFinancialSummaryRequest` Form Request
+calling `$this->user()->can('view-financial-reports')` — the same Gate, same reasoning, same pattern as
+`ProductionReportRequest`/`CollectionsReportRequest`/`ArAgingReportRequest`, not a new authorization concept.
+This is a breaking response-shape change for `monthly_revenue` (removed from the old field for every role,
+including admin, who now reads it from the new endpoint instead) — deliberate, not a compatibility concern,
+since no external consumer of this endpoint exists yet.
+
+**Status**: Implemented with Dashboard 2.0 — see `docs/PROJECT_STATUS.md` §12 for the PR. Establishes the
+precedent that any dashboard/aggregation endpoint mixing financial and operational data must be split (or
+otherwise gated) along the same boundary Reports already draws, not left ungated by default.
+
+## 2026-08-09 — Dashboard 2.0 financial widgets show period-over-period trend, not actual-vs-goal
+
+The Dashboard 2.0 design phase considered showing production/collections progress against a goal (a common
+pattern in competing dental PM systems — Dentrix/CareStack both support goal-tracking dashboards). A
+full-backend search confirmed no goal/target/quota concept exists anywhere in this codebase's schema
+(`ClinicSetting`/`BillingSetting` checked directly) — building it would mean a new settings field, a new
+Settings UI, and a migration: real new scope, not reuse.
+
+**Decision**: ship period-over-period trend instead (this calendar month vs. last calendar month), computed
+by calling the existing `ReportService::production()`/`collections()` methods twice with different date
+ranges — zero new storage, consistent with this phase's "reuse existing services" discipline
+(`DashboardService::monthlyRevenue()` already established the pattern of delegating to `ReportService` rather
+than reimplementing). `change_pct` is `null`, never `0`, when the previous period had no activity — the same
+"don't fabricate a trend the data doesn't support" rule the Premium Visual Redesign doc's §6 already set for
+this dashboard's stat cards.
+
+**Status**: Implemented with Dashboard 2.0. Goal-setting itself remains explicitly deferred (named, not
+dropped — see the design doc's §7) — revisit if period-over-period trend proves insufficient in practice.

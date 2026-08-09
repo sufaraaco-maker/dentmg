@@ -50,4 +50,17 @@ describe('useAuthStore role getters', () => {
     store.user = makeUser('dentist')
     expect(store.canManageAppointments).toBe(false)
   })
+
+  it('canViewFinancials is true only for admin', () => {
+    const store = useAuthStore()
+
+    store.user = makeUser('admin')
+    expect(store.canViewFinancials).toBe(true)
+
+    store.user = makeUser('dentist')
+    expect(store.canViewFinancials).toBe(false)
+
+    store.user = makeUser('receptionist')
+    expect(store.canViewFinancials).toBe(false)
+  })
 })

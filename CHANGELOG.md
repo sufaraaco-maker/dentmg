@@ -26,8 +26,35 @@ merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **
 (2026-08-08, `98ae299`); **2.6a (Timeline foundation)** merged via **PR #31** (`cb7b52d`,
 2026-08-09); **2.6b (Timeline UI)** merged via **PR #32** (`70b6ba6`), an E2E test fix that
 post-merge CI's real E2E run caught merged via **PR #33** (`83c584b`) — this file's newest entry
-below. **Phase 2 (Patient Profile Redesign) is complete.** See `docs/PROJECT_STATUS.md` for the
+below. **Phase 2 (Patient Profile Redesign) closed out via PR #34.** **Phase 3 (Dashboard 2.0)** — the
+next phase in the 8-phase roadmap, absorbing the Premium Visual Redesign's own Dashboard-restyle
+plan — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the
 living, continuously-updated status book this file's own per-PR history now feeds into._
+
+### Added — Dashboard 2.0 (`feature/dashboard-2-0`)
+- New admin-only `GET /dashboard/financial-summary` endpoint: production/collections
+  period-over-period trend (this month vs. last), and an A/R aging snapshot — each a thin wrapper
+  around an existing `ReportService` method, no new report logic. Gated by the same
+  `view-financial-reports` Gate `reports/production`/`reports/collections`/`reports/ar-aging`
+  already use.
+- New `unscheduled_accepted_treatment` field on `GET /dashboard/summary` (open to every role):
+  accepted treatment-plan items that are neither scheduled nor completed, capped at 5 for a widget,
+  not a full report.
+- Frontend: `FinancialSnapshotWidget.vue` (admin-only) and `UnscheduledTreatmentWidget.vue` (all
+  roles) on the Dashboard; restyled stat cards (bigger icon badges, distinct tint per card, trend
+  badge), a gradient-styled `AiQuestionBox.vue`, and `gap-6` grid spacing throughout — absorbs
+  `docs/modules/frontend-visual-redesign-design.md` §6 in full, which is now superseded by
+  `docs/modules/dashboard-2.0-design.md`.
+- `PatientDetailView.vue` now accepts an optional `?tab=` query param on first load (validated
+  against the same tab-key list every other tab-visibility check uses) so the new Unscheduled
+  Treatment widget can deep-link a row straight to that patient's Treatment Plans tab.
+
+### Fixed — a real, pre-existing security gap in `/dashboard/summary`
+- `monthly_revenue` was returned to **every authenticated role** with zero authorization — the
+  identical figure `reports/collections` already restricts to admins. Found during Dashboard 2.0's
+  design-phase audit, not introduced by it. Fixed by removing `monthly_revenue` from the open
+  endpoint entirely and moving it to the new admin-gated `/dashboard/financial-summary` — see
+  `docs/decisions.md`'s 2026-08-09 entry for the full write-up.
 
 ### Fixed — `e2e/timeline.spec.ts` (`fix/timeline-e2e-multi-instance-scoping`, merged 2026-08-09 via PR #33)
 - Post-merge CI on `main` runs the E2E job for real (PR-triggered runs skip it by design), and
