@@ -30,8 +30,35 @@ below. **Phase 2 (Patient Profile Redesign) closed out via PR #34.** **Phase 3 (
 next phase in the 8-phase roadmap, absorbing the Premium Visual Redesign's own Dashboard-restyle
 plan — merged via **PR #35** (`0f04b35`, 2026-08-09); post-merge CI on `main` (Backend/Frontend/E2E,
 including the real `e2e/dashboard.spec.ts` run) fully green. **Milestone: "Phase 3 — Dashboard 2.0
-Complete."** See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
-file's own per-PR history now feeds into._
+Complete."** **Phase 4: Advanced Permissions & Audit** — design approved 2026-08-09 (fine-grained
+permissions over the current 3 roles, a full audit-trail overhaul, simple immutability now/retention
+deferred); **Step 1 (Permissions Foundation)** and **Step 2 (Policy refactor)** implemented same day on
+`feature/phase4-permissions-foundation` — this file's newest entry below — not yet merged. See
+`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
+now feeds into._
+
+### Added — Phase 4 Steps 1-2: Permissions Foundation + Policy refactor (`feature/phase4-permissions-foundation`, not yet merged)
+- New `permissions` catalog (68 entries) and `role_permissions` matrix, derived 1:1 from a full
+  line-by-line read of all 27 Policy classes' actual pre-Phase-4 behavior — day 1, zero effective
+  permission change; verified independently (seeded per-role grant counts — admin=68, dentist=36,
+  receptionist=37 — matched a manual derivation exactly).
+- `User::hasPermission()` with a per-role cache (`RolePermission::permissionKeysForRole()`,
+  invalidated via `flushCache()`).
+- New admin-only endpoints: `GET /permissions`, `GET /role-permissions`, `PUT /role-permissions` —
+  gated by a hardcoded `manage-permissions` Gate (`isAdmin()`), never routed through the matrix
+  itself, so self-lockout is structurally impossible, not just validated-against. `users.manage` is
+  additionally protected server-side from ever being revoked from Admin.
+- All 27 Policy classes converted from raw `UserRole` comparisons to `hasPermission()` calls; every
+  identity/ownership/target-role check (e.g. `Appointment::start()`'s
+  `$actor->is($appointment->dentist)`, `DentistTimeOff`'s target-role validation, `User::delete()`'s
+  self-delete block) preserved verbatim, unchanged.
+- `Tests\TestCase` now seeds the permission catalog automatically for every `RefreshDatabase` test
+  class; 15 new baseline Policy tests added for the previously-untested policies (35 new tests).
+- Backend: **1121/1121 tests green** (1086 + 35 new), zero regressions across every pre-existing
+  Feature/Policy test. Pint clean; targeted PHPStan clean on all 27 Policies + 15 new test files.
+
+Design doc: `docs/modules/phase4-permissions-audit-design.md`. See `docs/decisions.md`'s 2026-08-09
+entry for the fine-grained-permissions-over-hierarchy decision.
 
 ### Added — Dashboard 2.0 (`feature/dashboard-2-0`, merged 2026-08-09 via PR #35)
 - New admin-only `GET /dashboard/financial-summary` endpoint: production/collections
