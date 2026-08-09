@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AppointmentStatus;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\Appointments\DentistConflictException;
 use App\Exceptions\Appointments\EarlyNoShowException;
 use App\Exceptions\Appointments\InvalidStatusTransitionException;
@@ -304,6 +305,10 @@ class AppointmentService
         $appointment->cancelled_by = Auth::id();
         $appointment->save();
 
+        event(new PatientActivityOccurred(
+            $appointment, Auth::user(), 'appointment.cancelled', 'appointments', 'Appointment cancelled',
+        ));
+
         return $appointment;
     }
 
@@ -322,6 +327,10 @@ class AppointmentService
         $appointment->status = AppointmentStatus::NoShow;
         $appointment->no_show_at = now();
         $appointment->save();
+
+        event(new PatientActivityOccurred(
+            $appointment, Auth::user(), 'appointment.no_show', 'appointments', 'Appointment marked as no-show',
+        ));
 
         return $appointment;
     }
@@ -349,6 +358,18 @@ class AppointmentService
     /**
      * @param  array<string, mixed>  $extraAttributes
      */
+    /**
+     * @var array<string, string> Human-readable summary per reachable status — confirm/checkIn/
+     *                            start/complete all funnel through here, so one dispatch site
+     *                            covers all 4 §5-inventory events instead of 4 separate ones.
+     */
+    private const TRANSITION_SUMMARIES = [
+        'confirmed' => 'Appointment confirmed',
+        'checked_in' => 'Patient checked in',
+        'in_progress' => 'Appointment started',
+        'completed' => 'Appointment completed',
+    ];
+
     private function transitionTo(Appointment $appointment, AppointmentStatus $to, array $extraAttributes = []): Appointment
     {
         $this->assertCanTransitionTo($appointment, $to);
@@ -356,6 +377,10 @@ class AppointmentService
         $appointment->fill($extraAttributes);
         $appointment->status = $to;
         $appointment->save();
+
+        event(new PatientActivityOccurred(
+            $appointment, Auth::user(), "appointment.{$to->value}", 'appointments', self::TRANSITION_SUMMARIES[$to->value],
+        ));
 
         return $appointment;
     }

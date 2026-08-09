@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\LabCaseStatus;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\Laboratory\InvalidLabCaseOperationException;
 use App\Models\LabCase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LabCaseService
@@ -84,7 +86,13 @@ class LabCaseService
 
             $locked->save();
 
-            return $locked->fresh();
+            $fresh = $locked->fresh();
+
+            event(new PatientActivityOccurred(
+                $fresh, Auth::user(), 'lab_case.sent', 'laboratory', "Lab case {$fresh->case_number} sent",
+            ));
+
+            return $fresh;
         });
     }
 
@@ -104,7 +112,13 @@ class LabCaseService
             $locked->received_at = now();
             $locked->save();
 
-            return $locked->fresh();
+            $fresh = $locked->fresh();
+
+            event(new PatientActivityOccurred(
+                $fresh, Auth::user(), 'lab_case.received', 'laboratory', "Lab case {$fresh->case_number} received",
+            ));
+
+            return $fresh;
         });
     }
 
@@ -122,7 +136,14 @@ class LabCaseService
             $locked->quality_checked_at = now();
             $locked->save();
 
-            return $locked->fresh();
+            $fresh = $locked->fresh();
+
+            event(new PatientActivityOccurred(
+                $fresh, Auth::user(), 'lab_case.quality_checked', 'laboratory',
+                "Lab case {$fresh->case_number} passed quality check",
+            ));
+
+            return $fresh;
         });
     }
 

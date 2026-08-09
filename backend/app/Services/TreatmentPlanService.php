@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\TreatmentPlanItemStatus;
 use App\Enums\TreatmentPlanStatus;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\TreatmentPlan\InvalidTreatmentPlanItemStatusTransitionException;
 use App\Exceptions\TreatmentPlan\InvalidTreatmentPlanStatusTransitionException;
 use App\Exceptions\TreatmentPlan\TreatmentPlanHasOpenItemsException;
@@ -196,6 +197,10 @@ class TreatmentPlanService
         $plan->presented_at = now();
         $plan->save();
 
+        event(new PatientActivityOccurred(
+            $plan, $actor, 'treatment_plan.presented', 'treatment_plans', "Treatment plan \"{$plan->title}\" presented",
+        ));
+
         return $plan;
     }
 
@@ -225,6 +230,10 @@ class TreatmentPlanService
                 });
         });
 
+        event(new PatientActivityOccurred(
+            $plan, $actor, 'treatment_plan.accepted', 'treatment_plans', "Treatment plan \"{$plan->title}\" accepted",
+        ));
+
         return $plan->fresh();
     }
 
@@ -235,6 +244,10 @@ class TreatmentPlanService
         $plan->status = TreatmentPlanStatus::Rejected;
         $plan->rejected_at = now();
         $plan->save();
+
+        event(new PatientActivityOccurred(
+            $plan, $actor, 'treatment_plan.rejected', 'treatment_plans', "Treatment plan \"{$plan->title}\" rejected",
+        ));
 
         return $plan;
     }
@@ -266,6 +279,10 @@ class TreatmentPlanService
         $plan->completed_at = now();
         $plan->save();
 
+        event(new PatientActivityOccurred(
+            $plan, $actor, 'treatment_plan.completed', 'treatment_plans', "Treatment plan \"{$plan->title}\" completed",
+        ));
+
         return $plan;
     }
 
@@ -294,6 +311,10 @@ class TreatmentPlanService
                     $item->save();
                 });
         });
+
+        event(new PatientActivityOccurred(
+            $plan, $actor, 'treatment_plan.cancelled', 'treatment_plans', "Treatment plan \"{$plan->title}\" cancelled",
+        ));
 
         return $plan->fresh();
     }

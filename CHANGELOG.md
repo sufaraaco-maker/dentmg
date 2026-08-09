@@ -23,8 +23,45 @@ PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
-(2026-08-08, `98ae299`) — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the
-living, continuously-updated status book this file's own per-PR history now feeds into._
+(2026-08-08, `98ae299`); **2.6a (Timeline foundation)** implemented on
+`feature/patient-profile-phase2-6a-timeline-foundation`, opened as **PR #31** — this file's newest
+entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
+file's own per-PR history now feeds into._
+
+### Added — Phase 2.6a: Timeline foundation (`feature/patient-profile-phase2-6a-timeline-foundation`, implemented 2026-08-09)
+- **Context**: first of two PRs for the sixth and final implementation sub-phase of Phase 2
+  (Patient Profile Redesign) — see `docs/modules/patient-timeline-redesign-design.md`. Unlike
+  every prior sub-phase, this one is split into 2.6a (this PR — events, listener, security,
+  no UI) and 2.6b (Timeline UI, not yet started), per the design doc's own §16 decision 7: the
+  umbrella doc's only phase rated "Highest risk," since it touches every module's service.
+- **`PatientActivity`** (new model: UUID PK, append-only — no `updated_at`, no soft deletes) +
+  **`Patient::activities()`** + `patient_activities` migration (`event_type`, `category`,
+  polymorphic `subject`, `actor_id`, precomputed `summary`, `metadata`, `occurred_at`).
+- **One generic `PatientActivityOccurred` event** + **one synchronous `RecordsPatientActivity`
+  listener**, relying on Laravel's default auto-discovery (introducing this codebase's event
+  system for the first time — confirmed zero `app/Events`/`app/Listeners` existed before this
+  PR). No queue — confirmed no queue worker actually runs in this project despite
+  `QUEUE_CONNECTION=redis` being configured. Verified genuinely wired end-to-end (not faked) by a
+  dedicated integration test.
+- **24 event dispatch call sites** across all 9 candidate services (`AppointmentService`,
+  `TreatmentPlanService`, `ClinicalNoteService`, `InvoiceService`, `PaymentService`,
+  `MedicalHistoryService`, `LabCaseService`, `PatientImageService`, `PatientDocumentService`).
+- **`PatientActivityPolicy`**: a static `CATEGORY_SUBJECT_MAP` (one category per real owning
+  policy class — `appointments`, `treatment_plans`, `clinical_notes`, `billing`,
+  `medical_history`, `laboratory`, `imaging`, `documents`), checked once per category per
+  request via `$actor->can('viewAny', ...)`, never per row. A real category-taxonomy conflict
+  (originally one `clinical` category spanning `TreatmentPlan`/`ClinicalNote`/Medical History
+  despite their different `viewAny()` rules) was found and fixed before implementation started —
+  see the design doc's §5 correction note.
+- **`GET /patients/{patient}/activities`** — patient-scoped only, paginated 15/page,
+  `?category=`/`?from=`/`?to=` filters, most-recent-first.
+- **Tests**: 25 dispatch tests (one per event, plus one confirming `ClinicalNoteService::sign()`'s
+  idempotent already-signed path never double-fires) + 9 controller/pagination/filter tests,
+  including **the security-critical test §9A itself mandates** — a receptionist's request to
+  `/activities` never returns `clinical_notes`-category rows, asserted directly against the
+  response body. Full suite 1054/1054 green (1020 + 34 new), Pint clean, PHPStan clean on every
+  new/touched file (one real finding fixed: a generic-`Model`-typed magic-property access,
+  switched to `getAttribute()`).
 
 ### Added — Phase 2.5: Documents (`feature/patient-profile-phase2-5-documents`, merged 2026-08-08 via PR #27)
 - **Context**: fifth implementation sub-phase of Phase 2 (Patient Profile Redesign) — see

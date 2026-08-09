@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-09 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (merged PR #16, then PR #17), Phase 2 (Patient Profile Redesign) design approval, Phase 2.1 (Foundation) merged via PR #18 (docs close-out PR #19), Phase 2.2 (Billing) merged via PR #20, Phase 2.3 (Medical History) merged via **PR #22** (`aa704b6`, docs close-out PR #23), **Phase 2.4 (Laboratory)** design-approved and merged via **PR #24** (`9de50fb`, docs close-out PR #25), **Phase 2.5 (Documents)** design-approved and merged via **PR #27** (`98ae299`, docs close-out **PR #28**, `933ee90`) — Backend 1020/1020 tests green (Pint clean), Frontend 915/915 tests green (type-check/ESLint/Prettier clean), post-merge CI on `main` confirmed fully green; **Phase 2.6 (Timeline) design phase** — audited actual current code on `main` (confirmed zero event-driven infrastructure exists anywhere: no `app/Events`/`app/Listeners`, no service dispatches any event, no queue worker actually runs despite `QUEUE_CONNECTION=redis`), read the binding §9A Security Architecture Decision and the umbrella doc's unusually-detailed §6-§9/§15.2/§17 Timeline sketch in full, produced `docs/modules/patient-timeline-redesign-design.md` resolving 6 structural gaps that sketch left open (event-dispatch mechanism, a 22-event per-service inventory, the `PatientActivityPolicy` category-to-policy lookup mechanism, `patient.updated` scope, historical backfill, Appointments-tab retirement) — **all 7 §16 decisions approved by the user as recommended**, merged via **PR #29** (`e8e2cba`); **before starting 2.6a implementation**, verifying each candidate policy's actual `viewAny()` rule found a real conflict the approved design missed — the `clinical` category grouped `TreatmentPlan`/`ClinicalNote`/Medical History events under one value despite `ClinicalNotePolicy::viewAny()` being `Admin`/`Dentist`-only while the other two are all-staff, which would have broken §7's one-category-to-one-policy mechanism; split into `treatment_plans`/`clinical_notes`/`medical_history`, confirmed with the user before changing the design doc, opened as **PR #30**. |
-| **Repo HEAD at time of writing** | `main` at `e8e2cba` (PR #29 merge: Phase 2.6 — Timeline design phase, on top of `933ee90`'s PR #28 merge). PR #30 (category-taxonomy fix) is open, not yet merged. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1 (Foundation) merged 2026-08-07 via PR #18. Phase 2.2 (Billing) merged 2026-08-08 via PR #20. Phase 2.3 (Medical History) merged 2026-08-08 via PR #22. Phase 2.4 (Laboratory) merged 2026-08-08 via PR #24. Phase 2.5 (Documents) merged 2026-08-08 via PR #27.** **Phase 2.6 (Timeline) design-drafted 2026-08-09**, awaiting user approval — see `docs/modules/patient-timeline-redesign-design.md`. This is the **final sub-phase** of Phase 2 (Patient Profile Redesign). |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (PR #16/#17), Phase 2 (Patient Profile Redesign) design approval, sub-phases 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all designed, implemented, and merged via PR #18-#28 — see §4's PR history table and §12's narrative for full per-phase detail. **Phase 2.6 (Timeline)**, the final sub-phase: design doc (`docs/modules/patient-timeline-redesign-design.md`) produced by auditing the actual codebase (confirmed zero event-driven infrastructure existed anywhere), all 7 §16 decisions approved by the user as recommended, merged via **PR #29** (`e8e2cba`); a real category-taxonomy conflict found before writing any code (verifying each candidate policy's `viewAny()` showed the approved `clinical` category wrongly grouped `TreatmentPlan`/`ClinicalNote`/Medical History despite different permission rules) was fixed and confirmed with the user, merged via **PR #30** (`47e0c59`); **2.6a (Foundation) implemented** on `feature/patient-profile-phase2-6a-timeline-foundation` — `PatientActivity` model, one generic event + one synchronous listener (Laravel's event system introduced to this codebase for the first time, confirmed genuinely auto-discovered end-to-end by a non-faked integration test), 24 dispatch call sites across all 9 candidate services, `PatientActivityPolicy`'s per-category policy-reuse mechanism, the `/activities` endpoint — Backend 1054/1054 tests green (Pint clean, PHPStan clean on every new file), opened as **PR #31**. **2.6b (UI) not yet started**, per the design doc's approved 2-PR split. |
+| **Repo HEAD at time of writing** | `main` at `47e0c59` (PR #30 merge: Phase 2.6 category-taxonomy fix, on top of `e8e2cba`'s PR #29 merge). 2.6a's implementation is on `feature/patient-profile-phase2-6a-timeline-foundation`, open as a PR — not yet merged. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) implemented 2026-08-09**, opening as a PR — see `docs/modules/patient-timeline-redesign-design.md`. This is the **final sub-phase** of Phase 2 (Patient Profile Redesign); 2.6b (UI) remains. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -164,7 +164,7 @@ full narrative):
 
 ## 4. Pull Requests History
 
-Sourced directly from `gh pr list --state all` (30 PRs total as of this update; #30 open, all others merged) — not from prose in other docs.
+Sourced directly from `gh pr list --state all` (31 PRs total as of this update; #31 open, all others merged) — not from prose in other docs.
 
 | # | Branch | Goal | Key changes | Merge status |
 |---|---|---|---|---|
@@ -197,7 +197,8 @@ Sourced directly from `gh pr list --state all` (30 PRs total as of this update; 
 | 27 | `feature/patient-profile-phase2-5-documents` | Phase 2.5 — Documents | `PatientDocument` model/service/policy/controller (patient-scoped only), `PatientDocumentsPanel.vue` (read/write), `DocumentCategory` enum | **Merged** 2026-08-08 (`98ae299`) |
 | 28 | `docs/phase2.5-closeout-pr27` | Docs-only: close out PR #27, record post-merge CI confirmation | No code changes | **Merged** 2026-08-08 (`933ee90`) |
 | 29 | `docs/phase2.6-timeline-design` | Docs-only: Phase 2.6 (Timeline) design phase — audit + drill-down design doc | No code changes | **Merged** 2026-08-08 (`e8e2cba`) |
-| 30 | `docs/phase2.6-category-fix` | Docs-only: fix a real category-taxonomy conflict in the approved Timeline design (found pre-implementation) | No code changes | **Open** — CI pending |
+| 30 | `docs/phase2.6-category-fix` | Docs-only: fix a real category-taxonomy conflict in the approved Timeline design (found pre-implementation) | No code changes | **Merged** 2026-08-08 (`47e0c59`) |
+| 31 | `feature/patient-profile-phase2-6a-timeline-foundation` | Phase 2.6a — Timeline foundation | `PatientActivity` model, one generic event + one listener, 24 dispatch call sites across 9 services, `PatientActivityPolicy`'s per-category mechanism, `/activities` endpoint — no UI | **Open** — CI pending |
 
 ---
 
@@ -405,7 +406,7 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 
 | # | Item | Why it matters | Impact | Est. effort | Dependencies |
 |---|---|---|---|---|---|
-| 1 | **Phase 2.6a: Timeline foundation (events + listener + security)** | All 7 §16 decisions in `docs/modules/patient-timeline-redesign-design.md` approved by the user as recommended (PR #29, merged); a real category-taxonomy conflict found pre-implementation was fixed and confirmed with the user (PR #30) — ready to implement per §14's proposed 2-PR split | High — the roadmap's own next priority, and the last sub-phase of Phase 2 | **Highest** (per umbrella doc §17 — new event architecture, touches every module's service, security-critical role-filtering) | PR #30 merged first |
+| 1 | **Phase 2.6b: Timeline UI** | 2.6a (Foundation — events/listener/security/endpoint) implemented, opened as **PR #31**; once merged, 2.6b builds `ActivityTimeline.vue`, the `timeline` tab, Billing's Payment History wiring, Overview preview, i18n, per the design doc's approved 2-PR split (§16 decision 7) | High — the roadmap's own next priority, and the last sub-phase of Phase 2 | Medium (UI only — the higher-risk foundation work is 2.6a) | 2.6a's PR merged first |
 | 2 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 3 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
 | 4 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
@@ -431,7 +432,7 @@ Phase 2.6 (Timeline) — the final sub-phase — completed its Design Phase** (2
 the actual codebase (confirmed zero event-driven infrastructure exists anywhere in this project
 today) and resolving 6 structural gaps the umbrella doc's already-detailed Timeline sketch left
 open: the event-dispatch mechanism (explicit inline `event()` calls, one synchronous listener, no
-queue — none actually runs today), a 22-event first-cut inventory across the 9 candidate services,
+queue — none actually runs today), a 24-event first-cut inventory across the 9 candidate services,
 the `PatientActivityPolicy` category-to-policy lookup mechanism (a static category→model map checked
 once per category per request, reusing each category's real owning policy — resolves the
 correctness-vs-performance tension without a drift-prone duplicate role map), and three scope calls
@@ -441,8 +442,30 @@ phase). **All 7 §16 decisions approved by the user as recommended.** Before sta
 implementation, verifying each candidate policy's real `viewAny()` rule against the approved category
 table found a genuine conflict (the `clinical` category conflated three subject types with different
 permission rules — see PR #30) — fixed and confirmed with the user before writing any code, per this
-project's established protocol for design-vs-implementation conflicts. Step 1
-(analysis) and Step 2 (design document,
+project's established protocol for design-vs-implementation conflicts.
+
+**Phase 2.6a (Timeline foundation), implemented 2026-08-09** on
+`feature/patient-profile-phase2-6a-timeline-foundation` (design doc:
+`docs/modules/patient-timeline-redesign-design.md`, Implementation Summary section): `PatientActivity`
+model/migration (append-only) + `Patient::activities()`; **one generic `PatientActivityOccurred`
+event**, not 24 near-identical classes — a refinement of the design doc's original per-event-class
+phrasing, not a reopening of §16 decision 1 (which was about mechanism, not file-per-type
+granularity) — dispatched via `event()` at all 24 call sites across `AppointmentService`,
+`TreatmentPlanService`, `ClinicalNoteService`, `InvoiceService`, `PaymentService`,
+`MedicalHistoryService`, `LabCaseService`, `PatientImageService`, `PatientDocumentService`; one
+synchronous `RecordsPatientActivity` listener relying on Laravel's default auto-discovery —
+**confirmed genuinely wired, not assumed**, by a dedicated integration test that calls a service
+method without faking events and asserts a real database row. `PatientActivityPolicy`'s
+`CATEGORY_SUBJECT_MAP` implements §7's mechanism exactly. `GET /patients/{patient}/activities` —
+patient-scoped, paginated, category/date-range filterable. **The security-critical test §9A itself
+mandates is implemented and passing**: a receptionist's request never returns `clinical_notes`-category
+rows, asserted directly against the response body. One real PHPStan finding fixed (a generic-`Model`-
+typed magic-property access switched to `getAttribute()`) — confirmed via a targeted run on the new
+files, not the full known-noisy local run. Backend: 1054/1054 tests green (1020 + 34 new: 25 dispatch
+tests, 9 controller/security tests), Pint clean. **2.6b (Timeline UI) not yet started**, per the
+design doc's approved 2-PR split (§16 decision 7).
+
+Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge
 Invoices+Payments into one Billing tab (backend stays split), a structured Medical History foundation
 (Allergies/Conditions/Medications/Notes, not free text), a V1 Documents foundation (no versioning/sharing/

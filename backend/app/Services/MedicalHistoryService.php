@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MedicalConditionStatus;
+use App\Events\PatientActivityOccurred;
 use App\Models\PatientAllergy;
 use App\Models\PatientMedicalCondition;
 use App\Models\PatientMedication;
@@ -21,7 +22,7 @@ class MedicalHistoryService
      */
     public function addAllergy(array $data, User $actor): PatientAllergy
     {
-        return PatientAllergy::create([
+        $allergy = PatientAllergy::create([
             'patient_id' => $data['patient_id'],
             'allergen' => $data['allergen'],
             'severity' => $data['severity'] ?? null,
@@ -29,6 +30,12 @@ class MedicalHistoryService
             'notes' => $data['notes'] ?? null,
             'created_by_id' => $actor->id,
         ]);
+
+        event(new PatientActivityOccurred(
+            $allergy, $actor, 'medical_history.allergy_added', 'medical_history', "Allergy added: {$allergy->allergen}",
+        ));
+
+        return $allergy;
     }
 
     /**
@@ -54,7 +61,7 @@ class MedicalHistoryService
      */
     public function addCondition(array $data, User $actor): PatientMedicalCondition
     {
-        return PatientMedicalCondition::create([
+        $condition = PatientMedicalCondition::create([
             'patient_id' => $data['patient_id'],
             'condition_name' => $data['condition_name'],
             'status' => $data['status'] ?? MedicalConditionStatus::Active,
@@ -62,6 +69,13 @@ class MedicalHistoryService
             'notes' => $data['notes'] ?? null,
             'created_by_id' => $actor->id,
         ]);
+
+        event(new PatientActivityOccurred(
+            $condition, $actor, 'medical_history.condition_added', 'medical_history',
+            "Medical condition added: {$condition->condition_name}",
+        ));
+
+        return $condition;
     }
 
     /**
@@ -87,7 +101,7 @@ class MedicalHistoryService
      */
     public function addMedication(array $data, User $actor): PatientMedication
     {
-        return PatientMedication::create([
+        $medication = PatientMedication::create([
             'patient_id' => $data['patient_id'],
             'medication_name' => $data['medication_name'],
             'dosage' => $data['dosage'] ?? null,
@@ -98,6 +112,13 @@ class MedicalHistoryService
             'notes' => $data['notes'] ?? null,
             'created_by_id' => $actor->id,
         ]);
+
+        event(new PatientActivityOccurred(
+            $medication, $actor, 'medical_history.medication_added', 'medical_history',
+            "Medication added: {$medication->medication_name}",
+        ));
+
+        return $medication;
     }
 
     /**

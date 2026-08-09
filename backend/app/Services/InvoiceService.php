@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\TreatmentPlanItemStatus;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\Invoice\InvalidInvoiceItemException;
 use App\Exceptions\Invoice\InvalidInvoiceStatusTransitionException;
 use App\Exceptions\Invoice\InvoiceItemLockedException;
@@ -15,6 +16,7 @@ use App\Models\TreatmentPlanItem;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -184,7 +186,14 @@ class InvoiceService
             $locked->issued_at = now();
             $locked->save();
 
-            return $locked->fresh('items');
+            $fresh = $locked->fresh('items');
+
+            event(new PatientActivityOccurred(
+                $fresh, Auth::user(), 'invoice.issued', 'billing',
+                "Invoice {$fresh->invoice_number} issued for {$this->total($fresh)}",
+            ));
+
+            return $fresh;
         });
     }
 
@@ -203,6 +212,10 @@ class InvoiceService
             $locked->status = InvoiceStatus::Void;
             $locked->voided_at = now();
             $locked->save();
+
+            event(new PatientActivityOccurred(
+                $locked, Auth::user(), 'invoice.voided', 'billing', "Invoice {$locked->invoice_number} voided",
+            ));
 
             return $locked->fresh('items');
         });

@@ -2,13 +2,63 @@
 
 | | |
 |---|---|
-| **Status** | **Draft — awaiting user approval.** Step 1 (current-state audit) complete; this doc proposes a spec for Step 2. No implementation has started — per this project's two-phase workflow, none will until §16's decisions are resolved. |
+| **Status** | **Approved 2026-08-08.** All 7 decisions in §16 were approved by the user as recommended. A real category-taxonomy conflict was found and fixed pre-implementation (§5's correction note). **2.6a (Foundation) implemented**, opened as **PR #31** — see `docs/PROJECT_STATUS.md` §12 for current merge status. **2.6b (UI) not yet started.** |
 | **Roadmap position** | Phase 2 (Patient Profile Redesign), sub-phase 2.6 of 7 — the final sub-phase. See `docs/PROJECT_STATUS.md` §12 and `docs/modules/patient-profile-redesign-design.md` §17. Follows 2.1 (Foundation, PR #18), 2.2 (Billing, PR #20), 2.3 (Medical History, PR #22), 2.4 (Laboratory, PR #24), 2.5 (Documents, PR #27) — all merged to `main`. |
 | **Governing decisions inherited** | **§9A of `docs/modules/patient-profile-redesign-design.md` (the Security Architecture Decision) is binding here unchanged and is not revisited anywhere in this doc** — see §0 below for its full text. §0 item 4 and §3's tab-order rationale are also inherited. This doc is a **drill-down**, not a replacement: the umbrella doc's §6/§7/§8/§9/§9A/§10/§15.2/§17 already sketch this sub-phase in unusual detail (more than any prior phase had); this doc verifies that sketch against the actual code on `main` today and resolves the structural decisions it left open. |
 | **Analysis basis** | Direct inspection of every Timeline-adjacent backend/frontend file on `main` (post-PR #28, commit `933ee90`) — confirmed nothing Timeline/`PatientActivity`-related exists yet, confirmed zero event-driven infrastructure exists anywhere in this codebase (no `app/Events`, no `app/Listeners`, no service dispatches any event), and confirmed no queue worker actually runs despite `QUEUE_CONNECTION=redis` being configured (no `ShouldQueue` usage, no queue-worker service in `docker-compose.yml`). Read all 9 candidate services' full public method lists to build the per-service event inventory in §5. Read `App\Models\Concerns\Auditable`/`AuditObserver`/`AuditLog` end-to-end to confirm exactly why it can't serve as Timeline's source, corroborating §9A's own reasoning. Read the umbrella doc's full §9/§9A verbatim and `docs/decisions.md`'s 2026-08-07 entry verbatim. Read `patient-documents-redesign-design.md` as this doc's structural template. |
 | **Author** | Claude Code, for user review. Every recommendation below is a proposal, not a decision — see §16 for the explicit approval list. |
 
 ---
+
+## Implementation Summary — 2.6a Foundation (added post-implementation, 2026-08-08)
+
+All 7 §16 decisions implemented as recommended, plus the pre-implementation category-taxonomy fix
+(§5's correction note). No further deviations found during implementation:
+
+- **§6**: `PatientActivity` model/migration built exactly as specced — append-only (`const
+  UPDATED_AT = null`, no `SoftDeletes`), `uuidMorphs('subject')`, both composite indexes.
+  `Patient::activities()` added.
+- **§4/§16 decision 1**: implemented as **one generic `PatientActivityOccurred` event** (not 24
+  near-identical classes) — the event carries `$subject`/`$actor`/`$eventType`/`$category`/
+  `$summary`/`$metadata`, with the calling service method building the summary string inline at
+  its own call site. This is a refinement of §4's original phrasing ("each event class implements
+  a `summary(): string` method"), not a reopening of decision 1 — decision 1 was about mechanism
+  (explicit `event()` calls, one synchronous listener, no queue), not file-per-type granularity;
+  24 near-identical event classes would have been the kind of premature duplication this project's
+  own conventions avoid. One synchronous `RecordsPatientActivity` listener, relying on Laravel's
+  default auto-discovery (no manual registration — matches how `PatientImagePolicy`/
+  `PatientDocumentPolicy` already rely on naming-convention auto-discovery, not `Gate::policy()`).
+  **Confirmed genuinely wired, not just assumed**: a dedicated integration test calls a service
+  method without faking events and asserts a real `patient_activities` row via
+  `assertDatabaseHas()` — auto-discovery works end to end in this Laravel 12 app.
+- **§5**: **24 event dispatch call sites**, not 22 — the design doc's own decision-list prose
+  miscounted its own table (which always had 24 rows); fixed in §16 decision 2's text in the same
+  pass. All 24 fire from the corrected categories (§5's pre-implementation fix): `appointments`
+  (6), `treatment_plans` (5), `clinical_notes` (1), `billing` (4: 2 invoice + 2 payment),
+  `medical_history` (3), `laboratory` (3), `imaging` (1), `documents` (1).
+- **§7/§16 decision 3**: `PatientActivityPolicy::CATEGORY_SUBJECT_MAP` implemented exactly as
+  specced — one category per real policy class, `allowedCategories()` checks each once per
+  request via `$actor->can('viewAny', ...)`, feeding the controller's `whereIn('category', ...)`.
+- **§8.1**: `GET /patients/{patient}/activities` — patient-scoped, paginated at 15/page,
+  `?category=`/`?from=`/`?to=` filters, ordered most-recent-first.
+- **§13/§16 decision 3's enforcement requirement**: the security-critical test §9A itself mandates
+  is implemented and passing — a receptionist's request never returns `clinical_notes`-category
+  rows, asserted directly against the response body (not inferred from a 403). One dispatch test
+  per event (25 tests: 24 events + 1 idempotency test confirming `ClinicalNoteService::sign()`'s
+  already-signed early-return never double-dispatches) plus 9 controller/pagination/filter/security
+  tests — 34 new tests total. Backend: 1054/1054 green (1020 + 34, Pint clean).
+- **One real type-safety finding, fixed**: `RecordsPatientActivity` originally read
+  `$event->subject->patient_id` (the magic property), which PHPStan correctly flagged as
+  undefined on the generic base `Model` type (every one of the 11 possible subject classes has
+  `patient_id`, but the base type itself doesn't declare it) — switched to
+  `$event->subject->getAttribute('patient_id')`, a properly-typed method call with identical
+  runtime behavior. Confirmed via a targeted PHPStan run on the new files, not the full
+  known-noisy local run.
+- **Not yet built**: 2.6b (UI) — `ActivityTimeline.vue`, the `timeline` tab, Billing's Payment
+  History wiring, Overview preview, frontend tests, i18n — per §16 decision 7's approved 2-PR
+  split. §16 decisions 4-6 (no backfill, `patient.updated` excluded, Appointments-tab retirement
+  deferred) are scope decisions with nothing to "implement" in 2.6a; they remain in force for 2.6b
+  and beyond.
 
 ## 0. Why this doc exists separately from the umbrella design doc, and what's already binding
 
@@ -216,7 +266,7 @@ This mirrors how a "touches everything" risk is best reviewed — a reviewer can
 ## 16. Decisions Requiring Approval Before Implementation
 
 1. **§4 — Event-dispatch mechanism: explicit inline `event()` calls per service method, one synchronous listener (`RecordsPatientActivity`), no queue.** Recommend **yes** — a model-observer approach can't distinguish business intent (§4), and no queue infrastructure actually runs in this project today, confirmed by audit. Alternative: introduce real queued jobs — a materially bigger change this phase shouldn't also absorb.
-2. **§5 — The 22-event first-cut inventory across 9 services**, deliberately excluding draft/administrative-only mutations (full table in §5). Recommend **as listed** — reviewable now as the authoritative list §13's dispatch tests verify against. Alternative: add/remove specific events (e.g. include `treatment_plan.item_completed` at item granularity) — flag any specific additions/removals now, not mid-implementation.
+2. **§5 — The 24-event first-cut inventory across 9 services** (the table has 24 rows; an earlier draft of this decision text miscounted it as 22), deliberately excluding draft/administrative-only mutations (full table in §5). Recommend **as listed** — reviewable now as the authoritative list §13's dispatch tests verify against. Alternative: add/remove specific events (e.g. include `treatment_plan.item_completed` at item granularity) — flag any specific additions/removals now, not mid-implementation.
 3. **§7 — Permission mechanism: a static `CATEGORY_SUBJECT_MAP` + one `viewAny()` check per category per request, feeding a `WHERE IN` filter.** Recommend **yes** — resolves §0 item 3's correctness-vs-performance tension by reusing each category's real owning policy at the class level (no drift, no per-row cost). Alternative: a hand-maintained role-to-category map — explicitly what §9A's own text warns against ("could drift out of sync").
 4. **§15 — No historical backfill; Timeline starts empty and populates forward only.** Recommend **yes** — reconstructing multi-module historical summaries is large, error-prone, and disproportionate to V1. Alternative: backfill some bounded window (e.g. last 90 days) — a real option if the user wants Timeline to feel populated on day one, at added implementation cost.
 5. **§15 — `patient.updated` is NOT wired as a Timeline-sourced event in this phase.** Recommend **yes**, to keep §9A's "not merged" boundary unambiguous. Alternative: wire it as umbrella doc §9.2 originally suggested — technically fine, just needs explicit confirmation it doesn't blur the boundary.

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\PatientActivityOccurred;
 use App\Models\Patient;
 use App\Models\PatientImage;
 use App\Models\User;
@@ -76,7 +77,7 @@ class PatientImageService
 
         $thumbnailPath = $this->generateThumbnail($disk, $file->getRealPath(), (string) $patient->id, $id);
 
-        return PatientImage::create([
+        $image = PatientImage::create([
             'patient_id' => $patient->id,
             'uploaded_by' => $uploader->id,
             'image_type' => $metadata['image_type'],
@@ -94,6 +95,12 @@ class PatientImageService
             'height' => $height,
             'notes' => $metadata['notes'] ?? null,
         ]);
+
+        event(new PatientActivityOccurred(
+            $image, $uploader, 'image.uploaded', 'imaging', 'Image uploaded',
+        ));
+
+        return $image;
     }
 
     /**

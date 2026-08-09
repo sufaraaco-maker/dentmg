@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ClinicalNoteStatus;
+use App\Events\PatientActivityOccurred;
 use App\Exceptions\ClinicalNote\ClinicalNoteLockedException;
 use App\Exceptions\ClinicalNote\InvalidClinicalNoteOperationException;
 use App\Models\ClinicalNote;
@@ -95,6 +96,12 @@ class ClinicalNoteService
             $locked->signed_at = now();
             $locked->signed_by_id = $actor->id;
             $locked->save();
+
+            // Only the real transition fires — the idempotent already-signed early-return above
+            // must never double-record (design doc §5).
+            event(new PatientActivityOccurred(
+                $locked, $actor, 'clinical_note.signed', 'clinical_notes', 'Clinical note signed',
+            ));
 
             return $locked;
         });
