@@ -24,11 +24,11 @@ Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via *
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
 (2026-08-08, `98ae299`); **2.6a (Timeline foundation)** implemented on
-`feature/patient-profile-phase2-6a-timeline-foundation`, opened as **PR #31** — this file's newest
-entry below. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
-file's own per-PR history now feeds into._
+`feature/patient-profile-phase2-6a-timeline-foundation`, merged via **PR #31** (`cb7b52d`,
+2026-08-09) — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living,
+continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.6a: Timeline foundation (`feature/patient-profile-phase2-6a-timeline-foundation`, implemented 2026-08-09)
+### Added — Phase 2.6a: Timeline foundation (`feature/patient-profile-phase2-6a-timeline-foundation`, merged 2026-08-09 via PR #31)
 - **Context**: first of two PRs for the sixth and final implementation sub-phase of Phase 2
   (Patient Profile Redesign) — see `docs/modules/patient-timeline-redesign-design.md`. Unlike
   every prior sub-phase, this one is split into 2.6a (this PR — events, listener, security,
