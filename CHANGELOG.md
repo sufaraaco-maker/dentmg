@@ -25,8 +25,8 @@ merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
 (2026-08-08, `98ae299`); **2.6a (Timeline foundation)** merged via **PR #31** (`cb7b52d`,
 2026-08-09); **2.6b (Timeline UI)** implemented on
-`feature/patient-profile-phase2-6b-timeline-ui` — this file's newest entry below, opened as a
-PR. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own
+`feature/patient-profile-phase2-6b-timeline-ui` — this file's newest entry below, opened as
+**PR #32**. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own
 per-PR history now feeds into._
 
 ### Added — Phase 2.6b: Timeline UI (`feature/patient-profile-phase2-6b-timeline-ui`, implemented 2026-08-09)
