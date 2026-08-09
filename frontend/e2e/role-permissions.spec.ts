@@ -131,7 +131,9 @@ test.describe('role permissions matrix', () => {
     }
   })
 
-  test('a non-admin gets 403 on the permission-catalog and role-permissions-matrix endpoints', async ({ page }) => {
+  test('a non-admin gets 403 on the permission-catalog and role-permissions-matrix endpoints', async ({
+    page,
+  }) => {
     await loginAsEnglish(page, 'receptionist')
 
     const statuses = await page.evaluate(async (apiUrl) => {

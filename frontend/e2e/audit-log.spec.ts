@@ -62,7 +62,9 @@ test.describe('audit log viewer', () => {
     await expect(page.getByText('No field changes recorded')).toBeVisible()
   })
 
-  test('a failed login is audited with the attempted email as its actor and in its context', async ({ page }) => {
+  test('a failed login is audited with the attempted email as its actor and in its context', async ({
+    page,
+  }) => {
     const attemptedEmail = `nonexistent-${Date.now()}@example.com`
 
     // Deliberately attempted *before* any real login on this page — `Auth::id()` inside

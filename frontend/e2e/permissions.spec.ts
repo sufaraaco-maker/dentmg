@@ -18,9 +18,7 @@ test.describe('permission boundaries', () => {
     await expect(page.getByRole('button', { name: 'New User' })).not.toBeVisible()
   })
 
-  test('a non-admin cannot reach the admin-only Appointment Types route by direct URL', async ({
-    page,
-  }) => {
+  test('a non-admin cannot reach the admin-only Appointment Types route by direct URL', async ({ page }) => {
     await loginAsEnglish(page, 'receptionist')
     await page.goto('/appointments/types')
     await expect(page.getByText('Access Denied')).toBeVisible({ timeout: 10_000 })
