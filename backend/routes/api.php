@@ -23,10 +23,12 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientImageController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchaseOrderItemController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\RolePermissionController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplyCategoryController;
@@ -48,6 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/financial-summary', [DashboardController::class, 'financialSummary']);
 
     Route::apiResource('users', UserController::class);
+
+    // Phase 4 (Advanced Permissions & Audit) design doc §1.5 — admin-only (`manage-permissions`
+    // Gate), never routed through the matrix these endpoints themselves manage.
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('role-permissions', [RolePermissionController::class, 'index']);
+    Route::put('role-permissions', [RolePermissionController::class, 'update']);
 
     Route::get('patients/{patient}/audit-logs', [PatientController::class, 'auditLogs']);
     Route::apiResource('patients', PatientController::class);

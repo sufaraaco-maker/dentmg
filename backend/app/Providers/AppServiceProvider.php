@@ -47,6 +47,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-financial-reports', fn (User $user) => $user->role === UserRole::Admin);
         Gate::define('view-operational-reports', fn (User $user) => true);
 
+        // Phase 4 (Advanced Permissions & Audit) design doc §1.4: managing the role_permissions
+        // matrix itself is checked via a hardcoded isAdmin() Gate, never routed through the
+        // matrix it governs — this is what makes self-lockout structurally impossible, not just
+        // validated-against (see UpdateRolePermissionsRequest for the matrix's own separate
+        // users.manage protection).
+        Gate::define('manage-permissions', fn (User $user) => $user->isAdmin());
+
         // Medical History (Phase 2.3, design doc §6.4): one policy class for all three entities,
         // registered explicitly since Laravel's naming-convention auto-discovery only maps one
         // policy per model.

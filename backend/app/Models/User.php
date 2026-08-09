@@ -58,6 +58,17 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
+    /**
+     * Phase 4 (Advanced Permissions & Audit) design doc §1.3 — the replacement for raw
+     * `$this->role === UserRole::X` checks scattered across Policies. Backed by
+     * RolePermission::permissionKeysForRole()'s per-role cache, so this is one cached lookup, not
+     * one query per authorization check.
+     */
+    public function hasPermission(string $key): bool
+    {
+        return in_array($key, RolePermission::permissionKeysForRole($this->role), true);
+    }
+
     public function appointmentsAsDentist(): HasMany
     {
         return $this->hasMany(Appointment::class, 'dentist_id');
