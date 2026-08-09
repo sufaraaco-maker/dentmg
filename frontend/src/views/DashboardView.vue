@@ -10,13 +10,16 @@ import UpcomingAppointmentsWidget from '@/components/appointments/UpcomingAppoin
 import AppointmentDialog from '@/components/appointments/AppointmentDialog.vue'
 import LowStockWidget from '@/components/inventory/LowStockWidget.vue'
 import DueLabCasesWidget from '@/components/laboratory/DueLabCasesWidget.vue'
+import FinancialSnapshotWidget from '@/components/dashboard/FinancialSnapshotWidget.vue'
+import UnscheduledTreatmentWidget from '@/components/dashboard/UnscheduledTreatmentWidget.vue'
 import AiQuestionBox from '@/components/aiAssistant/AiQuestionBox.vue'
-import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { useDashboardStore } from '@/stores/dashboard'
 import { askDashboardInsight } from '@/services/aiAssistant/aiAssistantApi'
 
 const { t } = useI18n()
 const auth = useAuthStore()
+const dashboardStore = useDashboardStore()
 
 // A dentist's dashboard shows their own schedule read-mostly; front desk/admin get the
 // operational "all appointments" framing with Waiting/Late highlighting (design doc §8).
@@ -24,37 +27,31 @@ const scope = computed(() => (auth.isDentist ? 'own' : 'all'))
 
 const newAppointmentDialogVisible = ref(false)
 
-interface DashboardSummary {
-  total_patients: number
-  today_appointments: number
-  /** Decimal-cast, always a string (e.g. "225.50") — see Reports design doc §1/§7. */
-  monthly_revenue: string
-}
-
-const summary = ref<DashboardSummary | null>(null)
-const loading = ref(true)
-const error = ref(false)
-
+/**
+ * Dashboard 2.0 (design doc §3.1): only 2 universal stat cards now, not 3 — `monthly_revenue`
+ * moved to the admin-only `FinancialSnapshotWidget` below (§1.1's security fix means it's no
+ * longer part of the open-to-all `/dashboard/summary` payload at all, so it can't be a plain stat
+ * card everyone sees). Distinct tint per card, per the restyle brief.
+ */
 const statCards = [
-  { key: 'total_patients' as const, icon: 'pi pi-users' },
-  { key: 'today_appointments' as const, icon: 'pi pi-calendar' },
-  { key: 'monthly_revenue' as const, icon: 'pi pi-wallet' },
+  { key: 'total_patients' as const, icon: 'pi pi-users', tint: 'primary' as const },
+  { key: 'today_appointments' as const, icon: 'pi pi-calendar', tint: 'blue' as const },
 ]
 
-onMounted(async () => {
-  try {
-    const { data } = await api.get<DashboardSummary>('/dashboard/summary')
-    summary.value = data
-  } catch {
-    error.value = true
-  } finally {
-    loading.value = false
-  }
+const TINT_CLASSES: Record<'primary' | 'blue', string> = {
+  primary: 'bg-primary-50 text-primary dark:bg-primary-400/10',
+  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400',
+}
+
+onMounted(() => {
+  dashboardStore.fetchSummary()
+  // Skip the network call entirely for a role that would get a 403 — not just hide the result.
+  if (auth.canViewFinancials) dashboardStore.fetchFinancialSummary()
 })
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-6">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
         {{ t('dashboard.title') }}
@@ -66,25 +63,33 @@ onMounted(async () => {
       />
     </div>
 
-    <Message v-if="error" severity="error">{{ t('dashboard.loadError') }}</Message>
+    <Message v-if="dashboardStore.error" severity="error">{{ t(dashboardStore.error) }}</Message>
+    <Message v-if="dashboardStore.financialError" severity="error">{{
+      t(dashboardStore.financialError)
+    }}</Message>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <Card v-for="stat in statCards" :key="stat.key" class="transition-shadow duration-200 hover:shadow-md">
         <template #content>
           <div class="flex items-center gap-3">
             <span
-              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-400/10"
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+              :class="TINT_CLASSES[stat.tint]"
             >
-              <i :class="[stat.icon, 'text-xl text-primary']" />
+              <i :class="[stat.icon, 'text-xl']" />
             </span>
             <div>
-              <Skeleton v-if="loading" width="4rem" height="1.5rem" />
+              <Skeleton
+                v-if="dashboardStore.loading && !dashboardStore.summary"
+                width="4rem"
+                height="1.75rem"
+              />
               <p
                 v-else
                 dir="ltr"
-                class="text-start tabular-nums text-xl font-semibold text-surface-900 dark:text-surface-0"
+                class="text-start tabular-nums text-2xl font-semibold text-surface-900 dark:text-surface-0"
               >
-                {{ summary?.[stat.key] ?? 0 }}
+                {{ dashboardStore.summary?.[stat.key] ?? 0 }}
               </p>
               <p class="text-sm text-surface-500">{{ t(`dashboard.stats.${stat.key}`) }}</p>
             </div>
@@ -93,12 +98,24 @@ onMounted(async () => {
       </Card>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <FinancialSnapshotWidget
+        v-if="auth.canViewFinancials"
+        :summary="dashboardStore.financialSummary"
+        :loading="dashboardStore.financialLoading"
+      />
+      <UnscheduledTreatmentWidget
+        :data="dashboardStore.summary?.unscheduled_accepted_treatment ?? null"
+        :loading="dashboardStore.loading"
+      />
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <TodayScheduleWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
       <UpcomingAppointmentsWidget :scope="scope" @new-appointment="newAppointmentDialogVisible = true" />
     </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
       <LowStockWidget />
       <DueLabCasesWidget />
     </div>

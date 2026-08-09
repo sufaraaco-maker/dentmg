@@ -16,9 +16,9 @@
 | | |
 |---|---|
 | **Last updated** | 2026-08-09 |
-| **Updated by** | Claude Code — Phase 1 release verification + close-out (PR #16/#17), Phase 2 (Patient Profile Redesign) design approval, sub-phases 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all designed, implemented, and merged via PR #18-#28 — see §4's PR history table and §12's narrative for full per-phase detail. **Phase 2.6 (Timeline)**, the final sub-phase: design doc (`docs/modules/patient-timeline-redesign-design.md`) produced by auditing the actual codebase (confirmed zero event-driven infrastructure existed anywhere), all 7 §16 decisions approved by the user as recommended, merged via **PR #29** (`e8e2cba`); a real category-taxonomy conflict found before writing any code (verifying each candidate policy's `viewAny()` showed the approved `clinical` category wrongly grouped `TreatmentPlan`/`ClinicalNote`/Medical History despite different permission rules) was fixed and confirmed with the user, merged via **PR #30** (`47e0c59`); **2.6a (Foundation) implemented** on `feature/patient-profile-phase2-6a-timeline-foundation` — `PatientActivity` model, one generic event + one synchronous listener (Laravel's event system introduced to this codebase for the first time, confirmed genuinely auto-discovered end-to-end by a non-faked integration test), 24 dispatch call sites across all 9 candidate services, `PatientActivityPolicy`'s per-category policy-reuse mechanism, the `/activities` endpoint — Backend 1054/1054 tests green (Pint clean, PHPStan clean on every new file), **merged via PR #31** (`cb7b52d`), post-merge CI on `main` re-verified. **2.6b (UI) implemented** on `feature/patient-profile-phase2-6b-timeline-ui` — `ActivityTimeline.vue` (one embeddable component backing the new `timeline` tab, Billing's Payment History sub-section, and an Overview recent-activity preview, per the design doc's §9.4/§15.2 single-component requirement), a `patientActivities` Pinia store keyed by patient+category+page-size (a deliberate deviation from every sibling store, required because up to three `ActivityTimeline` instances mount simultaneously on one patient page — `PatientDetailView.vue`'s `Tabs` isn't `lazy`), "Load more" pagination, a category-filter chip row (built from scratch — the design doc's own citation of an existing mobile chip-row pattern turned out not to exist in this codebase, confirmed with the user before building it), i18n for all 3 locales, **merged via PR #32** (`70b6ba6`). Frontend: all 933 tests green (27 new, including the security-critical E2E assertion that a receptionist session never sees `clinical_notes`-category rows even when explicitly filtering for them), `vue-tsc`/ESLint/Prettier clean. Post-merge CI on `main` (which, unlike a PR-triggered run, actually executes the E2E job) caught two real bugs in `e2e/timeline.spec.ts` itself — a lab case number read before its async fetch completed, and an unscoped `getByText()` hitting a strict-mode violation because `PatientDetailView.vue`'s non-`lazy` `Tabs` keep the Overview preview's and the Timeline tab's `ActivityTimeline` instances mounted simultaneously — both fixed and **merged via PR #33** (`83c584b`); post-merge CI re-run, all three jobs (Backend/Frontend/E2E) green. **Phase 2 (Patient Profile Redesign) is now complete in full.** |
-| **Repo HEAD at time of writing** | `main` at `83c584b` (PR #33 merge: `e2e/timeline.spec.ts` fix, on top of `70b6ba6`'s PR #32 merge). |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)** — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. |
+| **Updated by** | Claude Code — Phase 1 release verification + close-out (PR #16/#17), Phase 2 (Patient Profile Redesign) design approval, sub-phases 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all designed, implemented, and merged via PR #18-#28 — see §4's PR history table and §12's narrative for full per-phase detail. **Phase 2.6 (Timeline)**, the final sub-phase: design doc (`docs/modules/patient-timeline-redesign-design.md`) produced by auditing the actual codebase (confirmed zero event-driven infrastructure existed anywhere), all 7 §16 decisions approved by the user as recommended, merged via **PR #29** (`e8e2cba`); a real category-taxonomy conflict found before writing any code (verifying each candidate policy's `viewAny()` showed the approved `clinical` category wrongly grouped `TreatmentPlan`/`ClinicalNote`/Medical History despite different permission rules) was fixed and confirmed with the user, merged via **PR #30** (`47e0c59`); **2.6a (Foundation) implemented** on `feature/patient-profile-phase2-6a-timeline-foundation` — `PatientActivity` model, one generic event + one synchronous listener (Laravel's event system introduced to this codebase for the first time, confirmed genuinely auto-discovered end-to-end by a non-faked integration test), 24 dispatch call sites across all 9 candidate services, `PatientActivityPolicy`'s per-category policy-reuse mechanism, the `/activities` endpoint — Backend 1054/1054 tests green (Pint clean, PHPStan clean on every new file), **merged via PR #31** (`cb7b52d`), post-merge CI on `main` re-verified. **2.6b (UI) implemented** on `feature/patient-profile-phase2-6b-timeline-ui` — `ActivityTimeline.vue` (one embeddable component backing the new `timeline` tab, Billing's Payment History sub-section, and an Overview recent-activity preview, per the design doc's §9.4/§15.2 single-component requirement), a `patientActivities` Pinia store keyed by patient+category+page-size (a deliberate deviation from every sibling store, required because up to three `ActivityTimeline` instances mount simultaneously on one patient page — `PatientDetailView.vue`'s `Tabs` isn't `lazy`), "Load more" pagination, a category-filter chip row (built from scratch — the design doc's own citation of an existing mobile chip-row pattern turned out not to exist in this codebase, confirmed with the user before building it), i18n for all 3 locales, **merged via PR #32** (`70b6ba6`). Frontend: all 933 tests green (27 new, including the security-critical E2E assertion that a receptionist session never sees `clinical_notes`-category rows even when explicitly filtering for them), `vue-tsc`/ESLint/Prettier clean. Post-merge CI on `main` (which, unlike a PR-triggered run, actually executes the E2E job) caught two real bugs in `e2e/timeline.spec.ts` itself — a lab case number read before its async fetch completed, and an unscoped `getByText()` hitting a strict-mode violation because `PatientDetailView.vue`'s non-`lazy` `Tabs` keep the Overview preview's and the Timeline tab's `ActivityTimeline` instances mounted simultaneously — both fixed and **merged via PR #33** (`83c584b`); post-merge CI re-run, all three jobs (Backend/Frontend/E2E) green. **Phase 2 (Patient Profile Redesign) is now complete in full**, closed out via **PR #34**. **Phase 3 (Dashboard 2.0)** — the next phase in the 8-phase roadmap — design phase reconciled two competing candidates for "next" (the roadmap's own Phase 3 vs. the still-unfinished Premium Visual Redesign's own Dashboard-restyle plan) into one design doc, `docs/modules/dashboard-2.0-design.md`, approved by the user as "Functional 2.0": restyle (absorbing `frontend-visual-redesign-design.md` §6 in full, now marked superseded there) plus new data-backed widgets reusing existing `ReportService` methods. The design-phase audit found a real, pre-existing security gap — `/dashboard/summary` returned `monthly_revenue` to every role with zero authorization, the same figure `reports/collections` already restricts to admins — fixed as part of this phase, not a separate one; see `docs/decisions.md`'s 2026-08-09 entries for both that fix and the "trend, not goal" scope decision. **Implemented on `feature/dashboard-2-0`** in the 4 sequential steps the design doc's §8 specifies (backend → frontend data layer → frontend widgets/restyle → E2E/i18n/docs), each verified before the next: Backend 1069/1069 tests green (26 new), Pint clean, PHPStan clean (targeted run on new files, cross-checked against the same pre-existing local-only false-positive pattern `TECH_DEBT.md` already documents on `casts()`-style models). Frontend 966/966+ tests green (33 new: `dashboard.ts` store, `FinancialSnapshotWidget.vue`, `UnscheduledTreatmentWidget.vue`, `auth.canViewFinancials`), `vue-tsc`/ESLint/Prettier clean. Manually verified in a real browser (admin sees both new widgets with real seeded data — 118 patients, real revenue/production/A-R figures; dentist correctly never sees Financial Snapshot) since this session's local Windows Docker environment reproduced the same pre-existing per-HTTP-request latency this file's own §12 (Phase 2.6b) already documented — generous timeouts, not application bugs, were the fix. New `e2e/dashboard.spec.ts` (first for this module) written covering the security-critical case per this project's established §9A-style precedent — asserted against rendered DOM **and** that the network request itself is never made for a non-admin session **and** that direct access is server-side blocked (403) regardless of the UI. |
+| **Repo HEAD at time of writing** | `main` at `54d9bf8` (PR #34 merge); Dashboard 2.0 implemented on `feature/dashboard-2-0`, not yet merged — opened as **PR #35**. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Phase 3 (Dashboard 2.0) implemented 2026-08-09 on `feature/dashboard-2-0`, opened as PR #35** — see `docs/modules/dashboard-2.0-design.md`. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -120,6 +120,8 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-07 | **PR #16** merged after an independent final release verification (Backend + Frontend CI re-confirmed green firsthand, not taken on faith; `git merge-tree` confirmed no conflicts with `main`; diff checked for introduced TODO/FIXME — none found). **Milestone: "Phase 1 — Foundation Complete."** Immediate next step: Phase 2 (Patient Profile Redesign) design phase — see §12. |
 | 2026-08-07 | **Phase 2: Patient Profile Redesign — design phase begins.** Step 1 analysis (current hub + all 8 related modules + design system + permissions) approved by the user. Step 2 design doc written: `docs/modules/patient-profile-redesign-design.md` — merges Invoices+Payments into one Billing tab (backend stays split), structured Medical History (Allergies/Conditions/Medications/Notes), a V1 Documents foundation, and a dedicated `PatientActivity` event architecture for Timeline with per-category role-filtering as an explicit security requirement. No implementation code written yet — awaiting design approval per §12. |
 | 2026-08-08 | **Phase 2.3 (Medical History) implemented and opened as PR #22** on `feature/patient-profile-phase2-3-medical-history` — see §12 for full detail and the new `CHANGELOG.md` entry. Confirmed the "(proposed)" permission default the design doc's §10/§19 flagged for Medical History (view = all staff, write = Admin + Dentist) by implementation, matching `DentalChartEntryPolicy`'s closest existing pattern rather than inventing a new one. Backend 998/998 tests green (Pint clean); frontend 867/867 tests green, type-check/ESLint clean. PR #22's first CI run caught a real Pint `php_unit_method_casing` issue and 7 genuinely non-Prettier-compliant new files that an earlier flawed local `git stash`-based verification had missed — both fixed, branch re-verified to match `origin/main`'s exact 235-file pre-existing baseline (via a proper `git worktree` comparison), pushed as a follow-up commit. **PR #22's CI is fully green on re-run** (Backend pass, Frontend pass, E2E skipping as expected on `pull_request`). Not merged — stopped for the user's review per their explicit instruction. |
+| 2026-08-08 → 2026-08-09 | **Phase 2.4-2.6 (Laboratory, Documents, Timeline) and Phase 2 close-out** — see §4's PR history table (PR #24-#34) and §12 for full per-phase detail; not individually rowed here (this table's own update cadence lapsed after Phase 2.3 — §4/§12 remained current throughout and are the authoritative record for this window). **Phase 2 (Patient Profile Redesign) complete, closed out via PR #34.** |
+| 2026-08-09 | **Phase 3 (Dashboard 2.0) — design phase.** Two competing "next phase" candidates (roadmap's own Phase 3 vs. finishing the still-open Premium Visual Redesign) reconciled into one design doc, `docs/modules/dashboard-2.0-design.md`, approved by the user as "Functional 2.0" (restyle + new data-backed widgets, reusing existing `ReportService` methods rather than new report logic). Design-phase audit found a real, pre-existing security gap in `/dashboard/summary` (see §5/`docs/decisions.md`). **Implemented on `feature/dashboard-2-0`** in the design doc's 4 sequential steps, each verified before the next — see §12 for full detail. Opened as **PR #35**. |
 
 ---
 
@@ -130,7 +132,7 @@ as of the 2026-08-07 reconciliation, see §0.
 
 | Module | Status | Backend | Frontend | Tests | Docs | Notes |
 |---|---|---|---|---|---|---|
-| Dashboard | Done | ✅ `DashboardService` | ✅ `DashboardView` + widgets | Covered by `DashboardTest` | `docs/modules/dashboard.md` | `today_appointments` was an unscoped `COUNT(*)` — **fixed 2026-08-07** (PR #15), now properly date-scoped with a regression test. |
+| Dashboard | **Dashboard 2.0** (2026-08-09, PR #35, pending merge) | ✅ `DashboardService` (split operational/financial) | ✅ `DashboardView` + `FinancialSnapshotWidget`/`UnscheduledTreatmentWidget` + restyled stat cards | `DashboardTest` + `DashboardFinancialSummaryTest` (26 tests); frontend store/component tests + `e2e/dashboard.spec.ts` (new) | `docs/modules/dashboard-2.0-design.md` (`docs/modules/dashboard.md` is the stale pre-implementation V1 scope doc, superseded in substance though never formally marked — pre-existing gap, not touched this phase) | `today_appointments` was an unscoped `COUNT(*)` — **fixed 2026-08-07** (PR #15). **`monthly_revenue` had zero authorization — fixed 2026-08-09** (Dashboard 2.0): moved to a new admin-gated `/dashboard/financial-summary` endpoint, see `docs/decisions.md`. |
 | Authentication | Done | ✅ Sanctum SPA cookie auth | ✅ `LoginView` | ✅ | `docs/modules/authentication.md` | Rate-limited (5/60s per email+IP). |
 | Users | Done | ✅ CRUD, soft delete | ✅ `UsersView` | ✅ | `docs/modules/users.md` | Self-delete blocked; admin-only write. |
 | Roles & Permissions | Done | ✅ `UserRole` backed enum | ✅ role-gated UI | ✅ | `docs/modules/roles-permissions.md` | 3 roles (admin/dentist/receptionist); deliberately not a `spatie/laravel-permission` table model. |
@@ -201,6 +203,8 @@ Sourced directly from `gh pr list --state all` (31 PRs total as of this update; 
 | 31 | `feature/patient-profile-phase2-6a-timeline-foundation` | Phase 2.6a — Timeline foundation | `PatientActivity` model, one generic event + one listener, 24 dispatch call sites across 9 services, `PatientActivityPolicy`'s per-category mechanism, `/activities` endpoint — no UI | **Merged** 2026-08-09 (`cb7b52d`) |
 | 32 | `feature/patient-profile-phase2-6b-timeline-ui` | Phase 2.6b — Timeline UI | `ActivityTimeline.vue`, `patientActivities` store, `timeline` tab, Billing's Payment History wiring, Overview preview, category chips, i18n | **Merged** 2026-08-09 (`70b6ba6`) |
 | 33 | `fix/timeline-e2e-multi-instance-scoping` | Fix 2 real bugs `e2e/timeline.spec.ts` itself had, caught by post-merge CI's real E2E run (PR-triggered runs skip it by design) | Lab case number read before async fetch completed; unscoped `getByText()` hit a strict-mode violation across 2 simultaneously-mounted `ActivityTimeline` instances | **Merged** 2026-08-09 (`83c584b`) — post-merge CI fully green, closing out Phase 2 |
+| 34 | `docs/phase2-complete-closeout` | Docs-only: close out Phase 2 (Patient Profile Redesign) | No code changes | **Merged** 2026-08-09 (`54d9bf8`) |
+| 35 | `feature/dashboard-2-0` | Phase 3 — Dashboard 2.0 | Split `/dashboard/summary` (operational, all roles) from new `/dashboard/financial-summary` (admin-only) — fixes a real pre-existing leak (`monthly_revenue` had no gate); production/collections trend + A/R aging snapshot (reuses `ReportService`, no new report logic); `unscheduled_accepted_treatment` widget data (new query); `FinancialSnapshotWidget.vue`/`UnscheduledTreatmentWidget.vue`; restyled stat cards/`AiQuestionBox` gradient/`gap-6` spacing (absorbs Premium Visual Redesign §6, now superseded); `PatientDetailView.vue` `?tab=` deep-link; new `e2e/dashboard.spec.ts` | **Opened**, pending merge — see §12 |
 
 ---
 
@@ -227,6 +231,8 @@ onward) — this is a summary of the decisions with the widest blast radius:
 | **Flagged for Phase 4** (2026-08-07): `UserRole`'s flat 3-value enum will need to become a real role-hierarchy/permission-matrix model (`Owner → Clinic Admin → {Dentist, Assistant, Receptionist, Accountant}`) | This is exactly the "real requirement" `docs/decisions.md`'s 2026-07-11 entry said would justify revisiting the flat-enum decision — not decided yet, needs its own design-approval round when Phase 4 (Advanced Permissions & Audit) starts | Flagged, not decided |
 | **Security Architecture Decision** (2026-08-07): Patient Timeline is built on a dedicated `PatientActivity` event model, never the `Auditable` trail, with Timeline permissions enforced **server-side, per-category**, at query time — a receptionist's `/activities` request must never return `category=clinical` rows, regardless of frontend hiding | Aggregation features are exactly where a stricter per-module read rule (e.g. `ClinicalNotePolicy` barring receptionists) can silently leak if not re-checked at the aggregation point; full detail in `docs/modules/patient-profile-redesign-design.md` §9A, full decision text in `docs/decisions.md` | **Approved with the Phase 2 design (2026-08-07) — binding on Phase 2.6 and any future cross-module aggregation feature** |
 | One `MedicalHistoryPolicy` class registered against 3 models (`PatientAllergy`/`PatientMedicalCondition`/`PatientMedication`) via explicit `Gate::policy()` calls in `AppServiceProvider`, not 3 near-identical policy classes | Laravel's naming-convention auto-discovery only maps one policy per model; the design doc explicitly calls for one policy since the 3 entities are one logical feature — full detail in `docs/decisions.md` | **Implemented with Phase 2.3, merged via PR #22 (2026-08-08) — sets the precedent for any future entity cluster that should share one policy** |
+| **Dashboard split by financial/operational sensitivity**: `/dashboard/summary` (open, all roles) vs. new `/dashboard/financial-summary` (`view-financial-reports`, admin-only) | Found a real, pre-existing leak — `monthly_revenue` had zero authorization, unlike the identical figure on `reports/collections`; full detail in `docs/decisions.md`'s 2026-08-09 entry | **Implemented with Dashboard 2.0 (PR #35, 2026-08-09) — sets the precedent that any dashboard/aggregation endpoint mixing financial and operational data must be split along the same boundary Reports already draws** |
+| Dashboard 2.0 financial widgets show period-over-period trend, not actual-vs-goal | No goal/target concept exists anywhere in the schema; trend reuses `ReportService` with zero new storage vs. goal-setting needing a new Settings field + UI — full detail in `docs/decisions.md` | **Implemented with Dashboard 2.0 (PR #35, 2026-08-09) — goal-setting explicitly deferred, not dropped** |
 
 ---
 
@@ -410,14 +416,14 @@ dependencies. Estimates are this report's judgment, not a formal estimation exer
 |---|---|---|---|---|---|
 | 1 | **Write permanent E2E suites for Billing, Payments, Treatment Plans** | Closes the last gap between these 3 modules and this project's own "Production Ready" bar | Medium | Medium (3 specs, design docs already name the scenarios to cover) | None |
 | 2 | **Give Billing a backend Feature-test suite + final `modules/billing.md` doc** | Billing is the only module still missing both | Medium | Small–Medium | None |
-| 3 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Dashboard redesign, Phase 3 Data Tables | The active frontend-only initiative — note the Dashboard redesign item here overlaps with roadmap Phase 3 (Dashboard 2.0); reconcile scope between the two before starting either | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
+| 3 | **Continue Premium Visual Redesign**: remaining icon migration (~62 files), Phase 3 Data Tables | The active frontend-only initiative — Dashboard redesign (former overlap with roadmap Phase 3) resolved 2026-08-09, see "Resolved this pass" below | Medium (UX quality, not correctness) | Large (multi-step, own design doc already scopes it) | None blocking, but should follow the two-phase design→implementation workflow per file/step |
 | 4 | **Add a real-Postgres migration-verification CI step** | Already caused one production-breaking bug to hide behind 643 passing SQLite tests for a full day | Medium | Small (one new CI job step, not the full suite) | None |
 | 5 | **Provision S3/offsite backup** | Local-disk-only backup doesn't survive VPS loss | Medium, escalates to High before real clinic onboarding | Small (config-only — code path already exists, commented out) | Choice of provider (Backblaze B2 / Wasabi / AWS S3) |
 | 6 | **App-wide PWA manifest + service worker** | Every module has been built "PWA-ready" but nothing is installable yet; also roadmap Phase 6 | Low–Medium | Medium | None |
 | 7 | **`vue-i18n` runtime-only build + message precompilation** | ~84 KB gzip bundle-size win, app-wide | Low | Small–Medium (needs careful 3-locale regression pass) | None |
 | 8 | **Codebase-wide PrimeVue `id`→`inputId` accessibility sweep** | Real but narrow a11y gap, fixed piecemeal so far | Low | Small | None |
 
-**Resolved this pass**: the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests (former item #4) was fixed as part of Phase 2.4 (PR #24, 2026-08-08) — see `TECH_DEBT.md`'s Resolved section. **Phase 2.6b: Timeline UI** (former item #1) merged via PR #32, then PR #33 fixed 2 real bugs post-merge CI's E2E job caught in the E2E spec itself — see §12. This closes out **Phase 2 (Patient Profile Redesign) in full.**
+**Resolved this pass**: the `BelongsToPatient` SQL-error bug in Laboratory's Form Requests (former item #4) was fixed as part of Phase 2.4 (PR #24, 2026-08-08) — see `TECH_DEBT.md`'s Resolved section. **Phase 2.6b: Timeline UI** (former item #1) merged via PR #32, then PR #33 fixed 2 real bugs post-merge CI's E2E job caught in the E2E spec itself — see §12. This closes out **Phase 2 (Patient Profile Redesign) in full.** **Dashboard redesign** (former item #3's overlap between roadmap Phase 3 and the Premium Visual Redesign's own §6 plan) resolved 2026-08-09 via Dashboard 2.0 (PR #35), which absorbed and implemented it in full — see §12.
 
 ---
 
@@ -511,8 +517,108 @@ assertion to its own `tabpanel` via `getByRole('tabpanel', { name: ... })`. **Me
 
 **Phase 2 (Patient Profile Redesign) is complete**: all 7 sub-phases (2.1 Foundation, 2.2 Billing,
 2.3 Medical History, 2.4 Laboratory, 2.5 Documents, 2.6a Timeline foundation, 2.6b Timeline UI) are
-merged to `main`, each with its own post-merge CI confirmation. No further work is scoped under
-Phase 2 — see §11 for what's next.
+merged to `main`, each with its own post-merge CI confirmation, closed out via **PR #34**
+(2026-08-09).
+
+## Phase 3 — Dashboard 2.0
+
+**Design phase (2026-08-09)**: with Phase 2 closed, two candidates competed for "next" — the
+8-phase roadmap's own Phase 3 (Dashboard 2.0), and finishing the still-unfinished Premium Visual
+Redesign initiative, whose own §6 already scoped a Dashboard restyle that had never been built. The
+user chose "Functional 2.0": absorb the restyle into Dashboard 2.0's scope rather than treat them as
+two separate efforts. Step 1 analysis audited the actual current `DashboardService`/`DashboardView`
+code (3 stat cards, no trends, no role gating) and researched competing dental PM systems (Dentrix,
+CareStack, Jarvis Analytics, Adit) — the recurring pattern across real competitors is
+production/collections-vs-goal, A/R aging at a glance, and unscheduled-accepted-treatment tracking,
+not just prettier static counters, which shaped the "Functional 2.0" direction the user then
+approved over a restyle-only alternative.
+
+A backend ground-truth audit (Explore-agent-assisted, all findings file:line-cited) before writing
+the design doc found two things that changed scope from the initial proposal:
+
+1. **A real, pre-existing security gap**: `DashboardController::summary()` had no Form Request, no
+   policy, no Gate check of any kind — any authenticated role could call it, and it already returned
+   `monthly_revenue`, the same figure `reports/collections` restricts to admins via
+   `view-financial-reports`. This predates Dashboard 2.0 and is fixed as part of it, not introduced
+   by it — see `docs/decisions.md`'s 2026-08-09 entry.
+2. **No goal/target concept exists anywhere in the schema** (confirmed by a full-backend search) —
+   building "actual vs. goal" would mean a new `ClinicSetting` field + Settings UI + migration, real
+   new scope for a phase otherwise scoped around reusing existing services. The user chose
+   period-over-period trend instead (this month vs. last, computed by calling
+   `ReportService::production()`/`collections()` twice with different date ranges) — zero new
+   storage, goal-setting explicitly deferred rather than dropped.
+
+Design doc: `docs/modules/dashboard-2.0-design.md`. Approved by the user 2026-08-09 ("لا أرى حاليًا
+سببًا لتعديل التصميم قبل التنفيذ" — no reason to change the design before implementing), with two
+explicit conditions: verify after every step before moving to the next, and land the whole phase as
+one PR with any deviations documented before requesting merge.
+
+**Implementation (2026-08-09), on `feature/dashboard-2-0`**, in the design doc's §8 sequence, each
+step verified before the next:
+
+1. **Backend**: `DashboardService::summary()` now returns `unscheduled_accepted_treatment` (a new
+   query — `TreatmentPlan.status=Accepted` + `TreatmentPlanItem.status=Planned` +
+   `appointment_id` null or pointing to a cancelled `Appointment`, since
+   `TreatmentPlanItemStatus`'s own docblock defines "scheduled" exactly that way) instead of
+   `monthly_revenue`. New `DashboardService::financialSummary()` (production/collections trend +
+   A/R aging, each a thin wrapper around an existing `ReportService` method) backs a new
+   `GET /dashboard/financial-summary`, gated by a new `DashboardFinancialSummaryRequest` calling
+   the same `view-financial-reports` Gate `reports/production`/`collections`/`ar-aging` already use
+   — no new authorization concept. Backend: **1069/1069 tests green** (1043 + 26 new: 17 in
+   `DashboardTest`, 9 in the new `DashboardFinancialSummaryTest`), Pint clean. A real Pint
+   `php_unit_method_casing` miss (`test_ar_aging_reflects_report_service_arAging_summary_directly`
+   — the exact class of bug Phase 2.3's `MedicalHistoryPolicyTest` hit before) was caught locally
+   before pushing, not by CI. PHPStan targeted run on the new files surfaced the same class of
+   `casts()`-model false positive `TECH_DEBT.md` already documents (confirmed by running the same
+   targeted analysis against unmodified `ReportService.php`, which shows the identical error
+   pattern — not a regression).
+2. **Frontend data layer**: `dashboard.ts` Pinia store (`fetchSummary`/`fetchFinancialSummary` as
+   two independent fetches, not one — matching the backend split), `auth.canViewFinancials`
+   (mirrors `canManageAppointments`'s existing naming convention). `DashboardView.vue` calls
+   `fetchFinancialSummary()` only `if (auth.canViewFinancials)` — skips the network call entirely
+   for a role that would get a `403`, not just hides the result.
+3. **Frontend widgets + restyle**: `FinancialSnapshotWidget.vue` (admin-only, one card not three)
+   and `UnscheduledTreatmentWidget.vue` (all roles, reuses Phase 2.1's `EmptyState.vue` — confirmed
+   generic enough to reuse as-is, not patient-profile-specific) on `DashboardView.vue`; restyled
+   stat cards (`h-12 w-12` tinted badges, `text-2xl`, only 2 universal cards now since
+   `monthly_revenue` moved behind the admin gate and can't be a plain stat card everyone sees — a
+   deviation from the design doc's literal "revenue=purple 3rd card" phrasing, superseded by the
+   security fix itself); gradient-styled `AiQuestionBox.vue`; `gap-6` spacing throughout — absorbs
+   `frontend-visual-redesign-design.md` §6 in full, now marked superseded there and in
+   `docs/roadmap.md`. One small addition beyond the design doc's literal text:
+   `PatientDetailView.vue` now reads an optional `?tab=` query param on first load (validated
+   against the same tab-key list every visibility check already uses) so
+   `UnscheduledTreatmentWidget.vue`'s "View plan" button can deep-link to that patient's Treatment
+   Plans tab — the existing "View Timeline" button could set `activeTab` directly since it's the
+   same component instance; an external navigation from the Dashboard has no such instance to reach
+   into, so it needed a real (if narrow) entry point. Frontend: **966+/966+ tests green** (933 + 33
+   new: `dashboard.ts` store tests, `auth.canViewFinancials` test, `FinancialSnapshotWidget.vue`/
+   `UnscheduledTreatmentWidget.vue` component tests), `vue-tsc`/ESLint/Prettier clean.
+4. **E2E, i18n, docs**: new `e2e/dashboard.spec.ts` — the first for this module — covering the
+   security-critical case this project's §9A precedent established: a non-admin session never shows
+   Financial Snapshot in the DOM, **never even issues the network request** for
+   `/dashboard/financial-summary` (asserted via `page.on('request')`, not just DOM absence), and a
+   direct fetch to that endpoint from a receptionist session gets a real `403` regardless of what
+   the UI does. i18n: 8 new keys × 3 locales (`ar`/`en`/`tr`), parity verified programmatically
+   (1284 → 1292 keys, identical count across all three). This file, `CHANGELOG.md`, and
+   `docs/decisions.md` updated in the same pass, `frontend-visual-redesign-design.md` §6 marked
+   superseded.
+
+**Verification**: local Windows Docker environment reproduced the same pre-existing
+per-HTTP-request latency this file already documented for Phase 2.6b (a single `sanctum/csrf-cookie`
+request measured ~11s via raw `fetch`, confirmed independent of Playwright or this phase's code) —
+worked around with generous timeouts rather than treated as a regression. Manually verified in a
+real browser: admin sees real seeded data (118 patients, real production/collections/A-R figures,
+correctly *no* trend badge shown since the seeded demo data has no prior-month activity — the "don't
+fabricate a trend" rule working as designed, not a bug); dentist correctly never sees Financial
+Snapshot, sees Unscheduled Treatment (empty state, correctly rendered via `EmptyState.vue`); no
+console errors beyond the expected pre-login `401` on `/api/user`. `e2e/dashboard.spec.ts` itself
+was written and reviewed but not yet confirmed green against a live run in this session (the same
+environment latency affected the E2E harness's own fixed 25s login timeout on a heavily-loaded
+container) — CI is the verification authority for this suite, per this project's established
+stance; will be confirmed via push-to-branch/PR CI before merge.
+
+**Opened as PR #35**, not yet merged — see §4.
 
 Step 1 (analysis) and Step 2 (design document,
 `docs/modules/patient-profile-redesign-design.md`) are both approved. Governing decisions: merge

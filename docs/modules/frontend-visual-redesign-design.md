@@ -146,7 +146,13 @@ alternative (partial migration). Mitigation for the blast radius:
 - Icon size bump to Lucide `:size="20"` (top-level) / `:size="18"` (nested children, depth > 0) — currently
   both render at the same `text-base`.
 
-## 6. Dashboard Redesign (`DashboardView.vue`)
+## 6. Dashboard Redesign (`DashboardView.vue`) — SUPERSEDED
+
+**Superseded 2026-08-09 by `docs/modules/dashboard-2.0-design.md`** (roadmap Phase 3, Dashboard
+2.0), which absorbed this section's restyle plan in full and implemented it alongside new
+data-backed widgets (production/collections trend, A/R aging, unscheduled-accepted-treatment) —
+see that doc for the actual implemented design. This section is kept only as a historical record of
+what was originally scoped here; do not implement from it directly.
 
 Replaces `frontend-ux-redesign.md` Phase 2 in full (that phase was "Not started," so this is a clean
 replacement, not a conflicting change):

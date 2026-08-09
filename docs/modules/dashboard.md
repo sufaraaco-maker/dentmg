@@ -1,5 +1,10 @@
 # Dashboard Module
 
+> **Superseded 2026-08-09** by `docs/modules/dashboard-2.0-design.md` (Dashboard 2.0) for anything
+> current — this doc describes the original pre-`Patients`/`Appointments`/`Billing` V1 scope and is
+> kept only as a historical record. `total_patients`/`today_appointments` moved on since; the API
+> shape below (`monthly_revenue` on `/dashboard/summary`) is out of date — see the current doc.
+
 ## Scope (V1)
 
 عرض ملخص سريع لأهم أرقام العيادة. بما إن modules زي Patients وAppointments وBilling لسه ما اتبنت، الإحصائيات ترجع صفر تلقائيًا لحد ما تلك الجداول تصير موجودة — بدون ما ينهار الـ endpoint.

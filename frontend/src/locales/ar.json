@@ -63,6 +63,18 @@
       "monthly_revenue": "إيرادات الشهر"
     },
     "loadError": "تعذّر تحميل بيانات لوحة التحكم",
+    "financialLoadError": "تعذّر تحميل البيانات المالية",
+    "financial": {
+      "title": "لمحة مالية",
+      "production": "الإنتاج",
+      "vsLastMonth": "مقارنة بالشهر الماضي"
+    },
+    "unscheduledTreatment": {
+      "title": "علاج غير مجدول",
+      "emptyTitle": "لا يوجد شيء معلّق",
+      "emptyDescription": "تمت جدولة جميع العلاجات المقبولة.",
+      "viewPlan": "عرض الخطة"
+    },
     "widgets": {
       "newAppointment": "موعد جديد",
       "today": {

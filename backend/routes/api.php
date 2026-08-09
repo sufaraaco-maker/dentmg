@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
 
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+    Route::get('/dashboard/financial-summary', [DashboardController::class, 'financialSummary']);
 
     Route::apiResource('users', UserController::class);
 

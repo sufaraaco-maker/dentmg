@@ -63,6 +63,18 @@
       "monthly_revenue": "Aylık Gelir"
     },
     "loadError": "Panel verileri yüklenemedi",
+    "financialLoadError": "Mali veriler yüklenemedi",
+    "financial": {
+      "title": "Mali Özet",
+      "production": "Üretim",
+      "vsLastMonth": "geçen aya göre"
+    },
+    "unscheduledTreatment": {
+      "title": "Planlanmamış Tedavi",
+      "emptyTitle": "Bekleyen bir şey yok",
+      "emptyDescription": "Kabul edilen tüm tedaviler planlandı.",
+      "viewPlan": "Planı görüntüle"
+    },
     "widgets": {
       "newAppointment": "Yeni Randevu",
       "today": {

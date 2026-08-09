@@ -63,6 +63,18 @@
       "monthly_revenue": "Monthly Revenue"
     },
     "loadError": "Failed to load dashboard data",
+    "financialLoadError": "Failed to load financial data",
+    "financial": {
+      "title": "Financial Snapshot",
+      "production": "Production",
+      "vsLastMonth": "vs. last month"
+    },
+    "unscheduledTreatment": {
+      "title": "Unscheduled Treatment",
+      "emptyTitle": "Nothing outstanding",
+      "emptyDescription": "All accepted treatment has been scheduled.",
+      "viewPlan": "View plan"
+    },
     "widgets": {
       "newAppointment": "New Appointment",
       "today": {

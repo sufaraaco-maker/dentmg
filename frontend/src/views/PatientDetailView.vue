@@ -98,7 +98,17 @@ const visibleTabs = computed(() => tabDefinitions.value.filter((tab) => tab.visi
 // Mobile dropdown switcher (design doc §17 2.2 — "needed now since Billing's merge changes the tab
 // count"): this view had no <768px fallback for its `TabList` before Phase 2.2. `activeTab` drives
 // both the desktop `TabList` and this `Select`, via `Tabs`' controlled `v-model:value`.
-const activeTab = ref('overview')
+//
+// Dashboard 2.0 (design doc §3.2): the Unscheduled Treatment widget deep-links here via `?tab=
+// treatmentPlans` — the Overview preview's own "View Timeline" button sets `activeTab` directly
+// since it's the same component instance, but an external navigation has no such instance to
+// reach into, so it needs a real (if narrow) entry point: an initial-only read of `route.query.tab`,
+// validated against the same `tabDefinitions` every other tab-visibility check already uses, rather
+// than trusting an arbitrary query string.
+const requestedTab = typeof route.query.tab === 'string' ? route.query.tab : null
+const activeTab = ref(
+  requestedTab && tabDefinitions.value.some((tab) => tab.key === requestedTab) ? requestedTab : 'overview',
+)
 
 function formatDate(value: string) {
   return parseLocalDate(value).toLocaleDateString(locale.value)
