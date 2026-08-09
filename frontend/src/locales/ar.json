@@ -191,7 +191,8 @@
       "treatmentPlans": "خطط العلاج",
       "clinicalNotes": "الملاحظات السريرية",
       "billing": "الفوترة",
-      "documents": "المستندات"
+      "documents": "المستندات",
+      "timeline": "السجل الزمني"
     },
     "tabSwitcher": {
       "label": "تبديل القسم"
@@ -263,13 +264,30 @@
         "invoices": "الفواتير",
         "payments": "المدفوعات",
         "paymentHistory": "سجل المدفوعات"
-      },
-      "paymentHistoryTitle": "سجل المدفوعات"
+      }
     },
     "documentsPanel": {
       "title": "المستندات",
       "upload": "رفع مستند",
       "empty": "لا توجد مستندات لهذا المريض بعد."
+    },
+    "timelinePanel": {
+      "overviewTitle": "النشاط الأخير",
+      "empty": "لا يوجد نشاط مسجّل لهذا المريض بعد.",
+      "loadError": "فشل تحميل النشاط",
+      "loadMore": "عرض المزيد",
+      "viewAll": "عرض السجل الزمني",
+      "categories": {
+        "all": "الكل",
+        "appointments": "المواعيد",
+        "treatment_plans": "خطط العلاج",
+        "clinical_notes": "الملاحظات السريرية",
+        "billing": "الفوترة",
+        "medical_history": "التاريخ الطبي",
+        "laboratory": "المختبر",
+        "imaging": "الأشعة والصور",
+        "documents": "المستندات"
+      }
     }
   },
   "medicalHistory": {

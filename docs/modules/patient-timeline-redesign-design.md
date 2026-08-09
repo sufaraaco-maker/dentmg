@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved 2026-08-08.** All 7 decisions in §16 were approved by the user as recommended. A real category-taxonomy conflict was found and fixed pre-implementation (§5's correction note). **2.6a (Foundation) implemented**, opened as **PR #31** — see `docs/PROJECT_STATUS.md` §12 for current merge status. **2.6b (UI) not yet started.** |
+| **Status** | **Approved 2026-08-08.** All 7 decisions in §16 were approved by the user as recommended. A real category-taxonomy conflict was found and fixed pre-implementation (§5's correction note). **2.6a (Foundation) merged via PR #31.** **2.6b (UI) implemented 2026-08-09**, opened as a PR — see `docs/PROJECT_STATUS.md` §12 for current merge status. |
 | **Roadmap position** | Phase 2 (Patient Profile Redesign), sub-phase 2.6 of 7 — the final sub-phase. See `docs/PROJECT_STATUS.md` §12 and `docs/modules/patient-profile-redesign-design.md` §17. Follows 2.1 (Foundation, PR #18), 2.2 (Billing, PR #20), 2.3 (Medical History, PR #22), 2.4 (Laboratory, PR #24), 2.5 (Documents, PR #27) — all merged to `main`. |
 | **Governing decisions inherited** | **§9A of `docs/modules/patient-profile-redesign-design.md` (the Security Architecture Decision) is binding here unchanged and is not revisited anywhere in this doc** — see §0 below for its full text. §0 item 4 and §3's tab-order rationale are also inherited. This doc is a **drill-down**, not a replacement: the umbrella doc's §6/§7/§8/§9/§9A/§10/§15.2/§17 already sketch this sub-phase in unusual detail (more than any prior phase had); this doc verifies that sketch against the actual code on `main` today and resolves the structural decisions it left open. |
 | **Analysis basis** | Direct inspection of every Timeline-adjacent backend/frontend file on `main` (post-PR #28, commit `933ee90`) — confirmed nothing Timeline/`PatientActivity`-related exists yet, confirmed zero event-driven infrastructure exists anywhere in this codebase (no `app/Events`, no `app/Listeners`, no service dispatches any event), and confirmed no queue worker actually runs despite `QUEUE_CONNECTION=redis` being configured (no `ShouldQueue` usage, no queue-worker service in `docker-compose.yml`). Read all 9 candidate services' full public method lists to build the per-service event inventory in §5. Read `App\Models\Concerns\Auditable`/`AuditObserver`/`AuditLog` end-to-end to confirm exactly why it can't serve as Timeline's source, corroborating §9A's own reasoning. Read the umbrella doc's full §9/§9A verbatim and `docs/decisions.md`'s 2026-08-07 entry verbatim. Read `patient-documents-redesign-design.md` as this doc's structural template. |
@@ -54,11 +54,45 @@ All 7 §16 decisions implemented as recommended, plus the pre-implementation cat
   `$event->subject->getAttribute('patient_id')`, a properly-typed method call with identical
   runtime behavior. Confirmed via a targeted PHPStan run on the new files, not the full
   known-noisy local run.
-- **Not yet built**: 2.6b (UI) — `ActivityTimeline.vue`, the `timeline` tab, Billing's Payment
-  History wiring, Overview preview, frontend tests, i18n — per §16 decision 7's approved 2-PR
-  split. §16 decisions 4-6 (no backfill, `patient.updated` excluded, Appointments-tab retirement
+- §16 decisions 4-6 (no backfill, `patient.updated` excluded, Appointments-tab retirement
   deferred) are scope decisions with nothing to "implement" in 2.6a; they remain in force for 2.6b
   and beyond.
+
+## Implementation Summary — 2.6b UI (added post-implementation, 2026-08-09)
+
+- **§8.1's "one embeddable component" requirement**: `ActivityTimeline.vue` (props `patientId`,
+  optional `category`, `pageSize`, `compact`) backs all three call sites — the new `timeline` tab
+  (unfiltered, category chips), Billing's Payment History (`category="billing"`, replacing its
+  `FutureFeaturePlaceholder`), and an Overview preview card (`compact`, a "View Timeline" button
+  emitting up to `PatientDetailView.vue` to switch tabs) — exactly as §9.4/§15.2 require.
+- **A necessary deviation from every sibling store's shape**: `patientActivities.ts` keys its cache
+  by `patientId::category::perPage`, not patient id alone. Reason, discovered during
+  implementation, not anticipated in this doc: `PatientDetailView.vue`'s `Tabs` isn't `lazy`, so
+  PrimeVue's `TabPanel` mounts every tab's content via `v-show`, not `v-if` — up to three
+  `ActivityTimeline` instances (Overview preview, Billing embed, Timeline tab) are live
+  simultaneously on one patient page, each wanting a different category/page-size slice. A
+  patient-id-only cache (`patientDocuments.ts`'s convention) would let one instance's fetch
+  silently overwrite another's.
+- **§13's "Load more" pagination**: implemented as page-appending (`fetchNextPage` grows the
+  query's accumulated id list), not `Paginator`-style page-replacement.
+- **§12's mobile chip-row citation corrected**: this doc recommended matching "Laboratory's
+  established mobile chip-row pattern" — that pattern doesn't exist. Laboratory's status filter is
+  a plain PrimeVue `Select` on every viewport; no chip-row component exists anywhere in the
+  codebase. Flagged and confirmed with the user before implementation (the same design-vs-codebase
+  conflict protocol as §5's pre-implementation category-taxonomy fix) — the user chose to build the
+  chip row as originally specified (`flex overflow-x-auto` on `<768px`, `flex-wrap` above) rather
+  than fall back to a dropdown.
+- **§18's testing requirements**: 27 new frontend tests (`patientActivities.test.ts`'s query-key
+  isolation, `ActivityTimeline.test.ts`'s filter/pagination/compact-mode behavior), plus updated
+  `PatientBillingPanel.test.ts`/`PatientDetailView.test.ts` assertions for the real wiring — 933/933
+  frontend tests green, `vue-tsc`/ESLint/Prettier clean. `e2e/timeline.spec.ts` covers cross-module
+  aggregation, category filtering, the Overview preview's tab-jump, and §18's security-critical
+  case — a receptionist session never sees `clinical_notes`-category rows even when explicitly
+  filtering for them — reusing `laboratory.spec.ts`'s and `clinical-notes.spec.ts`'s proven UI flows
+  to generate real cross-module activity rather than seeding data directly.
+- **i18n**: `patients.tabs.timeline` and a new `patients.timelinePanel.*` block added to all 3
+  locales; the now-dead `patients.billingPanel.paymentHistoryTitle` key (no longer referenced by any
+  component once `FutureFeaturePlaceholder` was replaced) was removed.
 
 ## 0. Why this doc exists separately from the umbrella design doc, and what's already binding
 

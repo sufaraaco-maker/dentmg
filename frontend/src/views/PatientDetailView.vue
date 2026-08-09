@@ -31,6 +31,7 @@ import PatientDocumentsPanel from '@/components/documents/PatientDocumentsPanel.
 import PatientTreatmentPlansPanel from '@/components/treatmentPlans/PatientTreatmentPlansPanel.vue'
 import PatientClinicalNotesPanel from '@/components/clinicalNotes/PatientClinicalNotesPanel.vue'
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
+import ActivityTimeline from '@/components/patients/ActivityTimeline.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -71,6 +72,12 @@ const canAccessClinicalNotes = computed(() => auth.isAdmin || auth.isDentist)
  * matches the umbrella doc's IA rationale grouping Billing/Documents as administrative tabs, and
  * requires no reordering since `billing` was already the last entry. All staff can read (matches
  * `PatientDocumentPolicy::viewAny`, open to all roles).
+ *
+ * Phase 2.6b: `timeline` added last, after `documents` (patient-timeline-redesign-design.md §8.1)
+ * — the final sub-phase's own tab, deliberately last since every other tab already existed before
+ * Timeline aggregates across them. All staff can read: `PatientActivityPolicy::viewAny` gates only
+ * the endpoint itself, with per-category server-side filtering doing the real access control
+ * (design doc §7/§9A) — so unlike `clinicalNotes` this tab needs no role-based visibility gate.
  */
 const tabDefinitions = computed(() => [
   { key: 'overview', labelKey: 'patients.tabs.overview', visible: true },
@@ -83,6 +90,7 @@ const tabDefinitions = computed(() => [
   { key: 'clinicalNotes', labelKey: 'patients.tabs.clinicalNotes', visible: canAccessClinicalNotes.value },
   { key: 'billing', labelKey: 'patients.tabs.billing', visible: true },
   { key: 'documents', labelKey: 'patients.tabs.documents', visible: true },
+  { key: 'timeline', labelKey: 'patients.tabs.timeline', visible: true },
 ])
 
 const visibleTabs = computed(() => tabDefinitions.value.filter((tab) => tab.visible))
@@ -283,6 +291,18 @@ onMounted(() => {
               </template>
             </Card>
 
+            <Card class="lg:col-span-2">
+              <template #title>{{ t('patients.timelinePanel.overviewTitle') }}</template>
+              <template #content>
+                <ActivityTimeline
+                  :patient-id="patientId"
+                  compact
+                  :page-size="5"
+                  @view-all="activeTab = 'timeline'"
+                />
+              </template>
+            </Card>
+
             <Card v-if="auth.isAdmin" class="lg:col-span-2">
               <template #title>{{ t('patients.sections.history') }}</template>
               <template #content>
@@ -357,6 +377,12 @@ onMounted(() => {
         <TabPanel value="documents">
           <div class="pt-2">
             <PatientDocumentsPanel :patient-id="patientId" />
+          </div>
+        </TabPanel>
+
+        <TabPanel value="timeline">
+          <div class="pt-2">
+            <ActivityTimeline :patient-id="patientId" />
           </div>
         </TabPanel>
       </TabPanels>

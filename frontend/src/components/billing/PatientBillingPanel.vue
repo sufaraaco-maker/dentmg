@@ -5,14 +5,14 @@ import SelectButton from 'primevue/selectbutton'
 import BillingSummaryCard from './BillingSummaryCard.vue'
 import PatientInvoicesPanel from '@/components/invoices/PatientInvoicesPanel.vue'
 import PatientPaymentsPanel from '@/components/payments/PatientPaymentsPanel.vue'
-import FutureFeaturePlaceholder from '@/components/appointments/FutureFeaturePlaceholder.vue'
+import ActivityTimeline from '@/components/patients/ActivityTimeline.vue'
 
 /**
  * Billing tab shell (design doc §5.2/§17 Phase 2.2) — hosts the Outstanding Balance hero + Summary
  * row (`BillingSummaryCard.vue`) and a `SelectButton` switching between the existing
- * Invoices/Payments panels (reused as-is, unchanged) and a "Payment History" placeholder (the real
- * feature is `ActivityTimeline.vue` filtered to `category=billing`, Phase 2.6 — not buildable yet).
- * Purely a shell: no fetch orchestration of its own beyond what the sub-panels already own.
+ * Invoices/Payments panels (reused as-is, unchanged) and Payment History, backed by
+ * `ActivityTimeline.vue` filtered to `category="billing"` (Phase 2.6b). Purely a shell: no fetch
+ * orchestration of its own beyond what the sub-panels already own.
  */
 defineProps<{ patientId: string }>()
 
@@ -44,10 +44,6 @@ const sectionOptions = [
 
     <PatientInvoicesPanel v-if="section === 'invoices'" :patient-id="patientId" />
     <PatientPaymentsPanel v-else-if="section === 'payments'" :patient-id="patientId" />
-    <FutureFeaturePlaceholder
-      v-else
-      icon="pi pi-history"
-      title-key="patients.billingPanel.paymentHistoryTitle"
-    />
+    <ActivityTimeline v-else :patient-id="patientId" category="billing" />
   </div>
 </template>

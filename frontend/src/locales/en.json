@@ -191,7 +191,8 @@
       "treatmentPlans": "Treatment Plans",
       "clinicalNotes": "Clinical Notes",
       "billing": "Billing",
-      "documents": "Documents"
+      "documents": "Documents",
+      "timeline": "Timeline"
     },
     "tabSwitcher": {
       "label": "Switch section"
@@ -263,13 +264,30 @@
         "invoices": "Invoices",
         "payments": "Payments",
         "paymentHistory": "Payment History"
-      },
-      "paymentHistoryTitle": "Payment History"
+      }
     },
     "documentsPanel": {
       "title": "Documents",
       "upload": "Upload Document",
       "empty": "No documents for this patient yet."
+    },
+    "timelinePanel": {
+      "overviewTitle": "Recent Activity",
+      "empty": "No activity recorded for this patient yet.",
+      "loadError": "Failed to load activity",
+      "loadMore": "Load more",
+      "viewAll": "View Timeline",
+      "categories": {
+        "all": "All",
+        "appointments": "Appointments",
+        "treatment_plans": "Treatment Plans",
+        "clinical_notes": "Clinical Notes",
+        "billing": "Billing",
+        "medical_history": "Medical History",
+        "laboratory": "Laboratory",
+        "imaging": "Imaging",
+        "documents": "Documents"
+      }
     }
   },
   "medicalHistory": {

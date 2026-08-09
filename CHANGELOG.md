@@ -23,10 +23,38 @@ PR #15 (+ PR #14), then formally verified and closed out via PR #16 — see that
 Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via **PR #18**; **2.2 (Billing)**
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
-(2026-08-08, `98ae299`); **2.6a (Timeline foundation)** implemented on
-`feature/patient-profile-phase2-6a-timeline-foundation`, merged via **PR #31** (`cb7b52d`,
-2026-08-09) — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the living,
-continuously-updated status book this file's own per-PR history now feeds into._
+(2026-08-08, `98ae299`); **2.6a (Timeline foundation)** merged via **PR #31** (`cb7b52d`,
+2026-08-09); **2.6b (Timeline UI)** implemented on
+`feature/patient-profile-phase2-6b-timeline-ui` — this file's newest entry below, opened as a
+PR. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own
+per-PR history now feeds into._
+
+### Added — Phase 2.6b: Timeline UI (`feature/patient-profile-phase2-6b-timeline-ui`, implemented 2026-08-09)
+- **Context**: second and final PR of Phase 2.6 (Timeline), closing out Phase 2 (Patient Profile
+  Redesign) in full — see `docs/modules/patient-timeline-redesign-design.md` §13/§16 decision 7.
+- **`ActivityTimeline.vue`**: one embeddable component (`patientId`/`category`/`pageSize`/`compact`
+  props) backing all three call sites the design doc requires as a single component — the new
+  `timeline` tab (unfiltered, category chips), Billing's Payment History sub-section
+  (`category="billing"`, replacing its `FutureFeaturePlaceholder`), and an Overview recent-activity
+  preview card (`compact`, with a "View Timeline" button that switches the active tab).
+- **`patientActivities` Pinia store**, keyed by `patientId::category::perPage` rather than patient
+  id alone (every sibling store's convention) — necessary because `PatientDetailView.vue`'s `Tabs`
+  isn't `lazy`, so up to three `ActivityTimeline` instances are mounted simultaneously on one
+  patient page, each wanting a different slice; a patient-id-only cache would let one instance's
+  fetch overwrite another's. "Load more" pagination (appends pages, never replaces).
+- **Category-filter chip row**, built from scratch: the design doc cited an existing mobile
+  chip-row pattern (Laboratory's status filter) to match, which turned out to be a plain dropdown
+  with no chip-row component anywhere in the codebase — flagged and confirmed with the user before
+  implementation, who chose to build the chip row as originally specified.
+- **i18n** added for all 3 locales (`patients.tabs.timeline`, `patients.timelinePanel.*`); the
+  now-unused `patients.billingPanel.paymentHistoryTitle` key was removed.
+- **Tests**: 27 new (`patientActivities.test.ts`'s query-isolation logic, `ActivityTimeline.test.ts`'s
+  filter/pagination/compact-mode behavior) plus updated assertions in
+  `PatientBillingPanel.test.ts`/`PatientDetailView.test.ts` for the real wiring. Frontend
+  933/933 green, `vue-tsc`/ESLint/Prettier clean. Playwright E2E written
+  (`e2e/timeline.spec.ts`) covering cross-module aggregation, category filtering, and the
+  security-critical case design doc §18 mandates — a receptionist session never sees
+  `clinical_notes`-category rows even when explicitly filtering for them.
 
 ### Added — Phase 2.6a: Timeline foundation (`feature/patient-profile-phase2-6a-timeline-foundation`, merged 2026-08-09 via PR #31)
 - **Context**: first of two PRs for the sixth and final implementation sub-phase of Phase 2

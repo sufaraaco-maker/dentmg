@@ -10,6 +10,7 @@ import PatientDentalChartPanel from '@/components/dental-chart/PatientDentalChar
 import PatientBillingPanel from '@/components/billing/PatientBillingPanel.vue'
 import PatientLabCasesPanel from '@/components/laboratory/PatientLabCasesPanel.vue'
 import PatientDocumentsPanel from '@/components/documents/PatientDocumentsPanel.vue'
+import ActivityTimeline from '@/components/patients/ActivityTimeline.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Patient } from '@/types/patient'
 import type { UserRole } from '@/types/user'
@@ -93,6 +94,7 @@ async function mountView(role: UserRole) {
         MedicalHistoryPanel: true,
         PatientLabCasesPanel: true,
         PatientDocumentsPanel: true,
+        ActivityTimeline: true,
       },
     },
   })
@@ -179,7 +181,7 @@ describe('PatientDetailView — tabs', () => {
     expect(tabLabels).toContain('Billing')
   })
 
-  it('renders PatientDocumentsPanel, scoped to the current patient, as the last tab after Billing (Phase 2.5)', async () => {
+  it('renders PatientDocumentsPanel, scoped to the current patient, right after Billing (Phase 2.5)', async () => {
     const wrapper = await mountView('admin')
     await clickTab(wrapper, 'Documents')
     await flushPromises()
@@ -189,8 +191,21 @@ describe('PatientDetailView — tabs', () => {
     expect(panel.props('patientId')).toBe('patient-1')
 
     const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
-    expect(tabLabels.at(-2)).toBe('Billing')
-    expect(tabLabels.at(-1)).toBe('Documents')
+    expect(tabLabels.at(-3)).toBe('Billing')
+    expect(tabLabels.at(-2)).toBe('Documents')
+  })
+
+  it('renders ActivityTimeline, scoped to the current patient, as the last tab after Documents (Phase 2.6b)', async () => {
+    const wrapper = await mountView('admin')
+    await clickTab(wrapper, 'Timeline')
+    await flushPromises()
+
+    const panels = wrapper.findAllComponents(ActivityTimeline)
+    const tabPanel = panels.find((panel) => !panel.props('compact'))
+    expect(tabPanel?.props('patientId')).toBe('patient-1')
+
+    const tabLabels = wrapper.findAll('[role="tab"]').map((n) => n.text())
+    expect(tabLabels.at(-1)).toBe('Timeline')
   })
 })
 

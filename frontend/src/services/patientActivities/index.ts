@@ -1,0 +1,1 @@
+export { patientActivitiesApi } from './patientActivitiesApi'
