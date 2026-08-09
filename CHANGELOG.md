@@ -24,12 +24,22 @@ Profile Redesign** design approved 2026-08-07; **2.1 (Foundation)** merged via *
 merged via **PR #20**; **2.3 (Medical History)** merged via **PR #22** (2026-08-08); **2.4 (Laboratory)**
 merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **PR #27**
 (2026-08-08, `98ae299`); **2.6a (Timeline foundation)** merged via **PR #31** (`cb7b52d`,
-2026-08-09); **2.6b (Timeline UI)** implemented on
-`feature/patient-profile-phase2-6b-timeline-ui` — this file's newest entry below, opened as
-**PR #32**. See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own
-per-PR history now feeds into._
+2026-08-09); **2.6b (Timeline UI)** merged via **PR #32** (`70b6ba6`), an E2E test fix that
+post-merge CI's real E2E run caught merged via **PR #33** (`83c584b`) — this file's newest entry
+below. **Phase 2 (Patient Profile Redesign) is complete.** See `docs/PROJECT_STATUS.md` for the
+living, continuously-updated status book this file's own per-PR history now feeds into._
 
-### Added — Phase 2.6b: Timeline UI (`feature/patient-profile-phase2-6b-timeline-ui`, implemented 2026-08-09)
+### Fixed — `e2e/timeline.spec.ts` (`fix/timeline-e2e-multi-instance-scoping`, merged 2026-08-09 via PR #33)
+- Post-merge CI on `main` runs the E2E job for real (PR-triggered runs skip it by design), and
+  caught 2 real bugs the PR #32 merge introduced, both in the test spec itself, not application
+  code: a lab case's `case_number` was read from `<h1>` before its async fetch replaced a fallback
+  string ("Lab Cases"), and an unscoped `getByText('Clinical note signed')` hit a strict-mode
+  violation because the Overview preview's and the Timeline tab's `ActivityTimeline` instances are
+  both mounted simultaneously (the exact scenario `patientActivities.ts`'s composite cache key
+  exists to handle). Fixed by waiting for the lab case's status tag before reading `case_number`,
+  and scoping every assertion to its own `tabpanel` via `getByRole('tabpanel', { name: ... })`.
+
+### Added — Phase 2.6b: Timeline UI (`feature/patient-profile-phase2-6b-timeline-ui`, merged 2026-08-09 via PR #32)
 - **Context**: second and final PR of Phase 2.6 (Timeline), closing out Phase 2 (Patient Profile
   Redesign) in full — see `docs/modules/patient-timeline-redesign-design.md` §13/§16 decision 7.
 - **`ActivityTimeline.vue`**: one embeddable component (`patientId`/`category`/`pageSize`/`compact`
