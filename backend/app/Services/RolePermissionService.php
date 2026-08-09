@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class RolePermissionService
 {
+    public function __construct(private AuditLogService $auditLogService) {}
+
     /**
      * @return Collection<int, Permission>
      */
@@ -36,10 +38,18 @@ class RolePermissionService
      * Full replace, per role (design doc §1.5 — the payload is the complete desired assignment,
      * not a diff).
      *
+     * Phase 4 Step 3 design doc §3: a `role_permissions` change is itself audit-worthy — "who
+     * changed what a role can do, and when." Not modeled as a per-row Auditable (rows are managed
+     * as a set via PUT, not individually CRUD'd) — the full before/after matrix is recorded
+     * directly via `AuditLogService::recordEvent()` instead, deliberately holding only the
+     * permission-key arrays (no secrets, nothing beyond what's needed to review the change).
+     *
      * @param  array<string, list<string>>  $assignments
      */
     public function updateMatrix(array $assignments): void
     {
+        $before = $this->matrix();
+
         DB::transaction(function () use ($assignments) {
             RolePermission::query()->delete();
 
@@ -54,5 +64,15 @@ class RolePermissionService
         });
 
         RolePermission::flushCache();
+
+        $after = $this->matrix();
+
+        $this->auditLogService->recordEvent(
+            RolePermission::class,
+            null,
+            'role_permissions_updated',
+            newValues: $after,
+            oldValues: $before,
+        );
     }
 }

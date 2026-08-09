@@ -54,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
         // users.manage protection).
         Gate::define('manage-permissions', fn (User $user) => $user->isAdmin());
 
+        // Phase 4 Step 3 design doc §2.6: the general (non-patient-scoped) Audit Log viewer —
+        // same hardcoded isAdmin() pattern as manage-permissions, for the same reason.
+        Gate::define('view-audit-logs', fn (User $user) => $user->isAdmin());
+
         // Medical History (Phase 2.3, design doc §6.4): one policy class for all three entities,
         // registered explicitly since Laravel's naming-convention auto-discovery only maps one
         // policy per model.

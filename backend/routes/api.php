@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingSettingController;
 use App\Http\Controllers\Api\BillingSummaryController;
@@ -56,6 +57,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions', [PermissionController::class, 'index']);
     Route::get('role-permissions', [RolePermissionController::class, 'index']);
     Route::put('role-permissions', [RolePermissionController::class, 'update']);
+
+    // Phase 4 Step 3 design doc §2.6 — the general Audit Log viewer, admin-only.
+    Route::get('audit-logs', [AuditLogController::class, 'index']);
 
     Route::get('patients/{patient}/audit-logs', [PatientController::class, 'auditLogs']);
     Route::apiResource('patients', PatientController::class);

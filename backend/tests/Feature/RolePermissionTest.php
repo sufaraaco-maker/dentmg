@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
+use App\Models\RolePermission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -141,5 +143,43 @@ class RolePermissionTest extends TestCase
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('assignments.admin.1');
+    }
+
+    /**
+     * Phase 4 Step 3 design doc §3 — a role_permissions change is itself audit-worthy.
+     */
+    public function test_updating_the_matrix_is_audited_with_before_and_after(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $dentistPermissionsBefore = RolePermission::where('role', 'dentist')->pluck('permission_key')->sort()->values()->all();
+
+        $this->actingAs($actor)->putJson('/api/role-permissions', [
+            'assignments' => [
+                'admin' => ['users.manage', 'patients.view'],
+                'dentist' => ['patients.view', 'clinical_notes.view'],
+                'receptionist' => ['patients.view'],
+            ],
+        ])->assertOk();
+
+        $log = AuditLog::query()->where('action', 'role_permissions_updated')->firstOrFail();
+
+        $this->assertSame($actor->id, $log->user_id);
+        $this->assertSame($dentistPermissionsBefore, $log->old_values['dentist']);
+        $this->assertSame(['clinical_notes.view', 'patients.view'], $log->changes['dentist']);
+    }
+
+    public function test_rejected_matrix_updates_are_not_audited(): void
+    {
+        $actor = User::factory()->admin()->create();
+
+        $this->actingAs($actor)->putJson('/api/role-permissions', [
+            'assignments' => [
+                'admin' => ['patients.view'],
+                'dentist' => ['patients.view'],
+                'receptionist' => ['patients.view'],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'role_permissions_updated']);
     }
 }
