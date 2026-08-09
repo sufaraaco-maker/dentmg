@@ -1,7 +1,7 @@
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import DataTable from 'primevue/datatable'
 import PatientDetailView from './PatientDetailView.vue'
 import MedicalHistoryPanel from '@/components/medicalHistory/MedicalHistoryPanel.vue'
@@ -66,6 +66,18 @@ function makeRouter() {
   })
 }
 
+// PrimeVue's `TabList` schedules a `setTimeout` for its ink-bar positioning on every mount; with
+// no explicit unmount, that timeout can outlive this file's teardown and fire into a torn-down
+// jsdom environment (`ReferenceError: HTMLElement is not defined`) — surfaced by CI once this
+// suite's worker-thread batching shifted (Dashboard 2.0 added new test files elsewhere), not a
+// behavior change here. Tracking and unmounting every wrapper is the actual fix, not a workaround.
+const mountedWrappers: VueWrapper[] = []
+
+afterEach(() => {
+  mountedWrappers.forEach((wrapper) => wrapper.unmount())
+  mountedWrappers.length = 0
+})
+
 async function mountView(role: UserRole) {
   setActivePinia(createPinia())
   setRole(role)
@@ -98,6 +110,7 @@ async function mountView(role: UserRole) {
       },
     },
   })
+  mountedWrappers.push(wrapper)
   await flushPromises()
   return wrapper
 }
