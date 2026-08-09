@@ -41,13 +41,20 @@ test.describe('audit log viewer', () => {
     page,
   }) => {
     await loginAsEnglish(page, 'admin') // itself produces a fresh `login_succeeded` row to find
+
+    // Registered *before* the navigation that triggers it — a faster environment (CI) can
+    // complete the mount-time fetch before a listener set up after `goto()` ever gets a chance to
+    // attach, which then hangs until the whole test times out (confirmed: this exact ordering bug
+    // is what failed CI). Settling this fetch before filtering matters because, under this
+    // environment's documented per-request latency, it can otherwise resolve *after* the filtered
+    // fetch below, overwriting its results with unfiltered rows — a real race, but not one a real
+    // user would ever trigger by filtering within milliseconds of the page appearing.
+    const initialLoad = page.waitForResponse(
+      (r) => r.url().includes('/api/audit-logs') && r.request().method() === 'GET',
+    )
     await page.goto('/audit-logs')
     await page.waitForSelector('table')
-    // Settles the unfiltered mount-time fetch before filtering — under this environment's
-    // documented per-request latency, that first request can resolve *after* the filtered one
-    // fired below, overwriting its results with unfiltered rows (a real race, but not one a real
-    // user would ever trigger by filtering within milliseconds of the page appearing).
-    await page.waitForResponse((r) => r.url().includes('/api/audit-logs') && r.request().method() === 'GET')
+    await initialLoad
 
     await filterByAction(page, 'Login succeeded')
 
