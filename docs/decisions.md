@@ -357,10 +357,13 @@ checked via a hardcoded `isAdmin()` Gate rather than routed through the matrix t
 `users.manage` can never be revoked from Admin through the matrix API — both close the self-lockout risk
 structurally, not just by validation. Full design: `docs/modules/phase4-permissions-audit-design.md` §1.
 
-**Status**: Steps 1-2 implemented 2026-08-09 on `feature/phase4-permissions-foundation` — Backend
-1121/1121 tests green, zero regressions across every pre-existing Feature/Policy test. The 2026-08-07
-role-hierarchy flag stays open, not resolved by this choice — revisit if Phase 5 (SaaS Multi-Tenant Prep)
-gives it a concrete multi-clinic reason to exist.
+**Status**: All 5 steps implemented 2026-08-09 on `feature/phase4-permissions-foundation` — Backend
+1145/1145 tests green (Steps 1-3), Frontend 969/969 tests green (Step 4's `PermissionsView.vue` matrix UI
++ `AuditLogsView.vue`), full E2E coverage (Step 5) with every scenario passing at least once locally, zero
+regressions across every pre-existing Feature/Policy/component/E2E test. The 2026-08-07 role-hierarchy flag
+stays open, not resolved by this choice — revisit if Phase 5 (SaaS Multi-Tenant Prep) gives it a concrete
+multi-clinic reason to exist. Pushed with CI triggered via `workflow_dispatch`; no PR opened yet, per the
+user's explicit instruction to review the complete diff after CI confirms.
 
 ## 2026-08-09 — Phase 4 Step 3: audit writes fail open for the operation, fail closed on sensitive data
 

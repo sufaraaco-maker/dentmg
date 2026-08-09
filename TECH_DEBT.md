@@ -242,6 +242,11 @@ renders a `FutureFeaturePlaceholder` in that slot instead of a real audit panel 
 **Revisit**: add `GET /api/appointments/{appointment}/audit-logs` + `AppointmentController::auditLogs()` +
 `AppointmentPolicy::viewAuditLogs` (admin only), mirroring the Patients pattern exactly. Small, low-risk —
 the write-side capture already works, only the read-side route is missing. Not blocking.
+**Partial mitigation (2026-08-09, Phase 4 Step 4)**: the new general `GET /audit-logs` admin viewer
+(`AuditLogsView.vue`) can filter by resource type = Appointment, so an admin can now see every
+Appointment audit event without this route — but not scoped to one specific appointment's `id` (the
+general viewer has no `auditable_id` filter), so this item stays open for the embedded per-appointment
+panel `AppointmentDetailView` still needs.
 
 ### Appointment mutation endpoints don't eager-load relations
 `AppointmentResource` responses from `store`/`confirm`/`check-in`/`start`/`complete`/`cancel`/`no-show`/`update` don't eager-load `patient`/`dentist`/`appointment_type` (only `index`/`show` do), so the frontend's `appointments.store.ts` issues a follow-up `GET /api/appointments/{id}` after every mutation to re-hydrate those nested fields before updating its cache — see `docs/modules/appointments-ui-design.md` §11 "Post-Mutation Rehydration."

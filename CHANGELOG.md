@@ -32,10 +32,80 @@ plan — merged via **PR #35** (`0f04b35`, 2026-08-09); post-merge CI on `main` 
 including the real `e2e/dashboard.spec.ts` run) fully green. **Milestone: "Phase 3 — Dashboard 2.0
 Complete."** **Phase 4: Advanced Permissions & Audit** — design approved 2026-08-09 (fine-grained
 permissions over the current 3 roles, a full audit-trail overhaul, simple immutability now/retention
-deferred); **Step 1 (Permissions Foundation)** and **Step 2 (Policy refactor)** implemented same day on
-`feature/phase4-permissions-foundation` — this file's newest entries below — not yet merged. See
-`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
-now feeds into._
+deferred); **Steps 1-2 (Permissions Foundation + Policy refactor)**, **Step 3 (Audit Overhaul)**,
+**Step 4 (Frontend)**, and **Step 5 (E2E + final docs)** all implemented 2026-08-09 on
+`feature/phase4-permissions-foundation` — this file's newest entry below — pushed with CI triggered,
+not yet merged (no PR opened). See `docs/PROJECT_STATUS.md` for the living, continuously-updated
+status book this file's own per-PR history now feeds into._
+
+### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, not yet merged)
+- New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
+  in a real browser; an admin toggling a permission off persists across reload, takes effect for a
+  live receptionist session (the New Patient button disappears), and is audited as
+  `role_permissions_updated` with a real before/after diff (verified by filtering the Audit Log and
+  expanding the row) — restores the original global matrix via a direct API call afterward, since
+  `role_permissions` is shared by every other E2E spec; a non-admin gets 403 on `GET /permissions`,
+  `GET`/`PUT /role-permissions`.
+- New `audit-log.spec.ts`: filtering by action narrows results and a row expands to show it has no
+  field diff; a failed login (made from a genuinely unauthenticated session — an earlier draft of
+  this test fired it from an already-logged-in admin session and wrongly recorded the admin as the
+  actor instead of `null`, since `Auth::id()` reflects the current session, not what a login attempt
+  claims) is audited with the attempted email as both its Actor and in its Context; a non-admin gets
+  403 on `GET /audit-logs`.
+- `permissions.spec.ts`: added admin-can-reach-both-screens and
+  non-admin-has-no-sidebar-entry-and-is-blocked-on-direct-URL cases, alongside the existing
+  pre-Phase-4 permission-boundary tests (unmodified and still passing — the design doc's own
+  required "receptionist retains today's effective permissions after the Policy refactor" proof).
+- Iterating locally against the dev stack surfaced and fixed 4 real bugs in the tests themselves (a
+  PUT missing its XSRF header returning 419 instead of 403; a CSS-transition click flaking under
+  this environment's per-request latency; a locale-forcing gap showing Arabic text to an
+  English-text assertion; a wrong expected error string) plus a real fetch-ordering race between a
+  page's initial unfiltered load and an immediately-applied filter. Every test passed cleanly at
+  least once locally; remaining local flakiness matches this environment's already-documented
+  per-request latency (`docs/PROJECT_STATUS.md`), not application behavior.
+- Final 3-locale i18n parity re-verified after Step 5: 1453/1453/1453 keys, zero drift either way.
+- `docs/decisions.md`'s Phase 4 entry and `TECH_DEBT.md`'s Appointment-audit-log item both updated;
+  `docs/modules/roles-permissions.md` formally marked superseded by the Phase 4 design doc.
+- Pushed to `origin/feature/phase4-permissions-foundation`; full CI (Backend/Frontend/E2E) triggered
+  via `workflow_dispatch` for the authoritative signal this environment's own local Docker latency
+  can't reliably give.
+
+Design doc: `docs/modules/phase4-permissions-audit-design.md` §9/§14. No backend behavior changed.
+
+### Added — Phase 4 Step 4: Frontend (`feature/phase4-permissions-foundation`, not yet merged)
+- New admin-only **Permissions** screen (`PermissionsView.vue`): a role×permission matrix (68
+  catalog entries grouped by module, one toggle switch per role) editable as a single draft with
+  explicit Save/Discard — no per-toggle autosave. The `users.manage` cell on the Admin role renders
+  disabled/checked, matching `UpdateRolePermissionsRequest`'s server-side self-lockout rule
+  (§1.4) exactly, so the UI explains the constraint instead of letting an admin uncheck it and
+  learn only from a rejected save. A 422 from the save endpoint is shown as that specific
+  self-lockout message, not a generic error. Responsive per the design doc's §10: the matrix table
+  (desktop) is replaced by a stacked Accordion — one panel per role — on narrow viewports, since a
+  grid of toggles doesn't fit a phone width.
+- New admin-only **Audit Log** screen (`AuditLogsView.vue`): the general (non-patient-scoped)
+  viewer over `GET /audit-logs`, with User/Resource type/Action/date-range filters, server-side
+  pagination, and a per-row expansion showing the old/new field diff (or the login/matrix-update
+  `context`, e.g. the attempted email on a `login_failed` row — shown as that row's "Actor" too,
+  since there's no resolved `user`). Raw values (PHP FQCNs, permission-key arrays) are never shown
+  to the user — a `config/auditableTypes.ts` map and i18n action/resource-type labels translate
+  every raw backend value first.
+- New `permissions.ts`/`auditLogs.ts` Pinia stores and `services/permissions`,
+  `services/auditLogs` API layers, following this app's established store-owns-error-state pattern.
+- New Sidebar entries (admin-only, `ADMINISTRATION` section) and routes (`/permissions`,
+  `/audit-logs`), gated the same way `Users`/`Settings` already are.
+- i18n: ~300 new keys across all 3 locales (`permissions.*` — 28 group labels + 68 catalog labels,
+  `auditLog.*` — 7 action labels + 22 resource-type labels + filter/table copy) — 3-locale key
+  parity verified programmatically (1453 keys in each of `en`/`ar`/`tr`, zero missing either way).
+- Frontend: 20 new tests (2 new stores, `PermissionsView`/`AuditLogsView` component tests covering
+  matrix toggle/locked-cell rendering/save, filter controls, row expansion, and the
+  no-resolved-user actor case) — **969/969 frontend tests green**, `vue-tsc`/ESLint/Prettier clean.
+  Manually verified in a real browser against real seeded audit-trail data: the full matrix and a
+  live Audit Log both render correctly in English, Arabic (RTL), and at a mobile viewport; a
+  non-admin (dentist) session has no `Permissions`/`Audit Log` sidebar entry and gets the app's
+  standard 403 page on direct navigation to either route.
+
+Design doc: `docs/modules/phase4-permissions-audit-design.md` §1.6/§2.6/§8/§10. No backend behavior
+changed — Step 4 is frontend-only, consuming the Step 1-3 API surface as-is.
 
 ### Added — Phase 4 Step 3: Audit Overhaul (`feature/phase4-permissions-foundation`, not yet merged)
 - Closes the two critical gaps the design-phase audit found: `User` was not audited, and no
