@@ -34,9 +34,9 @@ Complete."** **Phase 4: Advanced Permissions & Audit** — design approved 2026-
 permissions over the current 3 roles, a full audit-trail overhaul, simple immutability now/retention
 deferred); **Steps 1-2 (Permissions Foundation + Policy refactor)**, **Step 3 (Audit Overhaul)**,
 **Step 4 (Frontend)**, and **Step 5 (E2E + final docs)** all implemented 2026-08-09 on
-`feature/phase4-permissions-foundation` — this file's newest entry below — pushed with CI triggered,
-not yet merged (no PR opened). See `docs/PROJECT_STATUS.md` for the living, continuously-updated
-status book this file's own per-PR history now feeds into._
+`feature/phase4-permissions-foundation` — this file's newest entry below — pushed, **CI fully green
+(Backend/Frontend/E2E, run `31328615397`)**, not yet merged (no PR opened). See `docs/PROJECT_STATUS.md`
+for the living, continuously-updated status book this file's own per-PR history now feeds into._
 
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, not yet merged)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
@@ -66,9 +66,11 @@ status book this file's own per-PR history now feeds into._
 - Final 3-locale i18n parity re-verified after Step 5: 1453/1453/1453 keys, zero drift either way.
 - `docs/decisions.md`'s Phase 4 entry and `TECH_DEBT.md`'s Appointment-audit-log item both updated;
   `docs/modules/roles-permissions.md` formally marked superseded by the Phase 4 design doc.
-- Pushed to `origin/feature/phase4-permissions-foundation`; full CI (Backend/Frontend/E2E) triggered
-  via `workflow_dispatch` for the authoritative signal this environment's own local Docker latency
-  can't reliably give.
+- Pushed to `origin/feature/phase4-permissions-foundation`; first CI run (`31328029404`) caught one
+  real ordering bug local runs never surfaced — a `page.waitForResponse()` registered *after* the
+  `page.goto()` that triggers the response, a race a fast environment (CI) loses and this local
+  Docker setup's own latency happens to mask — fixed and **re-run (`31328615397`) fully green:
+  Backend, Frontend, and E2E (53/53) all `success`.**
 
 Design doc: `docs/modules/phase4-permissions-audit-design.md` §9/§14. No backend behavior changed.
 
