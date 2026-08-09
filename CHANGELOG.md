@@ -28,10 +28,12 @@ merged via **PR #24** (2026-08-08, `9de50fb`); **2.5 (Documents)** merged via **
 post-merge CI's real E2E run caught merged via **PR #33** (`83c584b`) — this file's newest entry
 below. **Phase 2 (Patient Profile Redesign) closed out via PR #34.** **Phase 3 (Dashboard 2.0)** — the
 next phase in the 8-phase roadmap, absorbing the Premium Visual Redesign's own Dashboard-restyle
-plan — this file's newest entry below. See `docs/PROJECT_STATUS.md` for the
-living, continuously-updated status book this file's own per-PR history now feeds into._
+plan — merged via **PR #35** (`0f04b35`, 2026-08-09); post-merge CI on `main` (Backend/Frontend/E2E,
+including the real `e2e/dashboard.spec.ts` run) fully green. **Milestone: "Phase 3 — Dashboard 2.0
+Complete."** See `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this
+file's own per-PR history now feeds into._
 
-### Added — Dashboard 2.0 (`feature/dashboard-2-0`)
+### Added — Dashboard 2.0 (`feature/dashboard-2-0`, merged 2026-08-09 via PR #35)
 - New admin-only `GET /dashboard/financial-summary` endpoint: production/collections
   period-over-period trend (this month vs. last), and an A/R aging snapshot — each a thin wrapper
   around an existing `ReportService` method, no new report logic. Gated by the same
