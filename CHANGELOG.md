@@ -33,9 +33,45 @@ including the real `e2e/dashboard.spec.ts` run) fully green. **Milestone: "Phase
 Complete."** **Phase 4: Advanced Permissions & Audit** — design approved 2026-08-09 (fine-grained
 permissions over the current 3 roles, a full audit-trail overhaul, simple immutability now/retention
 deferred); **Step 1 (Permissions Foundation)** and **Step 2 (Policy refactor)** implemented same day on
-`feature/phase4-permissions-foundation` — this file's newest entry below — not yet merged. See
+`feature/phase4-permissions-foundation` — this file's newest entries below — not yet merged. See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
+
+### Added — Phase 4 Step 3: Audit Overhaul (`feature/phase4-permissions-foundation`, not yet merged)
+- Closes the two critical gaps the design-phase audit found: `User` was not audited, and no
+  authentication event was logged anywhere.
+- Additive `audit_logs` migration: `old_values`, `ip_address`, `user_agent`, `context` columns;
+  `auditable_id` relaxed to nullable for targetless events (e.g. a failed login against an
+  unknown email).
+- `AuditLogService` rewritten: `record()` (model-observer path) and `recordEvent()` (auth events,
+  role_permissions matrix changes) both capture real before/after diffs and IP/User-Agent; a new
+  `search()` backs the general viewer. Writes fail open (a broken audit write never breaks the
+  underlying login/save/permission-update) but fail closed on sensitive data (the failure log
+  itself never carries the payload).
+- `AuditObserver::updated()` now captures `old_values` for changed fields only (previously new
+  values only); `deleted()` captures the full pre-deletion state (previously an empty array).
+- `User` model is now `Auditable`.
+- `AuthService` logs `login_succeeded`/`login_failed`/`logged_out` — a failed login records the
+  attempted email in `context`, never the password; rate-limited attempts aren't logged as a
+  distinct action (the `login_failed` events that caused the throttle were already each logged);
+  logout is audited *before* the guard actually logs out, so the actor field isn't lost.
+- `RolePermissionService::updateMatrix()` now audits its own before/after matrix as
+  `role_permissions_updated` — closes a gap Step 1 itself had left open.
+- `AuditLog` model: immutability guard (throws on any update/delete attempt).
+- New `GET /audit-logs` — the first general (non-patient-scoped) Audit Log viewer, with
+  user_id/auditable_type/action/date-range filters and pagination, gated by a hardcoded
+  `view-audit-logs` Gate (`isAdmin()`, same self-lockout-proof pattern as `manage-permissions`).
+- `bootstrap/app.php` gained `trustProxies(at: '*')` — a real gap closed, not just documented:
+  `docs/deployment.md`'s host-level reverse proxy already sets `X-Forwarded-For` correctly, but
+  Laravel had zero trusted-proxy config, so captured IPs would have silently been the proxy's own
+  loopback address in production.
+- 24 new tests (old/new diffs, delete snapshots, redaction across `changes`/`old_values`/`context`,
+  IP/UA capture, fail-open write behavior, login success/failure/logout including the
+  unknown-email case, matrix-update auditing, immutability, endpoint authorization/filters/
+  pagination). Backend: **1145/1145 tests green** (1121 + 24 new), zero regressions.
+
+Design doc: `docs/modules/phase4-permissions-audit-design.md` §2. See `docs/decisions.md`'s
+2026-08-09 entries for the audit-write fail-open/fail-closed policy and the trusted-proxy fix.
 
 ### Added — Phase 4 Steps 1-2: Permissions Foundation + Policy refactor (`feature/phase4-permissions-foundation`, not yet merged)
 - New `permissions` catalog (68 entries) and `role_permissions` matrix, derived 1:1 from a full
