@@ -85,6 +85,10 @@ async function recordLabAndClinicalActivity(page: Page, patient: { id: string; f
   await waitForSelectOverlayClosed(page)
   await caseDialog.getByRole('button', { name: 'Create' }).click()
   await page.waitForURL(/\/lab-cases\/[^/]+$/, { timeout: 10_000 })
+  // The page's `<h1>` shows a fallback ("Lab Cases") until the case data itself has loaded —
+  // waiting for the status tag first (same signal `laboratory.spec.ts` waits on) guarantees the
+  // real `case_number` is in place before reading it.
+  await expect(page.locator('.p-tag')).toContainText('Draft')
   const caseNumber = (await page.locator('h1').innerText()).trim()
 
   await page.getByRole('button', { name: 'Send to Lab' }).click()
@@ -125,14 +129,20 @@ test.describe('patient timeline', () => {
     await page.goto(`/patients/${patient.id}`)
     await page.getByRole('tab', { name: 'Timeline' }).click()
 
-    await expect(page.getByText('Clinical note signed')).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(`Lab case ${caseNumber} sent`)).toBeVisible()
+    // `PatientDetailView.vue`'s `Tabs` isn't `lazy`, so the Overview tab's own `ActivityTimeline`
+    // preview stays mounted (just hidden) behind the Timeline tab — an unscoped `getByText` would
+    // match both instances' identical summary text and hit Playwright's strict-mode violation.
+    // Scoping to this tab's own `tabpanel` (found via its `aria-labelledby` back to the "Timeline"
+    // tab) isolates it from the Overview preview's copy of the same text.
+    const timelinePanel = page.getByRole('tabpanel', { name: 'Timeline' })
+    await expect(timelinePanel.getByText('Clinical note signed')).toBeVisible({ timeout: 10_000 })
+    await expect(timelinePanel.getByText(`Lab case ${caseNumber} sent`)).toBeVisible()
 
     // Selecting a category chip re-queries the server for just that category — the Clinical Notes
     // entry disappears entirely, not merely greyed out (design doc §13's chip filter).
-    await page.getByRole('button', { name: 'Laboratory', exact: true }).click()
-    await expect(page.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Clinical note signed')).toHaveCount(0)
+    await timelinePanel.getByRole('button', { name: 'Laboratory', exact: true }).click()
+    await expect(timelinePanel.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
+    await expect(timelinePanel.getByText('Clinical note signed')).toHaveCount(0)
   })
 
   test('the Overview tab shows a recent-activity preview that jumps to the Timeline tab', async ({
@@ -143,12 +153,15 @@ test.describe('patient timeline', () => {
     const { caseNumber } = await recordLabAndClinicalActivity(page, patient)
 
     await page.goto(`/patients/${patient.id}`)
-    await expect(page.getByText('Recent Activity')).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Clinical note signed')).toBeVisible({ timeout: 10_000 })
+    const overviewPanel = page.getByRole('tabpanel', { name: 'Overview' })
+    await expect(overviewPanel.getByText('Recent Activity')).toBeVisible({ timeout: 10_000 })
+    await expect(overviewPanel.getByText('Clinical note signed')).toBeVisible({ timeout: 10_000 })
 
-    await page.getByRole('button', { name: 'View Timeline' }).click()
+    await overviewPanel.getByRole('button', { name: 'View Timeline' }).click()
     await expect(page.getByRole('tab', { name: 'Timeline', selected: true })).toBeVisible()
-    await expect(page.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
+
+    const timelinePanel = page.getByRole('tabpanel', { name: 'Timeline' })
+    await expect(timelinePanel.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
   })
 
   test('a receptionist sees Laboratory activity on the Timeline tab but never Clinical Notes activity', async ({
@@ -163,14 +176,15 @@ test.describe('patient timeline', () => {
 
     await page.goto(`/patients/${patient.id}`)
     await page.getByRole('tab', { name: 'Timeline' }).click()
-    await expect(page.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Clinical note signed')).toHaveCount(0)
+    const timelinePanel = page.getByRole('tabpanel', { name: 'Timeline' })
+    await expect(timelinePanel.getByText(`Lab case ${caseNumber} sent`)).toBeVisible({ timeout: 10_000 })
+    await expect(timelinePanel.getByText('Clinical note signed')).toHaveCount(0)
 
     // Not just hidden by the frontend: the server excludes `clinical_notes` from the query itself
     // (design doc §9A/`PatientActivityPolicy::allowedCategories`) — explicitly filtering to it
     // must return nothing, not a client-side-hidden row.
-    await page.getByRole('button', { name: 'Clinical Notes', exact: true }).click()
-    await expect(page.getByText('No activity recorded for this patient yet.')).toBeVisible({
+    await timelinePanel.getByRole('button', { name: 'Clinical Notes', exact: true }).click()
+    await expect(timelinePanel.getByText('No activity recorded for this patient yet.')).toBeVisible({
       timeout: 10_000,
     })
   })
