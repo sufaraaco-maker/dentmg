@@ -98,13 +98,35 @@ async function findDentistId(page: Page): Promise<string> {
   return dentist.id
 }
 
-/** Tomorrow at 10:00 local, in the naive "digits-labeled" format the API expects. */
+/**
+ * Hands out a distinct hour per call, so the four tests in this file never book the same dentist
+ * into an overlapping slot on the shared seeded database (`fullyParallel: false`, so this is a
+ * simple counter rather than anything concurrent).
+ */
+let slotHour = 8
+function nextHour(): number {
+  slotHour += 1
+  return slotHour
+}
+
+/** Tomorrow at the given hour, in the naive "digits-labeled" format the API expects. */
 function tomorrowAt(hour: number): string {
   const date = new Date()
   date.setDate(date.getDate() + 1)
   date.setHours(hour, 0, 0, 0)
   const pad = (value: number) => String(value).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(hour)}:00:00`
+}
+
+/** `appointment_type_id` is required and must reference an *active* type — see StoreAppointmentRequest. */
+async function findAppointmentTypeId(page: Page): Promise<string> {
+  const types = await apiRequest<{ data: { id: string; is_active: boolean }[] }>(
+    page,
+    '/appointment-types',
+  )
+  const active = types.data.find((type) => type.is_active)
+  if (!active) throw new Error('No active appointment type found in the seeded data')
+  return active.id
 }
 
 async function createAppointmentForDentist(
@@ -117,7 +139,10 @@ async function createAppointmentForDentist(
     body: {
       patient_id: patientId,
       dentist_id: dentistId,
-      start_at: tomorrowAt(10),
+      appointment_type_id: await findAppointmentTypeId(page),
+      // Each test needs its own slot: the suite runs against a shared seeded database and the
+      // backend rejects overlapping appointments for the same dentist.
+      start_at: tomorrowAt(nextHour()),
       duration_minutes: 30,
       reason: 'E2E notification fixture',
     },
