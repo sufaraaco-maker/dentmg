@@ -271,6 +271,40 @@ class NotificationEndpointTest extends TestCase
         $this->assertSame($older->id, $response->json('data.1.id'));
     }
 
+    /**
+     * SECURITY: found as a 500. `markAsRead()` runs `findOrFail($notification)` against a `uuid`
+     * column with no format check of its own — on Postgres, a non-UUID string makes the driver
+     * throw `22P02: invalid input syntax for type uuid`, an uncaught `QueryException` that becomes
+     * a 500, not the 404 a not-found route should return. SQLite (this suite's own connection)
+     * stores the column as untyped text and silently returns zero rows either way, which is exactly
+     * why this bug shipped unnoticed by the existing suite — the fix (`->whereUuid()` on the route)
+     * rejects the id at the router, before any query runs, so it now 404s on every driver equally;
+     * this assertion protects that on the connection actually used here, and the same call was
+     * separately confirmed against a real Postgres connection during review (500 before the fix,
+     * 404 after — see PROJECT_STATUS.md).
+     */
+    public function test_marking_a_malformed_id_as_read_404s_instead_of_erroring(): void
+    {
+        $user = User::factory()->admin()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/notifications/not-a-real-uuid/read')
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->postJson('/api/notifications/12345/read')
+            ->assertNotFound();
+    }
+
+    public function test_marking_read_with_no_id_segment_404s(): void
+    {
+        $user = User::factory()->admin()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/notifications//read')
+            ->assertNotFound();
+    }
+
     public function test_mark_as_read_is_idempotent(): void
     {
         $user = User::factory()->admin()->create();

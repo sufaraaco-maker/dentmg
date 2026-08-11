@@ -222,7 +222,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    // `->whereUuid()` (Laravel's own route-constraint helper, not custom parsing) rejects a
+    // malformed id before the controller ever runs — without it, a non-UUID string reaches
+    // `findOrFail()`'s underlying `WHERE id = ?` against the `notifications.id` uuid column and
+    // Postgres throws `22P02: invalid input syntax for type uuid`, an uncaught QueryException that
+    // becomes a 500. SQLite (the test suite's own connection) stores the column as untyped text and
+    // never rejects it, which is why this needed a real Postgres-backed test, not just SQLite.
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->whereUuid('notification');
 
     Route::get('reports/production', [ReportController::class, 'production']);
     Route::get('reports/collections', [ReportController::class, 'collections']);
