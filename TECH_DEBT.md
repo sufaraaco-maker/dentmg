@@ -187,12 +187,23 @@ stale Vite transform (`dentalsuite_frontend` restarted twice), and PrimeVue drif
 and more severe than — the per-HTTP-request latency already documented below, which caused slowness and
 flakiness rather than a deterministic failure.
 
-**Consequence**: local E2E is currently unusable as a verification signal, so `notifications.spec.ts` ships
-written and type-checked but **never observed passing**. CI is the only authority until this is fixed.
-**Revisit**: before the next phase that adds E2E coverage. Worth checking whether CI still passes
-`auth.spec.ts` (if it does, the divergence is purely local — likely browser/Playwright version on this host;
-if it does not, this is a real application regression that CI has not yet caught because the E2E job does not
-run on `pull_request`).
+**Consequence**: local E2E is currently unusable as a verification signal, so `notifications.spec.ts` shipped
+written and type-checked but initially never observed passing. CI is the only authority until this is fixed.
+
+**This entry's own open question, answered 2026-08-11** (PR #39 pre-merge gate, per explicit user request):
+ran real `workflow_dispatch` CI on `feature/phase5-notifications` — `auth.spec.ts` and every other
+login-dependent spec **passed cleanly on CI**, confirming the divergence is purely local to this dev
+machine (Windows Docker Desktop + this host's Playwright/browser install), not a real application
+regression, and not something the E2E job's `pull_request`-skip was masking. Same run also found and fixed
+two genuinely real, pre-existing bugs unrelated to `login()` — see `docs/PROJECT_STATUS.md`'s Phase 5 "E2E
+— could not be verified locally, but now genuinely verified on real CI" section for the full account: a
+`notifications.spec.ts` fixture bug (wrong assumption about `/appointment-types`'s response shape) and a
+`ci.yml` gap (the E2E job never started a queue worker despite `SendsNotifications` being `ShouldQueue`
+since Phase 5B). `notifications.spec.ts` is now CI-confirmed passing (56/57, 1 flaky-then-passed).
+**Revisit**: the local `login()` failure itself is still unfixed and still blocks local E2E entirely — only
+its *consequence* for Phase 5 specifically has been resolved (via CI, not by fixing the local issue). Worth
+a dedicated session pinning down the local browser/Playwright version mismatch, before the next phase that
+adds E2E coverage needs to lean on local runs.
 
 ### Notification Center polls instead of receiving server push
 Introduced 2026-08-11 with Phase 5A (Notification System). The unread badge polls

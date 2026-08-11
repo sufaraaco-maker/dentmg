@@ -172,6 +172,30 @@ CI fully green after both fixes: Backend (tests, PHPStan, Pint) and Frontend (ty
 build) both `pass`; E2E `skipping` (by design — the E2E job does not run on `pull_request`, only on push to
 `main`, per this repo's existing CI convention).
 
+**Pre-merge E2E gate**: since the E2E job skips on `pull_request`, ran real `workflow_dispatch` CI on the
+branch — the mechanism this project has always used to get the authoritative E2E signal — before allowing
+a merge. Found and fixed two further genuinely real, pre-existing bugs (from the original Phase 5A/5B
+implementation, neither caused by the pre-PR review fixes above), each surfaced only because this was the
+first time any CI run reached this spec's actual assertions:
+- `notifications.spec.ts`'s `findAppointmentTypeId()` helper assumed `GET /appointment-types` returns a
+  paginated `{ data: [...] }` envelope (matching this same file's `/users`/`/notifications` calls), but
+  that endpoint is unpaginated and `JsonResource::withoutWrapping()` is global — it returns a bare array.
+  Fixed the helper to read the array directly.
+- The E2E job's `ci.yml` never started a queue worker, despite `QUEUE_CONNECTION=redis` (the project
+  default) and `SendsNotifications` being `ShouldQueue` since Phase 5B — every notification-producing
+  action in the suite enqueued and was never consumed, so no notification was ever created. Added a
+  `php artisan queue:work &` step to the job, mirroring the backend/frontend dev-server backgrounding
+  pattern already used there.
+
+Also confirms the local `login()` failure (`TECH_DEBT.md`) is genuinely environment-specific, not a real
+regression CI was missing: `auth.spec.ts` and every login-dependent spec passed cleanly on this same CI run.
+
+Final `workflow_dispatch` run: Backend `pass`, Frontend `pass`, **E2E 56/57 passed, 1 flaky-then-passed**
+(a notification-lookup timing race against the now-actually-running queue worker, resolved by Playwright's
+built-in retry — the same "flaky, not failure" class already recorded elsewhere in this project, not a new
+problem). `notifications.spec.ts` is, for the first time, genuinely CI-confirmed passing — including the
+cross-user notification, authorization, mark-all, and RTL/mobile scenarios.
+
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
   in a real browser; an admin toggling a permission off persists across reload, takes effect for a

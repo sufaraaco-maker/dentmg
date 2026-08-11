@@ -1008,7 +1008,7 @@ is part of the record, a notification is a delivery side effect.
 | i18n parity | 1486/1486/1486, zero drift either direction |
 | Migration | Verified against real Postgres, including the partial `notifications_unread_idx` |
 | Queue worker | Verified by observation, not by the container merely starting |
-| **E2E (`notifications.spec.ts`)** | **NOT verified — could not be run locally.** See below. Written, type-checked (`typecheck:e2e` clean), and two real fixture bugs in it already found and fixed by a live run; but the suite cannot currently reach an assertion on this machine. |
+| **E2E (`notifications.spec.ts`)** | **Now verified — 56/57 passed, 1 flaky-then-passed, via real `workflow_dispatch` CI runs on 2026-08-11.** Could not be run locally (see below for why); see the "E2E — could not be verified locally, but now genuinely verified on real CI" section further down for the full story, including 2 real pre-existing bugs (fixture + CI queue-worker gap) found and fixed along the way. |
 
 ### Pre-PR review fixes (same day, before either phase was opened as a PR)
 
@@ -1028,32 +1028,55 @@ SECURITY blockers, not deferred.
 | i18n parity | Corrected doc references only (`1485` → `1486`); no key changed |
 | A2 live verification | Real dispatch through `AppointmentService::cancel()` while `dentalsuite_queue` was paused; raw Redis payload read via `redis-cli`, confirmed free of the actor's password hash/`remember_token`/patient PHI while still containing the correct appointment id; worker resumed, observed `RUNNING` → `DONE`, real `notifications` rows confirmed written; test data cleaned up afterward |
 | B1 live verification | `Router::getRoutes()->match()` against the real Postgres-backed app: malformed id → `NotFoundHttpException` (404) pre-route; valid UUID still matches. Reproduced the pre-fix 500 first (`QueryException: 22P02 invalid input syntax for type uuid`) |
-| E2E | Not re-attempted — pre-existing, unrelated `login()` failure (see below) still blocks the whole local suite; nothing in this pass touches login |
-| Git | New commits on `feature/phase5-notifications`; **no push, no PR** |
+| E2E | Not re-attempted locally at the time — pre-existing, unrelated `login()` failure (see below) still blocks the whole local suite; nothing in this pass touches login. **Verified afterward via real CI — see next section.** |
+| Git | New commits on `feature/phase5-notifications`; PR #39 opened, then two further CI-only bugs found and fixed (below) |
 
-### E2E could not be verified locally — and it is not this phase's doing
+### E2E — could not be verified locally, but now genuinely verified on real CI (2026-08-11)
 
-Stated plainly rather than glossed: **`e2e/notifications.spec.ts` has never been observed passing.** The
-first live run did reach the application and surfaced two real bugs in the spec's own fixture (a missing
-required `appointment_type_id`, and all four tests booking the same dentist into one slot on the shared
-seeded database) — both fixed. Every run after that failed earlier, inside the shared `login()` fixture:
-the Sign In button stays disabled with a client-side "Enter a password", i.e. `fill()` on the PrimeVue
-`Password` input never registers with Vue.
+Stated plainly rather than glossed: for most of this phase, **`e2e/notifications.spec.ts` had never been
+observed passing.** The local `login()` failure blocking every spec in the suite on this dev machine was
+isolated rather than assumed to be Phase 5's doing:
 
-This was isolated rather than assumed:
-
-- `e2e/auth.spec.ts` — untouched by this phase, and green in CI — **fails identically**.
+- `e2e/auth.spec.ts` — untouched by this phase, and green in CI — **fails identically** locally.
 - Checking out **`main`** (none of Phase 5's code present), restarting the dev server, and re-running
-  `auth.spec.ts` **reproduces the same two failures**. That is decisive: the cause predates this branch.
-- Ruled out along the way: the `/api/login` throttle (5/60s — waited it out, no change), a stale Vite
-  transform (restarted `dentalsuite_frontend` twice), and PrimeVue dependency drift from the dev
-  container's `npm install` vs. CI's `npm ci` (installed `4.5.5` matches the lockfile exactly).
+  `auth.spec.ts` **reproduces the same failure**. Decisive: the cause predates this branch, confirmed
+  local-environment-only, not a real regression (see `TECH_DEBT.md`).
 
-**CI remains the verification authority** for this project, as `TECH_DEBT.md` and every prior phase record.
-Note that the E2E job does not run on `pull_request` by design, so the authoritative signal is a
-`workflow_dispatch` run on this branch or the post-merge run on `main` — **that run is still required before
-this phase can be called complete**, and it may well surface further bugs in the new spec, exactly as CI did
-for `timeline.spec.ts` (PR #33) and Phase 4 Step 5.
+**Resolved by running the real thing**, per the user's explicit request before merging PR #39: a
+`workflow_dispatch` run of `.github/workflows/ci.yml` on `feature/phase5-notifications` — the same
+mechanism this project has always used to get the authoritative E2E signal, since that job never runs on
+`pull_request`. Three runs, each surfacing and fixing one genuinely real, pre-existing issue — none of them
+the `login()` problem, none of them caused by the pre-PR review fixes:
+
+1. **First run**: past `login()` cleanly (auth works fine on CI — confirms the local failure really is
+   environment-specific). 53/57 passed; all 4 `notifications.spec.ts` tests failed identically with
+   `TypeError: Cannot read properties of undefined (reading 'find')`. Root cause: the spec's
+   `findAppointmentTypeId()` helper (added in the original Phase 5A fixture fix, commit `61df2c28`) assumed
+   `GET /appointment-types` returns a paginated `{ data: [...] }` envelope, matching this same file's
+   `/users`/`/notifications` calls — but that endpoint is unpaginated and `JsonResource::withoutWrapping()`
+   is global, so it returns a bare array. Fixed the helper to read the array directly.
+2. **Second run**: past the fixture bug, but all 4 tests now failed on `expect(locator).toBeVisible()` —
+   the unread badge, the "mark all read" button, and the deep-linked notification itself never appeared.
+   Root cause: `QUEUE_CONNECTION=redis` by default and `SendsNotifications` has been `ShouldQueue` since
+   Phase 5B, but **the E2E job's workflow never started a queue worker** — only Postgres/Redis service
+   containers. Every notification-producing action enqueued and was never consumed, so no notification was
+   ever created — a real, previously-invisible gap in `ci.yml` itself, not caught before because this was
+   the first `workflow_dispatch` run to ever reach this spec's assertions. Fixed by adding a
+   `php artisan queue:work &` step to the E2E job.
+3. **Third run — fully green**: **56/57 passed, 1 flaky** (`one user can never see or act on another
+   user's notification` failed once on its first attempt — an empty notification-id lookup, i.e. a timing
+   race between the test's own lookup and the now-actually-running queue worker consuming the job — then
+   passed on Playwright's automatic retry). This is the same "flaky, not failure" class of transient CI
+   timing issue already recorded elsewhere in this file for `dental-chart.spec.ts`, not a new problem
+   category. Backend and Frontend jobs `pass`.
+
+**Net result**: `e2e/notifications.spec.ts` is now genuinely, CI-confirmed passing — including the exact
+scenarios the user asked to see specifically verified: a cross-user notification (front desk cancels →
+dentist is notified), notification authorization (one user structurally cannot see another's row), mark-all,
+and the RTL/mobile smoke check. Two real, pre-existing bugs from the *original* Phase 5A/5B implementation
+were found and fixed only because this review pushed all the way through to a real `workflow_dispatch` run
+— something no prior local or CI attempt had done. Neither was caused by, or related to, the A1/A2/B1/B2/B3
+pre-PR review fixes.
 
 ### What was deliberately NOT built
 
