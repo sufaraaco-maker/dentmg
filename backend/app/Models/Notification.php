@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -25,6 +26,31 @@ use Illuminate\Notifications\DatabaseNotification;
  */
 class Notification extends DatabaseNotification
 {
+    use MassPrunable;
+
+    /**
+     * How long a read notification is kept before pruning. Unread rows are NEVER pruned regardless
+     * of age — an unread notification is still an outstanding thing to look at, and silently
+     * deleting one would be worse than letting the table grow.
+     */
+    public const RETENTION_DAYS = 90;
+
+    /**
+     * Phase 5B: activated only now that a scheduler container actually exists (design doc §6.4 /
+     * §14 Phase B) — before this phase nothing ran `model:prune`, so declaring it would have been
+     * decoration. `MassPrunable` rather than `Prunable`: these rows have no files or related
+     * records to clean up, so a single bulk DELETE is correct and far cheaper than instantiating
+     * every model.
+     *
+     * @return Builder<$this>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()
+            ->whereNotNull('read_at')
+            ->where('read_at', '<=', now()->subDays(self::RETENTION_DAYS));
+    }
+
     /**
      * The resource this notification points at — an Appointment, TreatmentPlan, LabCase, Invoice
      * or Payment. Read by the frontend for its deep link, never joined at list time (the payload

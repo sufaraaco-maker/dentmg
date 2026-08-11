@@ -17,6 +17,52 @@ services:
     networks:
       - dentalsuite
 
+  # Phase 5B (Notification System) — closes gap G1 in production too. See docker-compose.yml for
+  # the full reasoning; `restart: unless-stopped` matters more here, since `--max-time=3600` makes
+  # the worker exit hourly on purpose (the standard way to bound a long-running PHP process's
+  # memory) and rely on the restart policy to bring it straight back.
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: dentalsuite_queue
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan queue:work --tries=3 --backoff=5 --max-time=3600 --sleep=1
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
+  # Phase 5B — closes gap G2 in production. Exactly one scheduler container must run: two would
+  # double-fire every scheduled task.
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: dentalsuite_scheduler
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
   nginx:
     image: nginx:stable-alpine
     container_name: dentalsuite_nginx

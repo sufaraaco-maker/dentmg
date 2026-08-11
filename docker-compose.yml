@@ -14,6 +14,48 @@ services:
     networks:
       - dentalsuite
 
+  # Phase 5B (Notification System) — closes gap G1. `QUEUE_CONNECTION=redis` has been configured
+  # since the project's first .env, but NO worker process has ever existed in either compose file,
+  # so any `ShouldQueue` job would have been enqueued and then silently never run. That latent trap
+  # is why Phase 5A's notification listener is deliberately synchronous; this container is what
+  # makes queued work safe to adopt. Reuses the `app` image — same code, different entrypoint.
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dentalsuite_queue
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan queue:work --tries=3 --backoff=5 --max-time=3600 --sleep=1
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
+  # Phase 5B — closes gap G2. Nothing was scheduled anywhere before this (routes/console.php held
+  # only Laravel's stock `inspire` command), which is what blocked every time-based notification.
+  # `schedule:work` is the long-running, container-friendly form of the classic minutely cron entry.
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dentalsuite_scheduler
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
   nginx:
     image: nginx:stable-alpine
     container_name: dentalsuite_nginx
