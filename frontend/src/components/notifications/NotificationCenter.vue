@@ -25,8 +25,16 @@ const { t } = useI18n()
 const router = useRouter()
 const store = useNotificationsStore()
 
+/**
+ * Always refetch on mount, never gated on `store.items.length === 0`. `Popover`/`Drawer` unmount
+ * their default slot while hidden and remount it on every open (verified against PrimeVue's own
+ * render output — not an assumption), so this genuinely runs once per opening, not once ever — but
+ * the Pinia store's `items` survive the unmount, so the old length-based guard skipped every
+ * refetch after the first, leaving the panel stuck on whatever loaded the very first time it was
+ * ever opened (design doc's "Load more" replace-on-fresh-fetch behaviour never had a chance to run).
+ */
 onMounted(() => {
-  if (store.items.length === 0) void store.fetch()
+  void store.fetch()
 })
 
 const isEmpty = computed(() => !store.loading && store.items.length === 0)

@@ -177,4 +177,32 @@ describe('NotificationCenter', () => {
 
     expect(wrapper.find('[data-testid="notifications-mark-all"]').exists()).toBe(false)
   })
+
+  /**
+   * `Popover`/`Drawer` unmount and remount this component's whole tree on every open/close (real
+   * PrimeVue behaviour, confirmed by reading its render output — not simulated here), but the
+   * Pinia store instance is shared across the app's whole lifetime. This reproduces exactly that:
+   * one Pinia instance, mount → unmount ("close") → mount again ("reopen"), and asserts the second
+   * open actually refetches instead of trusting the first page loaded forever.
+   */
+  it('refetches on every reopen so a notification that arrived while closed is shown', async () => {
+    setActivePinia(createPinia())
+    mockedApi.list.mockResolvedValueOnce(makePage({ data: [makeNotification({ id: 'n1' })] }))
+
+    const first = mount(NotificationCenter)
+    await flushPromises()
+    expect(first.find('[data-testid="notification-n1"]').exists()).toBe(true)
+    first.unmount()
+
+    mockedApi.list.mockResolvedValueOnce(
+      makePage({ data: [makeNotification({ id: 'n2' }), makeNotification({ id: 'n1' })] }),
+    )
+
+    const second = mount(NotificationCenter)
+    await flushPromises()
+
+    expect(mockedApi.list).toHaveBeenCalledTimes(2)
+    expect(second.find('[data-testid="notification-n2"]').exists()).toBe(true)
+    expect(second.find('[data-testid="notification-n1"]').exists()).toBe(true)
+  })
 })
