@@ -154,8 +154,23 @@ SECURITY were treated as blockers on the PR itself, not deferred.
 Backend **1191/1191** green (5 new: 3 serialization, 2 malformed-id), zero regressions. Frontend
 **1005/1005** green (2 new: logout-reset, reopen-refetch), zero regressions. Pint clean, PHPStan clean on
 every touched/new file (only the pre-existing local-only `casts()` false-positive pattern
-`TECH_DEBT.md`/`docs/PROJECT_STATUS.md` already document elsewhere), `vue-tsc`/ESLint clean. Not opened as
-a PR until this pass; still not merged.
+`TECH_DEBT.md`/`docs/PROJECT_STATUS.md` already document elsewhere), `vue-tsc`/ESLint clean.
+
+**PR #39 opened to `main`.** Real CI (fresh Ubuntu runner, not this dev machine's Windows Docker) caught two
+further, genuinely real issues local runs had missed or mis-attributed — both pre-existing in Phase 5B, not
+introduced by the pass above, fixed in follow-up commits on the same PR before any merge:
+- Pint import-ordering violations in `routes/console.php` and `NotificationQueueTest.php` (fully-qualified
+  class names inline instead of `use` statements, one out-of-order import) — mechanical fix via `pint`
+  itself.
+- A real PHPStan/Larastan generics mismatch in `Notification::prunable()` (`@return Builder<$this>`
+  docblock against the actual `Builder<static>` `static::query()` returns) — this one is notable because it
+  proves the project's known "480ish false-positive `undefined property` errors on local Docker PHPStan
+  runs" artifact (`TECH_DEBT.md`) does not swallow real bugs: they surface with a different message shape
+  and CI catches them cleanly regardless of the noise.
+
+CI fully green after both fixes: Backend (tests, PHPStan, Pint) and Frontend (type-check, lint, tests,
+build) both `pass`; E2E `skipping` (by design — the E2E job does not run on `pull_request`, only on push to
+`main`, per this repo's existing CI convention).
 
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
