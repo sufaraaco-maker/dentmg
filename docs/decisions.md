@@ -499,3 +499,38 @@ notification is a delivery side effect.
 
 **Status**: Approved by the user as Decision D8 (Phase A + B in one cycle); implemented 2026-08-11 and
 guarded by `NotificationQueueTest`.
+
+## 2026-08-11 — Phase 5 pre-PR review: `readonly` event properties are compatible with `SerializesModels`, but only via `__serialize()`/`__unserialize()`
+
+A pre-PR review of Phase A/B found that `PatientActivityOccurred`'s `subject`/`actor` — plain `readonly`
+promoted `Model`/`?User` properties — had no serialization contract, so once `SendsNotifications` became
+`ShouldQueue` (Phase B), the full `Model` (bcrypt password hash, `remember_token`, and, whenever a relation
+happened to be preloaded, patient PHI) serialized straight into the Redis job payload. The standard fix,
+`Illuminate\Queue\SerializesModels`, was suspected at first to be incompatible with `readonly` properties —
+PHP forbids writing to an already-initialized `readonly` property, and older Laravel versions' equivalent
+mechanism (`__sleep()`/`__wakeup()`) mutates the *live* object's properties in place, which would indeed
+fail here.
+
+**Decision**: apply `SerializesModels` anyway, after verifying (not assuming) it actually works with this
+framework version's implementation. It does, because this codebase's `SerializesModels` (`illuminate/queue`)
+uses the newer `__serialize()`/`__unserialize()` magic methods instead: `__serialize()` only *reads* the live
+properties (never mutates them) and returns a `ModelIdentifier`-substituted array; `__unserialize()` writes
+each property for the first time on a freshly-allocated, not-yet-constructed object — the one case PHP's
+readonly rules permit regardless of which scope the write happens from. Confirmed three ways before trusting
+it: an isolated PHP script proving Reflection-based writes succeed on an uninitialized `readonly` property;
+a `NotificationEventSerializationTest` asserting the serialized payload contains no password hash/PHI and
+that the listener still resolves and notifies correctly after a real `serialize()`/`unserialize()` round
+trip; and a live run against the real `dentalsuite_queue` container — payload read directly from Redis via
+`redis-cli` while the worker was paused (clean), then the worker resumed and observed carrying the job
+`RUNNING` → `DONE` with a real `notifications` row written.
+
+**Consequence for future event/job classes carrying `Model` properties in this codebase**: `readonly`
+promoted properties do not need to be avoided for `ShouldQueue` compatibility — `SerializesModels` should
+still be added (it also shrinks a loaded relation to its name rather than its full data, which a plain
+`readonly` property does not), but never assumed to work without a payload-content test, since the *specific
+mechanism* a given Laravel version uses for it is what determines readonly-compatibility, not the trait name
+alone.
+
+**Status**: Fixed 2026-08-11 on `feature/phase5-notifications`, before either Phase A or B was opened as a
+PR. See `TECH_DEBT.md`/`CHANGELOG.md` for the sibling findings from the same review (notification-store
+reset on logout, malformed-UUID 404, Notification Center refetch-on-reopen, i18n parity doc drift).

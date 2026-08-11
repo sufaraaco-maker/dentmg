@@ -79,7 +79,7 @@ book this file's own per-PR history now feeds into._
   `TECH_DEBT.md` had tracked since the layout work — no header redesign was needed, exactly as predicted.
 - **Localization stores translation keys + raw params, never rendered text**, so switching language
   re-renders existing notifications correctly with no backfill. 32 new keys × 3 locales; parity re-verified
-  programmatically at **1485/1485/1485**, zero drift.
+  programmatically at **1486/1486/1486**, zero drift.
 
 **Phase B — Queue & Scheduler infrastructure**
 
@@ -106,6 +106,56 @@ deferred scope: `docs/modules/notifications-design.md`.
 **Deferred by explicit decision** (see that doc's §13 and `TECH_DEBT.md`): Email (Phase D), Web/PWA Push
 (roadmap Phase 6), patient-facing SMS/WhatsApp reminders (their own future module), per-user preferences,
 and the scheduled/administrative notification types (Phase C).
+
+### Fixed — Phase 5 pre-PR review findings (`feature/phase5-notifications`, 2026-08-11)
+
+Found in a pre-PR review of Phase A/B before either was ever pushed or opened as a PR — the two marked
+SECURITY were treated as blockers on the PR itself, not deferred.
+
+- **SECURITY — a signed-out session's notifications survived in memory for the next user on the same
+  device.** `notifications.ts`'s `reset()` existed and was unit-tested in isolation, but nothing ever
+  called it — `NotificationBell` lives in the always-mounted `DefaultLayout`, so its Pinia store outlived
+  any one session, and a same-tab login as a different user rendered the previous user's notification
+  rows until the next poll/fetch happened to overwrite them. `stores/auth.ts`'s `logout()` now calls
+  `useNotificationsStore().reset()` directly. New regression test in `auth.test.ts`.
+- **SECURITY — a dentist's password hash and a patient's PHI could sit in the Redis queue payload.**
+  `SendsNotifications` is `ShouldQueue`, so every dispatch of `PatientActivityOccurred` serializes into a
+  real `CallQueuedListener` job. The event's `subject`/`actor` were plain `readonly` `Model` properties
+  with no serialization contract, so PHP's default object serialization walked their full `$attributes`
+  — bcrypt hash, `remember_token`, and (whenever a relation happened to be preloaded) patient PHI included.
+  Fixed with `Illuminate\Queue\SerializesModels` on the event class. `readonly` promoted properties are
+  exactly why this needed verifying, not assuming: the trait's `__serialize()` only *reads* the live
+  properties, and `__unserialize()` initializes them for the first time on a freshly-allocated,
+  not-yet-constructed object — the one case PHP's readonly rules permit. Proven both ways: a new
+  `NotificationEventSerializationTest` (serialize → assert no hash/PHI substring → unserialize → confirm
+  the listener still resolves and notifies correctly) and a live run against the real
+  `dentalsuite_queue`/Redis — payload inspected directly via `redis-cli` while the worker was paused,
+  confirmed clean, then the worker resumed and observed carrying the job `RUNNING` → `DONE` with a real
+  `notifications` row written.
+- **`POST /notifications/{id}/read` 500'd on a malformed id instead of 404ing.** `markAsRead()`'s
+  `findOrFail()` runs against the `notifications.id` `uuid` column with no format check of its own — on
+  Postgres, a non-UUID string makes the driver throw `22P02: invalid input syntax for type uuid`, an
+  uncaught `QueryException` that becomes a 500. SQLite (this suite's own test connection) stores the
+  column as untyped text and never throws, which is exactly why the existing suite never caught it.
+  Fixed with `Route::whereUuid('notification')` — Laravel's own route-constraint helper, not custom
+  parsing — so a malformed id never reaches the controller; confirmed directly against real Postgres
+  (`Router::getRoutes()->match()`: `NotFoundHttpException` before hitting any query). New
+  `NotificationEndpointTest` cases for a malformed id and a missing id segment.
+- **Notification Center never refreshed after the first time it was opened.** `Popover`/`Drawer` unmount
+  and remount their content on every open/close (confirmed from PrimeVue's own render output), but the
+  Pinia store's `items` survive across that remount — so `NotificationCenter`'s `onMounted` guard,
+  `if (store.items.length === 0)`, skipped every fetch after the very first open, forever. Removed the
+  guard; the panel now fetches fresh on every open. New `NotificationCenter.test.ts` case: mount → close
+  (unmount) → a new notification arrives → reopen (remount) → it's there.
+- **`docs/PROJECT_STATUS.md`/this file both said i18n parity was `1485/1485/1485`; the real, re-verified
+  count is `1486/1486/1486`** (exact key-set parity, zero drift either direction — not just a count match).
+  Corrected in both files rather than hand-edited to a new number without re-running the check.
+
+Backend **1191/1191** green (5 new: 3 serialization, 2 malformed-id), zero regressions. Frontend
+**1005/1005** green (2 new: logout-reset, reopen-refetch), zero regressions. Pint clean, PHPStan clean on
+every touched/new file (only the pre-existing local-only `casts()` false-positive pattern
+`TECH_DEBT.md`/`docs/PROJECT_STATUS.md` already document elsewhere), `vue-tsc`/ESLint clean. Not opened as
+a PR until this pass; still not merged.
 
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
