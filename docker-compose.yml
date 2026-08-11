@@ -24,6 +24,11 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: dentalsuite_queue
+    # Required, not defensive — and the only service in this dev file that needs it. `--max-time`
+    # below makes the worker exit cleanly every hour on purpose (the standard way to bound a
+    # long-running PHP process's memory), so without a restart policy it exits 0 after an hour and
+    # never comes back. Observed happening during Phase 5B verification, on this very file.
+    restart: unless-stopped
     environment:
       # Only the `app` container migrates — see docker/php/entrypoint.sh.
       RUN_MIGRATIONS: 'false'
@@ -44,6 +49,9 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: dentalsuite_scheduler
+    # `schedule:work` has no self-imposed exit, but a crash here is silent (nothing else notices a
+    # missing scheduler), so it gets the same policy as the worker.
+    restart: unless-stopped
     environment:
       # Only the `app` container migrates — see docker/php/entrypoint.sh.
       RUN_MIGRATIONS: 'false'
