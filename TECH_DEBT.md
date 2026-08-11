@@ -172,6 +172,28 @@ pricing table referencing a tenant-shared procedure list), rather than continuin
 `dental_conditions`. Do not build speculatively before then, per the same "don't build ahead of a real need"
 principle already applied to Multi-Branch below.
 
+### The whole local Playwright suite currently fails at login (reproduces on `main`)
+Found 2026-08-11 while trying to verify Phase 5's new `e2e/notifications.spec.ts`. Every spec that logs in
+fails inside the shared `login()` fixture in `e2e/fixtures.ts`: the Sign In button stays disabled showing a
+client-side "Enter a password", meaning Playwright's `fill()` on `LoginView.vue`'s PrimeVue `Password`
+component (`toggle-mask`, `required`) never registers with Vue's `v-model`. The 25s `waitForFunction` then
+times out.
+
+**This is not caused by Phase 5.** `e2e/auth.spec.ts` — untouched and green in CI — fails identically, and
+checking out `main` (with none of Phase 5's code present), restarting the dev server, and re-running it
+**reproduces the same failures**. Ruled out: the `/api/login` throttle (5/60s, waited out — no change), a
+stale Vite transform (`dentalsuite_frontend` restarted twice), and PrimeVue drift from the dev container's
+`npm install` versus CI's `npm ci` (installed `4.5.5` matches the lockfile exactly). This is distinct from —
+and more severe than — the per-HTTP-request latency already documented below, which caused slowness and
+flakiness rather than a deterministic failure.
+
+**Consequence**: local E2E is currently unusable as a verification signal, so `notifications.spec.ts` ships
+written and type-checked but **never observed passing**. CI is the only authority until this is fixed.
+**Revisit**: before the next phase that adds E2E coverage. Worth checking whether CI still passes
+`auth.spec.ts` (if it does, the divergence is purely local — likely browser/Playwright version on this host;
+if it does not, this is a real application regression that CI has not yet caught because the E2E job does not
+run on `pull_request`).
+
 ### Notification Center polls instead of receiving server push
 Introduced 2026-08-11 with Phase 5A (Notification System). The unread badge polls
 `GET /notifications/unread-count` every 60 seconds (gated on `document.visibilityState`, so a backgrounded

@@ -980,12 +980,31 @@ is part of the record, a notification is a delivery side effect.
 | i18n parity | 1485/1485/1485, zero drift either direction |
 | Migration | Verified against real Postgres, including the partial `notifications_unread_idx` |
 | Queue worker | Verified by observation, not by the container merely starting |
+| **E2E (`notifications.spec.ts`)** | **NOT verified — could not be run locally.** See below. Written, type-checked (`typecheck:e2e` clean), and two real fixture bugs in it already found and fixed by a live run; but the suite cannot currently reach an assertion on this machine. |
 
-**Known local-environment caveat, consistent with every prior phase**: this Windows Docker host's
-per-HTTP-request latency (documented in §9 and reproduced in Phases 2.6b, 3 and 4) makes the Playwright
-suite slow and occasionally flaky locally. **CI remains the verification authority** — the E2E job does not
-run on `pull_request` by design, so the authoritative signal is a `workflow_dispatch` run or the post-merge
-run on `main`.
+### E2E could not be verified locally — and it is not this phase's doing
+
+Stated plainly rather than glossed: **`e2e/notifications.spec.ts` has never been observed passing.** The
+first live run did reach the application and surfaced two real bugs in the spec's own fixture (a missing
+required `appointment_type_id`, and all four tests booking the same dentist into one slot on the shared
+seeded database) — both fixed. Every run after that failed earlier, inside the shared `login()` fixture:
+the Sign In button stays disabled with a client-side "Enter a password", i.e. `fill()` on the PrimeVue
+`Password` input never registers with Vue.
+
+This was isolated rather than assumed:
+
+- `e2e/auth.spec.ts` — untouched by this phase, and green in CI — **fails identically**.
+- Checking out **`main`** (none of Phase 5's code present), restarting the dev server, and re-running
+  `auth.spec.ts` **reproduces the same two failures**. That is decisive: the cause predates this branch.
+- Ruled out along the way: the `/api/login` throttle (5/60s — waited it out, no change), a stale Vite
+  transform (restarted `dentalsuite_frontend` twice), and PrimeVue dependency drift from the dev
+  container's `npm install` vs. CI's `npm ci` (installed `4.5.5` matches the lockfile exactly).
+
+**CI remains the verification authority** for this project, as `TECH_DEBT.md` and every prior phase record.
+Note that the E2E job does not run on `pull_request` by design, so the authoritative signal is a
+`workflow_dispatch` run on this branch or the post-merge run on `main` — **that run is still required before
+this phase can be called complete**, and it may well surface further bugs in the new spec, exactly as CI did
+for `timeline.spec.ts` (PR #33) and Phase 4 Step 5.
 
 ### What was deliberately NOT built
 
