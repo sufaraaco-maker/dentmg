@@ -7,10 +7,12 @@ use App\Models\PatientAllergy;
 use App\Models\PatientMedicalCondition;
 use App\Models\PatientMedication;
 use App\Models\User;
+use App\Notifications\Channels\DatabaseChannel;
 use App\Policies\MedicalHistoryPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -22,7 +24,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Phase 5 (Notification System) design doc §3.1 / Decision D1: Laravel's ChannelManager
+        // resolves the `database` channel out of the container, so binding this subclass makes
+        // every notification's plain `via() => ['database']` write the four additive columns
+        // (category / subject / patient) as well as the stock ones — without any notification
+        // class needing to know a custom channel exists.
+        $this->app->bind(BaseDatabaseChannel::class, DatabaseChannel::class);
     }
 
     /**

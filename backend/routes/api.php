@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\MedicalHistoryController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientActivityController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientDocumentController;
@@ -212,6 +213,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Patient Profile's Timeline tab (Phase 2.6a). Read-only — activity rows are written only by
     // RecordsPatientActivity, never via a user-facing endpoint.
     Route::get('patients/{patient}/activities', [PatientActivityController::class, 'index']);
+
+    // Notification System (Phase 5A), design doc §7. Every route is self-scoped through
+    // $request->user()->notifications() — `{notification}` is deliberately a plain string, NOT a
+    // route-model-bound {notification}, so another user's row is never resolved in the first place
+    // (design doc §8.1). No permission middleware by Decision D6: reading your own notifications is
+    // structurally self-scoped, exactly like the My Account routes below.
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
 
     Route::get('reports/production', [ReportController::class, 'production']);
     Route::get('reports/collections', [ReportController::class, 'collections']);
