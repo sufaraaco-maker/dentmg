@@ -42,7 +42,7 @@ class Notification extends DatabaseNotification
      * records to clean up, so a single bulk DELETE is correct and far cheaper than instantiating
      * every model.
      *
-     * @return Builder<$this>
+     * @return Builder<static>
      */
     public function prunable(): Builder
     {
