@@ -5,6 +5,7 @@ namespace App\Events;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 /**
  * Design doc §4/§16 decision 1: one generic event class, not 22 near-identical ones — the
@@ -20,6 +21,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 class PatientActivityOccurred
 {
     use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
         public readonly Model $subject,
