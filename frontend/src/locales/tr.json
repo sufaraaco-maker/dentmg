@@ -1865,5 +1865,72 @@
       "add": "Ekle",
       "added": "Eklendi"
     }
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "viewAll": "Tüm bildirimleri görüntüle",
+    "markAllRead": "Tümünü okundu işaretle",
+    "loadMore": "Daha fazla yükle",
+    "unread": "Okunmamış",
+    "loading": "Bildirimler yükleniyor…",
+    "loadError": "Bildirimler yüklenemedi.",
+    "markReadError": "Bildirim okundu olarak işaretlenemedi.",
+    "markAllReadError": "Tüm bildirimler okundu olarak işaretlenemedi.",
+    "status": {
+      "all": "Tümü",
+      "unread": "Okunmamış",
+      "read": "Okunmuş"
+    },
+    "categories": {
+      "appointments": "Randevular",
+      "treatment_plans": "Tedavi Planları",
+      "laboratory": "Laboratuvar",
+      "billing": "Faturalandırma",
+      "payments": "Ödemeler"
+    },
+    "types": {
+      "appointment": {
+        "checked_in": {
+          "title": "Hasta geldi",
+          "body": "{patientName}, {startAt} randevusu için giriş yaptı."
+        },
+        "cancelled": {
+          "title": "Randevu iptal edildi",
+          "body": "{patientName} adlı hastanın {startAt} tarihli randevusu iptal edildi."
+        },
+        "no_show": {
+          "title": "Hasta gelmedi",
+          "body": "{patientName}, {startAt} tarihli randevusuna gelmedi."
+        }
+      },
+      "treatment_plan": {
+        "accepted": {
+          "title": "Tedavi planı kabul edildi",
+          "body": "{patientName}, “{planTitle}” planını kabul etti. Planlamaya hazır."
+        },
+        "rejected": {
+          "title": "Tedavi planı reddedildi",
+          "body": "{patientName}, “{planTitle}” planını reddetti."
+        }
+      },
+      "lab_case": {
+        "received": {
+          "title": "Laboratuvar vakası teslim alındı",
+          "body": "{patientName} için {caseNumber} ({caseType}) vakası laboratuvardan geri geldi."
+        }
+      },
+      "payment": {
+        "refunded": {
+          "title": "Ödeme iade edildi",
+          "body": "{patientName} adlı hastaya {amount} iade edildi."
+        }
+      },
+      "invoice": {
+        "voided": {
+          "title": "Fatura iptal edildi",
+          "body": "{patientName} adlı hastaya ait {invoiceNumber} numaralı fatura iptal edildi."
+        }
+      }
+    }
   }
 }

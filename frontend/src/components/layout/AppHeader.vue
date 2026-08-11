@@ -5,18 +5,8 @@ import { RouterLink, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
-import Popover from 'primevue/popover'
-import {
-  Bell,
-  BellOff,
-  ChevronRight,
-  LogOut,
-  Menu as MenuIcon,
-  Moon,
-  Search,
-  Sun,
-  User,
-} from 'lucide-vue-next'
+import { ChevronRight, LogOut, Menu as MenuIcon, Moon, Search, Sun, User } from 'lucide-vue-next'
+import NotificationBell from '@/components/notifications/NotificationBell.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useCommandPaletteStore } from '@/stores/commandPalette'
@@ -48,11 +38,6 @@ const initials = computed(() => {
     .map((part) => part[0]?.toUpperCase())
     .join('')
 })
-
-const notificationsPopover = ref()
-function toggleNotifications(event: Event) {
-  notificationsPopover.value?.toggle(event)
-}
 
 /** `iconComponent` is a Lucide component rendered via the `#itemicon` slot below — PrimeVue's own
  *  `MenuItem.icon` field expects a CSS class string (font-icon convention), so it's left unset;
@@ -123,17 +108,9 @@ function toggleUserMenu(event: Event) {
         </kbd>
       </button>
 
-      <Button text rounded :aria-label="t('common.notifications')" @click="toggleNotifications">
-        <template #icon="{ class: iconClass }">
-          <Bell :size="18" :class="iconClass" />
-        </template>
-      </Button>
-      <Popover ref="notificationsPopover">
-        <div class="flex w-64 flex-col items-center gap-2 p-4 text-center">
-          <BellOff :size="24" class="text-surface-300 dark:text-surface-600" />
-          <p class="text-sm text-surface-500 dark:text-surface-400">{{ t('common.noNotifications') }}</p>
-        </div>
-      </Popover>
+      <!-- Phase 5A: replaces the inert bell + "No notifications yet" popover that
+           TECH_DEBT.md recorded as placeholder UI awaiting a real notification backend. -->
+      <NotificationBell />
 
       <Select
         :model-value="locale"

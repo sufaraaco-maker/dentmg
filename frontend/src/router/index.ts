@@ -194,6 +194,14 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
+          // Notification System (Phase 5A) — the full history view behind the header bell's panel.
+          // No `meta.roles`: every role has their own notifications and the API is self-scoped
+          // (design doc §8.1 / Decision D6), so there is nothing role-specific to gate.
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('@/views/NotificationsView.vue'),
+        },
+        {
           path: 'account',
           name: 'account',
           component: () => import('@/views/AccountView.vue'),
