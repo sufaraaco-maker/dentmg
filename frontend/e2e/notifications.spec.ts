@@ -118,13 +118,15 @@ function tomorrowAt(hour: number): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(hour)}:00:00`
 }
 
-/** `appointment_type_id` is required and must reference an *active* type — see StoreAppointmentRequest. */
+/**
+ * `appointment_type_id` is required and must reference an *active* type — see StoreAppointmentRequest.
+ * `GET /appointment-types` returns a bare array, not `{ data: [...] }` — `AppointmentTypeController::index()`
+ * returns `AppointmentTypeResource::collection()` with no pagination, and `JsonResource::withoutWrapping()`
+ * is set globally (see docs/decisions.md), so there is no `data` envelope to unwrap.
+ */
 async function findAppointmentTypeId(page: Page): Promise<string> {
-  const types = await apiRequest<{ data: { id: string; is_active: boolean }[] }>(
-    page,
-    '/appointment-types',
-  )
-  const active = types.data.find((type) => type.is_active)
+  const types = await apiRequest<{ id: string; is_active: boolean }[]>(page, '/appointment-types')
+  const active = types.find((type) => type.is_active)
   if (!active) throw new Error('No active appointment type found in the seeded data')
   return active.id
 }
