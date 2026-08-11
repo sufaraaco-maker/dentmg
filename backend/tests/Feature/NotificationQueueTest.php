@@ -2,14 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Listeners\RecordsPatientActivity;
 use App\Listeners\SendsNotifications;
 use App\Models\Appointment;
 use App\Models\Notification;
+use App\Models\PatientActivity;
 use App\Models\User;
+use App\Notifications\AppointmentCancelledNotification;
 use App\Services\AppointmentService;
+use App\Services\NotificationService;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Events\CallQueuedListener;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -51,7 +56,7 @@ class NotificationQueueTest extends TestCase
         $this->assertSame(0, Notification::query()->count());
 
         // ...whereas the Timeline row, whose listener is deliberately still synchronous, is there.
-        $this->assertSame(1, \App\Models\PatientActivity::query()->count());
+        $this->assertSame(1, PatientActivity::query()->count());
     }
 
     /**
@@ -62,7 +67,7 @@ class NotificationQueueTest extends TestCase
      */
     public function test_the_listener_defers_until_after_the_database_transaction_commits(): void
     {
-        $this->assertTrue((new SendsNotifications(app(\App\Services\NotificationService::class)))->afterCommit);
+        $this->assertTrue((new SendsNotifications(app(NotificationService::class)))->afterCommit);
     }
 
     /**
@@ -72,8 +77,8 @@ class NotificationQueueTest extends TestCase
     public function test_the_timeline_listener_remains_synchronous(): void
     {
         $this->assertNotInstanceOf(
-            \Illuminate\Contracts\Queue\ShouldQueue::class,
-            new \App\Listeners\RecordsPatientActivity,
+            ShouldQueue::class,
+            new RecordsPatientActivity,
         );
     }
 
@@ -87,7 +92,7 @@ class NotificationQueueTest extends TestCase
 
         $notification = Notification::query()->create([
             'id' => (string) Str::uuid(),
-            'type' => \App\Notifications\AppointmentCancelledNotification::class,
+            'type' => AppointmentCancelledNotification::class,
             'notifiable_type' => User::class,
             'notifiable_id' => $for->id,
             'category' => 'appointments',

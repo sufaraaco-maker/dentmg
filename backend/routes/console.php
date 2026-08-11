@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Notification;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,7 +28,7 @@ Artisan::command('inspire', function () {
 // pruned, however old — see Notification::prunable(). Runs off-peak; `onOneServer` is a no-op
 // today (single scheduler container) but makes the intent explicit and is correct in advance of
 // any future horizontal scaling, since a double-run would just delete the same rows twice.
-Schedule::command('model:prune', ['--model' => [\App\Models\Notification::class]])
+Schedule::command('model:prune', ['--model' => [Notification::class]])
     ->dailyAt('03:00')
     ->onOneServer()
     ->withoutOverlapping();
