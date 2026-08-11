@@ -420,3 +420,82 @@ so the per-IP API throttle now trusts the same forwarded header the audit log do
 not an oversight: the same single-trusted-proxy bind that makes the IP trustworthy for audit logging makes
 it equally trustworthy for rate-limiting. No action needed unless the deployment topology in
 `docs/deployment.md` ever changes to allow an untrusted path to the app.
+
+## 2026-08-11 — Phase 5: notifications extend Laravel's own `notifications` table rather than a bespoke model
+
+Phase 5's design brief explicitly asked to review Laravel Notifications before choosing an implementation
+and to prefer Laravel conventions over an unnecessary abstraction. Laravel's `DatabaseNotification` already
+provides the entire Notification Center feature list — `read_at`, `markAsRead()`, `unreadNotifications`,
+`Prunable` — and the `User` model already used the `Notifiable` trait (Laravel skeleton default, previously
+inert since no table stood behind it).
+
+The stock schema alone was not sufficient, for two concrete reasons: the read-time authorization re-check
+(below) needs `WHERE category IN (...)` on an indexed column, not a JSON probe into `data`; and deep links
+need a stable `subject_type`/`subject_id`.
+
+**Decision**: use Laravel's stock `notifications` table plus four additive columns (`category`,
+`subject_type`, `subject_id`, nullable `patient_id`), populated by a subclass of Laravel's own
+`Illuminate\Notifications\Channels\DatabaseChannel` bound over it in `AppServiceProvider`. This overrides one
+documented extension point (`buildPayload`) and inherits everything else. It is the same
+additive-columns-on-a-framework-table move Phase 4 Step 3 already made on `audit_logs`, so it follows an
+in-repo precedent rather than inventing one. A parallel bespoke `Notification` model was rejected as exactly
+the unnecessary abstraction the brief warned against.
+
+**Status**: Approved by the user as Decision D1 of `docs/modules/notifications-design.md`; implemented
+2026-08-11.
+
+## 2026-08-11 — Phase 5: no permission catalog entry for notifications; access is structurally self-scoped
+
+Every other module's endpoints go through the Phase 4 permission matrix. Notifications deliberately do not.
+
+Every notification is addressed to exactly one `notifiable` user, and every route resolves its target from
+`$request->user()->notifications()` — never from a route-model-bound `{notification}` looked up globally. A
+notification belonging to someone else is therefore not "found and then rejected"; it is never in the result
+set, so those routes return 404 rather than 403. There is no `where user_id = ?` to forget and no policy to
+misconfigure. This is the same structural guarantee `ProfileController` (My Account) already relies on — and
+My Account likewise has no permission key.
+
+Adding a `notifications.view` catalog entry would imply an admin could meaningfully revoke a role's ability
+to read *its own* notifications, which is not a real operation.
+
+**Layered on top**, because ownership alone is not enough: every list *and* count query also filters
+`whereIn('category', NotificationPolicy::allowedCategories($user))`, re-derived per request from each
+category's real owning policy. This closes permission drift — a dentist notified of a `lab_case.received` on
+Monday stops seeing it if `lab_cases.view` is revoked from their role on Tuesday, even though the row still
+exists. `payments` is mapped to `Payment`/`PaymentPolicy` rather than folded into `billing`/`Invoice`,
+because `payments.view` and `invoices.view` are separately grantable and §8.2's rule is one category per real
+policy.
+
+**Status**: Approved by the user as Decision D6 of `docs/modules/notifications-design.md`; implemented
+2026-08-11 and covered by `NotificationEndpointTest` (both the IDOR case and the revoked-after-the-fact case)
+and by `e2e/notifications.spec.ts` (asserted three ways: rendered DOM, network response, direct API access).
+
+## 2026-08-11 — Phase 5B: a queue worker and scheduler now actually exist; `ShouldQueue` is safe to use
+
+Phase 5's design-phase audit found that `QUEUE_CONNECTION=redis` had been configured since the project's
+first `.env`, and Redis ran in both dev and production compose — but **neither compose file contained a
+`queue:work` process, a Horizon instance, or a supervisor**, and `routes/console.php` contained nothing but
+Laravel's stock `inspire` command. Anything `ShouldQueue` would have been enqueued to Redis and silently
+never executed. Phase 2.6's `RecordsPatientActivity` had been written synchronously specifically to sidestep
+this ("no queue worker actually runs in this project today (confirmed by audit)"), so the hazard was known
+locally but had never been escalated to a tracked item.
+
+**Decision**: add dedicated `queue` and `scheduler` containers to both compose files, reusing the existing
+app image with a different command; guard `docker/php/entrypoint.sh` with `RUN_MIGRATIONS` so only the `app`
+container migrates rather than three containers racing `migrate --force`; and adopt `ShouldQueue` only after
+observing a real job go `RUNNING` → `DONE` in the worker container.
+
+Two consequences worth recording:
+- `SendsNotifications` sets `$afterCommit = true`. `InvoiceService::void()`, `PaymentService::refund()` and
+  `LabCaseService::receive()` all fire `PatientActivityOccurred` from inside a `DB::transaction()`; without
+  it a worker can pick the job up before the commit and find no row — a race that only appears under load.
+- The listener keeps its `try/catch` even though it is now queued. This forgoes automatic retries in exchange
+  for the fail-open guarantee holding under *every* queue driver, including `sync` (which the test suite
+  uses), where an uncaught throw would propagate straight back into the caller's request. For a clinical
+  system, a lost notification is a better failure than a blocked cancellation.
+
+`RecordsPatientActivity` deliberately stays synchronous — a Timeline row is part of the record, whereas a
+notification is a delivery side effect.
+
+**Status**: Approved by the user as Decision D8 (Phase A + B in one cycle); implemented 2026-08-11 and
+guarded by `NotificationQueueTest`.

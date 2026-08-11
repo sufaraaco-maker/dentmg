@@ -172,12 +172,40 @@ pricing table referencing a tenant-shared procedure list), rather than continuin
 `dental_conditions`. Do not build speculatively before then, per the same "don't build ahead of a real need"
 principle already applied to Multi-Branch below.
 
-### Header notifications is inert UI (no notification backend)
-`AppHeader.vue`'s bell icon opens a popover that always reads "No notifications yet" — there is no
-notification system in the backend. Scaffolded deliberately as inert UI (per the layout architecture design,
-`docs/modules/layout-architecture.md`) rather than wired to fake data, so the header only needs a data source
-filled in later, not a redesign.
-**Revisit**: when a real notification system exists on the backend.
+### Notification Center polls instead of receiving server push
+Introduced 2026-08-11 with Phase 5A (Notification System). The unread badge polls
+`GET /notifications/unread-count` every 60 seconds (gated on `document.visibilityState`, so a backgrounded
+tab costs nothing) rather than receiving a push. This is a deliberate design decision, not an oversight:
+the project has **no broadcast layer at all** — `BROADCAST_CONNECTION=log`, no `config/broadcasting.php`,
+and no Echo/Pusher/Reverb client in `frontend/package.json` (all verified at design time). Adding one means
+a new server process, a new frontend dependency, private-channel auth, and new E2E surface, for a
+clinic-scale app where a 60s delay is imperceptible. The store contract is deliberately shaped so a
+broadcast push can later feed the same state with no UI change.
+**Revisit**: if a clinic reports the delay as a real problem, or if a broadcast layer is introduced for some
+other reason (at which point this becomes nearly free). See `docs/modules/notifications-design.md` §3.4.
+
+### Notification email, Web Push, and patient-facing reminders are designed but unbuilt
+Phase 5 (2026-08-11) shipped in-app notifications only. Three channels are fully designed and deliberately
+deferred, each blocked on something concrete rather than on effort:
+- **Email (Phase D)** — blocked on `MAIL_MAILER=log` (no real transport), the absence of a `users.locale`
+  column, and the absence of backend `lang/{en,ar,tr}` files. In-app notifications localize client-side and
+  need none of these; email renders server-side and needs all three. Also requires per-user preferences
+  first, since email without an opt-out is a defect.
+- **Web/PWA Push** — blocked on there being no service worker, which is blocked on the whole-app PWA gap
+  already tracked below. Belongs to roadmap Phase 6.
+- **Patient-facing reminders (SMS/WhatsApp/patient email)** — this is what the still-unwired
+  `appointment_reminders` table exists for. Needs an outbound transport, patient contact preferences,
+  consent/opt-out records, and a delivery-failure model: a module in its own right, with regulatory weight.
+**Revisit**: Phase D for email; roadmap Phase 6 for push; a dedicated future module for patient reminders.
+
+### `appointment_reminders` remains an unwired table
+Unchanged by Phase 5, and deliberately so. Created 2026-07-15 as forward-compatible schema for "the future
+Notifications module," but that module turned out to be **staff-facing in-app notifications**, whereas this
+table is for **patient-facing** reminders — a materially different feature (see the entry above). Phase 5
+left it untouched rather than half-wiring it: a table that looks live but silently drops every reminder
+would be worse than one that is visibly unwired and carries an explanatory docblock, which it does.
+**Revisit**: when patient-facing reminders are actually built. Its `channel` column is still deliberately a
+plain string rather than an enum, pending that decision.
 
 ### `national_id` uniqueness survives soft delete
 A soft-deleted patient's `national_id` can't be reused by a newly-registered patient, because the DB-level unique constraint doesn't exclude soft-deleted rows. Simpler than scoping the constraint, and arguably safer for data integrity, but worth knowing.
@@ -413,6 +441,31 @@ is real (if rare) even on CI's native runner, not unique to the local Windows Do
 pre-existing/unrelated to this module.
 
 ## Resolved
+
+### Header notifications is inert UI (no notification backend) — resolved 2026-08-11 (Phase 5A, Notification System)
+`AppHeader.vue`'s bell icon opened a popover that always read "No notifications yet," because no notification
+system existed in the backend. It was scaffolded deliberately as inert UI (per
+`docs/modules/layout-architecture.md`) rather than wired to fake data, so that the header would need only a
+data source later, not a redesign.
+**RESOLVED**: that prediction held exactly. Phase 5A replaced the placeholder markup with a real
+`NotificationBell` component (unread badge, visibility-gated polling, popover on desktop / drawer on mobile)
+backed by a real `notifications` table, API, and permission model — no header redesign was required, only the
+data source being filled in. See `docs/modules/notifications-design.md`.
+
+### No queue worker or scheduler process existed anywhere, despite `QUEUE_CONNECTION=redis` — resolved 2026-08-11 (Phase 5B)
+Found during Phase 5's design-phase audit and, unlike most items here, **never previously recorded** — which
+is precisely what made it dangerous. `QUEUE_CONNECTION=redis` had been set since the project's first `.env`,
+and Redis ran in both dev and prod compose, but **neither compose file contained a `queue:work` process, a
+Horizon instance, or a supervisor** — and `routes/console.php` held nothing but Laravel's stock `inspire`
+command, so no scheduler ran either. Anything `ShouldQueue` would therefore have been enqueued to Redis and
+silently never executed, with no error anywhere. Phase 2.6's `RecordsPatientActivity` had been written
+synchronously specifically to sidestep this, with a docblock noting "no queue worker actually runs in this
+project today (confirmed by audit)" — the hazard was known locally but never escalated to a tracked item.
+**RESOLVED**: Phase 5B added `queue` and `scheduler` containers to both `docker-compose.yml` and
+`docker-compose.prod.yml` (reusing the existing app image), plus a `RUN_MIGRATIONS` guard in
+`docker/php/entrypoint.sh` so only the `app` container migrates rather than three containers racing.
+Verified by observing a real job go `RUNNING` -> `DONE` in `dentalsuite_queue`, not merely by the container
+starting. `NotificationQueueTest` guards the wiring going forward.
 
 ### `App\Rules\BelongsToPatient` threw a real SQL error when used against `TreatmentPlanItem` — resolved 2026-08-08 (Phase 2.4, Laboratory Patient Profile integration)
 Originally discovered 2026-07-28 while writing Imaging's own Feature tests: `BelongsToPatient`

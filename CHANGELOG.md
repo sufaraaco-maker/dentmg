@@ -41,6 +41,72 @@ points checked) found zero blockers; **merged via PR #37** (`0bdf3d8`, 2026-08-0
 Permissions & Audit Complete."** See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
 book this file's own per-PR history now feeds into._
 
+### Added — Phase 5: Notification System, Phases A + B (`feature/phase5-notifications`, 2026-08-11)
+
+**Phase A — In-App Notification Center (backend + frontend)**
+
+- New `notifications` table: Laravel's own stock schema (so `Notifiable`, `DatabaseNotification`,
+  `markAsRead()`, `unreadNotifications` and `Prunable` all work natively) plus four additive columns —
+  `category`, `subject_type`/`subject_id`, and a nullable `patient_id` — populated by a ~20-line subclass
+  of Laravel's `DatabaseChannel` bound in `AppServiceProvider`. The same additive-columns-on-a-framework-
+  table approach Phase 4 Step 3 used on `audit_logs`; not a bespoke model, and not a fork.
+- **Zero new event dispatch call sites.** `SendsNotifications` is a *second* listener on the existing
+  `PatientActivityOccurred` event, which Phase 2.6 already fires from 21 call sites across 9 services —
+  so Appointments, Treatment Plans, Laboratory, Billing and Payments all gained notification coverage
+  without a single existing service method being edited.
+- `NotificationRules` is an explicit **allow-list**: 8 of the 24 live event types notify, the other 16 stay
+  silent by design (`appointment.checked_in`/`.cancelled`/`.no_show`, `treatment_plan.accepted`/`.rejected`,
+  `lab_case.received`, `payment.refunded`, `invoice.voided`). Per-type exclusion reasoning is recorded in
+  `docs/modules/notifications-design.md` §5.1.
+- Two universal rules enforced centrally in `NotificationService`, so no rule can forget either: the actor
+  never receives a notification for their own action, and a notification is never created for a user who
+  could not open its target.
+- `RecipientResolver` is the **single multi-tenant seam** — every "who receives this" query lives in one
+  class, so a future clinic scope is one `where()` there rather than an audit of every rule.
+- Three authorization layers: structural ownership (every route resolves from
+  `$request->user()->notifications()`, so another user's row 404s because it is never in scope — no
+  permission catalog entry needed, matching My Account's precedent), a read-time category re-check on both
+  the list *and* the count (so a notification stops being visible if its category permission is revoked
+  after it was created), and the send-time check above.
+- 5 new endpoints: `GET /notifications`, `GET /notifications/unread-count` (deliberately separate — it is
+  polled, and must not deserialize a page of rows to render a badge), `POST /notifications/{id}/read`,
+  `POST /notifications/read-all` (honours the active category filter). No delete endpoint by design.
+- Frontend: `NotificationBell` (unread badge capped at `9+`, 60s poll gated on `document.visibilityState`,
+  `Popover` on desktop / full-height `Drawer` under `md:`), one embeddable `NotificationCenter` shared by
+  the popover, the drawer, and the new `/notifications` page, `NotificationItem`, a `notifications` Pinia
+  store (optimistic mark-read with rollback, error-as-i18n-key), and `config/notificationTypes.ts` so no raw
+  backend value reaches the UI. Replaces the inert bell + "No notifications yet" popover that
+  `TECH_DEBT.md` had tracked since the layout work — no header redesign was needed, exactly as predicted.
+- **Localization stores translation keys + raw params, never rendered text**, so switching language
+  re-renders existing notifications correctly with no backfill. 32 new keys × 3 locales; parity re-verified
+  programmatically at **1485/1485/1485**, zero drift.
+
+**Phase B — Queue & Scheduler infrastructure**
+
+- Added `queue` and `scheduler` containers to **both** `docker-compose.yml` and `docker-compose.prod.yml`.
+  This closes a real, previously-untracked latent hazard: `QUEUE_CONNECTION=redis` had been configured since
+  the project's first `.env`, but **no worker process existed anywhere**, so any `ShouldQueue` job would have
+  been enqueued and silently never run. Verified by observing a real job go `RUNNING` → `DONE` in
+  `dentalsuite_queue`, not merely by the container starting.
+- `docker/php/entrypoint.sh` gained a `RUN_MIGRATIONS` guard so only the `app` container migrates, rather
+  than three containers racing `migrate --force` at boot.
+- `SendsNotifications` became `ShouldQueue` **only after** the worker was proven to consume jobs, with
+  `$afterCommit = true` — load-bearing, because `InvoiceService::void()`, `PaymentService::refund()` and
+  `LabCaseService::receive()` all fire the event from inside a `DB::transaction()`. It keeps its
+  `try/catch`, trading automatic retries for a fail-open guarantee that holds under every queue driver
+  including `sync`. `RecordsPatientActivity` stays synchronous.
+- `Notification` became `MassPrunable` (read notifications older than 90 days; unread rows are never pruned
+  however old), and `routes/console.php` gained its first-ever scheduled task.
+
+**Verification**: Backend 1186/1186 tests green (41 new: 18 dispatch, 16 endpoint, 7 queue/scheduler), zero
+regressions. Frontend 1003/1003 green (34 new). Pint clean, `vue-tsc`/ESLint/Prettier clean, E2E types clean.
+Migration verified against real Postgres including the partial unread index. Full design, decision log, and
+deferred scope: `docs/modules/notifications-design.md`.
+
+**Deferred by explicit decision** (see that doc's §13 and `TECH_DEBT.md`): Email (Phase D), Web/PWA Push
+(roadmap Phase 6), patient-facing SMS/WhatsApp reminders (their own future module), per-user preferences,
+and the scheduled/administrative notification types (Phase C).
+
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
   in a real browser; an admin toggling a permission off persists across reload, takes effect for a

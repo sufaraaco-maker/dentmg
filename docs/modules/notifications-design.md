@@ -729,9 +729,56 @@ Nothing below is assumed decided. Each carries a recommendation and its reasonin
 
 ---
 
-## 17. Approval
+## 17. Approval & Decision Log
 
-**Awaiting user approval. No implementation code, commit, or PR before it is given.**
+**Design approved by the user on 2026-08-11**, with Phase A + Phase B authorized for implementation in the
+same cycle.
 
-Once approved, this document gains an *Approval & Decision Log* section recording the resolution of D1–D8,
-following the convention of `docs/modules/phase4-permissions-audit-design.md` and its predecessors.
+| # | Decision | Resolution |
+|---|---|---|
+| **D1** | Table strategy | **Approved as recommended** — Laravel's stock `notifications` table + the four additive columns, populated by a `DatabaseChannel` subclass bound in `AppServiceProvider` |
+| **D2** | Partial unread index | **Approved** — implemented as `notifications_unread_idx`, guarded on the driver (raw partial index on Postgres, plain composite under the SQLite test suite) |
+| **D3** | `medical_history.allergy_added` | **Deferred to Phase C**, as recommended |
+| **D4** | `lab_case.quality_checked` | **Excluded from this cycle** by explicit user decision. Adding it later is one line in `NotificationRules` plus one `BaseNotification` subclass |
+| **D5** | Dismiss vs. prune | **Read-only + prune**, as recommended. No `DELETE` endpoint exists |
+| **D6** | Permission catalog entry | **Approved as recommended** — no catalog entry; access is self-scoped through `$request->user()->notifications()`, with the category re-check layered on top |
+| **D7** | Poll interval | 60s, visibility-gated |
+| **D8** | Phase scope | **Phase A + Phase B** implemented this cycle. Phases C and D remain scoped but unstarted |
+
+### Implementation notes worth recording
+
+Things that turned out differently from, or more specific than, the design above:
+
+1. **`payment.refunded`'s notification category is `payments`, not `billing`.** The audit in §1.2 recorded
+   that `PaymentService` dispatches its *activity* rows under the `billing` category (which is why
+   `PatientActivityPolicy` has no `payments` key). This module deliberately does **not** inherit that:
+   `NotificationPolicy::CATEGORY_SUBJECT_MAP` maps `payments → Payment`, so the read-time check runs against
+   `PaymentPolicy` rather than `InvoicePolicy`. `payments.view` and `invoices.view` are separately grantable
+   permissions, and §8.2's rule is "one category per real policy, never a category spanning two policies with
+   different rules."
+
+2. **A `notifications.loading` key was added** for the panel's spinner `aria-label`. The design assumed a
+   `common.loading` key existed; it does not (verified — `common` has 18 keys, none for loading). Scoped to
+   this module's own namespace rather than inventing a shared key no other module uses.
+
+3. **`docker/php/entrypoint.sh` gained a `RUN_MIGRATIONS` guard.** Phase B's `queue` and `scheduler`
+   containers reuse the `app` image and therefore its entrypoint, which runs `php artisan migrate --force`.
+   Three containers racing that at boot is a real hazard, so the two new ones set `RUN_MIGRATIONS=false` and
+   wait for the schema instead. Not anticipated in §14's Phase B description; found by reading the entrypoint
+   before adding the containers.
+
+4. **`SendsNotifications` sets `$afterCommit = true`.** Three of the dispatching services
+   (`InvoiceService::void()`, `PaymentService::refund()`, `LabCaseService::receive()`) fire the event from
+   inside a `DB::transaction()`. Without this, a worker can pick the job up before the commit and find no
+   row — a race that only manifests under load. §9 did not call this out; it is load-bearing.
+
+5. **The listener keeps its `try/catch` even once queued.** This gives up automatic retries in exchange for
+   the fail-open guarantee holding under *every* queue configuration, including `QUEUE_CONNECTION=sync`
+   (which the test suite uses), where an uncaught throw would propagate back into the caller's request. For a
+   clinical system a lost notification beats a blocked cancellation.
+
+6. **The E2E spec asserts authorization layer 1, not layer 2.** §12.3 called for the security-critical case
+   to be asserted three ways; it is — but against *structural ownership* (one user cannot see or act on
+   another's notification) rather than category revocation. Revoking a permission in E2E would mutate the
+   globally shared `role_permissions` matrix that every other spec depends on. Layer 2's drift case is
+   covered exhaustively in `NotificationEndpointTest`, where a transactional test database makes it free.

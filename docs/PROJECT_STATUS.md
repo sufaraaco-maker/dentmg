@@ -15,7 +15,7 @@
 
 | | |
 |---|---|
-| **Last updated** | 2026-08-09 |
+| **Last updated** | 2026-08-11 |
 | **Updated by** | Claude Code — Phase 1 release verification + close-out (PR #16/#17), Phase 2 (Patient Profile Redesign) design approval, sub-phases 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all designed, implemented, and merged via PR #18-#28 — see §4's PR history table and §12's narrative for full per-phase detail. **Phase 2.6 (Timeline)**, the final sub-phase: design doc (`docs/modules/patient-timeline-redesign-design.md`) produced by auditing the actual codebase (confirmed zero event-driven infrastructure existed anywhere), all 7 §16 decisions approved by the user as recommended, merged via **PR #29** (`e8e2cba`); a real category-taxonomy conflict found before writing any code (verifying each candidate policy's `viewAny()` showed the approved `clinical` category wrongly grouped `TreatmentPlan`/`ClinicalNote`/Medical History despite different permission rules) was fixed and confirmed with the user, merged via **PR #30** (`47e0c59`); **2.6a (Foundation) implemented** on `feature/patient-profile-phase2-6a-timeline-foundation` — `PatientActivity` model, one generic event + one synchronous listener (Laravel's event system introduced to this codebase for the first time, confirmed genuinely auto-discovered end-to-end by a non-faked integration test), 24 dispatch call sites across all 9 candidate services, `PatientActivityPolicy`'s per-category policy-reuse mechanism, the `/activities` endpoint — Backend 1054/1054 tests green (Pint clean, PHPStan clean on every new file), **merged via PR #31** (`cb7b52d`), post-merge CI on `main` re-verified. **2.6b (UI) implemented** on `feature/patient-profile-phase2-6b-timeline-ui` — `ActivityTimeline.vue` (one embeddable component backing the new `timeline` tab, Billing's Payment History sub-section, and an Overview recent-activity preview, per the design doc's §9.4/§15.2 single-component requirement), a `patientActivities` Pinia store keyed by patient+category+page-size (a deliberate deviation from every sibling store, required because up to three `ActivityTimeline` instances mount simultaneously on one patient page — `PatientDetailView.vue`'s `Tabs` isn't `lazy`), "Load more" pagination, a category-filter chip row (built from scratch — the design doc's own citation of an existing mobile chip-row pattern turned out not to exist in this codebase, confirmed with the user before building it), i18n for all 3 locales, **merged via PR #32** (`70b6ba6`). Frontend: all 933 tests green (27 new, including the security-critical E2E assertion that a receptionist session never sees `clinical_notes`-category rows even when explicitly filtering for them), `vue-tsc`/ESLint/Prettier clean. Post-merge CI on `main` (which, unlike a PR-triggered run, actually executes the E2E job) caught two real bugs in `e2e/timeline.spec.ts` itself — a lab case number read before its async fetch completed, and an unscoped `getByText()` hitting a strict-mode violation because `PatientDetailView.vue`'s non-`lazy` `Tabs` keep the Overview preview's and the Timeline tab's `ActivityTimeline` instances mounted simultaneously — both fixed and **merged via PR #33** (`83c584b`); post-merge CI re-run, all three jobs (Backend/Frontend/E2E) green. **Phase 2 (Patient Profile Redesign) is now complete in full**, closed out via **PR #34**. **Phase 3 (Dashboard 2.0)** — the next phase in the 8-phase roadmap — design phase reconciled two competing candidates for "next" (the roadmap's own Phase 3 vs. the still-unfinished Premium Visual Redesign's own Dashboard-restyle plan) into one design doc, `docs/modules/dashboard-2.0-design.md`, approved by the user as "Functional 2.0": restyle (absorbing `frontend-visual-redesign-design.md` §6 in full, now marked superseded there) plus new data-backed widgets reusing existing `ReportService` methods. The design-phase audit found a real, pre-existing security gap — `/dashboard/summary` returned `monthly_revenue` to every role with zero authorization, the same figure `reports/collections` already restricts to admins — fixed as part of this phase, not a separate one; see `docs/decisions.md`'s 2026-08-09 entries for both that fix and the "trend, not goal" scope decision. **Implemented on `feature/dashboard-2-0`** in the 4 sequential steps the design doc's §8 specifies (backend → frontend data layer → frontend widgets/restyle → E2E/i18n/docs), each verified before the next: Backend 1069/1069 tests green (26 new), Pint clean, PHPStan clean (targeted run on new files, cross-checked against the same pre-existing local-only false-positive pattern `TECH_DEBT.md` already documents on `casts()`-style models). Frontend 966/966+ tests green (33 new: `dashboard.ts` store, `FinancialSnapshotWidget.vue`, `UnscheduledTreatmentWidget.vue`, `auth.canViewFinancials`), `vue-tsc`/ESLint/Prettier clean. Manually verified in a real browser (admin sees both new widgets with real seeded data — 118 patients, real revenue/production/A-R figures; dentist correctly never sees Financial Snapshot) since this session's local Windows Docker environment reproduced the same pre-existing per-HTTP-request latency this file's own §12 (Phase 2.6b) already documented — generous timeouts, not application bugs, were the fix. New `e2e/dashboard.spec.ts` (first for this module) written covering the security-critical case per this project's established §9A-style precedent — asserted against rendered DOM **and** that the network request itself is never made for a non-admin session **and** that direct access is server-side blocked (403) regardless of the UI. **PR #35 merged to `main` 2026-08-09** (`0f04b35`); post-merge CI (which, unlike the PR-triggered run, actually executes the E2E job) re-run and **fully green — Backend, Frontend, and E2E all `success`**, confirming `e2e/dashboard.spec.ts` genuinely passes, not just reviewed. **Phase 3 (Dashboard 2.0) is now complete.** **Phase 4 (Advanced Permissions & Audit)** — design phase: a ground-truth audit (direct full reads of all 27 Policy classes, the `Auditable` trait/`AuditObserver`/`AuditLogService`, and `AuthController`/`AuthService`) found two critical, previously-undocumented gaps — the `User` model itself is not audited (role/account changes leave no trail) and there is zero logging of authentication events (login success/failure, logout) — plus confirmed `Auditable` and `PatientActivity` are intentionally separate systems, not a gap. User approved three scope decisions: fine-grained permissions layered on the current 3 roles (not a full role-hierarchy rewrite — that stays flagged, not decided, see `docs/decisions.md`), a full audit-trail overhaul closing both gaps, and simple immutability now with retention explicitly deferred. Full design doc: `docs/modules/phase4-permissions-audit-design.md`. **Implementing on `feature/phase4-permissions-foundation`**, per the design doc's §14 5-step sequence, each verified before the next: **Step 1 (Permissions Foundation)** — a 68-entry permission catalog derived 1:1 from a full line-by-line read of all 27 Policies (methods sharing an identical role-set within one Policy collapse into one key), the `permissions`/`role_permissions` tables, `User::hasPermission()` with a per-role cache, 3 new admin-only endpoints gated by a hardcoded `manage-permissions` Gate (never routed through the matrix itself, making self-lockout structurally impossible, not just validated-against), and a server-side rule protecting `users.manage` from ever being revoked from Admin. Catalog verified two ways: the seeded per-role grant counts (admin=68, dentist=36, receptionist=37) matched an independent manual derivation exactly. **Step 2 (Policy refactor)** — all 27 Policies converted from raw `UserRole` comparisons to `hasPermission()` calls, with every identity/ownership/target-role check (e.g. `Appointment::start()`'s `$actor->is($appointment->dentist)`, `DentistTimeOff`'s target-role validation, `User::delete()`'s self-delete block) preserved verbatim; `Tests\TestCase` now seeds the permission catalog automatically for every `RefreshDatabase` test class; 15 new baseline Policy tests added for the previously-untested policies (35 new tests). **Backend 1121/1121 tests green** (1086 + 35 new), **zero regressions** across every pre-existing Feature/Policy test — the strongest available evidence the refactor is behavior-preserving. Pint clean (524 files); targeted PHPStan clean on all 27 Policies + 15 new test files (3 pre-existing local-only false positives surfaced on untouched identity-check lines, confirmed unrelated). **Step 3 (Audit Overhaul), implemented same day**: closes both critical gaps the design-phase audit
 found — `User` made `Auditable`; `AuditObserver` now captures real before/after diffs (`old_values`, not just
 new values) and a full pre-deletion snapshot on delete; `AuthService` logs `login_succeeded`/`login_failed`/
@@ -61,10 +61,47 @@ found zero blockers — two non-blocking notes recorded (`docs/decisions.md`'s `
 `TECH_DEBT.md`'s new migration-rollback item). **PR #37 merged to `main` 2026-08-09** (`0bdf3d8`); post-merge
 CI on `main` (which, unlike the PR-triggered run, actually executes the E2E job) re-run and **fully green —
 Backend, Frontend, and E2E all `success`** (run `31333946387`). **Phase 4 (Advanced Permissions & Audit) is
-now complete.** Next: Notification System design phase (In-App + Appointment notifications; WhatsApp
-flagged as a future channel, not built now). |
-| **Repo HEAD at time of writing** | `main` at `0bdf3d8` (PR #37 merge — Phase 4: Advanced Permissions & Audit); post-merge CI fully green (Backend/Frontend/E2E — run `31333946387`) — see `docs/modules/phase4-permissions-audit-design.md`. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Milestone: "Phase 4 — Advanced Permissions & Audit Complete" (2026-08-09)**, closed out via **PR #37** (`0bdf3d8`) — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31333946387`) — see `docs/modules/phase4-permissions-audit-design.md`. Next up: Notification System (design phase not yet started). |
+now complete**, closed out via PR #38.
+
+**Phase 5 (Notification System)** — design phase produced `docs/modules/notifications-design.md` from a
+ground-truth audit that found no notification system existed anywhere (no `notifications` table, no
+`app/Notifications`, no `app/Mail`, no `config/broadcasting.php`, no route) **but** that the project was far
+closer than that suggested: Phase 2.6's `PatientActivityOccurred` already fires from 21 call sites across 9
+services covering 24 event types, Phase 4's `PatientActivityPolicy` already established the category-filtering
+security pattern, and `User` already carried Laravel's `Notifiable` trait. The same audit surfaced a real,
+**previously-untracked** infrastructure hazard: `QUEUE_CONNECTION=redis` had been configured since the
+project's first `.env`, yet **no `queue:work` process, Horizon, or supervisor existed in either compose
+file**, and nothing was scheduled — so anything `ShouldQueue` would have been enqueued and silently never
+run. User approved the design with decisions D1-D8 (Laravel's own notifications table + 4 additive columns;
+partial unread index; `medical_history.allergy_added` deferred to Phase C; `lab_case.quality_checked`
+excluded; read-only + prune, no dismiss endpoint; no permission catalog entry — self-scoped like My Account;
+60s visibility-gated poll; **Phase A + Phase B in this cycle**).
+**Implemented on `feature/phase5-notifications`.** **Phase A**: the `notifications` table (Laravel's stock
+schema + `category`/`subject_*`/nullable `patient_id`, written by a ~20-line `DatabaseChannel` subclass bound
+in `AppServiceProvider` — the same additive-columns move Phase 4 Step 3 made on `audit_logs`);
+`SendsNotifications` as a **second listener on the existing event, so zero new dispatch call sites were
+needed**; `NotificationRules` as an explicit allow-list where only 8 of the 24 live event types notify and
+the other 16 stay silent by design; `RecipientResolver` as the single multi-tenant seam; three authorization
+layers (structural ownership → another user's row 404s because it is never in scope; a read-time category
+re-check on both list *and* count, closing the permission-drift case; and a send-time check); 5 endpoints;
+a `NotificationBell`/`NotificationCenter`/`NotificationItem` frontend replacing the inert header bell
+`TECH_DEBT.md` had tracked (popover on desktop, drawer under `md:`, badge capped at `9+`, 60s poll gated on
+`document.visibilityState`); localization that stores **translation keys + raw params, never rendered text**,
+so switching language re-renders existing rows correctly — 32 new keys × 3 locales, parity verified
+programmatically at **1485/1485/1485, zero drift**. **Phase B**: `queue` and `scheduler` containers added to
+both compose files, a `RUN_MIGRATIONS` guard in `docker/php/entrypoint.sh` so only `app` migrates rather than
+three containers racing, `SendsNotifications` flipped to `ShouldQueue` **only after** a real job was observed
+going `RUNNING` → `DONE` in `dentalsuite_queue`, `$afterCommit = true` (load-bearing — three dispatching
+services fire the event inside `DB::transaction()`), and `Notification` made `MassPrunable` with the
+project's first-ever scheduled task. Verification: Backend **1186/1186** green (41 new, zero regressions),
+Frontend **1003/1003** green (34 new), Pint clean, `vue-tsc`/ESLint/Prettier clean, E2E types clean,
+migration verified against real Postgres including the partial unread index. Phases C (scheduled/admin
+notifications) and D (email) are designed but not started; Web Push is deferred to roadmap Phase 6 (it needs
+the PWA/service-worker foundation that does not exist), and patient-facing SMS/WhatsApp reminders to their
+own future module — the unwired `appointment_reminders` table was deliberately left untouched rather than
+half-wired. Not yet merged: no PR opened, awaiting the user's own review. |
+| **Repo HEAD at time of writing** | `feature/phase5-notifications` (Phase 5: Notification System, Phases A + B — **not yet merged, no PR opened**, awaiting the user's review). Branched from `main` at `75cf60b` (PR #38 merge — Phase 4 docs close-out); `main`'s last post-merge CI fully green (Backend/Frontend/E2E — run `31333946387`) — see `docs/modules/notifications-design.md`. |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Milestone: "Phase 4 — Advanced Permissions & Audit Complete" (2026-08-09)**, closed out via **PR #37** (`0bdf3d8`) — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31333946387`) — see `docs/modules/phase4-permissions-audit-design.md`. **Phase 5 — Notification System (Phases A + B)** implemented 2026-08-11 on `feature/phase5-notifications` — a real in-app Notification Center plus the queue worker and scheduler that had never existed; **not yet merged, no PR opened**, awaiting the user's review — see `docs/modules/notifications-design.md`. Next up: Phase 5C/5D (scheduled + email notifications) or roadmap Phase 6 (SaaS Multi-Tenant Prep), per the user's prioritization. |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -131,8 +168,15 @@ parallel: a frontend-only visual/UX redesign (mid-flight, see §6) and a new 8-p
 SaaS readiness — **Phase 1 (Stabilization) closed 2026-08-07, Phase 2 (Patient Profile Redesign) closed
 2026-08-09 via PR #34, Phase 3 (Dashboard 2.0) closed 2026-08-09 via PR #35, Phase 4 (Advanced Permissions
 & Audit) closed 2026-08-09 via PR #37** — `main`'s CI is **fully green** (Backend/Frontend/E2E) as of the
-Phase 4 post-merge run (see §2, §9, §12). Next up: Notification System design phase (In-App + Appointment
-notifications; WhatsApp flagged as a future channel, not built now).
+Phase 4 post-merge run (see §2, §9, §12). **Phase 5 (Notification System), Phases A + B, is implemented on
+`feature/phase5-notifications` and awaiting the user's review — not merged, no PR opened yet**: a real
+in-app Notification Center (Laravel's own notifications table extended with 4 additive columns, an 8-of-24
+event-type allow-list riding the *existing* `PatientActivityOccurred` event so no new dispatch call sites
+were needed, three authorization layers, keys-not-text localization across en/ar/tr), plus the queue worker
+and scheduler containers that had never existed in this project despite `QUEUE_CONNECTION=redis` being
+configured since day one. Notification Email, Web Push, and patient-facing reminders are designed and
+explicitly deferred (see the Phase 5 section before §13, and `TECH_DEBT.md`). Next up: the user's review and
+a PR, then either Phase 5C/5D or roadmap Phase 6 (SaaS Multi-Tenant Prep).
 
 ---
 
@@ -177,6 +221,9 @@ but wasn't committed until the 2026-07-16 checkpoint squashed it into initial hi
 | 2026-08-09 | **Phase 4 Step 4 (Frontend) implemented** on `feature/phase4-permissions-foundation` — new admin-only `PermissionsView.vue` (68-entry catalog matrix, module-grouped rows, one `ToggleSwitch` per role, explicit Save/Discard over a local draft rather than per-toggle autosave; the `users.manage`/Admin cell renders disabled/checked, matching `UpdateRolePermissionsRequest`'s server-side self-lockout rule exactly, not just a client-side guess; a stacked per-role `Accordion` replaces the matrix table under `md:`, per the design doc's §10 mobile-first requirement) and `AuditLogsView.vue` (the general `GET /audit-logs` viewer — user/resource-type/action/date-range filters, server-side pagination, a `DataTable` row-expansion showing the old/new field diff or the event's `context`, e.g. the attempted email on a `login_failed` row rendered as that row's Actor since no `user` resolves). New `permissions.ts`/`auditLogs.ts` Pinia stores + `services/permissions`/`services/auditLogs` API layers (store-owns-error-state pattern, matching `dashboard.ts`); new `config/auditableTypes.ts` mapping every raw `auditable_type` FQCN (21 `Auditable` models + `RolePermission`) to an i18n label so no raw PHP class name ever reaches the UI. New admin-only Sidebar entries/routes (`/permissions`, `/audit-logs`), gated the same `roles: ['admin']` way as `Users`/`Settings`. ~300 new i18n keys (`permissions.groups.*`/`permissions.catalog.*`/`auditLog.*`) across all 3 locales — parity verified programmatically (1453 keys in each of `en`/`ar`/`tr`, zero missing either direction). 20 new frontend tests (2 stores + `PermissionsView`/`AuditLogsView` component tests: matrix toggle, locked-cell rendering and save-payload correctness, filter controls, row expansion, the no-resolved-user actor case) — **Frontend 969/969 tests green**, `vue-tsc`/ESLint/Prettier clean. Manually verified in a real browser against real seeded audit-trail data (not just component tests): the full matrix and a live, paginated Audit Log both render correctly in English and Arabic (RTL, via the app's real language switcher) and at a 390px mobile viewport; a dentist session has neither Sidebar entry and is server-side blocked (the app's standard 403 page) on direct navigation to either route. No backend behavior changed — Step 4 consumes the Step 1-3 API surface as-is. |
 | 2026-08-09 | **Phase 4 Step 5 (E2E + final docs) implemented** on `feature/phase4-permissions-foundation`, closing out all 5 steps — new `role-permissions.spec.ts` (self-lockout cell stays disabled+checked; an admin toggling a permission off persists across reload, takes effect for a live receptionist session, and is audited as `role_permissions_updated` with a real before/after diff; restores the shared global matrix afterward since it's used by every other E2E spec; 403s on all 3 permission-matrix endpoints) and `audit-log.spec.ts` (action filtering, no-diff row expansion, a failed login audited with the attempted email as both Actor and `context` — made from a genuinely unauthenticated session, not an already-logged-in one, since `Auth::id()` reflects the current session regardless of what a login attempt claims; 403 on `GET /audit-logs`); `permissions.spec.ts` gained admin-reaches-both-screens and non-admin-blocked-with-no-sidebar-entry cases, alongside its existing untouched pre-Phase-4 tests which already double as the design doc's required behavior-preservation proof. Iterating locally surfaced and fixed 4 real test bugs (a PUT missing its XSRF header returning 419 not 403; a click destabilized by this environment's per-request latency; a locale-forcing gap; a wrong expected error string) plus a real fetch-ordering race between a page's initial unfiltered load and an immediately-applied filter — every test passed cleanly at least once locally, remaining flakiness matching this environment's own already-documented latency pattern (§9), not application behavior. i18n parity re-verified (1453/1453/1453). `docs/decisions.md` and `TECH_DEBT.md` updated; `docs/modules/roles-permissions.md` formally marked superseded. Pushed to `origin/feature/phase4-permissions-foundation`; first CI run (`31328029404`) caught one real ordering bug local runs never had — a `page.waitForResponse()` registered *after* the `page.goto()` that triggers the response, a race a fast environment (CI) loses and a slow one (this local Docker setup) happens to win — fixed and **re-run (`31328615397`) fully green: Backend, Frontend, and E2E (53/53) all `success`.** Not yet merged — no PR opened per the user's explicit instruction, awaiting their own full-diff review. |
 | 2026-08-09 | **Final diff review** (103 files, 14 commits, +5543/-215 against `main`, 14 points checked: scope, temp/debug artifacts, migrations-from-clean, secrets, `hasPermission()` consistency, audit architecture, API contracts, real-vs-weakened test assertions, E2E shared-state restoration, i18n parity, doc/code consistency, Notification-System scope exclusion, diff-size/refactor risk, regression risk) found **zero blockers** — two non-blocking notes recorded (`docs/decisions.md`'s `trustProxies` addendum; `TECH_DEBT.md`'s migration-rollback item). User approved; **PR #37 opened**, then **merged to `main`** (`0bdf3d8`). Post-merge CI on `main` (the real run, unlike the PR-triggered one) re-confirmed fully green — Backend, Frontend, and E2E all `success` (run `31333946387`). **Milestone: "Phase 4 — Advanced Permissions & Audit Complete."** Next: Notification System design phase. |
+| 2026-08-11 | **Phase 5 (Notification System) — design phase.** Ground-truth audit found no notification system existed anywhere (no `notifications` table, no `app/Notifications`/`app/Mail`, no `config/broadcasting.php`, no route, no frontend store) — but also that Phase 2.6's `PatientActivityOccurred` already fires from 21 call sites across 9 services (24 event types), Phase 4's `PatientActivityPolicy` already established the category-filtering security pattern, and `User` already carried `Notifiable`. The same audit surfaced a **previously-untracked** hazard: `QUEUE_CONNECTION=redis` configured since the project's first `.env`, but **no worker process in either compose file** and nothing scheduled — any `ShouldQueue` would have been enqueued and silently never run. Design doc: `docs/modules/notifications-design.md`; user approved decisions D1-D8, scoping **Phase A + Phase B** to this cycle. |
+| 2026-08-11 | **Phase 5A (In-App Notification Center) implemented** on `feature/phase5-notifications` — Laravel's stock `notifications` table + 4 additive columns via a `DatabaseChannel` subclass (Decision D1); `SendsNotifications` as a **second listener on the existing event, so zero new dispatch call sites**; an 8-of-24 allow-list (`NotificationRules`) with per-type exclusion reasoning recorded; `RecipientResolver` as the single multi-tenant seam; three authorization layers (structural ownership → 404 not 403; read-time category re-check on list *and* count; send-time check); 5 endpoints; `NotificationBell`/`NotificationCenter`/`NotificationItem` replacing the inert header bell `TECH_DEBT.md` had tracked since the layout work; keys-not-text localization, 32 keys × 3 locales, parity **1485/1485/1485**. Backend 1179/1179 green (34 new, zero regressions), Frontend 34 new tests green. |
+| 2026-08-11 | **Phase 5B (Queue + Scheduler) implemented** — `queue` and `scheduler` containers added to **both** compose files, a `RUN_MIGRATIONS` guard in `docker/php/entrypoint.sh` so only `app` migrates rather than three containers racing. `ShouldQueue` adopted **only after** a real job was observed going `RUNNING` → `DONE` in `dentalsuite_queue` (the user's explicit condition), with `$afterCommit = true` — load-bearing, since `InvoiceService::void()`/`PaymentService::refund()`/`LabCaseService::receive()` all fire the event inside a `DB::transaction()`. `Notification` made `MassPrunable` (90-day retention, unread never pruned) and `routes/console.php` gained the project's first scheduled task. Backend **1186/1186** green (41 new total), Frontend **1003/1003** green. **Not merged — no PR opened, awaiting the user's own review.** |
 
 ---
 
@@ -204,6 +251,7 @@ as of the 2026-08-07 reconciliation, see §0.
 | Reports | **Production Ready ✅** (PR #7, merged 2026-07-28) | ✅ `ReportService`, 6 live reports, CSV export | ✅ Reports nav group + 6 views | 855/855 backend + 652/652 frontend + 29/29 E2E at merge; `reports.spec.ts`'s `DemoDataSeeder` regression (2 separate ordering bugs: Collections, New Patients) **fixed 2026-08-07** (PR #15) | `docs/modules/reports-design.md` | Was CI-red since 2026-08-01, now green — see §9/§12. |
 | Settings | **Production Ready ✅** (PR #8, **merged** 2026-07-30 — corrects stale "not merged" prose elsewhere, §0) | ✅ `ClinicSetting`, `BillingSetting` API, My Account | ✅ Settings views + header avatar menu | 877/877 backend (22 module-specific) + 672/672 frontend + 32/32 E2E | `docs/modules/settings-design.md` | Multi-branch, clinic logo upload, notification settings deliberately out of V1. |
 | AI Assistant | **Production Ready ✅** (PR #9, 2026-07-31; extended by PR #11, 2026-08-02) | ✅ gated service layer, `AiInteractionLog` | ✅ Dashboard Insights/Smart Search/Report writing + Settings API-key UI | 905/905 backend + 694/694 frontend + 34/34 E2E at PR #9; +additional tests in PR #11 | `docs/modules/ai-assistant-design.md`, `-settings-api-key-design.md` | See §7 for full detail — fails closed with no API key configured; PHI-touching features shipped disabled by design. |
+| **Notifications** | **Phase 5A/5B implemented 2026-08-11 — not yet merged** (`feature/phase5-notifications`) | ✅ Laravel `notifications` table + 4 additive columns, custom `DatabaseChannel`, `NotificationService`/`RecipientResolver`/`NotificationRules`, `SendsNotifications` (queued) on the existing `PatientActivityOccurred` event, `NotificationPolicy` category map, 5 endpoints | ✅ `NotificationBell` (badge + visibility-gated 60s poll, popover/drawer), one embeddable `NotificationCenter` shared by popover/drawer/`/notifications` page, `NotificationItem`, `notifications` store | 1186/1186 backend (41 new: 18 dispatch, 16 endpoint, 7 queue/scheduler) + 1003/1003 frontend (34 new) + `e2e/notifications.spec.ts` | `docs/modules/notifications-design.md` | In-app only. Email = Phase D, Web Push = roadmap Phase 6 (needs the absent PWA foundation), patient-facing SMS/WhatsApp = its own future module; `appointment_reminders` deliberately left unwired. Phase B closed a previously-untracked hazard: no queue worker had ever existed despite `QUEUE_CONNECTION=redis`. |
 
 **Post-roadmap initiative — Frontend UX & Navigation Redesign / Premium Visual Redesign** (see §6 for the
 full narrative):
@@ -260,6 +308,10 @@ Sourced directly from `gh pr list --state all` (31 PRs total as of this update; 
 | 33 | `fix/timeline-e2e-multi-instance-scoping` | Fix 2 real bugs `e2e/timeline.spec.ts` itself had, caught by post-merge CI's real E2E run (PR-triggered runs skip it by design) | Lab case number read before async fetch completed; unscoped `getByText()` hit a strict-mode violation across 2 simultaneously-mounted `ActivityTimeline` instances | **Merged** 2026-08-09 (`83c584b`) — post-merge CI fully green, closing out Phase 2 |
 | 34 | `docs/phase2-complete-closeout` | Docs-only: close out Phase 2 (Patient Profile Redesign) | No code changes | **Merged** 2026-08-09 (`54d9bf8`) |
 | 35 | `feature/dashboard-2-0` | Phase 3 — Dashboard 2.0 | Split `/dashboard/summary` (operational, all roles) from new `/dashboard/financial-summary` (admin-only) — fixes a real pre-existing leak (`monthly_revenue` had no gate); production/collections trend + A/R aging snapshot (reuses `ReportService`, no new report logic); `unscheduled_accepted_treatment` widget data (new query); `FinancialSnapshotWidget.vue`/`UnscheduledTreatmentWidget.vue`; restyled stat cards/`AiQuestionBox` gradient/`gap-6` spacing (absorbs Premium Visual Redesign §6, now superseded); `PatientDetailView.vue` `?tab=` deep-link; new `e2e/dashboard.spec.ts` | **Merged** 2026-08-09 (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E), closing out Phase 3 |
+| 36 | `docs/phase3-closeout` | Docs-only: close out Phase 3 (Dashboard 2.0) | No code changes | **Merged** 2026-08-09 (`14416e9`) |
+| 37 | `feature/phase4-permissions-foundation` | Phase 4 — Advanced Permissions & Audit (all 5 steps) | 68-entry permission catalog + `permissions`/`role_permissions` matrix, all 27 Policies on `hasPermission()`, full `audit_logs` overhaul (old/new diffs, IP/UA, auth events, immutability), `PermissionsView.vue`/`AuditLogsView.vue`, `trustProxies`, 3 new E2E specs | **Merged** 2026-08-09 (`0bdf3d8`) — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31333946387`), closing out Phase 4 |
+| 38 | `docs/phase4-close-out` | Docs-only: close out Phase 4 (record PR #37 merge + post-merge CI) | No code changes | **Merged** 2026-08-09 (`75cf60b`) |
+| — | `feature/phase5-notifications` | Phase 5 — Notification System, Phases A + B | `notifications` table (Laravel's + 4 additive columns) + custom `DatabaseChannel`; `SendsNotifications` as a second listener on the existing `PatientActivityOccurred` (zero new dispatch sites); `NotificationRules` 8-of-24 allow-list; `RecipientResolver`; `NotificationPolicy`; 5 endpoints; `NotificationBell`/`NotificationCenter`/`NotificationItem` + `/notifications` page + store; 32 i18n keys × 3 locales; `queue`+`scheduler` containers in both compose files; `entrypoint.sh` `RUN_MIGRATIONS` guard; `MassPrunable` + first scheduled task; `e2e/notifications.spec.ts` | **No PR opened** — implemented 2026-08-11, awaiting the user's own review before a PR is requested |
 
 ---
 
@@ -850,6 +902,109 @@ new features) that starting implementation without a design-approval round first
 two-phase workflow every prior module has followed. Competing candidates (Payments/Treatment-Plans
 E2E gap, remaining Premium Visual Redesign steps, S3 backup) are all real but lower-priority per the
 roadmap's own stated order — see §11 for the full list.
+
+---
+
+## Phase 5 — Notification System (2026-08-11)
+
+**Status: Phases A + B implemented on `feature/phase5-notifications`. Not merged; no PR opened, awaiting
+the user's own review.** Design doc: `docs/modules/notifications-design.md` (approved, decisions D1-D8).
+
+### What the design-phase audit actually found
+
+Two findings shaped everything else, and neither was assumed — both came from reading the real files:
+
+1. **No notification system existed at all**, confirmed by search: no `notifications` migration, no
+   `app/Notifications/`, no `app/Mail/`, no `app/Jobs/`, no `config/broadcasting.php`, no route, no frontend
+   store. `TECH_DEBT.md` had tracked the inert header bell since the layout work, predicting it would need
+   "a data source filled in later, not a redesign."
+2. **The project was far closer than that suggested.** Phase 2.6's `PatientActivityOccurred` already fires
+   from **21 physical call sites across 9 services, covering 24 event types**; Phase 4's
+   `PatientActivityPolicy` had already established the per-category, filter-in-the-query security pattern;
+   and `User` already carried Laravel's `Notifiable` trait (inert, since no table stood behind it). This is
+   why Phase 5A needed **zero new event dispatch call sites** — a second listener on an event that already
+   fires everywhere, versus Phase 2.6's own 24 hand-placed sites.
+
+The audit also surfaced a real, **previously-untracked** infrastructure hazard (now recorded in
+`TECH_DEBT.md`'s Resolved section): `QUEUE_CONNECTION=redis` had been set since the project's first `.env`
+and Redis ran in both compose files, but **no `queue:work` process, Horizon instance, or supervisor existed
+anywhere**, and `routes/console.php` held nothing but the stock `inspire` command. Anything `ShouldQueue`
+would have been enqueued and silently never executed. Phase 2.6's `RecordsPatientActivity` had been written
+synchronously specifically to sidestep this — the hazard was known locally, in a docblock, but had never
+been escalated to a tracked item.
+
+### Phase A — In-App Notification Center
+
+- **Table (Decision D1)**: Laravel's stock `notifications` schema plus four additive columns
+  (`category`, `subject_type`, `subject_id`, nullable `patient_id`), populated by a ~20-line subclass of
+  Laravel's own `DatabaseChannel` bound in `AppServiceProvider`. Keeps `markAsRead()`,
+  `unreadNotifications`, and `Prunable` for free while making the security filter a real indexed `WHERE`
+  rather than a JSON probe. The same additive-columns move Phase 4 Step 3 made on `audit_logs`.
+- **Volume control**: `NotificationRules` is an explicit allow-list — **8 of the 24 live event types
+  notify**, the other 16 stay silent by design, with per-type reasoning recorded in the design doc's §5.1.
+  A Notification Center that fills with routine lifecycle events gets ignored, which would make the
+  genuinely urgent ones worthless.
+- **Three authorization layers**: structural ownership (every route resolves from
+  `$request->user()->notifications()`, so another user's row **404s because it is never in scope** — no
+  permission catalog entry needed, Decision D6, matching My Account); a read-time category re-check applied
+  to the list **and the count** (a badge that counted invisible rows would leak that they exist); and a
+  send-time check, so a notification is never created for someone who could not open its target.
+- **Localization**: stores translation keys + raw params, never rendered text — so switching language
+  re-renders existing notifications correctly with no backfill, and coverage stays verifiable by the same
+  programmatic parity check. 32 new keys × 3 locales; **1485/1485/1485, zero drift**.
+
+### Phase B — Queue & Scheduler
+
+`queue` and `scheduler` containers added to **both** compose files, plus a `RUN_MIGRATIONS` guard in
+`docker/php/entrypoint.sh` (found by reading the entrypoint before adding the containers — without it,
+three containers would race `migrate --force` at boot).
+
+Per the user's explicit instruction, `ShouldQueue` was adopted **only after** the worker was proven: a real
+job was observed going `RUNNING` → `DONE` in `dentalsuite_queue`, and then a real `InvoiceService::void()`
+was driven end-to-end and its notification confirmed written by the worker. Two consequences worth
+recording: `$afterCommit = true` is load-bearing (three dispatching services fire the event inside a
+`DB::transaction()`, so without it a worker can pick the job up before the commit and find no row), and the
+listener keeps its `try/catch` even when queued — trading automatic retries for a fail-open guarantee that
+holds under every queue driver including `sync`. `RecordsPatientActivity` stays synchronous: a Timeline row
+is part of the record, a notification is a delivery side effect.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| Backend tests | **1186/1186 green** (41 new: 18 dispatch, 16 endpoint, 7 queue/scheduler) — 1145 Phase 4 baseline + 41, **zero regressions** |
+| Frontend tests | **1003/1003 green**, 150 files (34 new) — 969 Phase 4 baseline + 34, **zero regressions** |
+| Pint | Clean (553 files) |
+| PHPStan | Only the "undefined property on `casts()` models" pattern `TECH_DEBT.md` already documents as local-only — confirmed by reproducing it identically on untouched, CI-green files (`InvoiceService.php`, `PatientActivityResource.php`) |
+| `vue-tsc` / ESLint / Prettier / E2E types | Clean |
+| i18n parity | 1485/1485/1485, zero drift either direction |
+| Migration | Verified against real Postgres, including the partial `notifications_unread_idx` |
+| Queue worker | Verified by observation, not by the container merely starting |
+
+**Known local-environment caveat, consistent with every prior phase**: this Windows Docker host's
+per-HTTP-request latency (documented in §9 and reproduced in Phases 2.6b, 3 and 4) makes the Playwright
+suite slow and occasionally flaky locally. **CI remains the verification authority** — the E2E job does not
+run on `pull_request` by design, so the authoritative signal is a `workflow_dispatch` run or the post-merge
+run on `main`.
+
+### What was deliberately NOT built
+
+Recorded so "why isn't this here" is answered once: **Email** (Phase D — blocked on `MAIL_MAILER=log`, no
+`users.locale` column, no backend `lang/` files, and on preferences existing first); **Web/PWA Push**
+(roadmap Phase 6 — needs a service worker, which needs the PWA foundation this project does not have);
+**patient-facing SMS/WhatsApp/email reminders** (their own future module — needs transport, contact
+preferences, consent records, and a delivery-failure model; the `appointment_reminders` table was left
+untouched rather than half-wired, because a table that looks live but silently drops reminders is worse
+than a visibly unwired one); **realtime websockets** (no broadcast layer exists; polling is adequate at
+clinic scale); **per-user preferences** (meaningless while in-app is the only channel); and **Phase C's
+scheduled/administrative types** (lab overdue, low-stock digest, unconfirmed appointments, repeated-login
+alerts) — all designed, none started. See the design doc's §13 and `TECH_DEBT.md`.
+
+### Immediate next step
+
+The user's review of this branch, then a PR. After that, the open choice is Phase 5C/5D (which Phase B has
+now unblocked) versus roadmap Phase 6 (SaaS Multi-Tenant Prep) — a prioritization call for the user, not a
+decision this file should make on their behalf.
 
 ---
 
