@@ -1865,5 +1865,72 @@
       "add": "Add",
       "added": "Added"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "viewAll": "View all notifications",
+    "markAllRead": "Mark all as read",
+    "loadMore": "Load more",
+    "unread": "Unread",
+    "loading": "Loading notifications…",
+    "loadError": "Could not load notifications.",
+    "markReadError": "Could not mark the notification as read.",
+    "markAllReadError": "Could not mark all notifications as read.",
+    "status": {
+      "all": "All",
+      "unread": "Unread",
+      "read": "Read"
+    },
+    "categories": {
+      "appointments": "Appointments",
+      "treatment_plans": "Treatment Plans",
+      "laboratory": "Laboratory",
+      "billing": "Billing",
+      "payments": "Payments"
+    },
+    "types": {
+      "appointment": {
+        "checked_in": {
+          "title": "Patient has arrived",
+          "body": "{patientName} checked in for their {startAt} appointment."
+        },
+        "cancelled": {
+          "title": "Appointment cancelled",
+          "body": "{patientName}'s appointment on {startAt} was cancelled."
+        },
+        "no_show": {
+          "title": "Patient did not attend",
+          "body": "{patientName} did not attend their {startAt} appointment."
+        }
+      },
+      "treatment_plan": {
+        "accepted": {
+          "title": "Treatment plan accepted",
+          "body": "{patientName} accepted the plan “{planTitle}”. It is ready to schedule."
+        },
+        "rejected": {
+          "title": "Treatment plan rejected",
+          "body": "{patientName} rejected the plan “{planTitle}”."
+        }
+      },
+      "lab_case": {
+        "received": {
+          "title": "Lab case received",
+          "body": "Case {caseNumber} ({caseType}) for {patientName} is back from the lab."
+        }
+      },
+      "payment": {
+        "refunded": {
+          "title": "Payment refunded",
+          "body": "{amount} was refunded to {patientName}."
+        }
+      },
+      "invoice": {
+        "voided": {
+          "title": "Invoice voided",
+          "body": "Invoice {invoiceNumber} for {patientName} was voided."
+        }
+      }
+    }
   }
 }

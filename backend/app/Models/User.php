@@ -9,6 +9,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -83,5 +84,21 @@ class User extends Authenticatable
     public function timeOff(): HasMany
     {
         return $this->hasMany(DentistTimeOff::class);
+    }
+
+    /**
+     * Phase 5 (Notification System) design doc §3.1 — overrides the `Notifiable` trait's own
+     * `notifications()` so the relation resolves to `App\Models\Notification` (Laravel's
+     * `DatabaseNotification` plus this project's four additive columns) rather than the framework
+     * base class. Without this override the `inCategories()` scope that carries the read-time
+     * authorization filter, and Phase B's pruning, would not be reachable from the relation.
+     *
+     * Ordering matches the trait's own (`latest()`), so no existing behaviour changes.
+     *
+     * @return MorphMany<Notification, $this>
+     */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
     }
 }

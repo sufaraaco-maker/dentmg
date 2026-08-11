@@ -420,3 +420,117 @@ so the per-IP API throttle now trusts the same forwarded header the audit log do
 not an oversight: the same single-trusted-proxy bind that makes the IP trustworthy for audit logging makes
 it equally trustworthy for rate-limiting. No action needed unless the deployment topology in
 `docs/deployment.md` ever changes to allow an untrusted path to the app.
+
+## 2026-08-11 — Phase 5: notifications extend Laravel's own `notifications` table rather than a bespoke model
+
+Phase 5's design brief explicitly asked to review Laravel Notifications before choosing an implementation
+and to prefer Laravel conventions over an unnecessary abstraction. Laravel's `DatabaseNotification` already
+provides the entire Notification Center feature list — `read_at`, `markAsRead()`, `unreadNotifications`,
+`Prunable` — and the `User` model already used the `Notifiable` trait (Laravel skeleton default, previously
+inert since no table stood behind it).
+
+The stock schema alone was not sufficient, for two concrete reasons: the read-time authorization re-check
+(below) needs `WHERE category IN (...)` on an indexed column, not a JSON probe into `data`; and deep links
+need a stable `subject_type`/`subject_id`.
+
+**Decision**: use Laravel's stock `notifications` table plus four additive columns (`category`,
+`subject_type`, `subject_id`, nullable `patient_id`), populated by a subclass of Laravel's own
+`Illuminate\Notifications\Channels\DatabaseChannel` bound over it in `AppServiceProvider`. This overrides one
+documented extension point (`buildPayload`) and inherits everything else. It is the same
+additive-columns-on-a-framework-table move Phase 4 Step 3 already made on `audit_logs`, so it follows an
+in-repo precedent rather than inventing one. A parallel bespoke `Notification` model was rejected as exactly
+the unnecessary abstraction the brief warned against.
+
+**Status**: Approved by the user as Decision D1 of `docs/modules/notifications-design.md`; implemented
+2026-08-11.
+
+## 2026-08-11 — Phase 5: no permission catalog entry for notifications; access is structurally self-scoped
+
+Every other module's endpoints go through the Phase 4 permission matrix. Notifications deliberately do not.
+
+Every notification is addressed to exactly one `notifiable` user, and every route resolves its target from
+`$request->user()->notifications()` — never from a route-model-bound `{notification}` looked up globally. A
+notification belonging to someone else is therefore not "found and then rejected"; it is never in the result
+set, so those routes return 404 rather than 403. There is no `where user_id = ?` to forget and no policy to
+misconfigure. This is the same structural guarantee `ProfileController` (My Account) already relies on — and
+My Account likewise has no permission key.
+
+Adding a `notifications.view` catalog entry would imply an admin could meaningfully revoke a role's ability
+to read *its own* notifications, which is not a real operation.
+
+**Layered on top**, because ownership alone is not enough: every list *and* count query also filters
+`whereIn('category', NotificationPolicy::allowedCategories($user))`, re-derived per request from each
+category's real owning policy. This closes permission drift — a dentist notified of a `lab_case.received` on
+Monday stops seeing it if `lab_cases.view` is revoked from their role on Tuesday, even though the row still
+exists. `payments` is mapped to `Payment`/`PaymentPolicy` rather than folded into `billing`/`Invoice`,
+because `payments.view` and `invoices.view` are separately grantable and §8.2's rule is one category per real
+policy.
+
+**Status**: Approved by the user as Decision D6 of `docs/modules/notifications-design.md`; implemented
+2026-08-11 and covered by `NotificationEndpointTest` (both the IDOR case and the revoked-after-the-fact case)
+and by `e2e/notifications.spec.ts` (asserted three ways: rendered DOM, network response, direct API access).
+
+## 2026-08-11 — Phase 5B: a queue worker and scheduler now actually exist; `ShouldQueue` is safe to use
+
+Phase 5's design-phase audit found that `QUEUE_CONNECTION=redis` had been configured since the project's
+first `.env`, and Redis ran in both dev and production compose — but **neither compose file contained a
+`queue:work` process, a Horizon instance, or a supervisor**, and `routes/console.php` contained nothing but
+Laravel's stock `inspire` command. Anything `ShouldQueue` would have been enqueued to Redis and silently
+never executed. Phase 2.6's `RecordsPatientActivity` had been written synchronously specifically to sidestep
+this ("no queue worker actually runs in this project today (confirmed by audit)"), so the hazard was known
+locally but had never been escalated to a tracked item.
+
+**Decision**: add dedicated `queue` and `scheduler` containers to both compose files, reusing the existing
+app image with a different command; guard `docker/php/entrypoint.sh` with `RUN_MIGRATIONS` so only the `app`
+container migrates rather than three containers racing `migrate --force`; and adopt `ShouldQueue` only after
+observing a real job go `RUNNING` → `DONE` in the worker container.
+
+Two consequences worth recording:
+- `SendsNotifications` sets `$afterCommit = true`. `InvoiceService::void()`, `PaymentService::refund()` and
+  `LabCaseService::receive()` all fire `PatientActivityOccurred` from inside a `DB::transaction()`; without
+  it a worker can pick the job up before the commit and find no row — a race that only appears under load.
+- The listener keeps its `try/catch` even though it is now queued. This forgoes automatic retries in exchange
+  for the fail-open guarantee holding under *every* queue driver, including `sync` (which the test suite
+  uses), where an uncaught throw would propagate straight back into the caller's request. For a clinical
+  system, a lost notification is a better failure than a blocked cancellation.
+
+`RecordsPatientActivity` deliberately stays synchronous — a Timeline row is part of the record, whereas a
+notification is a delivery side effect.
+
+**Status**: Approved by the user as Decision D8 (Phase A + B in one cycle); implemented 2026-08-11 and
+guarded by `NotificationQueueTest`.
+
+## 2026-08-11 — Phase 5 pre-PR review: `readonly` event properties are compatible with `SerializesModels`, but only via `__serialize()`/`__unserialize()`
+
+A pre-PR review of Phase A/B found that `PatientActivityOccurred`'s `subject`/`actor` — plain `readonly`
+promoted `Model`/`?User` properties — had no serialization contract, so once `SendsNotifications` became
+`ShouldQueue` (Phase B), the full `Model` (bcrypt password hash, `remember_token`, and, whenever a relation
+happened to be preloaded, patient PHI) serialized straight into the Redis job payload. The standard fix,
+`Illuminate\Queue\SerializesModels`, was suspected at first to be incompatible with `readonly` properties —
+PHP forbids writing to an already-initialized `readonly` property, and older Laravel versions' equivalent
+mechanism (`__sleep()`/`__wakeup()`) mutates the *live* object's properties in place, which would indeed
+fail here.
+
+**Decision**: apply `SerializesModels` anyway, after verifying (not assuming) it actually works with this
+framework version's implementation. It does, because this codebase's `SerializesModels` (`illuminate/queue`)
+uses the newer `__serialize()`/`__unserialize()` magic methods instead: `__serialize()` only *reads* the live
+properties (never mutates them) and returns a `ModelIdentifier`-substituted array; `__unserialize()` writes
+each property for the first time on a freshly-allocated, not-yet-constructed object — the one case PHP's
+readonly rules permit regardless of which scope the write happens from. Confirmed three ways before trusting
+it: an isolated PHP script proving Reflection-based writes succeed on an uninitialized `readonly` property;
+a `NotificationEventSerializationTest` asserting the serialized payload contains no password hash/PHI and
+that the listener still resolves and notifies correctly after a real `serialize()`/`unserialize()` round
+trip; and a live run against the real `dentalsuite_queue` container — payload read directly from Redis via
+`redis-cli` while the worker was paused (clean), then the worker resumed and observed carrying the job
+`RUNNING` → `DONE` with a real `notifications` row written.
+
+**Consequence for future event/job classes carrying `Model` properties in this codebase**: `readonly`
+promoted properties do not need to be avoided for `ShouldQueue` compatibility — `SerializesModels` should
+still be added (it also shrinks a loaded relation to its name rather than its full data, which a plain
+`readonly` property does not), but never assumed to work without a payload-content test, since the *specific
+mechanism* a given Laravel version uses for it is what determines readonly-compatibility, not the trait name
+alone.
+
+**Status**: Fixed 2026-08-11 on `feature/phase5-notifications`, before either Phase A or B was opened as a
+PR. See `TECH_DEBT.md`/`CHANGELOG.md` for the sibling findings from the same review (notification-store
+reset on logout, malformed-UUID 404, Notification Center refetch-on-reopen, i18n parity doc drift).

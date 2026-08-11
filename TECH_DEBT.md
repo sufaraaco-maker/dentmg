@@ -172,12 +172,73 @@ pricing table referencing a tenant-shared procedure list), rather than continuin
 `dental_conditions`. Do not build speculatively before then, per the same "don't build ahead of a real need"
 principle already applied to Multi-Branch below.
 
-### Header notifications is inert UI (no notification backend)
-`AppHeader.vue`'s bell icon opens a popover that always reads "No notifications yet" — there is no
-notification system in the backend. Scaffolded deliberately as inert UI (per the layout architecture design,
-`docs/modules/layout-architecture.md`) rather than wired to fake data, so the header only needs a data source
-filled in later, not a redesign.
-**Revisit**: when a real notification system exists on the backend.
+### The whole local Playwright suite currently fails at login (reproduces on `main`)
+Found 2026-08-11 while trying to verify Phase 5's new `e2e/notifications.spec.ts`. Every spec that logs in
+fails inside the shared `login()` fixture in `e2e/fixtures.ts`: the Sign In button stays disabled showing a
+client-side "Enter a password", meaning Playwright's `fill()` on `LoginView.vue`'s PrimeVue `Password`
+component (`toggle-mask`, `required`) never registers with Vue's `v-model`. The 25s `waitForFunction` then
+times out.
+
+**This is not caused by Phase 5.** `e2e/auth.spec.ts` — untouched and green in CI — fails identically, and
+checking out `main` (with none of Phase 5's code present), restarting the dev server, and re-running it
+**reproduces the same failures**. Ruled out: the `/api/login` throttle (5/60s, waited out — no change), a
+stale Vite transform (`dentalsuite_frontend` restarted twice), and PrimeVue drift from the dev container's
+`npm install` versus CI's `npm ci` (installed `4.5.5` matches the lockfile exactly). This is distinct from —
+and more severe than — the per-HTTP-request latency already documented below, which caused slowness and
+flakiness rather than a deterministic failure.
+
+**Consequence**: local E2E is currently unusable as a verification signal, so `notifications.spec.ts` shipped
+written and type-checked but initially never observed passing. CI is the only authority until this is fixed.
+
+**This entry's own open question, answered 2026-08-11** (PR #39 pre-merge gate, per explicit user request):
+ran real `workflow_dispatch` CI on `feature/phase5-notifications` — `auth.spec.ts` and every other
+login-dependent spec **passed cleanly on CI**, confirming the divergence is purely local to this dev
+machine (Windows Docker Desktop + this host's Playwright/browser install), not a real application
+regression, and not something the E2E job's `pull_request`-skip was masking. Same run also found and fixed
+two genuinely real, pre-existing bugs unrelated to `login()` — see `docs/PROJECT_STATUS.md`'s Phase 5 "E2E
+— could not be verified locally, but now genuinely verified on real CI" section for the full account: a
+`notifications.spec.ts` fixture bug (wrong assumption about `/appointment-types`'s response shape) and a
+`ci.yml` gap (the E2E job never started a queue worker despite `SendsNotifications` being `ShouldQueue`
+since Phase 5B). `notifications.spec.ts` is now CI-confirmed passing (56/57, 1 flaky-then-passed).
+**Revisit**: the local `login()` failure itself is still unfixed and still blocks local E2E entirely — only
+its *consequence* for Phase 5 specifically has been resolved (via CI, not by fixing the local issue). Worth
+a dedicated session pinning down the local browser/Playwright version mismatch, before the next phase that
+adds E2E coverage needs to lean on local runs.
+
+### Notification Center polls instead of receiving server push
+Introduced 2026-08-11 with Phase 5A (Notification System). The unread badge polls
+`GET /notifications/unread-count` every 60 seconds (gated on `document.visibilityState`, so a backgrounded
+tab costs nothing) rather than receiving a push. This is a deliberate design decision, not an oversight:
+the project has **no broadcast layer at all** — `BROADCAST_CONNECTION=log`, no `config/broadcasting.php`,
+and no Echo/Pusher/Reverb client in `frontend/package.json` (all verified at design time). Adding one means
+a new server process, a new frontend dependency, private-channel auth, and new E2E surface, for a
+clinic-scale app where a 60s delay is imperceptible. The store contract is deliberately shaped so a
+broadcast push can later feed the same state with no UI change.
+**Revisit**: if a clinic reports the delay as a real problem, or if a broadcast layer is introduced for some
+other reason (at which point this becomes nearly free). See `docs/modules/notifications-design.md` §3.4.
+
+### Notification email, Web Push, and patient-facing reminders are designed but unbuilt
+Phase 5 (2026-08-11) shipped in-app notifications only. Three channels are fully designed and deliberately
+deferred, each blocked on something concrete rather than on effort:
+- **Email (Phase D)** — blocked on `MAIL_MAILER=log` (no real transport), the absence of a `users.locale`
+  column, and the absence of backend `lang/{en,ar,tr}` files. In-app notifications localize client-side and
+  need none of these; email renders server-side and needs all three. Also requires per-user preferences
+  first, since email without an opt-out is a defect.
+- **Web/PWA Push** — blocked on there being no service worker, which is blocked on the whole-app PWA gap
+  already tracked below. Belongs to roadmap Phase 6.
+- **Patient-facing reminders (SMS/WhatsApp/patient email)** — this is what the still-unwired
+  `appointment_reminders` table exists for. Needs an outbound transport, patient contact preferences,
+  consent/opt-out records, and a delivery-failure model: a module in its own right, with regulatory weight.
+**Revisit**: Phase D for email; roadmap Phase 6 for push; a dedicated future module for patient reminders.
+
+### `appointment_reminders` remains an unwired table
+Unchanged by Phase 5, and deliberately so. Created 2026-07-15 as forward-compatible schema for "the future
+Notifications module," but that module turned out to be **staff-facing in-app notifications**, whereas this
+table is for **patient-facing** reminders — a materially different feature (see the entry above). Phase 5
+left it untouched rather than half-wiring it: a table that looks live but silently drops every reminder
+would be worse than one that is visibly unwired and carries an explanatory docblock, which it does.
+**Revisit**: when patient-facing reminders are actually built. Its `channel` column is still deliberately a
+plain string rather than an enum, pending that decision.
 
 ### `national_id` uniqueness survives soft delete
 A soft-deleted patient's `national_id` can't be reused by a newly-registered patient, because the DB-level unique constraint doesn't exclude soft-deleted rows. Simpler than scoping the constraint, and arguably safer for data integrity, but worth knowing.
@@ -413,6 +474,31 @@ is real (if rare) even on CI's native runner, not unique to the local Windows Do
 pre-existing/unrelated to this module.
 
 ## Resolved
+
+### Header notifications is inert UI (no notification backend) — resolved 2026-08-11 (Phase 5A, Notification System)
+`AppHeader.vue`'s bell icon opened a popover that always read "No notifications yet," because no notification
+system existed in the backend. It was scaffolded deliberately as inert UI (per
+`docs/modules/layout-architecture.md`) rather than wired to fake data, so that the header would need only a
+data source later, not a redesign.
+**RESOLVED**: that prediction held exactly. Phase 5A replaced the placeholder markup with a real
+`NotificationBell` component (unread badge, visibility-gated polling, popover on desktop / drawer on mobile)
+backed by a real `notifications` table, API, and permission model — no header redesign was required, only the
+data source being filled in. See `docs/modules/notifications-design.md`.
+
+### No queue worker or scheduler process existed anywhere, despite `QUEUE_CONNECTION=redis` — resolved 2026-08-11 (Phase 5B)
+Found during Phase 5's design-phase audit and, unlike most items here, **never previously recorded** — which
+is precisely what made it dangerous. `QUEUE_CONNECTION=redis` had been set since the project's first `.env`,
+and Redis ran in both dev and prod compose, but **neither compose file contained a `queue:work` process, a
+Horizon instance, or a supervisor** — and `routes/console.php` held nothing but Laravel's stock `inspire`
+command, so no scheduler ran either. Anything `ShouldQueue` would therefore have been enqueued to Redis and
+silently never executed, with no error anywhere. Phase 2.6's `RecordsPatientActivity` had been written
+synchronously specifically to sidestep this, with a docblock noting "no queue worker actually runs in this
+project today (confirmed by audit)" — the hazard was known locally but never escalated to a tracked item.
+**RESOLVED**: Phase 5B added `queue` and `scheduler` containers to both `docker-compose.yml` and
+`docker-compose.prod.yml` (reusing the existing app image), plus a `RUN_MIGRATIONS` guard in
+`docker/php/entrypoint.sh` so only the `app` container migrates rather than three containers racing.
+Verified by observing a real job go `RUNNING` -> `DONE` in `dentalsuite_queue`, not merely by the container
+starting. `NotificationQueueTest` guards the wiring going forward.
 
 ### `App\Rules\BelongsToPatient` threw a real SQL error when used against `TreatmentPlanItem` — resolved 2026-08-08 (Phase 2.4, Laboratory Patient Profile integration)
 Originally discovered 2026-07-28 while writing Imaging's own Feature tests: `BelongsToPatient`

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\InvoiceItemController;
 use App\Http\Controllers\Api\LabCaseController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\MedicalHistoryController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientActivityController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PatientDocumentController;
@@ -212,6 +213,23 @@ Route::middleware('auth:sanctum')->group(function () {
     // Patient Profile's Timeline tab (Phase 2.6a). Read-only — activity rows are written only by
     // RecordsPatientActivity, never via a user-facing endpoint.
     Route::get('patients/{patient}/activities', [PatientActivityController::class, 'index']);
+
+    // Notification System (Phase 5A), design doc §7. Every route is self-scoped through
+    // $request->user()->notifications() — `{notification}` is deliberately a plain string, NOT a
+    // route-model-bound {notification}, so another user's row is never resolved in the first place
+    // (design doc §8.1). No permission middleware by Decision D6: reading your own notifications is
+    // structurally self-scoped, exactly like the My Account routes below.
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    // `->whereUuid()` (Laravel's own route-constraint helper, not custom parsing) rejects a
+    // malformed id before the controller ever runs — without it, a non-UUID string reaches
+    // `findOrFail()`'s underlying `WHERE id = ?` against the `notifications.id` uuid column and
+    // Postgres throws `22P02: invalid input syntax for type uuid`, an uncaught QueryException that
+    // becomes a 500. SQLite (the test suite's own connection) stores the column as untyped text and
+    // never rejects it, which is why this needed a real Postgres-backed test, not just SQLite.
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->whereUuid('notification');
 
     Route::get('reports/production', [ReportController::class, 'production']);
     Route::get('reports/collections', [ReportController::class, 'collections']);

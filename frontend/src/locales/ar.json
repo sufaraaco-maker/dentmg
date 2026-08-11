@@ -1865,5 +1865,72 @@
       "add": "إضافة",
       "added": "تمت الإضافة"
     }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "viewAll": "عرض كل الإشعارات",
+    "markAllRead": "تعليم الكل كمقروء",
+    "loadMore": "تحميل المزيد",
+    "unread": "غير مقروء",
+    "loading": "جارٍ تحميل الإشعارات…",
+    "loadError": "تعذّر تحميل الإشعارات.",
+    "markReadError": "تعذّر تعليم الإشعار كمقروء.",
+    "markAllReadError": "تعذّر تعليم جميع الإشعارات كمقروءة.",
+    "status": {
+      "all": "الكل",
+      "unread": "غير المقروءة",
+      "read": "المقروءة"
+    },
+    "categories": {
+      "appointments": "المواعيد",
+      "treatment_plans": "خطط العلاج",
+      "laboratory": "المختبر",
+      "billing": "الفواتير",
+      "payments": "المدفوعات"
+    },
+    "types": {
+      "appointment": {
+        "checked_in": {
+          "title": "وصل المريض",
+          "body": "سجّل {patientName} حضوره لموعد {startAt}."
+        },
+        "cancelled": {
+          "title": "تم إلغاء الموعد",
+          "body": "تم إلغاء موعد {patientName} في {startAt}."
+        },
+        "no_show": {
+          "title": "لم يحضر المريض",
+          "body": "لم يحضر {patientName} موعده في {startAt}."
+        }
+      },
+      "treatment_plan": {
+        "accepted": {
+          "title": "تمت الموافقة على خطة العلاج",
+          "body": "وافق {patientName} على الخطة «{planTitle}». أصبحت جاهزة للجدولة."
+        },
+        "rejected": {
+          "title": "تم رفض خطة العلاج",
+          "body": "رفض {patientName} الخطة «{planTitle}»."
+        }
+      },
+      "lab_case": {
+        "received": {
+          "title": "وصلت حالة المختبر",
+          "body": "عادت الحالة {caseNumber} ({caseType}) الخاصة بـ {patientName} من المختبر."
+        }
+      },
+      "payment": {
+        "refunded": {
+          "title": "تم استرداد دفعة",
+          "body": "تم استرداد {amount} إلى {patientName}."
+        }
+      },
+      "invoice": {
+        "voided": {
+          "title": "تم إلغاء الفاتورة",
+          "body": "تم إلغاء الفاتورة {invoiceNumber} الخاصة بـ {patientName}."
+        }
+      }
+    }
   }
 }

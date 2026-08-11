@@ -160,6 +160,16 @@ jobs:
         # needed) addressed.
         run: PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=localhost --port=8000 &
 
+      - name: Start queue worker
+        working-directory: backend
+        # QUEUE_CONNECTION=redis by default (backend/.env.example) and SendsNotifications has been
+        # ShouldQueue since Phase 5B — without a real worker consuming the Redis queue, every
+        # notification-producing action in the E2E suite enqueues and silently never delivers,
+        # which looks like "no notification was ever created" rather than a queue problem. Mirrors
+        # the queue container dev/prod compose already run; --stop-when-empty is deliberately not
+        # used since the suite dispatches jobs throughout its run, not just at the start.
+        run: php artisan queue:work --tries=1 &
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

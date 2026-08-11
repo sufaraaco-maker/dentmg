@@ -44,11 +44,20 @@ scope.
 ## Post-roadmap: 8-Phase Product Roadmap (Stabilization → Launch)
 
 A second, larger post-roadmap initiative — Stabilization & Integration → Patient Profile Redesign →
-Dashboard 2.0 → Advanced Permissions & Audit → SaaS Multi-Tenant Prep → PWA & Mobile → AI Assistant
-Expansion → Launch Preparation — is tracked in **`docs/PROJECT_STATUS.md`** (the living status book), not
-duplicated here. **Phase 1: Stabilization closed 2026-08-07** via PR #15 (+ PR #14) — restored a fully
-green `main` (CI's E2E job had been red since 2026-08-01), fixed the `Dashboard.today_appointments` bug,
-and closed a loading/empty-state/error-handling consistency pass. See `docs/PROJECT_STATUS.md` §3/§11/§12
+Dashboard 2.0 → Advanced Permissions & Audit → **Notification System** → SaaS Multi-Tenant Prep → PWA &
+Mobile → AI Assistant Expansion → Launch Preparation — is tracked in **`docs/PROJECT_STATUS.md`** (the
+living status book), not duplicated here. **Phase 1: Stabilization closed 2026-08-07** via PR #15 (+ PR #14)
+— restored a fully green `main` (CI's E2E job had been red since 2026-08-01), fixed the
+`Dashboard.today_appointments` bug, and closed a loading/empty-state/error-handling consistency pass.
+**Phases 2-4 closed 2026-08-09** (PR #34/#35/#37). **Phase 5: Notification System — Phases A + B
+implemented 2026-08-11** on `feature/phase5-notifications`: a real in-app Notification Center (Laravel's
+own notifications table + 4 additive columns, a second listener on the existing `PatientActivityOccurred`
+event so no new dispatch call sites were needed, an 8-of-24 event-type allow-list, three authorization
+layers, keys-not-text localization across en/ar/tr), plus the queue worker and scheduler containers that
+had never existed despite `QUEUE_CONNECTION=redis` being configured since the project's first `.env`.
+Phases C (scheduled/administrative notifications) and D (email) are designed but not started; Web Push is
+deferred to the PWA phase and patient-facing SMS/WhatsApp reminders to their own future module — see
+`docs/modules/notifications-design.md` §13 and `TECH_DEBT.md`. See `docs/PROJECT_STATUS.md` §3/§11/§12
 for current phase status and next steps.
 
 Full module list and scope boundaries are defined in `PROJECT_CONTEXT.md`.

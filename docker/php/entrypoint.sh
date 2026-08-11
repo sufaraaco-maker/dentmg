@@ -13,7 +13,21 @@ if ! grep -q "^APP_KEY=base64" .env 2>/dev/null; then
   php artisan key:generate --force
 fi
 
-php artisan migrate --force
+# Phase 5B (Notification System): the queue worker and scheduler containers introduced in that
+# phase share this image and therefore this entrypoint. Exactly ONE container must run migrations
+# — three racing `migrate --force` calls at boot can interleave badly — so those two set
+# RUN_MIGRATIONS=false and let the `app` container remain the single migrator. They still get the
+# vendor/.env/APP_KEY bootstrapping above, which they genuinely need.
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+  php artisan migrate --force
+else
+  # Wait for the app container to finish migrating before starting work, rather than crash-looping
+  # against a half-migrated schema.
+  until php artisan migrate:status >/dev/null 2>&1; do
+    echo "Waiting for database migrations to complete..."
+    sleep 2
+  done
+fi
 
 # The backend/ bind mount is created with root ownership on first run, but php-fpm
 # workers run as www-data (see php-fpm.d/www.conf) and need write access to log,

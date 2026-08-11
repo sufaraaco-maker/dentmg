@@ -14,6 +14,56 @@ services:
     networks:
       - dentalsuite
 
+  # Phase 5B (Notification System) — closes gap G1. `QUEUE_CONNECTION=redis` has been configured
+  # since the project's first .env, but NO worker process has ever existed in either compose file,
+  # so any `ShouldQueue` job would have been enqueued and then silently never run. That latent trap
+  # is why Phase 5A's notification listener is deliberately synchronous; this container is what
+  # makes queued work safe to adopt. Reuses the `app` image — same code, different entrypoint.
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dentalsuite_queue
+    # Required, not defensive — and the only service in this dev file that needs it. `--max-time`
+    # below makes the worker exit cleanly every hour on purpose (the standard way to bound a
+    # long-running PHP process's memory), so without a restart policy it exits 0 after an hour and
+    # never comes back. Observed happening during Phase 5B verification, on this very file.
+    restart: unless-stopped
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan queue:work --tries=3 --backoff=5 --max-time=3600 --sleep=1
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
+  # Phase 5B — closes gap G2. Nothing was scheduled anywhere before this (routes/console.php held
+  # only Laravel's stock `inspire` command), which is what blocked every time-based notification.
+  # `schedule:work` is the long-running, container-friendly form of the classic minutely cron entry.
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dentalsuite_scheduler
+    # `schedule:work` has no self-imposed exit, but a crash here is silent (nothing else notices a
+    # missing scheduler), so it gets the same policy as the worker.
+    restart: unless-stopped
+    environment:
+      # Only the `app` container migrates — see docker/php/entrypoint.sh.
+      RUN_MIGRATIONS: 'false'
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dentalsuite
+
   nginx:
     image: nginx:stable-alpine
     container_name: dentalsuite_nginx
