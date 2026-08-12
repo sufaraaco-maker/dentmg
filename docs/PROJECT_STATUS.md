@@ -133,24 +133,26 @@ lookup timing race against the queue worker, resolved by Playwright's own retry)
 and the real E2E run all `success`** (run `31545464355`; 56/57 passed, the same single flaky-then-passed
 test, confirming it is a transient timing flake, not deterministic). **Phase 5 (Notification System) is
 now complete.** **Notification E2E retry-fragility fix (2026-08-12)** — a real, repeating CI-retry failure
-mode found in `notifications.spec.ts`: `createAppointmentForDentist` picked its `start_at` from a
-module-level `slotHour` counter that resets to its initial value whenever Playwright's CI retry (`retries:
-1`) re-runs a failed test in a fresh worker process, so the retry requested the exact hour the failed
-attempt had already booked against the shared, non-transactional dev database — a `409 dentist_conflict`
-unrelated to whatever the original failure was. Fixed by replacing the counter with a real
-`GET /available-slots` query — the identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already
-applies to this exact bug class (see that function's own comment for the earlier incident this project
-already lived through once); every attempt, first run or retry, now asks the backend what is actually free,
-so a slot a prior attempt already booked is never re-offered. Added a regression test asserting a second
-booking call never lands on a first call's `start_at`. Local `notifications.spec.ts` run reproduced only
-the already-documented, environment-specific local `login()`/per-request-latency failures (`TECH_DEBT.md`
-— never reproduces on CI), none slot- or 409-related. Real `workflow_dispatch` CI on
-`fix/e2e-notifications-slot-retry-fragility` (**PR #46**, opened against `main`) ran fully green — Backend,
-Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run `31614084353`). **PR #46 is open,
-CI-confirmed green, pending a merge decision** — not yet merged; `main` itself is still at PR #44's merge
-commit `c4ec273` until #45 and/or #46 land. |
-| **Repo HEAD at time of writing** | `main` (Phase 5: Notification System, Phases A + B, plus pre-PR review fixes and a pre-merge E2E gate — **merged via PR #39**, merge commit `204194f`). Post-merge CI on `main` fully green — Backend, Frontend, and the real E2E run all `success` (run `31545464355`, 56/57 passed, 1 flaky-then-passed) — see `docs/modules/notifications-design.md`. |
-| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Milestone: "Phase 4 — Advanced Permissions & Audit Complete" (2026-08-09)**, closed out via **PR #37** (`0bdf3d8`) — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31333946387`) — see `docs/modules/phase4-permissions-audit-design.md`. **Milestone: "Phase 5 — Notification System Complete" (2026-08-11)**, closed out via **PR #39** (merge commit `204194f`) — a real in-app Notification Center plus the queue worker and scheduler that had never existed; pre-PR review fixed 5 further issues same day (2 marked SECURITY); a pre-merge `workflow_dispatch` E2E gate found and fixed 2 more genuinely real, pre-existing bugs before merging — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31545464355`, 56/57 E2E passed) — see `docs/modules/notifications-design.md`. **Phase 5C (scheduled/administrative notifications, types 9-13) implemented 2026-08-12** — design doc `docs/modules/notifications-phase-c-d-design.md`, full implementation account in its §19-20 — Backend 1211/1211 green; both verification gaps left open at implementation time (full frontend Vitest, real-browser/E2E) closed same day — full frontend Vitest 1003/1005 (2 pre-existing environment flakes, re-verified in isolation), real-browser/E2E closed via new CI-run `notifications.spec.ts` coverage rather than local Playwright (confirmed infeasible in this Alpine dev container). Pre-merge `workflow_dispatch` gate fully green on the second attempt (run `31584698456` — Backend/Frontend/E2E all `success`, E2E 59/59; the first attempt, run `31583701772`, caught one real CI-only Pint violation, fixed in a follow-up commit). **Milestone: "Phase 5C — Scheduled & Administrative Notifications Complete" (2026-08-12)**, closed out via **PR #41** (merge commit `1de1316`); post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31585621311`). Phase 5D (email) remains deferred to its own future cycle — see §12's "Immediate next step." |
+mode found in `notifications.spec.ts`, separate from (though adjacent to) the ordering-ambiguity bug PR #44
+fixed below: `createAppointmentForDentist` picked its `start_at` from a module-level `slotHour` counter that
+resets to its initial value whenever Playwright's CI retry (`retries: 1`) re-runs a failed test in a fresh
+worker process, so the retry requested the exact hour the failed attempt had already booked against the
+shared, non-transactional dev database — a `409 dentist_conflict` unrelated to whatever the original
+failure was. PR #44's fix stopped the *original* assertion from failing, which stopped the retry from ever
+firing, so this counter's own fragility remained latent and unfixed until now. Fixed by replacing the
+counter with a real `GET /available-slots` query — the identical fix `appointments.spec.ts`'s
+`pickFirstAvailableSlot` already applies to this exact bug class (see that function's own comment for the
+earlier incident this project already lived through once); every attempt, first run or retry, now asks the
+backend what is actually free, so a slot a prior attempt already booked is never re-offered. Added a
+regression test asserting a second booking call never lands on a first call's `start_at`. Local
+`notifications.spec.ts` run reproduced only the already-documented, environment-specific local
+`login()`/per-request-latency failures (`TECH_DEBT.md` — never reproduces on CI), none slot- or
+409-related. Real `workflow_dispatch` CI on `fix/e2e-notifications-slot-retry-fragility` ran fully green —
+Backend, Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run `31614084353`). **Merged via
+PR #46** (`498669f`, 2026-08-12); post-merge CI on `main` fully green (Backend/Frontend/E2E, 61/61 E2E
+passed, no flakes, run `31615676731`). |
+| **Repo HEAD at time of writing** | `main` at merge commit `498669f` (PR #46 — `notifications.spec.ts` CI-retry self-collision fix, following PR #44's E2E notification-lookup disambiguation fix, following PR #43's `appointment.created` notification fix, following PR #42's Phase 5C docs close-out, following PR #41's Phase 5C). Post-merge CI on `main` fully green — Backend, Frontend, and E2E all `success`, 61/61 passed, no flakes (run `31615676731`). |
+| **Milestone** | **Phase 1 — Foundation Complete** (2026-08-07) — baseline for all future development; see §2 for the verification this milestone rests on. **Phase 2.1-2.5 (Foundation/Billing/Medical History/Laboratory/Documents) all merged 2026-08-07/08 via PR #18/#20/#22/#24/#27.** **Phase 2.6 (Timeline) design-approved 2026-08-08; 2.6a (Foundation) merged 2026-08-09 via PR #31; 2.6b (UI) merged 2026-08-09 via PR #32** (E2E fix via PR #33) — see `docs/modules/patient-timeline-redesign-design.md`. **Milestone: "Phase 2 — Patient Profile Redesign Complete" (2026-08-09)**, closed out via PR #34 — all 7 sub-phases (2.1-2.6) merged to `main`, post-merge CI green including the real E2E run. **Milestone: "Phase 3 — Dashboard 2.0 Complete" (2026-08-09)**, closed out via **PR #35** (`0f04b35`) — post-merge CI on `main` fully green (Backend/Frontend/E2E) — see `docs/modules/dashboard-2.0-design.md`. **Milestone: "Phase 4 — Advanced Permissions & Audit Complete" (2026-08-09)**, closed out via **PR #37** (`0bdf3d8`) — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31333946387`) — see `docs/modules/phase4-permissions-audit-design.md`. **Milestone: "Phase 5 — Notification System Complete" (2026-08-11)**, closed out via **PR #39** (merge commit `204194f`) — a real in-app Notification Center plus the queue worker and scheduler that had never existed; pre-PR review fixed 5 further issues same day (2 marked SECURITY); a pre-merge `workflow_dispatch` E2E gate found and fixed 2 more genuinely real, pre-existing bugs before merging — post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31545464355`, 56/57 E2E passed) — see `docs/modules/notifications-design.md`. **Phase 5C (scheduled/administrative notifications, types 9-13) implemented 2026-08-12** — design doc `docs/modules/notifications-phase-c-d-design.md`, full implementation account in its §19-20 — Backend 1211/1211 green; both verification gaps left open at implementation time (full frontend Vitest, real-browser/E2E) closed same day — full frontend Vitest 1003/1005 (2 pre-existing environment flakes, re-verified in isolation), real-browser/E2E closed via new CI-run `notifications.spec.ts` coverage rather than local Playwright (confirmed infeasible in this Alpine dev container). Pre-merge `workflow_dispatch` gate fully green on the second attempt (run `31584698456` — Backend/Frontend/E2E all `success`, E2E 59/59; the first attempt, run `31583701772`, caught one real CI-only Pint violation, fixed in a follow-up commit). **Milestone: "Phase 5C — Scheduled & Administrative Notifications Complete" (2026-08-12)**, closed out via **PR #41** (merge commit `1de1316`); post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31585621311`); docs close-out via **PR #42**. **`appointment.created` notification (2026-08-12)** — a real gap found diagnosing a user report (the assigned dentist never got notified when a new appointment was created for them): `AppointmentService::create()` never dispatched `PatientActivityOccurred` at all, unlike every other appointment status transition, so neither the Notification System nor the Patient Timeline ever recorded appointment creation. Fixed — new `AppointmentCreatedNotification` (assigned dentist only, structurally excluding the creator and every other admin/receptionist/dentist), registered in `NotificationRules` (now 14 types); Backend 1214/1214, live end-to-end verified against the real dev stack; **merged via PR #43** (`f77d002`). Post-merge CI then caught a real, genuine regression in `notifications.spec.ts` — once one appointment could carry two notification types for the same recipient, the E2E helper `notificationIdFor()`'s subject_id-only lookup could no longer disambiguate them, failing 5 tests (1 real content-mismatch, 4 cascading from its retry). A test-assumption bug, not a backend defect — fixed by adding an optional `type` filter to the helper, no backend/actor-exclusion/feature change; **merged via PR #44** (`c4ec273`). Post-merge CI on `main` re-run and **fully green — Backend, Frontend, and E2E all `success`, 60/60 passed, no flakes** (run `31602557965`). **Notification E2E retry-fragility fix (2026-08-12)** — the module-level `slotHour` counter that caused PR #44's own retry cascade was still latently fragile after that fix; replaced with a real `GET /available-slots` query, **merged via PR #46** (`498669f`); post-merge CI on `main` fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`). Phase 5D (email) remains deferred to its own future cycle — see §12's "Immediate next step." |
 | **Confidence** | High — sourced directly from `gh pr`/`gh run`/`git log` and this session's own CI runs, not carried forward from the prior version without verification. |
 
 ---
@@ -372,12 +374,15 @@ Sourced directly from `gh pr list --state all` (31 PRs total as of this update; 
 | 38 | `docs/phase4-close-out` | Docs-only: close out Phase 4 (record PR #37 merge + post-merge CI) | No code changes | **Merged** 2026-08-09 (`75cf60b`) |
 | **#39** | `feature/phase5-notifications` | Phase 5 — Notification System, Phases A + B | `notifications` table (Laravel's + 4 additive columns) + custom `DatabaseChannel`; `SendsNotifications` as a second listener on the existing `PatientActivityOccurred` (zero new dispatch sites); `NotificationRules` 8-of-24 allow-list; `RecipientResolver`; `NotificationPolicy`; 5 endpoints; `NotificationBell`/`NotificationCenter`/`NotificationItem` + `/notifications` page + store; 32 i18n keys × 3 locales; `queue`+`scheduler` containers in both compose files; `entrypoint.sh` `RUN_MIGRATIONS` guard; `MassPrunable` + first scheduled task; `e2e/notifications.spec.ts`; plus 5 pre-PR review fixes (2 SECURITY) and 2 pre-merge E2E-gate fixes | **Merged 2026-08-11** (`204194f`); post-merge CI fully green including the real E2E run (56/57, 1 flaky-then-passed) |
 
-**Rows #40-#45 intentionally not yet backfilled here** — PR #45 (`docs/appointment-created-and-e2e-fix-close-out`,
-open, docs-only) is the in-flight close-out for Phase 5C (PR #41) and the `appointment.created`
-notification + E2E disambiguation fixes (PR #43/#44); per explicit direction it is left untouched by other
-sessions until it merges, so this table picks back up once it does rather than duplicating its work here.
+**Rows #40, #42, #45 intentionally not yet backfilled here** — #40/#42 are docs-only close-outs (Phase 5,
+Phase 5C) and #45 (`docs/appointment-created-and-e2e-fix-close-out`) is the close-out for the
+`appointment.created` notification + E2E disambiguation fixes (PR #43/#44); this table picks them up once
+each merges rather than duplicating that work here.
 
-| **#46** | `fix/e2e-notifications-slot-retry-fragility` | Fix a real CI-retry self-collision in `notifications.spec.ts` | `createAppointmentForDentist`'s module-level `slotHour` counter reset on every fresh-worker CI retry, so a retry could request the exact hour a failed attempt had already booked, 409-ing against its own leftover appointment; replaced with a real `GET /available-slots` query (same fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to this bug class) plus a new regression test | **Open**, not yet merged — real `workflow_dispatch` CI fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31614084353`) |
+| **#41** | `feature/phase5c-scheduled-notifications` | Phase 5C — Scheduled & Administrative Notifications (types 9-13) | 3 new scheduled types (`notifications:lab-cases-overdue`/`low-stock-digest`/`appointments-unconfirmed`) + 2 new reactive types via `AuditLogObserver` (`security.repeated_login_failures`, `permissions.matrix_updated`); 2 new categories (`inventory`, `security`); Decision D14 (`APP_TIMEZONE` genuinely configurable) | **Merged** 2026-08-12 (`1de1316`); post-merge CI fully green (Backend/Frontend/E2E, run `31585621311`) |
+| **#43** | `feature/appointment-created-notification` | Fix: assigned dentist never notified when a new appointment was created for them | `AppointmentService::create()` now dispatches `PatientActivityOccurred('appointment.created', ...)`; new `AppointmentCreatedNotification` (assigned dentist only, structurally excluding creator/other roles); registered in `NotificationRules` (14 types) | **Merged** 2026-08-12 (`f77d002`) |
+| **#44** | `fix/notifications-e2e-subject-id-ambiguity` | Fix: `notifications.spec.ts` couldn't disambiguate two notification types on one `subject_id` after PR #43 | `notificationIdFor()` gained an optional `type` filter; the cancellation test's two call sites now ask for `'appointment.cancelled'` explicitly instead of trusting `latest()` ordering | **Merged** 2026-08-12 (`c4ec273`); post-merge CI fully green (Backend/Frontend/E2E, 60/60, no flakes, run `31602557965`) |
+| **#46** | `fix/e2e-notifications-slot-retry-fragility` | Fix a real CI-retry self-collision in `notifications.spec.ts`, separate from and deeper than #44's fix | `createAppointmentForDentist`'s module-level `slotHour` counter reset on every fresh-worker CI retry, so a retry could request the exact hour a failed attempt had already booked, 409-ing against its own leftover appointment; replaced with a real `GET /available-slots` query (same fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to this bug class) plus a new regression test | **Merged** 2026-08-12 (`498669f`); post-merge CI fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`) |
 
 ---
 
@@ -1209,6 +1214,61 @@ re-run (`31584698456`) is **fully green: Backend, Frontend, and E2E all `success
 and E2E all `success`** (run `31585621311`). **Phase 5C (Scheduled & Administrative Notifications) is now
 complete.** **Phase D (email) remains deferred to its own future cycle**, per Decision D12 — D10/D13
 untouched.
+
+**A real gap found and fixed the same day, outside any numbered phase (2026-08-12)**: a user reported that
+the assigned dentist never gets notified when a new appointment is created for them. Diagnosed end-to-end
+before writing any code — traced the full chain (`AppointmentService::create()` → event dispatch →
+`SendsNotifications` → `NotificationRules` → `RecipientResolver` → `NotificationService` → the
+`notifications` table → the API → the UI) and confirmed, with a live test against the real DB and queue
+(not a unit test), that `create()` never dispatches `PatientActivityOccurred` at all — unlike every other
+appointment status transition (cancel/no-show/confirmed/checked-in/in-progress/completed). Not a deliberate
+exclusion like `appointment.confirmed`/`.in_progress`/`.completed` are — neither the Phase 5 nor Phase 5C
+design docs ever mention `appointment.created`; it was simply never wired into either the Notification
+System or the Patient Timeline. (A separate, unrelated diagnostic along the way — why an appointment
+*cancellation*'s notification didn't reach the admin who performed it — confirmed that behavior as working
+exactly as designed: the universal actor-exclusion rule, verified live against the real DB with a genuine
+recipient login, not assumed.)
+
+**Fix scoped and approved**: the assigned dentist only, notified; the creating admin/receptionist and every
+other admin/receptionist/dentist deliberately **not** notified — structurally, via `recipients()` never
+resolving those roles, not merely relying on actor-exclusion. `AppointmentService::create()` now dispatches
+`PatientActivityOccurred('appointment.created', 'appointments', ...)` after the transaction commits,
+mirroring every sibling transition method — the Patient Timeline now shows "Appointment created" for free,
+since `RecordsPatientActivity` has no per-type whitelist. New `AppointmentCreatedNotification` (mirrors
+`AppointmentCheckedInNotification`'s single-recipient pattern), registered in `NotificationRules` (now 14
+approved types), new i18n keys in en/ar/tr (parity 1500/1500/1500). Backend **1214/1214** (1211 + 3 new),
+zero regressions — existing tests are unaffected since they build fixtures via
+`Appointment::factory()->create()`, which bypasses the service entirely. Pint clean; PHPStan showed only
+this project's already-documented pre-existing local-Docker false positives, spread across lines untouched
+by this change. `vue-tsc`/ESLint clean. New E2E test. **Live end-to-end test against the real dev stack**:
+a receptionist created a real appointment via the actual API for a real dentist account, the real queue
+worker processed it, and the dentist's real `GET /notifications` returned the row, while the receptionist's
+own feed correctly showed nothing for it. `workflow_dispatch` pre-merge gate green (E2E 60/60); **merged
+via PR #43** (`f77d002`, 2026-08-12).
+
+**Post-merge CI on `main` then went red** (run `31596378941`) — 5 failures in `notifications.spec.ts`. Not
+dismissed as generic flakiness: isolated the actual cause before touching anything. A genuine test-assumption
+bug the new notification type exposed, not a backend defect — `createAppointmentForDentist()`, a shared E2E
+fixture, now also produces an `appointment.created` notification; the cancellation test then cancels that
+same appointment, producing a second notification (`appointment.cancelled`) for the same dentist/subject_id.
+`notificationIdFor()`'s `.find(row => row.subject_id === appointmentId)` trusted `latest()` ordering to break
+the same-second tie correctly — not guaranteed, and it broke the wrong way on that run, failing a content
+assertion. The other 4 failures were a cascade, not independent bugs: Playwright's retry of the first
+failure reset the file's shared `slotHour` counter in a fresh worker, re-booking the same dentist slot the
+still-DB-persisted (failed-attempt) appointment already occupied, throwing a real `409 dentist_conflict`
+that cascaded into every later test sharing the fixture.
+
+**Fix**: `notificationIdFor()` gained an optional `type` filter; the cancellation test's two call sites now
+explicitly request `'appointment.cancelled'` instead of relying on ordering — scoped to
+`frontend/e2e/notifications.spec.ts` alone, no backend change, no change to actor-exclusion, no change to
+the `appointment.created` feature itself. **Live-verified against the real dev stack**: creating then
+cancelling one appointment produces exactly 2 notifications for the recipient, cleanly distinguishable by
+`type` — the exact scenario that broke CI, provably resolved. `workflow_dispatch` pre-merge gate green
+(E2E 60/60, run `31598134440`); **merged via PR #44** (`c4ec273`, 2026-08-12); **post-merge CI on `main`
+re-run and fully green — Backend, Frontend, and E2E all `success`, 60/60 passed, no flakes** (run
+`31602557965`). `CHANGELOG.md` and `TECH_DEBT.md` updated in the same pass per Definition of Done
+(`TECH_DEBT.md` also records the same latent ambiguity still present, harmlessly, in one other test —
+deliberately left unfixed since it doesn't affect that test's assertions, to keep this fix's diff minimal).
 
 ---
 

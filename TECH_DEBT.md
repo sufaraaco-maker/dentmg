@@ -4,6 +4,19 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### `notifications.spec.ts`'s isolation test still has the same latent subject_id ambiguity, deliberately not fixed
+Found and left open 2026-08-12 while fixing the `notificationIdFor()` bug above (see Resolved). The
+isolation test (`"one user can never see or act on another user's notification"`) creates then cancels an
+appointment, same as the fixed cancellation test, so the dentist ends up with two notifications
+(`appointment.created`, `appointment.cancelled`) for one subject_id — and its own `notificationIdFor()` call
+(no `type` filter) is subject to the same ordering-tie non-determinism. Left unfixed on purpose, scoped
+exactly to what CI's failure required: this test's assertions only check that *a* notification belonging to
+the dentist is invisible/unreachable to the receptionist, which holds regardless of which of the two rows
+gets captured — so the ambiguity doesn't currently cause a flake.
+**Revisit**: if this test is ever extended to assert on a specific notification's content (matching what the
+cancellation test does), add the same `type: 'appointment.cancelled'` filter then — not preemptively, to
+keep that fix's diff minimal per the explicit scope it was given.
+
 ### `patients.allergies` (legacy free-text column) is deprecated but not dropped
 Introduced 2026-08-08 during Phase 2.3 (Medical History). The structured `patient_allergies` table now
 supersedes the free-text `patients.allergies` column (design doc §7) — a one-time backfill migration
@@ -474,6 +487,24 @@ is real (if rare) even on CI's native runner, not unique to the local Windows Do
 pre-existing/unrelated to this module.
 
 ## Resolved
+
+### `notificationIdFor()` E2E helper couldn't disambiguate two notifications on one subject_id — resolved 2026-08-12 (post-Phase-5C)
+Found by post-merge CI on `main` going red (run `31596378941`) right after PR #43 shipped a real gap fix
+(`AppointmentService::create()` now notifies the assigned dentist — see the "appointment.created" entry
+below/in `CHANGELOG.md`). `createAppointmentForDentist()`, a shared E2E fixture, now also produces an
+`appointment.created` notification; `notifications.spec.ts`'s cancellation test then cancels that same
+appointment, producing a second notification (`appointment.cancelled`) for the same dentist/subject_id.
+`notificationIdFor()`'s `.find(row => row.subject_id === appointmentId)` trusted `latest()` ordering to
+break the tie correctly — not guaranteed, and it broke the wrong way on that run, failing a content
+assertion. The other 4 failures in that run were a cascade (Playwright's retry reset the file's shared
+`slotHour` counter in a fresh worker, re-colliding with the still-DB-persisted appointment from the failed
+first attempt), not independent bugs.
+**RESOLVED**: `notificationIdFor()` gained an optional `type` filter; the cancellation test's two call sites
+now ask for `'appointment.cancelled'` explicitly. Backend/actor-exclusion/the `appointment.created` feature
+itself are untouched — this was a test-assumption bug, not a product defect. Live-verified against the real
+dev stack: creating then cancelling one appointment produces exactly 2 notifications for the recipient,
+cleanly distinguishable by `type`. **Merged via PR #44** (`c4ec273`); post-merge CI on `main` fully green
+(E2E 60/60, no flakes, run `31602557965`).
 
 ### `AuditLog.created_at` was set by the database's own real-UTC clock, not the app's — resolved 2026-08-12 (Phase 5C)
 Found during Phase 5C implementation, and a real bug this same phase's own D14 timezone fix exposed — not a

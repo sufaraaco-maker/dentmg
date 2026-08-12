@@ -53,7 +53,21 @@ day — see this file's newest entry below for the full account. A `workflow_dis
 fully green (Backend/Frontend/E2E, run `31584698456`); **merged via PR #41** (`1de1316`, 2026-08-12);
 post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31585621311`). **Milestone: "Phase 5C —
 Scheduled & Administrative Notifications Complete."** **Phase 5D (email) remains designed but deferred to
-its own future cycle.** See
+its own future cycle.**
+**A real gap found post-Phase-5C, outside any numbered phase**: diagnosing a user report that the assigned
+dentist never gets notified when a new appointment is created for them found that
+`AppointmentService::create()` never dispatched `PatientActivityOccurred` at all — unlike every other
+appointment status transition — so neither the Notification System nor the Patient Timeline ever recorded
+appointment creation. Fixed and **merged via PR #43** (`f77d002`, 2026-08-12) — this file's newest "Added"
+entry below. Post-merge CI on `main` then went red (5 `notifications.spec.ts` failures): a genuine
+test-assumption bug the new notification type exposed, not a backend defect — `notificationIdFor()`'s
+subject_id-only lookup could no longer disambiguate once one appointment could carry two notification types
+for the same recipient. Fixed and **merged via PR #44** (`c4ec273`, 2026-08-12) — this file's newest "Fixed"
+entry below. Post-merge CI on `main` re-run and **fully green — Backend, Frontend, and E2E all `success`,
+60/60 passed, no flakes** (run `31602557965`). **A separate, repeating CI-retry self-collision in
+`notifications.spec.ts`** (a module-level slot counter that reset on every fresh-worker retry) was fixed
+the same day via **PR #46** — this file's newest entry below — **merged 2026-08-12**; post-merge CI on
+`main` fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`). See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
@@ -66,18 +80,74 @@ first call requested the exact same hour the original, failed attempt had alread
 was still sitting in the shared dev database (this suite runs against real Postgres, not a
 transaction-wrapped test DB), so the retry collided with its own earlier self and failed with
 `409 dentist_conflict`, a reason unrelated to whatever the original failure was — the repeating flaky
-pattern reported in CI. Fixed by replacing the counter with a real `GET /available-slots` query: the
-identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to this exact bug class (see
-that function's own comment for the earlier incident this project already lived through once). Every
-attempt — first run or retry, same worker or a new one — now asks the backend what is actually free, so a
-slot a prior attempt already booked can never be re-offered. Added a regression test
-(`booking a slot excludes it from the next call, so a retry can never re-book it`) that books two slots
-back-to-back and asserts the second never lands on the first's `start_at`. No backend/production code
-touched. Verified: local `notifications.spec.ts` run reproduced only the already-documented,
-environment-specific local `login()`/per-request-latency failures (`TECH_DEBT.md` — confirmed to never
-reproduce on CI), none slot- or 409-related; real `workflow_dispatch` CI on the branch ran fully green —
-Backend, Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run `31614084353`). **PR #46
-opened against `main`, CI-confirmed green, not yet merged** (merge left to the user's own decision).
+pattern reported in CI, and distinct from (though adjacent to) the ordering-ambiguity bug the entry below
+fixes: that fix stopped the *original* assertion from failing, which stopped the retry from ever firing, so
+this counter's own fragility never got its own dedicated fix until now. Fixed by replacing the counter with
+a real `GET /available-slots` query: the identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot`
+already applies to this exact bug class (see that function's own comment for the earlier incident this
+project already lived through once). Every attempt — first run or retry, same worker or a new one — now
+asks the backend what is actually free, so a slot a prior attempt already booked can never be re-offered.
+Added a regression test (`booking a slot excludes it from the next call, so a retry can never re-book it`)
+that books two slots back-to-back and asserts the second never lands on the first's `start_at`. No
+backend/production code touched. Verified: local `notifications.spec.ts` run reproduced only the
+already-documented, environment-specific local `login()`/per-request-latency failures (`TECH_DEBT.md` —
+confirmed to never reproduce on CI), none slot- or 409-related; real `workflow_dispatch` CI on the branch
+ran fully green — Backend, Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run
+`31614084353`). **Merged via PR #46** (`498669f`, 2026-08-12); post-merge CI on `main` fully green
+(Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`).
+
+### Fixed — E2E notification lookup ambiguity once one appointment can carry two notification types (`fix/notifications-e2e-subject-id-ambiguity`, 2026-08-12)
+
+Post-merge CI on `main` (run `31596378941`, triggered by an unrelated docs-only PR landing right after
+PR #43) went red: 5 failures in `notifications.spec.ts`. Root cause was entirely in the test, not the
+backend — `createAppointmentForDentist()` (a shared E2E fixture) now also produces an `appointment.created`
+notification for the dentist (PR #43, working as designed); the cancellation test then cancelled that same
+appointment, producing a *second* notification (`appointment.cancelled`) for the same dentist/subject_id.
+`notificationIdFor()`'s `.find(row => row.subject_id === appointmentId)` trusted `latest()` ordering to put
+the newest row first — not a guaranteed same-second tie-break, and it broke the wrong way on that run,
+failing a content assertion. The other 4 failures were a cascade, not independent bugs: Playwright's retry
+of the first failure spun up a fresh worker, resetting the file's shared `slotHour` counter, so the retry
+re-booked the same dentist slot the still-DB-persisted (failed-attempt) appointment already occupied,
+throwing a real `409 dentist_conflict` that cascaded into every later test sharing the fixture.
+
+**Fix**: `notificationIdFor()` gained an optional `type` filter; the cancellation test's two call sites now
+explicitly request `'appointment.cancelled'` instead of relying on ordering. Scoped to
+`frontend/e2e/notifications.spec.ts` only — no backend change, no change to actor-exclusion, no change to
+the `appointment.created` feature itself. Live-verified against the real dev stack (creating then
+cancelling one appointment produces exactly 2 notifications for the recipient, cleanly distinguishable by
+`type` — the exact scenario that broke CI). `workflow_dispatch` pre-merge gate green (run `31598134440`,
+E2E 60/60); **merged via PR #44** (`c4ec273`); post-merge CI on `main` fully green (Backend/Frontend/E2E,
+run `31602557965`, E2E 60/60, no flakes).
+
+### Added — `appointment.created` notification for the assigned dentist (`feature/appointment-created-notification`, 2026-08-12)
+
+Diagnosed and fixed a real gap found while investigating a user report that the assigned dentist never gets
+notified when a new appointment is created for them: `AppointmentService::create()` never dispatched
+`PatientActivityOccurred` at all — unlike every other appointment status transition (cancel/no-show/
+confirmed/checked-in/in-progress/completed). Not a deliberate exclusion — neither the Phase 5 nor Phase 5C
+design docs ever mention `appointment.created` — just never wired into either the Notification System or
+the Patient Timeline.
+
+- `AppointmentService::create()` now dispatches `PatientActivityOccurred('appointment.created', ...)` after
+  the transaction commits, mirroring every sibling transition method. `RecordsPatientActivity` has no
+  per-type whitelist, so the Patient Timeline now shows "Appointment created" with no further changes.
+- New `AppointmentCreatedNotification` — recipients() = **the assigned dentist only**, mirroring
+  `AppointmentCheckedInNotification`'s pattern. The creating admin/receptionist, every other admin/
+  receptionist, and every other dentist are excluded **structurally** (`recipients()` never resolves those
+  roles at all), not merely by the existing universal actor-exclusion rule, which is otherwise untouched
+  and still covers a dentist creating their own appointment.
+- Registered in `NotificationRules::RULES` (now 14 approved types). i18n: new
+  `notifications.types.appointment.created.{title,body}` keys in en/ar/tr, parity 1500/1500/1500.
+
+**Verification**: Backend 1214/1214 (1211 baseline + 3 new), zero regressions — existing tests are
+unaffected since they build fixtures via `Appointment::factory()->create()`, which bypasses the service
+entirely; only real `AppointmentService::create()`/`POST /appointments` calls trigger the new dispatch.
+Pint clean. `vue-tsc`/ESLint clean. New E2E test. **Live end-to-end test against the real dev stack**: a
+receptionist created a real appointment via the actual API for a real dentist account, the real queue
+worker processed it, and the dentist's real `GET /notifications` returned the row — while the receptionist's
+own feed correctly showed nothing for it. `workflow_dispatch` pre-merge gate green (E2E 60/60); **merged
+via PR #43** (`f77d002`); post-merge CI on `main` initially caught the ordering-ambiguity regression above,
+resolved by PR #44 the same day.
 
 ### Added — Phase 5C: Scheduled & Administrative Notifications (2026-08-12)
 
