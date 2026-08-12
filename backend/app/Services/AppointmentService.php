@@ -229,7 +229,7 @@ class AppointmentService
         $this->assertNoPatientConflict($data['patient_id'], $startAt, $endAt, (bool) ($data['override_patient_conflict'] ?? false));
         $this->assertWithinWorkingHours($data['dentist_id'], $startAt, $endAt, (bool) ($data['override_outside_working_hours'] ?? false));
 
-        return $this->runGuardedAgainstDentistRace(fn () => Appointment::create([
+        $appointment = $this->runGuardedAgainstDentistRace(fn () => Appointment::create([
             'patient_id' => $data['patient_id'],
             'dentist_id' => $data['dentist_id'],
             'appointment_type_id' => $data['appointment_type_id'],
@@ -241,6 +241,12 @@ class AppointmentService
             'notes' => $data['notes'] ?? null,
             'reschedule_count' => 0,
         ]));
+
+        event(new PatientActivityOccurred(
+            $appointment, Auth::user(), 'appointment.created', 'appointments', 'Appointment created',
+        ));
+
+        return $appointment;
     }
 
     /**

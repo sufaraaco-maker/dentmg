@@ -1892,6 +1892,10 @@
     },
     "types": {
       "appointment": {
+        "created": {
+          "title": "New appointment scheduled",
+          "body": "A new appointment for {patientName} was scheduled for {startAt}."
+        },
         "checked_in": {
           "title": "Patient has arrived",
           "body": "{patientName} checked in for their {startAt} appointment."

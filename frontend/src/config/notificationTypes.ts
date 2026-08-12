@@ -1,6 +1,7 @@
 import {
   Beaker,
   CalendarClock,
+  CalendarPlus,
   CalendarX2,
   ClipboardCheck,
   Clock,
@@ -43,6 +44,7 @@ export const CATEGORY_STYLES: Record<NotificationCategory, { icon: Component; ac
  * not a cancellation, even though both are `appointments`.
  */
 const TYPE_ICONS: Partial<Record<NotificationType, Component>> = {
+  'appointment.created': CalendarPlus,
   'appointment.checked_in': LogIn,
   'appointment.no_show': UserX,
   'lab_case.overdue': Clock,

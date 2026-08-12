@@ -6,6 +6,7 @@
 
 /** Mirrors `NotificationRules::RULES` on the backend — the 8 Phase A types plus Phase C's 5. */
 export type NotificationType =
+  | 'appointment.created'
   | 'appointment.checked_in'
   | 'appointment.cancelled'
   | 'appointment.no_show'

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Events\PatientActivityOccurred;
 use App\Models\Appointment;
+use App\Models\AppointmentType;
 use App\Models\ClinicalNote;
 use App\Models\Invoice;
 use App\Models\LabCase;
@@ -55,7 +56,29 @@ class PatientActivityDispatchTest extends TestCase
         );
     }
 
-    // ---- Appointments (6) -----------------------------------------------------------------------
+    // ---- Appointments (7) -----------------------------------------------------------------------
+
+    /**
+     * Added later, as a genuine gap fix: AppointmentService::create() never dispatched
+     * PatientActivityOccurred at all, unlike every other status transition below.
+     */
+    public function test_appointment_created_dispatches(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $this->actingAs($actor);
+
+        $appointment = (new AppointmentService)->create([
+            'patient_id' => Patient::factory()->create()->id,
+            'dentist_id' => User::factory()->dentist()->create()->id,
+            'appointment_type_id' => AppointmentType::factory()->create()->id,
+            'start_at' => now()->addDay()->setTime(10, 0),
+            'duration_minutes' => 30,
+            'override_patient_conflict' => true,
+            'override_outside_working_hours' => true,
+        ]);
+
+        $this->assertDispatched('appointment.created', 'appointments', $appointment);
+    }
 
     public function test_appointment_confirmed_dispatches(): void
     {

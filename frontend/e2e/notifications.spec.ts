@@ -204,6 +204,41 @@ test.describe('Notification Center', () => {
     ).toHaveAttribute('data-unread', 'false')
   })
 
+  /**
+   * appointment.created — added later as a genuine gap fix, not part of the original 8/13
+   * whitelisted types: AppointmentService::create() never dispatched PatientActivityOccurred at
+   * all, so the assigned dentist never learned a new appointment had landed on their schedule.
+   */
+  test('creating an appointment notifies the assigned dentist, but not the creator', async ({ page }) => {
+    await loginAsEnglish(page, 'admin')
+    const patient = await createPatient(page)
+    const dentistId = await findDentistId(page)
+    const appointmentId = await createAppointmentForDentist(page, patient.id, dentistId)
+
+    // The admin created it — by the universal actor-exclusion rule they must not see it either,
+    // though here recipients() never resolves the admin role at all for this type.
+    const actorFeed = await apiRequest<{ data: { subject_id: string }[] }>(page, '/notifications?per_page=50')
+    expect(actorFeed.data.some((row) => row.subject_id === appointmentId)).toBe(false)
+
+    await logout(page)
+    await forceEnglishLocale(page)
+    await login(page, DEMO_USERS.dentist)
+    await page.goto('/')
+
+    const badge = page.getByTestId('notifications-badge')
+    await expect(badge).toBeVisible({ timeout: 20_000 })
+
+    const unread = await apiRequest<{ count: number }>(page, '/notifications/unread-count')
+    expect(unread.count).toBeGreaterThan(0)
+
+    await page.getByTestId('notifications-bell').click()
+    const row = page.getByTestId(`notification-${await notificationIdFor(page, appointmentId)}`)
+    await expect(row).toBeVisible()
+    await expect(row).toContainText('New appointment scheduled')
+    await expect(row).toContainText(patient.fullName)
+    await expect(row).toHaveAttribute('data-unread', 'true')
+  })
+
   test('mark all as read persists across a reload', async ({ page }) => {
     await loginAsEnglish(page, 'admin')
     const patient = await createPatient(page)
