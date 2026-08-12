@@ -67,7 +67,16 @@ entry below. Post-merge CI on `main` re-run and **fully green — Backend, Front
 60/60 passed, no flakes** (run `31602557965`). **A separate, repeating CI-retry self-collision in
 `notifications.spec.ts`** (a module-level slot counter that reset on every fresh-worker retry) was fixed
 the same day via **PR #46** — this file's newest entry below — **merged 2026-08-12**; post-merge CI on
-`main` fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`). See
+`main` fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`). **PR #45**
+(docs-only close-out for Phase 5C/PR #43/PR #44) then hit a real merge conflict against PR #46 in this file
+and `docs/PROJECT_STATUS.md` — both had queued edits to the same sections; resolved by merging `main` into
+the branch and combining both sets of entries newest-first, re-running the `workflow_dispatch` CI gate, and
+**merging 2026-08-12** (`173ee2a`). Post-merge CI on `main` showed 1 failure in `role-permissions.spec.ts`,
+a Phase 4 test untouched by either merge's purely-docs diff and already passing cleanly in that same day's
+two prior full runs; isolated (confirmed no code had changed) rather than assumed, then a `workflow_dispatch`
+re-run on `main` came back **fully green — Backend, Frontend, and E2E all `success`, 61/61 E2E passed, no
+flakes** (run `31618315687`), confirming the failure was transient CI-runner flakiness, not a regression.
+See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
