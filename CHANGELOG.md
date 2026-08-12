@@ -38,8 +38,13 @@ deferred); **Steps 1-2 (Permissions Foundation + Policy refactor)**, **Step 3 (A
 (Backend/Frontend/E2E, run `31328615397`)**, then a full final diff review against `main` (103 files, 14
 points checked) found zero blockers; **merged via PR #37** (`0bdf3d8`, 2026-08-09); post-merge CI on `main`
 (Backend/Frontend/E2E, including the real E2E run) fully green. **Milestone: "Phase 4 — Advanced
-Permissions & Audit Complete."** See `docs/PROJECT_STATUS.md` for the living, continuously-updated status
-book this file's own per-PR history now feeds into._
+Permissions & Audit Complete."** **Phase 5: Notification System (Phases A + B)** implemented 2026-08-11 on
+`feature/phase5-notifications` — this file's newest entries below — with a pre-PR review fixing 5 further
+issues (2 marked SECURITY) and a pre-merge `workflow_dispatch` E2E gate finding and fixing 2 more genuinely
+real, pre-existing bugs before allowing a merge; **merged via PR #39** (`204194f`, 2026-08-11); post-merge
+CI on `main` fully green (Backend/Frontend, and the real E2E run — 56/57 passed, 1 flaky-then-passed).
+**Milestone: "Phase 5 — Notification System Complete."** See `docs/PROJECT_STATUS.md` for the living,
+continuously-updated status book this file's own per-PR history now feeds into._
 
 ### Added — Phase 5: Notification System, Phases A + B (`feature/phase5-notifications`, 2026-08-11)
 
@@ -195,6 +200,11 @@ Final `workflow_dispatch` run: Backend `pass`, Frontend `pass`, **E2E 56/57 pass
 built-in retry — the same "flaky, not failure" class already recorded elsewhere in this project, not a new
 problem). `notifications.spec.ts` is, for the first time, genuinely CI-confirmed passing — including the
 cross-user notification, authorization, mark-all, and RTL/mobile scenarios.
+
+**Merged to `main` via PR #39** (`204194f`, 2026-08-11). Post-merge CI re-run and fully green — Backend,
+Frontend, and the real E2E run all `success` (run `31545464355`; 56/57 passed, the same single
+flaky-then-passed test as the pre-merge run, confirming a transient timing flake rather than a
+deterministic problem). **Phase 5 (Notification System) is now complete.**
 
 ### Added — Phase 4 Step 5: E2E + final docs closure (`feature/phase4-permissions-foundation`, merged 2026-08-09 via PR #37)
 - New `role-permissions.spec.ts`: the Admin/`users.manage` self-lockout cell stays disabled+checked
