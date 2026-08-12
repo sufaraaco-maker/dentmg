@@ -99,23 +99,43 @@ async function findDentistId(page: Page): Promise<string> {
 }
 
 /**
- * Hands out a distinct hour per call, so the four tests in this file never book the same dentist
- * into an overlapping slot on the shared seeded database (`fullyParallel: false`, so this is a
- * simple counter rather than anything concurrent).
+ * Picks a real, backend-confirmed free slot for the dentist tomorrow, instead of computing one by
+ * hand — the identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to
+ * the identical bug class (see its own comment there for the full story). This file used to hand
+ * out slots via a module-level `let slotHour` counter incremented per call. That broke under
+ * Playwright's CI retry (`playwright.config.ts`'s `retries: 1`): a failing test is retried in a
+ * fresh worker process, which re-imports this module and resets `slotHour` back to its initial
+ * value, so the retry's first call requests the *same* hour the original (failed) attempt already
+ * booked — that appointment is still sitting in the shared dev database (this suite never runs
+ * inside a DB transaction), so the retry collides with its own earlier self and fails with
+ * `409 dentist_conflict`, unrelated to whatever the original failure was. Querying
+ * `GET /available-slots` makes every attempt — first run or retry, same worker or a new one — ask
+ * the backend what's actually free right now, so this class of self-collision can't happen: any
+ * appointment a prior attempt already created is already reflected in the response.
  */
-let slotHour = 8
-function nextHour(): number {
-  slotHour += 1
-  return slotHour
-}
-
-/** Tomorrow at the given hour, in the naive "digits-labeled" format the API expects. */
-function tomorrowAt(hour: number): string {
+async function findAvailableSlot(
+  page: Page,
+  dentistId: string,
+  durationMinutes = 30,
+): Promise<string> {
   const date = new Date()
   date.setDate(date.getDate() + 1)
-  date.setHours(hour, 0, 0, 0)
   const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(hour)}:00:00`
+  const dateParam = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+
+  const { slots } = await apiRequest<{ slots: string[] }>(
+    page,
+    `/available-slots?dentist_id=${dentistId}&date=${dateParam}&duration_minutes=${durationMinutes}`,
+  )
+  if (slots.length === 0) {
+    throw new Error(
+      `No available slots for dentist ${dentistId} on ${dateParam} (working hours only cover ` +
+        `Sunday-Thursday — check DemoDataSeeder::seedWorkingHours if this date is a Friday/Saturday)`,
+    )
+  }
+  // Different tests in this file call this back-to-back against the same live endpoint, so each
+  // call already excludes every slot a prior call in this run (or a prior failed attempt) booked.
+  return slots[0]
 }
 
 /**
@@ -142,9 +162,10 @@ async function createAppointmentForDentist(
       patient_id: patientId,
       dentist_id: dentistId,
       appointment_type_id: await findAppointmentTypeId(page),
-      // Each test needs its own slot: the suite runs against a shared seeded database and the
-      // backend rejects overlapping appointments for the same dentist.
-      start_at: tomorrowAt(nextHour()),
+      // A real backend-confirmed free slot: the suite runs against a shared seeded database and
+      // the backend rejects overlapping appointments for the same dentist — see
+      // `findAvailableSlot` for why this can't be computed locally.
+      start_at: await findAvailableSlot(page, dentistId),
       duration_minutes: 30,
       reason: 'E2E notification fixture',
     },
@@ -393,6 +414,42 @@ test.describe('Notification Center', () => {
     await page.getByTestId('notifications-category-inventory').click()
 
     await expect(page.getByText('Low stock alert').first()).toBeVisible({ timeout: 20_000 })
+  })
+
+  /**
+   * Regression test for the bug `findAvailableSlot` was introduced to fix (see its own comment):
+   * a Playwright CI retry re-runs the booking logic from a fresh worker process with no in-memory
+   * state carried over from the failed attempt, while that attempt's own appointment is still
+   * sitting in the shared dev database. The two `createAppointmentForDentist` calls below are
+   * deliberately independent round-trips — nothing threads state between them — so the second one
+   * stands in for exactly what a retry does: ask fresh, with the first booking already committed.
+   * If slot selection ever regressed back to a local counter (or any other scheme blind to what's
+   * actually booked), this reproduces the original failure directly — the second `POST
+   * /appointments` would 409 with `dentist_conflict` instead of resolving to a 2xx id landing on a
+   * different `start_at`.
+   */
+  test('booking a slot excludes it from the next call, so a retry can never re-book it', async ({
+    page,
+  }) => {
+    await loginAsEnglish(page, 'admin')
+    const dentistId = await findDentistId(page)
+
+    const firstPatient = await createPatient(page)
+    const firstAppointmentId = await createAppointmentForDentist(page, firstPatient.id, dentistId)
+    const firstAppointment = await apiRequest<{ start_at: string }>(
+      page,
+      `/appointments/${firstAppointmentId}`,
+    )
+
+    const secondPatient = await createPatient(page)
+    const secondAppointmentId = await createAppointmentForDentist(page, secondPatient.id, dentistId)
+    const secondAppointment = await apiRequest<{ start_at: string }>(
+      page,
+      `/appointments/${secondAppointmentId}`,
+    )
+
+    expect(secondAppointmentId).not.toBe(firstAppointmentId)
+    expect(secondAppointment.start_at).not.toBe(firstAppointment.start_at)
   })
 })
 

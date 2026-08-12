@@ -64,9 +64,37 @@ test-assumption bug the new notification type exposed, not a backend defect — 
 subject_id-only lookup could no longer disambiguate once one appointment could carry two notification types
 for the same recipient. Fixed and **merged via PR #44** (`c4ec273`, 2026-08-12) — this file's newest "Fixed"
 entry below. Post-merge CI on `main` re-run and **fully green — Backend, Frontend, and E2E all `success`,
-60/60 passed, no flakes** (run `31602557965`). See
+60/60 passed, no flakes** (run `31602557965`). **A separate, repeating CI-retry self-collision in
+`notifications.spec.ts`** (a module-level slot counter that reset on every fresh-worker retry) was fixed
+the same day via **PR #46** — this file's newest entry below — **merged 2026-08-12**; post-merge CI on
+`main` fully green (Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`). See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
+
+### Fixed — `notifications.spec.ts` self-colliding on CI retry (`fix/e2e-notifications-slot-retry-fragility`, PR #46, 2026-08-12)
+
+`createAppointmentForDentist` picked its `start_at` from a module-level `slotHour` counter, incremented once
+per call. Playwright's CI retry (`playwright.config.ts`'s `retries: 1`) re-runs a failed test in a fresh
+worker process, which re-imports the spec file and resets the counter to its initial value — so the retry's
+first call requested the exact same hour the original, failed attempt had already booked. That appointment
+was still sitting in the shared dev database (this suite runs against real Postgres, not a
+transaction-wrapped test DB), so the retry collided with its own earlier self and failed with
+`409 dentist_conflict`, a reason unrelated to whatever the original failure was — the repeating flaky
+pattern reported in CI, and distinct from (though adjacent to) the ordering-ambiguity bug the entry below
+fixes: that fix stopped the *original* assertion from failing, which stopped the retry from ever firing, so
+this counter's own fragility never got its own dedicated fix until now. Fixed by replacing the counter with
+a real `GET /available-slots` query: the identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot`
+already applies to this exact bug class (see that function's own comment for the earlier incident this
+project already lived through once). Every attempt — first run or retry, same worker or a new one — now
+asks the backend what is actually free, so a slot a prior attempt already booked can never be re-offered.
+Added a regression test (`booking a slot excludes it from the next call, so a retry can never re-book it`)
+that books two slots back-to-back and asserts the second never lands on the first's `start_at`. No
+backend/production code touched. Verified: local `notifications.spec.ts` run reproduced only the
+already-documented, environment-specific local `login()`/per-request-latency failures (`TECH_DEBT.md` —
+confirmed to never reproduce on CI), none slot- or 409-related; real `workflow_dispatch` CI on the branch
+ran fully green — Backend, Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run
+`31614084353`). **Merged via PR #46** (`498669f`, 2026-08-12); post-merge CI on `main` fully green
+(Backend/Frontend/E2E, 61/61 E2E passed, no flakes, run `31615676731`).
 
 ### Fixed — E2E notification lookup ambiguity once one appointment can carry two notification types (`fix/notifications-e2e-subject-id-ambiguity`, 2026-08-12)
 
