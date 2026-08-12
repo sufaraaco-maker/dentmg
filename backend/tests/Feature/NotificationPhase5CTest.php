@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
-use App\Enums\LabCaseStatus;
 use App\Enums\UserRole;
 use App\Models\Appointment;
 use App\Models\AuditLog;
@@ -12,6 +11,7 @@ use App\Models\Notification;
 use App\Models\RolePermission;
 use App\Models\Supply;
 use App\Models\User;
+use App\Policies\NotificationPolicy;
 use App\Services\RolePermissionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -339,15 +339,15 @@ class NotificationPhase5CTest extends TestCase
         $admin = User::factory()->admin()->create();
         $dentist = User::factory()->dentist()->create();
 
-        $this->assertContains('security', \App\Policies\NotificationPolicy::allowedCategories($admin));
-        $this->assertNotContains('security', \App\Policies\NotificationPolicy::allowedCategories($dentist));
+        $this->assertContains('security', NotificationPolicy::allowedCategories($admin));
+        $this->assertNotContains('security', NotificationPolicy::allowedCategories($dentist));
     }
 
     public function test_the_inventory_category_follows_supplies_view_like_any_other_policy_backed_category(): void
     {
         $admin = User::factory()->admin()->create();
 
-        $this->assertContains('inventory', \App\Policies\NotificationPolicy::allowedCategories($admin));
+        $this->assertContains('inventory', NotificationPolicy::allowedCategories($admin));
 
         RolePermission::query()
             ->where('role', UserRole::Admin->value)
@@ -355,7 +355,7 @@ class NotificationPhase5CTest extends TestCase
             ->delete();
         RolePermission::flushCache();
 
-        $this->assertNotContains('inventory', \App\Policies\NotificationPolicy::allowedCategories($admin->fresh()));
+        $this->assertNotContains('inventory', NotificationPolicy::allowedCategories($admin->fresh()));
     }
 
     public function test_the_index_endpoint_accepts_the_two_new_categories_as_valid_filters(): void
