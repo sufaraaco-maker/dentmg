@@ -506,7 +506,8 @@ exact threshold through the real login form; `inventory`, via a new CI step seed
 passing on a real `workflow_dispatch` run (`31584698456`) — Backend/Frontend/E2E all green, E2E 59/59 with
 no flakes. (A first attempt, run `31583701772`, had already shown Frontend/E2E green including both new
 tests, but caught one real, CI-only Pint violation in the new backend test file that local Pint hadn't
-flagged — fixed in a follow-up commit.) **PR #41 opened to `main`, not yet merged.**
+flagged — fixed in a follow-up commit.) **Merged via PR #41** (`1de1316`, 2026-08-12); post-merge CI on
+`main` fully green (Backend/Frontend/E2E, run `31585621311`).
 
 ### `docker/php/entrypoint.sh`'s CRLF line endings crash-looped the app/queue/scheduler containers — resolved 2026-08-12 (Phase 5C)
 Found immediately after a routine Dockerfile change (adding `tzdata`, itself later found unnecessary — see
