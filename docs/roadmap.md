@@ -61,9 +61,16 @@ logout/login, and a dentist's password hash/patient PHI reaching the Redis queue
 E2E fixture assumption, and the E2E job never starting a queue worker) — full detail in `CHANGELOG.md`.
 Post-merge CI on `main` fully green: Backend, Frontend, **and the real E2E run (56/57 passed, 1
 flaky-then-passed)** — the first time this module's E2E suite has been genuinely observed passing.
-**Milestone: "Phase 5 — Notification System Complete."** Phases C (scheduled/administrative notifications)
-and D (email) are designed but not started; Web Push is deferred to the PWA phase and patient-facing
-SMS/WhatsApp reminders to their own future module — see `docs/modules/notifications-design.md` §13 and
-`TECH_DEBT.md`. See `docs/PROJECT_STATUS.md` §3/§11/§12 for current phase status and next steps.
+**Milestone: "Phase 5 — Notification System Complete."** **Phase 5C (scheduled/administrative
+notifications — types 9-13) implemented 2026-08-12**, not yet merged to `main` — a real in-app addition
+(3 scheduled Commands, a reactive `AuditLogObserver`, no schema change), plus a real infrastructure fix
+(D14: `config('app.timezone')` now `env()`-driven, set to the clinic's actual IANA zone, closing a latent
+gap the schema had never needed to expose before this phase) — see
+`docs/modules/notifications-phase-c-d-design.md` §19-20 for the full account, including 3 real bugs found
+and fixed during implementation. **Phase D (email) remains designed but not started**, deferred to its own
+future approval cycle by explicit user decision (D12) — needs a mailer/vendor choice this file
+deliberately doesn't make. Web Push is deferred to the PWA phase and patient-facing SMS/WhatsApp reminders
+to their own future module — see `docs/modules/notifications-design.md` §13 and `TECH_DEBT.md`. See
+`docs/PROJECT_STATUS.md` §3/§11/§12 for current phase status and next steps.
 
 Full module list and scope boundaries are defined in `PROJECT_CONTEXT.md`.

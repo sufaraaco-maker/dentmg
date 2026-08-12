@@ -1,0 +1,10 @@
+# Phase 5C (Notification System — scheduled/administrative types) design doc §3.3a addendum: a
+# Dockerfile change (adding `tzdata`) invalidated the build cache layer before
+# `COPY docker/php/entrypoint.sh`, forcing a fresh copy from the working tree — which, on this
+# Windows checkout's `core.autocrlf=true`, had CRLF line endings. A `#!/bin/sh\r` shebang doesn't
+# resolve, so `app`/`queue`/`scheduler` crash-looped on `exec entrypoint.sh: no such file or
+# directory` the moment the cache was invalidated, despite having run fine for the past week off an
+# older cached layer. Unlike the already-documented Prettier CRLF warning (cosmetic, files still
+# work), this is a real functional failure. Forcing LF for exactly the file type that broke —
+# shell scripts Docker executes directly — regardless of local `core.autocrlf`, closes it for good.
+docker/**/*.sh text eol=lf

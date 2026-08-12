@@ -1886,7 +1886,9 @@
       "treatment_plans": "Tedavi Planları",
       "laboratory": "Laboratuvar",
       "billing": "Faturalandırma",
-      "payments": "Ödemeler"
+      "payments": "Ödemeler",
+      "inventory": "Envanter",
+      "security": "Güvenlik"
     },
     "types": {
       "appointment": {
@@ -1901,6 +1903,10 @@
         "no_show": {
           "title": "Hasta gelmedi",
           "body": "{patientName}, {startAt} tarihli randevusuna gelmedi."
+        },
+        "unconfirmed": {
+          "title": "Randevu henüz onaylanmadı",
+          "body": "{patientName} adlı hastanın yarın {startAt} saatindeki randevusu hâlâ onaylanmadı."
         }
       },
       "treatment_plan": {
@@ -1917,6 +1923,10 @@
         "received": {
           "title": "Laboratuvar vakası teslim alındı",
           "body": "{patientName} için {caseNumber} ({caseType}) vakası laboratuvardan geri geldi."
+        },
+        "overdue": {
+          "title": "Laboratuvar vakası gecikti",
+          "body": "{patientName} için {caseNumber} vakasının teslim tarihi {dueAt} idi ve hâlâ gelmedi."
         }
       },
       "payment": {
@@ -1929,6 +1939,24 @@
         "voided": {
           "title": "Fatura iptal edildi",
           "body": "{patientName} adlı hastaya ait {invoiceNumber} numaralı fatura iptal edildi."
+        }
+      },
+      "inventory": {
+        "low_stock": {
+          "title": "Düşük stok uyarısı",
+          "body": "{count} malzeme yeniden sipariş seviyesinde veya altında."
+        }
+      },
+      "security": {
+        "repeated_login_failures": {
+          "title": "Tekrarlanan giriş hataları",
+          "body": "{email} için birden fazla başarısız giriş denemesi tespit edildi."
+        }
+      },
+      "permissions": {
+        "matrix_updated": {
+          "title": "İzin matrisi güncellendi",
+          "body": "Rol izin matrisi güncellendi."
         }
       }
     }

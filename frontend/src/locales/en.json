@@ -1886,7 +1886,9 @@
       "treatment_plans": "Treatment Plans",
       "laboratory": "Laboratory",
       "billing": "Billing",
-      "payments": "Payments"
+      "payments": "Payments",
+      "inventory": "Inventory",
+      "security": "Security"
     },
     "types": {
       "appointment": {
@@ -1901,6 +1903,10 @@
         "no_show": {
           "title": "Patient did not attend",
           "body": "{patientName} did not attend their {startAt} appointment."
+        },
+        "unconfirmed": {
+          "title": "Appointment not yet confirmed",
+          "body": "{patientName}'s appointment tomorrow at {startAt} is still unconfirmed."
         }
       },
       "treatment_plan": {
@@ -1917,6 +1923,10 @@
         "received": {
           "title": "Lab case received",
           "body": "Case {caseNumber} ({caseType}) for {patientName} is back from the lab."
+        },
+        "overdue": {
+          "title": "Lab case overdue",
+          "body": "Case {caseNumber} for {patientName} was due {dueAt} and hasn't come back yet."
         }
       },
       "payment": {
@@ -1929,6 +1939,24 @@
         "voided": {
           "title": "Invoice voided",
           "body": "Invoice {invoiceNumber} for {patientName} was voided."
+        }
+      },
+      "inventory": {
+        "low_stock": {
+          "title": "Low stock alert",
+          "body": "{count} supplies are at or below their reorder level."
+        }
+      },
+      "security": {
+        "repeated_login_failures": {
+          "title": "Repeated login failures",
+          "body": "Multiple failed login attempts were detected for {email}."
+        }
+      },
+      "permissions": {
+        "matrix_updated": {
+          "title": "Permissions matrix updated",
+          "body": "The role permissions matrix was updated."
         }
       }
     }

@@ -231,6 +231,23 @@ deferred, each blocked on something concrete rather than on effort:
   consent/opt-out records, and a delivery-failure model: a module in its own right, with regulatory weight.
 **Revisit**: Phase D for email; roadmap Phase 6 for push; a dedicated future module for patient reminders.
 
+### Phase 5C (scheduled/administrative notifications) not yet E2E/real-browser verified
+Implemented 2026-08-12 (`docs/modules/notifications-phase-c-d-design.md` §19-20). Backend verification is
+thorough — 1211/1211 tests (19 new, covering all 5 types including the dedup/threshold/actor-exclusion
+edge cases), PHPStan clean, run twice including once against a freshly rebuilt Docker image. What's
+missing, and why: a full frontend Vitest run was started but not completed (this environment's already-
+documented local Docker per-request latency, more pronounced here — a targeted run against exactly the
+touched files passed 14/14 instead), and real-browser confirmation of the two new category chips
+(`inventory`/`security`) rendering correctly wasn't done because Playwright's browser binaries are not
+pre-installed in this dev container — a distinct constraint from the already-documented local `login()` E2E
+failure below, not the same issue. The actual UI risk is low (the two new categories are additions to
+`config/notificationTypes.ts`'s existing `Record` maps, read generically by `NotificationCenter.vue`/
+`NotificationItem.vue`, neither of which changed), but this project's own standing rule is real-browser
+verification is mandatory for UI-facing work, not assumed from code review.
+**Revisit**: before merging, either install Playwright browsers in this container and drive a manual check,
+or extend `e2e/notifications.spec.ts` with one scheduled-type scenario and get a real `workflow_dispatch` CI
+run to confirm it — matching how Phase 5A/B's own pre-merge E2E gate closed exactly this kind of gap.
+
 ### `appointment_reminders` remains an unwired table
 Unchanged by Phase 5, and deliberately so. Created 2026-07-15 as forward-compatible schema for "the future
 Notifications module," but that module turned out to be **staff-facing in-app notifications**, whereas this
@@ -474,6 +491,37 @@ is real (if rare) even on CI's native runner, not unique to the local Windows Do
 pre-existing/unrelated to this module.
 
 ## Resolved
+
+### `AuditLog.created_at` was set by the database's own real-UTC clock, not the app's — resolved 2026-08-12 (Phase 5C)
+Found during Phase 5C implementation, and a real bug this same phase's own D14 timezone fix exposed — not a
+pre-existing one. `AuditLog` is the only model in the schema using `$timestamps = false` (no `updated_at`
+column exists) plus the migration's DB-level `useCurrent()` default for `created_at`, which runs on the
+database's own real-UTC clock regardless of `config('app.timezone')`. Once D14 made `now()` return clinic
+wall-clock time (Africa/Cairo) instead of literal UTC, every other timestamp in the app moved onto that
+clock — except this one, which stayed on the database's real UTC. Confirmed directly: `AuditLogObserver`'s
+login-failure window query (`created_at >= now()->subMinutes(15)`) silently matched zero rows for a
+freshly-inserted row, because its real-UTC `created_at` sat ~3 hours "in the past" relative to the
+Cairo-shifted `now()` being compared against it.
+**RESOLVED**: `AuditLog::booted()` gained a `creating` hook (`$log->created_at ??= now();`), so every
+creation path — the service, or any direct `::create()` call — lands on the same clock as everything else.
+New regression test: `AuthAuditTest::test_created_at_is_set_on_the_same_clock_as_the_rest_of_the_app_not_the_databases_own`.
+
+### `docker/php/entrypoint.sh`'s CRLF line endings crash-looped the app/queue/scheduler containers — resolved 2026-08-12 (Phase 5C)
+Found immediately after a routine Dockerfile change (adding `tzdata`, itself later found unnecessary — see
+below) invalidated Docker's build cache at the `apk add` layer, forcing a fresh `COPY docker/php/entrypoint.sh`
+from the working tree instead of reusing a layer cached since the file was first added. On this Windows
+checkout (`core.autocrlf=true`), that working-tree copy had CRLF line endings — `#!/bin/sh\r` doesn't resolve
+as an interpreter path, so all three containers crash-looped on `exec entrypoint.sh: no such file or
+directory` the moment the cache was invalidated, despite running fine for the prior week off the old cached
+layer. Materially different from the already-documented cosmetic Prettier CRLF warning elsewhere in this
+file/`PROJECT_STATUS.md` (files still work there) — this was a real functional failure, latent in the repo
+since the file was first added, invisible until a build happened to hit the exact layer masking it.
+**RESOLVED**: normalized `entrypoint.sh` to LF on disk; added a new `.gitattributes`
+(`docker/**/*.sh text eol=lf`) forcing LF for this file class regardless of local `core.autocrlf`, so no
+future Windows checkout can reintroduce it. Containers rebuilt and confirmed healthy; full backend suite
+re-run green a second time on the new image. (The `tzdata` addition that triggered this stayed in the
+Dockerfile as a defensive measure even though testing confirmed PHP's bundled timezone database already
+resolves `Africa/Cairo` correctly without it.)
 
 ### Header notifications is inert UI (no notification backend) — resolved 2026-08-11 (Phase 5A, Notification System)
 `AppHeader.vue`'s bell icon opened a popover that always read "No notifications yet," because no notification

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Notification as NotificationModel;
 use App\Models\User;
 use App\Notifications\BaseNotification;
 use App\Notifications\NotificationRules;
@@ -30,11 +31,23 @@ class NotificationService
     public function __construct(private RecipientResolver $resolver) {}
 
     /**
-     * @param  Model  $subject  the Appointment/TreatmentPlan/LabCase/Invoice/Payment the event is about
+     * @param  Model  $subject  the Appointment/TreatmentPlan/LabCase/Invoice/Payment/Supply/AuditLog
+     *                          the event is about
      * @param  User|null  $actor  who performed the action, if anyone (null for system/scheduled events)
-     * @param  string  $eventType  the PatientActivityOccurred event type, e.g. `appointment.cancelled`
+     * @param  string  $eventType  the PatientActivityOccurred event type (e.g. `appointment.cancelled`)
+     *                             or a Phase 5C scheduled/reactive type (e.g. `lab_case.overdue`) —
+     *                             both are just keys into NotificationRules, dispatchFor() doesn't
+     *                             care which produced them
+     * @param  bool  $deduplicateUnread  Phase 5C design doc §3.1: for the 3 scheduled types (a lab
+     *                                   case can stay overdue for a week), skip a recipient who
+     *                                   already has an unread notification for this exact
+     *                                   (recipient, type, subject) — a read one is fair game to
+     *                                   resurface. Default false and opt-in only: the 8 Phase A
+     *                                   types are each one-time occurrences that never need this,
+     *                                   and it costs one query per recipient, which the hot
+     *                                   reactive path has no reason to pay
      */
-    public function dispatchFor(Model $subject, ?User $actor, string $eventType): void
+    public function dispatchFor(Model $subject, ?User $actor, string $eventType, bool $deduplicateUnread = false): void
     {
         $notificationClass = NotificationRules::for($eventType);
 
@@ -53,6 +66,16 @@ class NotificationService
             // Rule 3 — layer 3 authorization. Cheap despite looking per-user: hasPermission() is
             // backed by the per-role cache Phase 4 introduced, so this resolves in memory.
             ->filter(fn (User $recipient) => $recipient->can('view', $subject))
+            ->when($deduplicateUnread, fn ($recipients) => $recipients->reject(
+                fn (User $recipient) => NotificationModel::query()
+                    ->where('notifiable_id', $recipient->id)
+                    ->where('notifiable_type', $recipient->getMorphClass())
+                    ->where('type', $notificationClass)
+                    ->where('subject_type', $subject->getMorphClass())
+                    ->where('subject_id', $subject->getKey())
+                    ->whereNull('read_at')
+                    ->exists(),
+            ))
             ->values();
 
         if ($recipients->isEmpty()) {

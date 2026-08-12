@@ -534,3 +534,41 @@ alone.
 **Status**: Fixed 2026-08-11 on `feature/phase5-notifications`, before either Phase A or B was opened as a
 PR. See `TECH_DEBT.md`/`CHANGELOG.md` for the sibling findings from the same review (notification-store
 reset on logout, malformed-UUID 404, Notification Center refetch-on-reopen, i18n parity doc drift).
+
+## 2026-08-12 — Phase 5C: `config('app.timezone')` is now genuinely configurable, set to the clinic's real zone
+
+Phase 5C's design-phase audit, in response to the user's explicit condition on Decision D11 ("must be clinic
+timezone, not blind UTC"), found `config/app.php`'s `'timezone'` key was a hardcoded `'UTC'` **literal**, not
+`env()`-driven — no environment variable could ever have changed it. This had never mattered before: every
+prior phase only stored and re-displayed wall-clock digits verbatim (`frontend/src/lib/date.ts`'s documented
+single-clinic, no-real-conversion convention) and never compared `now()` against a stored timestamp column.
+Phase 5C is the first to do both — `LabCase::dueOrOverdue()`/tomorrow's-appointments comparisons, and
+`Schedule::command(...)->dailyAt(...)`'s absolute run times — so it is the first to expose that the
+container's real system clock and the clinic's own wall-clock digits are two different clocks unless the
+clinic happens to be in UTC+0.
+
+**Decision**: change `config/app.php` to `env('APP_TIMEZONE', 'UTC')`; set `APP_TIMEZONE=Africa/Cairo` (the
+clinic's real IANA zone, confirmed with the user — Decision D14) in `backend/.env.example`, mirrored into
+the real local `backend/.env`. This is the project's actual convention for all runtime config — confirmed
+by reading both compose files, neither of which sets `APP_*` variables directly; `app`/`queue`/`scheduler`
+all load `backend/.env` from the mounted volume, and CI's own jobs `cp .env.example .env`, so this one line
+also fixes CI without a workflow change. `tzdata` added to both `docker/php/Dockerfile` and
+`Dockerfile.prod`'s `apk add` list as a defensive measure, though testing the *unmodified* image directly
+confirmed PHP's bundled timezone database already resolves `Africa/Cairo` correctly without it.
+
+**Consequence for future deployments**: a single global `APP_TIMEZONE` is correct for V1 (one clinic); per
+[[policy_saas_multitenant_readiness]], the future multi-clinic model will need this to become a per-clinic
+column (on `ClinicSetting`, following the same additive-column precedent as `audit_logs`/`notifications`)
+rather than a container-wide env var — flagged in the design doc rather than left to be rediscovered.
+
+**A second, previously-invisible bug this fix exposed, not introduced**: `AuditLog.created_at` is the one
+column in the schema set by the *database's* own `useCurrent()` default rather than PHP's `now()` (necessary
+because `$timestamps = false`, itself necessary because there is no `updated_at` column) — so it stayed on
+the database's real-UTC clock while everything else moved onto clinic wall-clock time, silently breaking any
+`now()`-vs-`created_at` comparison. Fixed separately (see `TECH_DEBT.md`'s Resolved section and this
+session's `AuditLog::booted()` change) — recorded here because it is a direct, if non-obvious, consequence
+of this decision, not an unrelated finding.
+
+**Status**: `Africa/Cairo` confirmed by the user 2026-08-12; implemented same day on Phase 5C
+(`docs/modules/notifications-phase-c-d-design.md` §16a/§19). `schedule:list` confirmed the three new
+Phase 5C Commands now report correct clinic-local next-run times.

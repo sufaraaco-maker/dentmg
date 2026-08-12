@@ -239,7 +239,7 @@ class NotificationDispatchTest extends TestCase
         $this->assertGreaterThanOrEqual(3, PatientActivity::query()->count());
     }
 
-    public function test_the_whitelist_contains_exactly_the_eight_approved_types(): void
+    public function test_the_whitelist_contains_exactly_the_thirteen_approved_types(): void
     {
         $this->assertSame([
             'appointment.checked_in',
@@ -250,6 +250,11 @@ class NotificationDispatchTest extends TestCase
             'lab_case.received',
             'payment.refunded',
             'invoice.voided',
+            'lab_case.overdue',
+            'inventory.low_stock',
+            'appointment.unconfirmed',
+            'security.repeated_login_failures',
+            'permissions.matrix_updated',
         ], array_keys(NotificationRules::RULES));
     }
 

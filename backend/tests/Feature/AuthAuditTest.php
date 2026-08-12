@@ -73,6 +73,35 @@ class AuthAuditTest extends TestCase
         $this->assertStringNotContainsString('my-super-secret-password', $payload);
     }
 
+    /**
+     * Phase 5C design doc §3.3a — a real bug that phase's own D14 timezone fix exposed: this table
+     * is the only one whose `created_at` was left to the migration's DB-level `useCurrent()`
+     * default, which runs on the database's own real-UTC clock, never touched by
+     * `config('app.timezone')`. Every other timestamp in the app is set by PHP's `now()` (clinic
+     * wall-clock time as of D14) — left alone, a fresh `AuditLog` row would sit ~3 hours away from
+     * anything comparing `now()` against it (confirmed: `AuditLogObserver`'s login-failure window
+     * query silently matched zero rows before `AuditLog::booted()`'s `creating` hook was added).
+     * Asserted here, not just in NotificationPhase5CTest, because this is a property of AuditLog
+     * itself, independent of who reads it.
+     */
+    public function test_created_at_is_set_on_the_same_clock_as_the_rest_of_the_app_not_the_databases_own(): void
+    {
+        User::factory()->create(['email' => 'clock-check@example.com']);
+
+        $this->postJson('/api/login', [
+            'email' => 'clock-check@example.com',
+            'password' => 'wrong-password',
+        ])->assertUnprocessable();
+
+        $log = AuditLog::query()->where('action', 'login_failed')->firstOrFail();
+
+        // If created_at were still the DB-level default (real UTC) while `now()` is clinic
+        // wall-clock time, this window would silently exclude a row inserted moments ago.
+        $this->assertTrue(
+            AuditLog::query()->whereKey($log->id)->where('created_at', '>=', now()->subMinute())->exists(),
+        );
+    }
+
     public function test_logout_is_audited_with_the_logging_out_user_as_both_actor_and_target(): void
     {
         $user = User::factory()->create();
