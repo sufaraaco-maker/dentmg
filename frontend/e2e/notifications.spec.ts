@@ -183,7 +183,12 @@ test.describe('Notification Center', () => {
     await expect(badge).toBeVisible({ timeout: 20_000 })
 
     await page.getByTestId('notifications-bell').click()
-    const row = page.getByTestId(`notification-${await notificationIdFor(page, appointmentId)}`)
+    // Explicitly the cancellation notification — the dentist also has an appointment.created
+    // notification for this same subject_id (fired on creation, since PR #43), so ordering alone
+    // can't be trusted to disambiguate.
+    const row = page.getByTestId(
+      `notification-${await notificationIdFor(page, appointmentId, 'appointment.cancelled')}`,
+    )
     await expect(row).toBeVisible()
     await expect(row).toContainText('Appointment cancelled')
     await expect(row).toContainText(patient.fullName)
@@ -200,7 +205,9 @@ test.describe('Notification Center', () => {
     await page.reload()
     await page.getByTestId('notifications-bell').click()
     await expect(
-      page.getByTestId(`notification-${await notificationIdFor(page, appointmentId)}`),
+      page.getByTestId(
+        `notification-${await notificationIdFor(page, appointmentId, 'appointment.cancelled')}`,
+      ),
     ).toHaveAttribute('data-unread', 'false')
   })
 
@@ -389,11 +396,22 @@ test.describe('Notification Center', () => {
   })
 })
 
-/** Finds the caller's own notification for a given appointment, via the app's own API. */
-async function notificationIdFor(page: Page, subjectId: string): Promise<string> {
-  const feed = await apiRequest<{ data: { id: string; subject_id: string }[] }>(
+/**
+ * Finds the caller's own notification for a given appointment, via the app's own API.
+ *
+ * `type` disambiguates when the same appointment can carry more than one notification for the
+ * same recipient — e.g. `appointment.created` (fired on creation, since PR #43) followed later by
+ * `appointment.cancelled` for the same subject_id. Without it, `.find()` depends on `latest()`
+ * ordering breaking a same-second tie the right way, which is not guaranteed; a caller asserting on
+ * a specific notification's content must ask for its type explicitly rather than trust ordering.
+ */
+async function notificationIdFor(page: Page, subjectId: string, type?: string): Promise<string> {
+  const feed = await apiRequest<{ data: { id: string; subject_id: string; data: { type: string } }[] }>(
     page,
     '/notifications?per_page=50',
   )
-  return feed.data.find((row) => row.subject_id === subjectId)?.id ?? ''
+  return (
+    feed.data.find((row) => row.subject_id === subjectId && (type === undefined || row.data.type === type))
+      ?.id ?? ''
+  )
 }
