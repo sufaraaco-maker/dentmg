@@ -38,6 +38,12 @@ namespace App\Notifications;
  * its `$eventType` came from `PatientActivityOccurred`; it is a plain lookup from a string to a
  * class, callable from anywhere with any subject. Three new `App\Console\Commands` call it directly
  * for the scheduled types (9-11); a new `AuditLogObserver` calls it for the reactive ones (12-13).
+ *
+ * `appointment.created` (type 14) was added later, as a genuine gap fix rather than a new phase:
+ * `AppointmentService::create()` never dispatched `PatientActivityOccurred` at all — not deliberately
+ * excluded like the routine transitions above, just never wired in either the Timeline (Phase 2.6)
+ * or here. It notifies the assigned dentist only, same pattern as `appointment.checked_in` — whoever
+ * created it already knows.
  */
 final class NotificationRules
 {
@@ -47,6 +53,7 @@ final class NotificationRules
      * @var array<string, class-string<BaseNotification>>
      */
     public const RULES = [
+        'appointment.created' => AppointmentCreatedNotification::class,
         'appointment.checked_in' => AppointmentCheckedInNotification::class,
         'appointment.cancelled' => AppointmentCancelledNotification::class,
         'appointment.no_show' => AppointmentNoShowNotification::class,

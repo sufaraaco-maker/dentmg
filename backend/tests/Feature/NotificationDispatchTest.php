@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\Appointment;
+use App\Models\AppointmentType;
 use App\Models\Invoice;
 use App\Models\LabCase;
 use App\Models\Notification;
+use App\Models\Patient;
 use App\Models\PatientActivity;
 use App\Models\Payment;
 use App\Models\RolePermission;
@@ -49,6 +51,70 @@ class NotificationDispatchTest extends TestCase
     // ---------------------------------------------------------------------
     // The whitelist (design doc §5 / NotificationRules)
     // ---------------------------------------------------------------------
+
+    /**
+     * Added later, as a genuine gap fix (not part of the original 8/13 whitelisted types):
+     * AppointmentService::create() never dispatched PatientActivityOccurred at all, so the
+     * assigned dentist never learned a new appointment had landed on their schedule regardless
+     * of who created it or what the UI did — see docs/decisions.md and TECH_DEBT.md.
+     */
+    public function test_appointment_creation_notifies_only_the_assigned_dentist(): void
+    {
+        $dentist = User::factory()->dentist()->create();
+        $otherAdmin = User::factory()->admin()->create();
+        $otherReceptionist = $this->receptionist();
+        $actor = User::factory()->admin()->create();
+
+        $this->actingAs($actor);
+        $appointment = (new AppointmentService)->create([
+            'patient_id' => Patient::factory()->create()->id,
+            'dentist_id' => $dentist->id,
+            'appointment_type_id' => AppointmentType::factory()->create()->id,
+            'start_at' => now()->addDay()->setTime(10, 0),
+            'duration_minutes' => 30,
+            'override_patient_conflict' => true,
+            'override_outside_working_hours' => true,
+        ]);
+
+        // Only the assigned dentist — never the actor, never any other admin/receptionist. Unlike
+        // AppointmentCancelledNotification, recipients() here never resolves any role at all, so
+        // "other admins/receptionists are excluded" is a structural guarantee, not a rule that
+        // could be forgotten. Asserted both ways: the exact recipient set, and each excluded party
+        // named explicitly so the guarantee is documented, not just implied.
+        $recipients = Notification::query()->pluck('notifiable_id')->all();
+        $this->assertSame([$dentist->id], $recipients);
+        $this->assertNotContains($actor->id, $recipients);
+        $this->assertNotContains($otherAdmin->id, $recipients);
+        $this->assertNotContains($otherReceptionist->id, $recipients);
+
+        $notification = Notification::query()->sole();
+        $this->assertSame('appointment.created', $notification->data['type']);
+        $this->assertSame('appointments', $notification->category);
+        $this->assertSame($appointment->id, $notification->subject_id);
+    }
+
+    /**
+     * Actor exclusion still has to hold even though recipients() only ever resolves the assigned
+     * dentist — the one case where that matters is a dentist creating their own appointment
+     * (self-scheduling), where they are simultaneously the actor and the sole recipient.
+     */
+    public function test_a_dentist_creating_their_own_appointment_is_not_notified(): void
+    {
+        $dentist = User::factory()->dentist()->create();
+
+        $this->actingAs($dentist);
+        (new AppointmentService)->create([
+            'patient_id' => Patient::factory()->create()->id,
+            'dentist_id' => $dentist->id,
+            'appointment_type_id' => AppointmentType::factory()->create()->id,
+            'start_at' => now()->addDay()->setTime(10, 0),
+            'duration_minutes' => 30,
+            'override_patient_conflict' => true,
+            'override_outside_working_hours' => true,
+        ]);
+
+        $this->assertSame(0, Notification::query()->count());
+    }
 
     public function test_whitelisted_appointment_cancellation_notifies_the_dentist_and_front_desk(): void
     {
@@ -214,9 +280,9 @@ class NotificationDispatchTest extends TestCase
     // ---------------------------------------------------------------------
 
     /**
-     * The whitelist covers 8 of the 24 live PatientActivityOccurred event types. The other 16 must
-     * produce nothing at all — a Notification Center that fills with routine lifecycle events is
-     * the failure mode this design explicitly guards against (design doc §5.1).
+     * The original 8 (now 9, with appointment.created) of the 25 live PatientActivityOccurred event
+     * types. The rest must produce nothing at all — a Notification Center that fills with routine
+     * lifecycle events is the failure mode this design explicitly guards against (design doc §5.1).
      */
     public function test_non_whitelisted_events_produce_no_notifications(): void
     {
@@ -239,9 +305,10 @@ class NotificationDispatchTest extends TestCase
         $this->assertGreaterThanOrEqual(3, PatientActivity::query()->count());
     }
 
-    public function test_the_whitelist_contains_exactly_the_thirteen_approved_types(): void
+    public function test_the_whitelist_contains_exactly_the_fourteen_approved_types(): void
     {
         $this->assertSame([
+            'appointment.created',
             'appointment.checked_in',
             'appointment.cancelled',
             'appointment.no_show',

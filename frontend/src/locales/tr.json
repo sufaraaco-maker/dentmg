@@ -1892,6 +1892,10 @@
     },
     "types": {
       "appointment": {
+        "created": {
+          "title": "Yeni randevu oluşturuldu",
+          "body": "{patientName} adlı hasta için {startAt} tarihine yeni bir randevu oluşturuldu."
+        },
         "checked_in": {
           "title": "Hasta geldi",
           "body": "{patientName}, {startAt} randevusu için giriş yaptı."

@@ -1892,6 +1892,10 @@
     },
     "types": {
       "appointment": {
+        "created": {
+          "title": "تم حجز موعد جديد",
+          "body": "تم حجز موعد جديد لـ {patientName} في {startAt}."
+        },
         "checked_in": {
           "title": "وصل المريض",
           "body": "سجّل {patientName} حضوره لموعد {startAt}."
