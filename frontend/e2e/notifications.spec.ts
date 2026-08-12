@@ -307,6 +307,51 @@ test.describe('Notification Center', () => {
     )
     expect(overflows).toBe(false)
   })
+
+  /**
+   * Phase 5C (design doc §5.3, type 12) — proves the `security` category, introduced this phase,
+   * actually renders in a real browser (TECH_DEBT.md's "Phase 5C not yet E2E/real-browser
+   * verified"). `AuditLogObserver`/`AuthService` (Decision D9) fire this reactively, with no
+   * scheduler involved, so it needs no CI-side fixture: 5 real failed logins for one never-before-
+   * seen email, through the real login form, is the whole trigger. A fresh generated email keeps
+   * this test's own count isolated from `auth.spec.ts`'s single failed-login case.
+   */
+  test('5 failed logins for one email raise a security-category alert for admins', async ({ page }) => {
+    const attemptEmail = `e2e-security-${Date.now()}@example.com`
+    await forceEnglishLocale(page)
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await page.goto('/login')
+      await page.waitForSelector('#email')
+      await page.fill('#email', attemptEmail)
+      await page.locator('input[type="password"]').first().fill('wrong-password')
+      await page.locator('button[type="submit"]').click()
+      await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 20_000 })
+    }
+
+    await loginAsEnglish(page, 'admin')
+    await page.goto('/notifications')
+    await page.getByTestId('notifications-category-security').click()
+
+    const row = page.getByText('Repeated login failures').first()
+    await expect(row).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText(attemptEmail)).toBeVisible()
+  })
+
+  /**
+   * Phase 5C (design doc §5.2, type 10) — proves the other new category, `inventory`, also renders
+   * real content. Unlike `security`, this type only ever comes from the daily
+   * `notifications:low-stock-digest` command, which the E2E CI job now runs once against a
+   * guaranteed-low-stock supply before the frontend even starts (see ci.yml) — this test only
+   * reads, matching how every other spec in this file treats CI-seeded state.
+   */
+  test('the inventory category shows the scheduled low-stock digest', async ({ page }) => {
+    await loginAsEnglish(page, 'admin')
+    await page.goto('/notifications')
+    await page.getByTestId('notifications-category-inventory').click()
+
+    await expect(page.getByText('Low stock alert').first()).toBeVisible({ timeout: 20_000 })
+  })
 })
 
 /** Finds the caller's own notification for a given appointment, via the app's own API. */

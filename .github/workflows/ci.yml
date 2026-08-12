@@ -170,6 +170,21 @@ jobs:
         # used since the suite dispatches jobs throughout its run, not just at the start.
         run: php artisan queue:work --tries=1 &
 
+      - name: Seed a low-stock supply and run the Phase 5C scheduled notification commands
+        working-directory: backend
+        # Phase 5C's new `inventory` category (design doc §5.2, type 10) has no user-facing action
+        # that creates it — it only ever comes from the daily `notifications:low-stock-digest`
+        # command, which nothing else in this job would otherwise trigger. Closes the real gap
+        # TECH_DEBT.md tracked ("Phase 5C not yet E2E/real-browser verified"): a real browser never
+        # confirmed the new `inventory` category chip renders actual content. `SupplyFactory`'s
+        # default `reorder_level` (5-50) with zero stock movements already qualifies as low stock
+        # (`Supply::lowStock()`'s `COALESCE(sm.on_hand, 0) <= reorder_level`), so no bespoke
+        # stock-movement fixture is needed. Runs once, before the frontend starts, so the
+        # notification already exists by the time notifications.spec.ts logs in as admin.
+        run: |
+          php artisan tinker --execute="\App\Models\Supply::factory()->create();"
+          php artisan notifications:low-stock-digest
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
