@@ -49,9 +49,11 @@ fix (D14: `APP_TIMEZONE` now genuinely configurable, set to the clinic's actual 
 and fixed during implementation (a category-validation gap, an `AuditLog.created_at` clock mismatch the D14
 fix itself exposed, and an unrelated CRLF-line-ending crash-loop a Dockerfile change surfaced). Both
 verification gaps left open at implementation time (full frontend Vitest, real-browser/E2E) closed the same
-day — see this file's newest entry below for the full account. **PR #41 opened to `main`**; a
-`workflow_dispatch` pre-merge gate is fully green (Backend/Frontend/E2E, run `31584698456`). **Not yet
-merged — awaiting review.** **Phase 5D (email) remains designed but deferred to its own future cycle.** See
+day — see this file's newest entry below for the full account. A `workflow_dispatch` pre-merge gate ran
+fully green (Backend/Frontend/E2E, run `31584698456`); **merged via PR #41** (`1de1316`, 2026-08-12);
+post-merge CI on `main` fully green (Backend/Frontend/E2E, run `31585621311`). **Milestone: "Phase 5C —
+Scheduled & Administrative Notifications Complete."** **Phase 5D (email) remains designed but deferred to
+its own future cycle.** See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
@@ -132,7 +134,9 @@ Frontend, and E2E all green** (E2E: 59/59, no flakes). A first `workflow_dispatc
 (`31583701772`) had already confirmed Frontend/E2E green including both new tests, but caught one real,
 CI-only Pint violation (an unused import and two fully-qualified class references Pint's local run hadn't
 flagged) in `NotificationPhase5CTest.php` — fixed, and the clean re-run above is the one that counts.
-**PR #41 opened to `main`; not yet merged — awaiting review.**
+**PR #41 merged to `main` 2026-08-12** (merge commit `1de1316`); post-merge CI on `main` fully green —
+Backend, Frontend, and E2E all `success` (run `31585621311`). **Phase 5C (Scheduled & Administrative
+Notifications) is now complete.**
 
 ### Added — Phase 5: Notification System, Phases A + B (`feature/phase5-notifications`, 2026-08-11)
 
