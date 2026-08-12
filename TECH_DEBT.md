@@ -231,23 +231,6 @@ deferred, each blocked on something concrete rather than on effort:
   consent/opt-out records, and a delivery-failure model: a module in its own right, with regulatory weight.
 **Revisit**: Phase D for email; roadmap Phase 6 for push; a dedicated future module for patient reminders.
 
-### Phase 5C (scheduled/administrative notifications) not yet E2E/real-browser verified
-Implemented 2026-08-12 (`docs/modules/notifications-phase-c-d-design.md` §19-20). Backend verification is
-thorough — 1211/1211 tests (19 new, covering all 5 types including the dedup/threshold/actor-exclusion
-edge cases), PHPStan clean, run twice including once against a freshly rebuilt Docker image. What's
-missing, and why: a full frontend Vitest run was started but not completed (this environment's already-
-documented local Docker per-request latency, more pronounced here — a targeted run against exactly the
-touched files passed 14/14 instead), and real-browser confirmation of the two new category chips
-(`inventory`/`security`) rendering correctly wasn't done because Playwright's browser binaries are not
-pre-installed in this dev container — a distinct constraint from the already-documented local `login()` E2E
-failure below, not the same issue. The actual UI risk is low (the two new categories are additions to
-`config/notificationTypes.ts`'s existing `Record` maps, read generically by `NotificationCenter.vue`/
-`NotificationItem.vue`, neither of which changed), but this project's own standing rule is real-browser
-verification is mandatory for UI-facing work, not assumed from code review.
-**Revisit**: before merging, either install Playwright browsers in this container and drive a manual check,
-or extend `e2e/notifications.spec.ts` with one scheduled-type scenario and get a real `workflow_dispatch` CI
-run to confirm it — matching how Phase 5A/B's own pre-merge E2E gate closed exactly this kind of gap.
-
 ### `appointment_reminders` remains an unwired table
 Unchanged by Phase 5, and deliberately so. Created 2026-07-15 as forward-compatible schema for "the future
 Notifications module," but that module turned out to be **staff-facing in-app notifications**, whereas this
@@ -505,6 +488,25 @@ Cairo-shifted `now()` being compared against it.
 **RESOLVED**: `AuditLog::booted()` gained a `creating` hook (`$log->created_at ??= now();`), so every
 creation path — the service, or any direct `::create()` call — lands on the same clock as everything else.
 New regression test: `AuthAuditTest::test_created_at_is_set_on_the_same_clock_as_the_rest_of_the_app_not_the_databases_own`.
+
+### Phase 5C not yet E2E/real-browser verified — resolved 2026-08-12 (same day)
+Implemented 2026-08-12 (`docs/modules/notifications-phase-c-d-design.md` §19-20) with two verification gaps
+left open: a full frontend Vitest run hadn't completed, and real-browser confirmation of the two new
+category chips (`inventory`/`security`) hadn't been done because Playwright's browser binaries aren't
+pre-installed in this dev container.
+**RESOLVED same day**: confirmed installing Playwright browsers in this container isn't viable at all, not
+just slow — it's Alpine Linux, which Playwright doesn't support (`playwright install --with-deps` fails
+outright, `apt-get: not found`), so this was never going to be a "wait longer" fix. Full frontend Vitest run
+completed: **1003/1005** (the 2 failures are the pre-existing `router/index.test.ts`/`PatientDetailView.test.ts`
+full-suite-load timeout flake, already on record elsewhere in this file; both re-verified 31/31 passing in
+isolation). Real-browser verification closed the way this file's own revisit note recommended: two new
+`notifications.spec.ts` tests (`security`, via 5 real failed logins deterministically crossing Decision D9's
+exact threshold through the real login form; `inventory`, via a new CI step seeding one guaranteed-low-stock
+`Supply` and running `notifications:low-stock-digest` before the frontend starts), confirmed genuinely
+passing on a real `workflow_dispatch` run (`31584698456`) — Backend/Frontend/E2E all green, E2E 59/59 with
+no flakes. (A first attempt, run `31583701772`, had already shown Frontend/E2E green including both new
+tests, but caught one real, CI-only Pint violation in the new backend test file that local Pint hadn't
+flagged — fixed in a follow-up commit.) **PR #41 opened to `main`, not yet merged.**
 
 ### `docker/php/entrypoint.sh`'s CRLF line endings crash-looped the app/queue/scheduler containers — resolved 2026-08-12 (Phase 5C)
 Found immediately after a routine Dockerfile change (adding `tzdata`, itself later found unnecessary — see

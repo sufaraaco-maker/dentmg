@@ -47,8 +47,11 @@ CI on `main` fully green (Backend/Frontend, and the real E2E run — 56/57 passe
 notifications)** implemented 2026-08-12 — this file's newest entry below — including a real infrastructure
 fix (D14: `APP_TIMEZONE` now genuinely configurable, set to the clinic's actual zone) and 3 real bugs found
 and fixed during implementation (a category-validation gap, an `AuditLog.created_at` clock mismatch the D14
-fix itself exposed, and an unrelated CRLF-line-ending crash-loop a Dockerfile change surfaced). Not yet
-merged — awaiting review. **Phase 5D (email) remains designed but deferred to its own future cycle.** See
+fix itself exposed, and an unrelated CRLF-line-ending crash-loop a Dockerfile change surfaced). Both
+verification gaps left open at implementation time (full frontend Vitest, real-browser/E2E) closed the same
+day — see this file's newest entry below for the full account. **PR #41 opened to `main`**; a
+`workflow_dispatch` pre-merge gate is fully green (Backend/Frontend/E2E, run `31584698456`). **Not yet
+merged — awaiting review.** **Phase 5D (email) remains designed but deferred to its own future cycle.** See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
@@ -112,13 +115,24 @@ full implementation account in its §19-20). No schema change — reuses the `no
 
 **Verification**: Backend **1211/1211** green (1191 baseline + 20 new — 19 in a new
 `NotificationPhase5CTest`, 1 in `AuthAuditTest`), run twice (before and after the Docker image rebuild),
-both fully green. PHPStan clean on every new/touched file. Pint clean. `vue-tsc`/ESLint clean, Prettier
-clean after `--write`. i18n parity 1498/1498/1498. `schedule:list` confirmed the 3 new Commands registered
-correctly. **Not yet verified**: a full frontend Vitest run (started, still progressing after 20+ minutes
-per this environment's documented local Docker latency, killed in favor of a targeted run — 14/14 green —
-against exactly the touched files) and real-browser/E2E confirmation (Playwright browsers aren't
-pre-installed in this dev container; recorded as the recommended next step in the design doc's §20, not
-silently skipped).
+both fully green. PHPStan clean on every new/touched file. `vue-tsc`/ESLint clean, Prettier clean after
+`--write`. i18n parity 1498/1498/1498. `schedule:list` confirmed the 3 new Commands registered correctly.
+
+**Both verification gaps this section previously left open are now closed, 2026-08-12, same day**: the
+full frontend Vitest suite was run to completion — **1003/1005** (the 2 failures are the pre-existing
+`router/index.test.ts`/`PatientDetailView.test.ts` full-suite-load timeout flake `TECH_DEBT.md` already
+had on record; both re-verified 31/31 passing in isolation). Real-browser/E2E confirmation: Playwright
+browsers cannot be installed in this dev container at all (Alpine — `playwright install --with-deps`
+fails outright, `apt-get: not found`), so per this project's established Phase 5A/B precedent the gap was
+closed with real CI coverage instead — two new `notifications.spec.ts` tests (`security`, via 5 real
+failed logins deterministically crossing Decision D9's exact threshold; `inventory`, via a new CI step
+that seeds one guaranteed-low-stock `Supply` and runs `notifications:low-stock-digest` before the frontend
+starts) — confirmed genuinely passing on a real `workflow_dispatch` run (`31584698456`): **Backend,
+Frontend, and E2E all green** (E2E: 59/59, no flakes). A first `workflow_dispatch` attempt
+(`31583701772`) had already confirmed Frontend/E2E green including both new tests, but caught one real,
+CI-only Pint violation (an unused import and two fully-qualified class references Pint's local run hadn't
+flagged) in `NotificationPhase5CTest.php` — fixed, and the clean re-run above is the one that counts.
+**PR #41 opened to `main`; not yet merged — awaiting review.**
 
 ### Added — Phase 5: Notification System, Phases A + B (`feature/phase5-notifications`, 2026-08-11)
 
