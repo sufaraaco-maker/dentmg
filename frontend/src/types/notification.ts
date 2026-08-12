@@ -1,8 +1,10 @@
 /**
  * Notification System (Phase 5A) — `NotificationResource` shape, design doc §6.2/§7.
+ * Phase 5C (design doc §5.2/§5.3) added the 5 scheduled/administrative types and the `inventory` /
+ * `security` categories.
  */
 
-/** The 8 whitelisted V1 types. Mirrors `NotificationRules::RULES` on the backend. */
+/** Mirrors `NotificationRules::RULES` on the backend — the 8 Phase A types plus Phase C's 5. */
 export type NotificationType =
   | 'appointment.checked_in'
   | 'appointment.cancelled'
@@ -12,9 +14,15 @@ export type NotificationType =
   | 'lab_case.received'
   | 'payment.refunded'
   | 'invoice.voided'
+  | 'lab_case.overdue'
+  | 'inventory.low_stock'
+  | 'appointment.unconfirmed'
+  | 'security.repeated_login_failures'
+  | 'permissions.matrix_updated'
 
-/** Mirrors `NotificationPolicy::CATEGORY_SUBJECT_MAP`. Phase C adds `inventory` and `security`. */
-export type NotificationCategory = 'appointments' | 'treatment_plans' | 'laboratory' | 'billing' | 'payments'
+/** Mirrors `NotificationPolicy::CATEGORY_SUBJECT_MAP` + `GATE_CATEGORIES`. */
+export type NotificationCategory =
+  'appointments' | 'treatment_plans' | 'laboratory' | 'billing' | 'payments' | 'inventory' | 'security'
 
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   'appointments',
@@ -22,6 +30,8 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   'laboratory',
   'billing',
   'payments',
+  'inventory',
+  'security',
 ]
 
 /**

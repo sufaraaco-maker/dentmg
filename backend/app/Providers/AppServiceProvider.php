@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Enums\UserRole;
+use App\Models\AuditLog;
 use App\Models\PatientAllergy;
 use App\Models\PatientMedicalCondition;
 use App\Models\PatientMedication;
 use App\Models\User;
 use App\Notifications\Channels\DatabaseChannel;
+use App\Observers\AuditLogObserver;
 use App\Policies\MedicalHistoryPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -71,5 +73,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(PatientAllergy::class, MedicalHistoryPolicy::class);
         Gate::policy(PatientMedicalCondition::class, MedicalHistoryPolicy::class);
         Gate::policy(PatientMedication::class, MedicalHistoryPolicy::class);
+
+        // Phase 5C (Notification System — scheduled/administrative types) design doc §2: types 12-13
+        // are reactive off AuditLog's own `created` event, not scheduled — AuditLogService::write()
+        // always goes through a real Eloquent `create()`, so this fires for free on every audit row.
+        AuditLog::observe(AuditLogObserver::class);
     }
 }

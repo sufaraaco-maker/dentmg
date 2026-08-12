@@ -31,7 +31,7 @@ class NotificationIndexRequest extends FormRequest
     {
         return [
             'status' => ['sometimes', Rule::in(['unread', 'read', 'all'])],
-            'category' => ['sometimes', Rule::in(array_keys(NotificationPolicy::CATEGORY_SUBJECT_MAP))],
+            'category' => ['sometimes', Rule::in(NotificationPolicy::allCategories())],
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
         ];

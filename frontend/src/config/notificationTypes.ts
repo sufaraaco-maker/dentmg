@@ -1,9 +1,24 @@
-import { Beaker, CalendarX2, ClipboardCheck, FileX2, LogIn, Undo2, UserX } from 'lucide-vue-next'
+import {
+  Beaker,
+  CalendarClock,
+  CalendarX2,
+  ClipboardCheck,
+  Clock,
+  FileX2,
+  KeyRound,
+  LogIn,
+  PackageX,
+  ShieldAlert,
+  Undo2,
+  UserX,
+} from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { NotificationCategory, NotificationType } from '@/types/notification'
 
 /**
- * Notification System (Phase 5A) design doc §10.1.
+ * Notification System (Phase 5A) design doc §10.1. Phase 5C (design doc §5.2/§5.3) added the
+ * `inventory` / `security` categories and their types — same "no raw backend value ever reaches the
+ * UI" role, extended rather than reworked.
  *
  * The "no raw backend value ever reaches the UI" layer, same role `config/auditableTypes.ts` plays
  * for the Audit Log viewer. A notification row arrives carrying only a stable type string and a
@@ -19,6 +34,8 @@ export const CATEGORY_STYLES: Record<NotificationCategory, { icon: Component; ac
   laboratory: { icon: Beaker, accent: 'text-amber-600 dark:text-amber-400' },
   billing: { icon: FileX2, accent: 'text-rose-600 dark:text-rose-400' },
   payments: { icon: Undo2, accent: 'text-emerald-600 dark:text-emerald-400' },
+  inventory: { icon: PackageX, accent: 'text-orange-600 dark:text-orange-400' },
+  security: { icon: ShieldAlert, accent: 'text-red-600 dark:text-red-400' },
 }
 
 /**
@@ -28,6 +45,9 @@ export const CATEGORY_STYLES: Record<NotificationCategory, { icon: Component; ac
 const TYPE_ICONS: Partial<Record<NotificationType, Component>> = {
   'appointment.checked_in': LogIn,
   'appointment.no_show': UserX,
+  'lab_case.overdue': Clock,
+  'appointment.unconfirmed': CalendarClock,
+  'permissions.matrix_updated': KeyRound,
 }
 
 export function notificationIcon(type: NotificationType, category: NotificationCategory): Component {

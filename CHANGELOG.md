@@ -43,8 +43,96 @@ Permissions & Audit Complete."** **Phase 5: Notification System (Phases A + B)**
 issues (2 marked SECURITY) and a pre-merge `workflow_dispatch` E2E gate finding and fixing 2 more genuinely
 real, pre-existing bugs before allowing a merge; **merged via PR #39** (`204194f`, 2026-08-11); post-merge
 CI on `main` fully green (Backend/Frontend, and the real E2E run — 56/57 passed, 1 flaky-then-passed).
-**Milestone: "Phase 5 — Notification System Complete."** See `docs/PROJECT_STATUS.md` for the living,
-continuously-updated status book this file's own per-PR history now feeds into._
+**Milestone: "Phase 5 — Notification System Complete."** **Phase 5C (scheduled/administrative
+notifications)** implemented 2026-08-12 — this file's newest entry below — including a real infrastructure
+fix (D14: `APP_TIMEZONE` now genuinely configurable, set to the clinic's actual zone) and 3 real bugs found
+and fixed during implementation (a category-validation gap, an `AuditLog.created_at` clock mismatch the D14
+fix itself exposed, and an unrelated CRLF-line-ending crash-loop a Dockerfile change surfaced). Both
+verification gaps left open at implementation time (full frontend Vitest, real-browser/E2E) closed the same
+day — see this file's newest entry below for the full account. **PR #41 opened to `main`**; a
+`workflow_dispatch` pre-merge gate is fully green (Backend/Frontend/E2E, run `31584698456`). **Not yet
+merged — awaiting review.** **Phase 5D (email) remains designed but deferred to its own future cycle.** See
+`docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
+now feeds into._
+
+### Added — Phase 5C: Scheduled & Administrative Notifications (2026-08-12)
+
+Types 9-13 of the Notification Center (design doc: `docs/modules/notifications-phase-c-d-design.md`,
+full implementation account in its §19-20). No schema change — reuses the `notifications` table and
+`NotificationService`/`RecipientResolver` infrastructure from Phase A/B unchanged.
+
+- **3 new scheduled types** (9-11), each a new `App\Console\Commands` class registered in
+  `routes/console.php`: `notifications:lab-cases-overdue` (03:30, reuses `LabCase::dueOrOverdue()`),
+  `notifications:low-stock-digest` (08:00, one digest notification reusing `Supply::lowStock()`),
+  `notifications:appointments-unconfirmed` (17:00, tomorrow's still-`scheduled` appointments). All three
+  opt into `NotificationService::dispatchFor()`'s new `deduplicateUnread` parameter so a condition that
+  stays true for days doesn't renotify the same recipient daily while their previous notification is still
+  unread.
+- **2 new reactive types** (12-13), dispatched by a new `AuditLogObserver` (registered via
+  `AuditLog::observe()`) on `AuditLog`'s own `created` event — no scheduler entry needed, since
+  `AuditLogService::write()` was already a real Eloquent `create()`: `security.repeated_login_failures`
+  (5 failures / 15 minutes for one email, notified exactly once per threshold-crossing) and
+  `permissions.matrix_updated` (every `role_permissions_updated` row, admins except the actor).
+- **2 new categories**, `inventory` (a real Policy, `SupplyPolicy::viewAny()`, fits the existing
+  `NotificationPolicy::CATEGORY_SUBJECT_MAP` as-is) and `security` (no Eloquent model — a new
+  `GATE_CATEGORIES` map plus a new one-method `AuditLogPolicy::view()` proxying Phase 4's existing
+  `view-audit-logs` Gate). New `NotificationPolicy::allCategories()` is now the single source of truth
+  both `allowedCategories()` and `NotificationIndexRequest`'s validation rule read from.
+- **Frontend**: 2 new `CATEGORY_STYLES` entries + 3 new `TYPE_ICONS` overrides in
+  `config/notificationTypes.ts`; 5 new `NotificationType`/2 new `NotificationCategory` union members;
+  12 new i18n keys × 3 locales (1498/1498/1498, zero drift) — no Vue component changed, since
+  `NotificationCenter.vue`/`NotificationItem.vue` already read these maps generically.
+- **Infrastructure fix (Decision D14)**: `config('app.timezone')` was a hardcoded `'UTC'` literal, not
+  `env()`-driven — no config value could ever have changed it. Changed to `env('APP_TIMEZONE', 'UTC')`;
+  `APP_TIMEZONE=Africa/Cairo` set in `backend/.env.example` (the project's real convention — neither
+  compose file sets `APP_*` vars directly, and CI copies `.env.example` itself). This is the first phase
+  to compare `now()` against a stored wall-clock column (`due_at`/`start_at`) or schedule an absolute daily
+  run time — every prior phase only stored/redisplayed digits, per `frontend/src/lib/date.ts`'s documented
+  single-clinic, no-real-conversion convention.
+
+**3 real bugs found during implementation, not assumed away:**
+
+1. `NotificationIndexRequest`'s `category` filter rejected `security` as invalid — it validated only
+   against `CATEGORY_SUBJECT_MAP`'s keys, which deliberately excludes `security`. Fixed by the new
+   `allCategories()` helper (above).
+2. **`AuditLog.created_at` was silently on a different clock than the rest of the app** — the one model
+   using a DB-level `useCurrent()` default instead of PHP's `now()` (necessary since `$timestamps = false`,
+   itself necessary since there is no `updated_at` column). A DB default runs on the database's own
+   real-UTC clock, never touched by the D14 config fix above; every other timestamp in the app is now
+   clinic wall-clock time. Result: `AuditLogObserver`'s login-failure window query silently matched zero
+   rows. Fixed at the model level — `AuditLog::booted()` gained a `creating` hook setting
+   `created_at ??= now()` — closing it for every creation path, not just the one that surfaced it. New
+   regression test in `AuthAuditTest`.
+3. **A Dockerfile change (adding `tzdata`, itself later found unnecessary — PHP's bundled timezone data
+   already resolves `Africa/Cairo` correctly) crash-looped `app`/`queue`/`scheduler`** by invalidating a
+   build-cache layer and forcing a fresh `COPY docker/php/entrypoint.sh` from a Windows working tree with
+   CRLF line endings (`core.autocrlf=true`) — `#!/bin/sh\r` doesn't resolve, so the containers crash-looped
+   immediately after rebuild. Fixed by normalizing the file to LF and adding a new `.gitattributes`
+   (`docker/**/*.sh text eol=lf`) so no future Windows checkout can reintroduce it. A materially different
+   class of finding than the already-documented cosmetic Prettier CRLF warning — this one was a real
+   functional failure, latent since the file was first added, invisible until this rebuild happened to hit
+   the exact cache layer masking it.
+
+**Verification**: Backend **1211/1211** green (1191 baseline + 20 new — 19 in a new
+`NotificationPhase5CTest`, 1 in `AuthAuditTest`), run twice (before and after the Docker image rebuild),
+both fully green. PHPStan clean on every new/touched file. `vue-tsc`/ESLint clean, Prettier clean after
+`--write`. i18n parity 1498/1498/1498. `schedule:list` confirmed the 3 new Commands registered correctly.
+
+**Both verification gaps this section previously left open are now closed, 2026-08-12, same day**: the
+full frontend Vitest suite was run to completion — **1003/1005** (the 2 failures are the pre-existing
+`router/index.test.ts`/`PatientDetailView.test.ts` full-suite-load timeout flake `TECH_DEBT.md` already
+had on record; both re-verified 31/31 passing in isolation). Real-browser/E2E confirmation: Playwright
+browsers cannot be installed in this dev container at all (Alpine — `playwright install --with-deps`
+fails outright, `apt-get: not found`), so per this project's established Phase 5A/B precedent the gap was
+closed with real CI coverage instead — two new `notifications.spec.ts` tests (`security`, via 5 real
+failed logins deterministically crossing Decision D9's exact threshold; `inventory`, via a new CI step
+that seeds one guaranteed-low-stock `Supply` and runs `notifications:low-stock-digest` before the frontend
+starts) — confirmed genuinely passing on a real `workflow_dispatch` run (`31584698456`): **Backend,
+Frontend, and E2E all green** (E2E: 59/59, no flakes). A first `workflow_dispatch` attempt
+(`31583701772`) had already confirmed Frontend/E2E green including both new tests, but caught one real,
+CI-only Pint violation (an unused import and two fully-qualified class references Pint's local run hadn't
+flagged) in `NotificationPhase5CTest.php` — fixed, and the clean re-run above is the one that counts.
+**PR #41 opened to `main`; not yet merged — awaiting review.**
 
 ### Added — Phase 5: Notification System, Phases A + B (`feature/phase5-notifications`, 2026-08-11)
 

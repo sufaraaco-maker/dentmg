@@ -475,6 +475,56 @@ pre-existing/unrelated to this module.
 
 ## Resolved
 
+### `AuditLog.created_at` was set by the database's own real-UTC clock, not the app's — resolved 2026-08-12 (Phase 5C)
+Found during Phase 5C implementation, and a real bug this same phase's own D14 timezone fix exposed — not a
+pre-existing one. `AuditLog` is the only model in the schema using `$timestamps = false` (no `updated_at`
+column exists) plus the migration's DB-level `useCurrent()` default for `created_at`, which runs on the
+database's own real-UTC clock regardless of `config('app.timezone')`. Once D14 made `now()` return clinic
+wall-clock time (Africa/Cairo) instead of literal UTC, every other timestamp in the app moved onto that
+clock — except this one, which stayed on the database's real UTC. Confirmed directly: `AuditLogObserver`'s
+login-failure window query (`created_at >= now()->subMinutes(15)`) silently matched zero rows for a
+freshly-inserted row, because its real-UTC `created_at` sat ~3 hours "in the past" relative to the
+Cairo-shifted `now()` being compared against it.
+**RESOLVED**: `AuditLog::booted()` gained a `creating` hook (`$log->created_at ??= now();`), so every
+creation path — the service, or any direct `::create()` call — lands on the same clock as everything else.
+New regression test: `AuthAuditTest::test_created_at_is_set_on_the_same_clock_as_the_rest_of_the_app_not_the_databases_own`.
+
+### Phase 5C not yet E2E/real-browser verified — resolved 2026-08-12 (same day)
+Implemented 2026-08-12 (`docs/modules/notifications-phase-c-d-design.md` §19-20) with two verification gaps
+left open: a full frontend Vitest run hadn't completed, and real-browser confirmation of the two new
+category chips (`inventory`/`security`) hadn't been done because Playwright's browser binaries aren't
+pre-installed in this dev container.
+**RESOLVED same day**: confirmed installing Playwright browsers in this container isn't viable at all, not
+just slow — it's Alpine Linux, which Playwright doesn't support (`playwright install --with-deps` fails
+outright, `apt-get: not found`), so this was never going to be a "wait longer" fix. Full frontend Vitest run
+completed: **1003/1005** (the 2 failures are the pre-existing `router/index.test.ts`/`PatientDetailView.test.ts`
+full-suite-load timeout flake, already on record elsewhere in this file; both re-verified 31/31 passing in
+isolation). Real-browser verification closed the way this file's own revisit note recommended: two new
+`notifications.spec.ts` tests (`security`, via 5 real failed logins deterministically crossing Decision D9's
+exact threshold through the real login form; `inventory`, via a new CI step seeding one guaranteed-low-stock
+`Supply` and running `notifications:low-stock-digest` before the frontend starts), confirmed genuinely
+passing on a real `workflow_dispatch` run (`31584698456`) — Backend/Frontend/E2E all green, E2E 59/59 with
+no flakes. (A first attempt, run `31583701772`, had already shown Frontend/E2E green including both new
+tests, but caught one real, CI-only Pint violation in the new backend test file that local Pint hadn't
+flagged — fixed in a follow-up commit.) **PR #41 opened to `main`, not yet merged.**
+
+### `docker/php/entrypoint.sh`'s CRLF line endings crash-looped the app/queue/scheduler containers — resolved 2026-08-12 (Phase 5C)
+Found immediately after a routine Dockerfile change (adding `tzdata`, itself later found unnecessary — see
+below) invalidated Docker's build cache at the `apk add` layer, forcing a fresh `COPY docker/php/entrypoint.sh`
+from the working tree instead of reusing a layer cached since the file was first added. On this Windows
+checkout (`core.autocrlf=true`), that working-tree copy had CRLF line endings — `#!/bin/sh\r` doesn't resolve
+as an interpreter path, so all three containers crash-looped on `exec entrypoint.sh: no such file or
+directory` the moment the cache was invalidated, despite running fine for the prior week off the old cached
+layer. Materially different from the already-documented cosmetic Prettier CRLF warning elsewhere in this
+file/`PROJECT_STATUS.md` (files still work there) — this was a real functional failure, latent in the repo
+since the file was first added, invisible until a build happened to hit the exact layer masking it.
+**RESOLVED**: normalized `entrypoint.sh` to LF on disk; added a new `.gitattributes`
+(`docker/**/*.sh text eol=lf`) forcing LF for this file class regardless of local `core.autocrlf`, so no
+future Windows checkout can reintroduce it. Containers rebuilt and confirmed healthy; full backend suite
+re-run green a second time on the new image. (The `tzdata` addition that triggered this stayed in the
+Dockerfile as a defensive measure even though testing confirmed PHP's bundled timezone database already
+resolves `Africa/Cairo` correctly without it.)
+
 ### Header notifications is inert UI (no notification backend) — resolved 2026-08-11 (Phase 5A, Notification System)
 `AppHeader.vue`'s bell icon opened a popover that always read "No notifications yet," because no notification
 system existed in the backend. It was scaffolded deliberately as inert UI (per

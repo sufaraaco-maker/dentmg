@@ -1886,7 +1886,9 @@
       "treatment_plans": "خطط العلاج",
       "laboratory": "المختبر",
       "billing": "الفواتير",
-      "payments": "المدفوعات"
+      "payments": "المدفوعات",
+      "inventory": "المخزون",
+      "security": "الأمان"
     },
     "types": {
       "appointment": {
@@ -1901,6 +1903,10 @@
         "no_show": {
           "title": "لم يحضر المريض",
           "body": "لم يحضر {patientName} موعده في {startAt}."
+        },
+        "unconfirmed": {
+          "title": "موعد غير مؤكد بعد",
+          "body": "موعد {patientName} غدًا الساعة {startAt} لا يزال غير مؤكد."
         }
       },
       "treatment_plan": {
@@ -1917,6 +1923,10 @@
         "received": {
           "title": "وصلت حالة المختبر",
           "body": "عادت الحالة {caseNumber} ({caseType}) الخاصة بـ {patientName} من المختبر."
+        },
+        "overdue": {
+          "title": "تأخرت حالة المختبر",
+          "body": "كان موعد استحقاق الحالة {caseNumber} الخاصة بـ {patientName} {dueAt} ولم تعد بعد."
         }
       },
       "payment": {
@@ -1929,6 +1939,24 @@
         "voided": {
           "title": "تم إلغاء الفاتورة",
           "body": "تم إلغاء الفاتورة {invoiceNumber} الخاصة بـ {patientName}."
+        }
+      },
+      "inventory": {
+        "low_stock": {
+          "title": "تنبيه انخفاض المخزون",
+          "body": "هناك {count} مستلزمات وصلت إلى حد إعادة الطلب أو أقل."
+        }
+      },
+      "security": {
+        "repeated_login_failures": {
+          "title": "محاولات دخول فاشلة متكررة",
+          "body": "تم رصد عدة محاولات دخول فاشلة لـ {email}."
+        }
+      },
+      "permissions": {
+        "matrix_updated": {
+          "title": "تم تحديث مصفوفة الصلاحيات",
+          "body": "تم تحديث مصفوفة صلاحيات الأدوار."
         }
       }
     }

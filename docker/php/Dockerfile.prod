@@ -9,6 +9,7 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     libpng-dev \
     linux-headers \
+    tzdata \
     $PHPIZE_DEPS
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \

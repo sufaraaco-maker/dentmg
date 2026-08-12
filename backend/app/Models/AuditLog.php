@@ -45,6 +45,23 @@ class AuditLog extends Model
      */
     protected static function booted(): void
     {
+        // Phase 5C (Notification System — scheduled/administrative types) design doc §3.3a /
+        // Decision D14 — a real bug this phase's own timezone fix exposed, not a pre-existing one:
+        // this table is the only one in the schema whose `created_at` was left to the migration's
+        // `useCurrent()` DB-level default (necessary because `$timestamps = false` above, itself
+        // required since there is no `updated_at` column). A DB-level default runs on the
+        // database's own real-UTC clock, never touched by `config('app.timezone')` — every other
+        // timestamp in this project is set by PHP's `now()`, which is clinic wall-clock time as of
+        // D14. Left alone, `AuditLog::created()`'s own `created_at` would sit ~`APP_TIMEZONE`'s
+        // offset away from every `now()` comparison run against it (confirmed: `AuditLogObserver`'s
+        // login-failure window query silently matched zero rows before this fix). Setting it here,
+        // on the same clock as everything else, if the caller hasn't already, closes that gap for
+        // every creation path — the service and any direct `::create()` call alike — not just the
+        // one that happened to surface it.
+        static::creating(function (self $log): void {
+            $log->created_at ??= now();
+        });
+
         static::updating(function (): void {
             throw new LogicException('Audit log entries are immutable — updates are not permitted.');
         });

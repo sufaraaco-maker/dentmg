@@ -75,9 +75,18 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | Phase 5C (Notification System — scheduled types) design doc §3.3a: this project stores
+    | wall-clock digits verbatim with no real timezone conversion (frontend/src/lib/date.ts), so
+    | `now()` must resolve to the clinic's own wall-clock time — not a literal UTC offset — for any
+    | code that compares `now()` against a stored timestamp column or schedules an absolute daily
+    | run time. `env('APP_TIMEZONE', 'UTC')` lets `.env` set the real clinic IANA zone without a
+    | code change per deployment; `LoadConfiguration::bootstrap()` calls
+    | `date_default_timezone_set()` from this value on every request/command, and the scheduler
+    | (`routes/console.php`) resolves each event's timezone from this same config key by default.
+    |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

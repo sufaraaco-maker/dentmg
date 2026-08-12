@@ -32,6 +32,12 @@ namespace App\Notifications;
  *
  * Adding a type is a one-line change here plus one BaseNotification subclass — no new dispatch
  * call site anywhere, because the 9 services already fire the event.
+ *
+ * Phase 5C added 5 more entries (types 9-13, design doc §5.2/§5.3) — proof this claim held for a
+ * trigger source `NotificationRules` was never written with in mind. `dispatchFor()` never assumed
+ * its `$eventType` came from `PatientActivityOccurred`; it is a plain lookup from a string to a
+ * class, callable from anywhere with any subject. Three new `App\Console\Commands` call it directly
+ * for the scheduled types (9-11); a new `AuditLogObserver` calls it for the reactive ones (12-13).
  */
 final class NotificationRules
 {
@@ -49,6 +55,13 @@ final class NotificationRules
         'lab_case.received' => LabCaseReceivedNotification::class,
         'payment.refunded' => PaymentRefundedNotification::class,
         'invoice.voided' => InvoiceVoidedNotification::class,
+
+        // Phase 5C (design doc §5.2/§5.3) — 9-11 scheduled, 12-13 reactive off AuditLog::created.
+        'lab_case.overdue' => LabCaseOverdueNotification::class,
+        'inventory.low_stock' => LowStockDigestNotification::class,
+        'appointment.unconfirmed' => AppointmentUnconfirmedNotification::class,
+        'security.repeated_login_failures' => RepeatedLoginFailuresNotification::class,
+        'permissions.matrix_updated' => PermissionsMatrixUpdatedNotification::class,
     ];
 
     /**
