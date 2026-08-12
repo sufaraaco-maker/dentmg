@@ -57,6 +57,28 @@ its own future cycle.** See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
+### Fixed — `notifications.spec.ts` self-colliding on CI retry (`fix/e2e-notifications-slot-retry-fragility`, PR #46, 2026-08-12)
+
+`createAppointmentForDentist` picked its `start_at` from a module-level `slotHour` counter, incremented once
+per call. Playwright's CI retry (`playwright.config.ts`'s `retries: 1`) re-runs a failed test in a fresh
+worker process, which re-imports the spec file and resets the counter to its initial value — so the retry's
+first call requested the exact same hour the original, failed attempt had already booked. That appointment
+was still sitting in the shared dev database (this suite runs against real Postgres, not a
+transaction-wrapped test DB), so the retry collided with its own earlier self and failed with
+`409 dentist_conflict`, a reason unrelated to whatever the original failure was — the repeating flaky
+pattern reported in CI. Fixed by replacing the counter with a real `GET /available-slots` query: the
+identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to this exact bug class (see
+that function's own comment for the earlier incident this project already lived through once). Every
+attempt — first run or retry, same worker or a new one — now asks the backend what is actually free, so a
+slot a prior attempt already booked can never be re-offered. Added a regression test
+(`booking a slot excludes it from the next call, so a retry can never re-book it`) that books two slots
+back-to-back and asserts the second never lands on the first's `start_at`. No backend/production code
+touched. Verified: local `notifications.spec.ts` run reproduced only the already-documented,
+environment-specific local `login()`/per-request-latency failures (`TECH_DEBT.md` — confirmed to never
+reproduce on CI), none slot- or 409-related; real `workflow_dispatch` CI on the branch ran fully green —
+Backend, Frontend, and E2E all `success`, **61/61 E2E passed, no flakes** (run `31614084353`). **PR #46
+opened against `main`, CI-confirmed green, not yet merged** (merge left to the user's own decision).
+
 ### Added — Phase 5C: Scheduled & Administrative Notifications (2026-08-12)
 
 Types 9-13 of the Notification Center (design doc: `docs/modules/notifications-phase-c-d-design.md`,
