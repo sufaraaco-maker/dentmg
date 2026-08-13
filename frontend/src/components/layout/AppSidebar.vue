@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Menu, ChevronDown } from 'lucide-vue-next'
 import Button from 'primevue/button'
 import AppSidebarItem from './AppSidebarItem.vue'
+import AppLogo from './AppLogo.vue'
 import { NAV_SECTIONS, navigation, flattenNavItems, type NavItem, type NavSection } from '@/config/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
@@ -74,9 +75,12 @@ function onNavigate() {
     ]"
   >
     <div v-if="variant === 'desktop'" class="flex items-center justify-between gap-2 px-3 py-4">
-      <span v-if="!collapsed" class="truncate text-lg font-semibold text-surface-900 dark:text-surface-0">
-        {{ t('app.name') }}
-      </span>
+      <div v-if="!collapsed" class="flex min-w-0 items-center gap-2">
+        <AppLogo :size="24" />
+        <span class="truncate text-lg font-semibold text-surface-900 dark:text-surface-0">
+          {{ t('app.name') }}
+        </span>
+      </div>
       <Button
         text
         rounded

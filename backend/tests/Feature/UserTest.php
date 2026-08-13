@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -184,6 +186,88 @@ class UserTest extends TestCase
 
         $response->assertForbidden();
         $this->assertDatabaseHas('users', ['id' => $actor->id, 'deleted_at' => null]);
+    }
+
+    // User avatar upload (2026-08-13) — always the `public` disk, same pattern as the clinic logo
+    // (ClinicSettingTest), gated by the same `users.manage` policy as every other user-management action.
+
+    public function test_admin_can_upload_a_users_avatar(): void
+    {
+        Storage::fake('public');
+        $actor = User::factory()->admin()->create();
+        $target = User::factory()->create();
+
+        $response = $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->image('avatar.png'),
+        ]);
+
+        $response->assertOk();
+        $this->assertNotNull($response->json('avatar_url'));
+        $target->refresh();
+        Storage::disk('public')->assertExists($target->avatar_path);
+    }
+
+    public function test_uploading_a_new_avatar_deletes_the_previous_file(): void
+    {
+        Storage::fake('public');
+        $actor = User::factory()->admin()->create();
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->image('first.png'),
+        ])->assertOk();
+        $firstPath = $target->refresh()->avatar_path;
+
+        $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->image('second.png'),
+        ])->assertOk();
+
+        Storage::disk('public')->assertMissing($firstPath);
+        Storage::disk('public')->assertExists($target->refresh()->avatar_path);
+    }
+
+    public function test_admin_can_remove_a_users_avatar(): void
+    {
+        Storage::fake('public');
+        $actor = User::factory()->admin()->create();
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->image('avatar.png'),
+        ])->assertOk();
+        $path = $target->refresh()->avatar_path;
+
+        $response = $this->actingAs($actor)->deleteJson("/api/users/{$target->id}/avatar");
+
+        $response->assertOk();
+        $this->assertNull($response->json('avatar_url'));
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_non_admin_cannot_upload_a_users_avatar(): void
+    {
+        Storage::fake('public');
+        $actor = User::factory()->create();
+        $target = User::factory()->create();
+
+        $response = $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->image('avatar.png'),
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_avatar_upload_rejects_a_non_image_file(): void
+    {
+        Storage::fake('public');
+        $actor = User::factory()->admin()->create();
+        $target = User::factory()->create();
+
+        $response = $this->actingAs($actor)->postJson("/api/users/{$target->id}/avatar", [
+            'avatar' => UploadedFile::fake()->create('avatar.pdf', 100),
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
     }
 
     public function test_soft_deleted_user_cannot_login(): void

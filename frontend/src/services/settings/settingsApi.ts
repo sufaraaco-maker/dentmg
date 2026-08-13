@@ -17,6 +17,20 @@ export function updateClinicSettings(payload: UpdateClinicSettingPayload) {
   return api.put<ClinicSetting>('/clinic-settings', payload).then((r) => r.data)
 }
 
+export function uploadClinicLogo(file: File) {
+  const formData = new FormData()
+  formData.append('logo', file)
+  return api
+    .post<ClinicSetting>('/clinic-settings/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => r.data)
+}
+
+export function removeClinicLogo() {
+  return api.delete<ClinicSetting>('/clinic-settings/logo').then((r) => r.data)
+}
+
 export function getBillingSettings() {
   return api.get<BillingSetting>('/billing-settings').then((r) => r.data)
 }

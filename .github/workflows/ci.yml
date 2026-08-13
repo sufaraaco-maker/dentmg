@@ -149,6 +149,14 @@ jobs:
         working-directory: backend
         run: php artisan migrate:fresh --seed --force
 
+      # Clinic logo / user avatar uploads (2026-08-13) serve from the `public` disk. `php artisan
+      # serve`'s built-in PHP dev server serves static files straight from `public/` the same way
+      # Docker's nginx does, so this symlink is all a real browser-driven E2E test needs to render
+      # an uploaded logo/avatar — no separate web-server config, unlike docker/nginx/default.prod.conf.
+      - name: Link public storage
+        working-directory: backend
+        run: php artisan storage:link
+
       - name: Start backend server
         working-directory: backend
         # `localhost`, not 127.0.0.1 — must match backend/.env.example's FRONTEND_URL and

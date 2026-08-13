@@ -20,6 +20,14 @@ fi
 # vendor/.env/APP_KEY bootstrapping above, which they genuinely need.
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
   php artisan migrate --force
+
+  # Clinic logo / user avatar uploads (2026-08-13) serve from the `public` disk, which needs this
+  # symlink to be web-reachable at all. Kept inside the same single-owner branch as `migrate`
+  # above rather than its own top-level check — three containers racing `storage:link` (it errors
+  # if the target already exists) is the identical hazard `RUN_MIGRATIONS` was introduced to avoid.
+  if [ ! -L public/storage ]; then
+    php artisan storage:link
+  fi
 else
   # Wait for the app container to finish migrating before starting work, rather than crash-looping
   # against a half-migrated schema.

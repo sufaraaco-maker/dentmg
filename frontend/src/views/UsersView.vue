@@ -14,6 +14,7 @@ import Tag from 'primevue/tag'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Message from 'primevue/message'
+import ImagePickerField from '@/components/common/ImagePickerField.vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { USER_ROLES, type AuthUser, type UserRole } from '@/types/user'
@@ -43,6 +44,8 @@ const dialogVisible = ref(false)
 const editingUser = ref<UserRow | null>(null)
 const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
+const avatarUploading = ref(false)
+const avatarError = ref<string | null>(null)
 
 const form = reactive<{
   name: string
@@ -100,12 +103,53 @@ function openCreateDialog() {
 function openEditDialog(user: UserRow) {
   editingUser.value = user
   errors.value = {}
+  avatarError.value = null
   form.name = user.name
   form.email = user.email
   form.password = ''
   form.password_confirmation = ''
   form.role = user.role
   dialogVisible.value = true
+}
+
+function patchUserRow(updated: UserRow) {
+  editingUser.value = updated
+  const index = users.value.findIndex((u) => u.id === updated.id)
+  if (index !== -1) users.value[index] = updated
+}
+
+async function onAvatarSelect(file: File) {
+  if (!editingUser.value) return
+
+  avatarUploading.value = true
+  avatarError.value = null
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    const { data } = await api.post<UserRow>(`/users/${editingUser.value.id}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    patchUserRow(data)
+  } catch {
+    avatarError.value = t('users.avatarSaveError')
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
+async function onAvatarRemove() {
+  if (!editingUser.value) return
+
+  avatarUploading.value = true
+  avatarError.value = null
+  try {
+    const { data } = await api.delete<UserRow>(`/users/${editingUser.value.id}/avatar`)
+    patchUserRow(data)
+  } catch {
+    avatarError.value = t('users.avatarSaveError')
+  } finally {
+    avatarUploading.value = false
+  }
 }
 
 async function onSave() {
@@ -186,6 +230,22 @@ onMounted(fetchUsers)
       <template #empty>
         <span class="text-surface-500 dark:text-surface-400">{{ t('users.empty') }}</span>
       </template>
+      <Column :header="t('users.avatar')" style="width: 4rem">
+        <template #body="{ data }">
+          <img
+            v-if="data.avatar_url"
+            :src="data.avatar_url"
+            :alt="data.name"
+            class="h-9 w-9 rounded-full object-cover"
+          />
+          <span
+            v-else
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary dark:bg-primary-400/10 dark:text-primary-300"
+          >
+            {{ data.name.slice(0, 1).toUpperCase() }}
+          </span>
+        </template>
+      </Column>
       <Column field="name" :header="t('users.name')" />
       <Column field="email" :header="t('users.email')" />
       <Column :header="t('users.role')">
@@ -210,6 +270,23 @@ onMounted(fetchUsers)
       class="w-full max-w-md"
     >
       <form class="flex flex-col gap-4" @submit.prevent="onSave">
+        <div v-if="editingUser" class="flex flex-col gap-2">
+          <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('users.avatar') }}</label>
+          <ImagePickerField
+            :image-url="editingUser.avatar_url ?? null"
+            :label="t('users.avatar')"
+            shape="circle"
+            :size="72"
+            :uploading="avatarUploading"
+            :error="avatarError"
+            @select="onAvatarSelect"
+            @remove="onAvatarRemove"
+          />
+        </div>
+        <Message v-else severity="secondary" size="small" variant="simple">
+          {{ t('users.avatarAfterCreate') }}
+        </Message>
+
         <div class="flex flex-col gap-2">
           <label for="name" class="text-sm text-surface-700 dark:text-surface-200">
             {{ t('users.name') }}

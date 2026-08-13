@@ -80,6 +80,33 @@ See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
+### Added — English default UI language, app branding on the login screen, clinic logo + user avatar uploads (2026-08-13)
+
+User-requested, cross-cutting change spanning i18n defaults, branding, and a new upload capability in two
+Settings-area screens — not tied to the 8-phase roadmap's next phase.
+
+- **Default UI language switched from Arabic to English** — `detectInitialLocale()`'s fallback
+  (`frontend/src/locales/index.ts`), `AVAILABLE_LOCALES` reordered English-first, `index.html`'s static
+  `lang`/`dir`/font-preload order updated to match (avoids an RTL flash on first paint). A user's previously
+  stored locale preference (`localStorage`) is still always honored — this only changes the cold-start
+  default for a browser that has never set one.
+- **App branding surfaced inside the app** — the existing brand mark (`frontend/public/favicon.svg`, already
+  the browser-tab icon) is now shown as a real logo, via a new `AppLogo.vue`, on the login screen (next to
+  the "DentalSuite" name), the expanded sidebar header, and the mobile header. No new asset was designed.
+- **Clinic logo upload** (Practice Settings) and **user profile photo upload** (Users add/edit dialog,
+  edit-only) — reopens `docs/modules/settings-design.md`'s V1 deferral of clinic logo upload (see
+  `docs/decisions.md`'s 2026-08-13 entry for the full reasoning and everything this stood up: two additive
+  migrations, `Storage`-facade-only service methods, 4 new endpoints, the app's first-ever use of the
+  `public` disk/`storage:link` — new for this codebase, not an extension of Imaging/Documents' auth-gated
+  streaming pattern, which is deliberately wrong for something that must render pre-login). A shared
+  `ImagePickerField.vue` backs both screens. Backend: 10 new Feature tests (`ClinicSettingTest`/`UserTest`),
+  full suite re-run 1224/1224 green (1214 baseline, zero regressions), Pint clean.
+  Frontend: `vue-tsc`/ESLint/Prettier clean on every touched file, 11 new/updated Vitest tests, i18n parity
+  re-verified at 1510/1510/1510 across en/ar/tr. **PR #48 opened, awaiting CI + user approval before
+  merge** — pre-merge CI caught one real `vue-tsc -b` build-mode type error (`UsersView.vue`'s
+  `ImagePickerField` binding didn't account for `AuthUser.avatar_url`'s deliberate optionality), fixed in a
+  follow-up commit on the same PR; see `docs/decisions.md`'s 2026-08-13 entry for detail.
+
 ### Fixed — `notifications.spec.ts` self-colliding on CI retry (`fix/e2e-notifications-slot-retry-fragility`, PR #46, 2026-08-12)
 
 `createAppointmentForDentist` picked its `start_at` from a module-level `slotHour` counter, incremented once

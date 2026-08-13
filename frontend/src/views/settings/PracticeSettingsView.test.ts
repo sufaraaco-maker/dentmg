@@ -19,6 +19,7 @@ function makeSettings(overrides: Partial<ClinicSetting> = {}): ClinicSetting {
     phone: '+1 555-0100',
     address: '123 Main St',
     email: 'contact@brightsmile.example',
+    logo_url: null,
     updated_at: '2026-07-30T00:00:00Z',
     ...overrides,
   }

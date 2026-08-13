@@ -4,6 +4,7 @@ export interface ClinicSetting {
   phone: string | null
   address: string | null
   email: string | null
+  logo_url: string | null
   ai_assistant_enabled: boolean
   ai_assistant_phi_features_acknowledged: boolean
   /** The raw key is never sent to the frontend (ai-assistant-settings-api-key-design.md §5) —

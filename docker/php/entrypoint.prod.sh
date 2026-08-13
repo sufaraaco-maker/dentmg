@@ -26,6 +26,15 @@ fi
 
 chown -R www-data:www-data storage bootstrap/cache
 
+# Clinic logo / user avatar uploads (2026-08-13) serve from the `public` disk, which needs this
+# symlink to be web-reachable at all. Guarded the same way `docker/php/entrypoint.sh` guards
+# `migrate`/`storage:link` — `app`/`queue`/`scheduler` share this image, and `storage:link` errors
+# if the target already exists, so only the single container that isn't `RUN_MIGRATIONS: 'false'`
+# (i.e. `app`) creates it.
+if [ "${RUN_MIGRATIONS:-true}" = "true" ] && [ ! -L public/storage ]; then
+  php artisan storage:link
+fi
+
 # Config/route/view caches are safe to rebuild on every boot (idempotent, no state loss) and
 # meaningfully cheaper than resolving config/routes on every request. Database migrations are
 # deliberately NOT run here — see docs/deployment.md "Migrations" for the explicit, operator-run

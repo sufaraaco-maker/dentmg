@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
+use App\Http\Requests\User\UploadUserAvatarRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\UserService;
@@ -51,5 +52,21 @@ class UserController extends Controller
         $this->userService->delete($user);
 
         return response()->noContent();
+    }
+
+    public function uploadAvatar(UploadUserAvatarRequest $request, User $user)
+    {
+        $user = $this->userService->updateAvatar($user, $request->file('avatar'));
+
+        return new UserResource($user);
+    }
+
+    public function destroyAvatar(User $user)
+    {
+        $this->authorize('update', $user);
+
+        $user = $this->userService->removeAvatar($user);
+
+        return new UserResource($user);
     }
 }

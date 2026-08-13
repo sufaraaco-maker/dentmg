@@ -27,6 +27,8 @@ class ClinicSetting extends Model
         'ai_assistant_enabled',
         'ai_assistant_phi_features_acknowledged',
         'ai_assistant_api_key',
+        'logo_disk',
+        'logo_path',
     ];
 
     protected $casts = [

@@ -8,8 +8,8 @@ export type SupportedLocale = 'ar' | 'en' | 'tr'
 export const RTL_LOCALES: SupportedLocale[] = ['ar']
 
 export const AVAILABLE_LOCALES: { code: SupportedLocale; label: string }[] = [
-  { code: 'ar', label: 'العربية' },
   { code: 'en', label: 'English' },
+  { code: 'ar', label: 'العربية' },
   { code: 'tr', label: 'Türkçe' },
 ]
 
@@ -20,7 +20,7 @@ function detectInitialLocale(): SupportedLocale {
   if (stored && AVAILABLE_LOCALES.some((l) => l.code === stored)) {
     return stored
   }
-  return 'ar'
+  return 'en'
 }
 
 export const i18n = createI18n({
