@@ -273,7 +273,7 @@ onMounted(fetchUsers)
         <div v-if="editingUser" class="flex flex-col gap-2">
           <label class="text-sm text-surface-700 dark:text-surface-200">{{ t('users.avatar') }}</label>
           <ImagePickerField
-            :image-url="editingUser.avatar_url"
+            :image-url="editingUser.avatar_url ?? null"
             :label="t('users.avatar')"
             shape="circle"
             :size="72"

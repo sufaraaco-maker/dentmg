@@ -102,7 +102,10 @@ Settings-area screens — not tied to the 8-phase roadmap's next phase.
   `ImagePickerField.vue` backs both screens. Backend: 10 new Feature tests (`ClinicSettingTest`/`UserTest`),
   full suite re-run 1224/1224 green (1214 baseline, zero regressions), Pint clean.
   Frontend: `vue-tsc`/ESLint/Prettier clean on every touched file, 11 new/updated Vitest tests, i18n parity
-  re-verified at 1510/1510/1510 across en/ar/tr. Not yet committed/pushed.
+  re-verified at 1510/1510/1510 across en/ar/tr. **PR #48 opened, awaiting CI + user approval before
+  merge** — pre-merge CI caught one real `vue-tsc -b` build-mode type error (`UsersView.vue`'s
+  `ImagePickerField` binding didn't account for `AuthUser.avatar_url`'s deliberate optionality), fixed in a
+  follow-up commit on the same PR; see `docs/decisions.md`'s 2026-08-13 entry for detail.
 
 ### Fixed — `notifications.spec.ts` self-colliding on CI retry (`fix/e2e-notifications-slot-retry-fragility`, PR #46, 2026-08-12)
 

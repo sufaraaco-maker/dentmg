@@ -636,7 +636,11 @@ predate avatars and have nothing to do with them (role/permission tests); every 
 a missing value the same as `null` (`v-if="user?.avatar_url"`), so making it required would only have forced
 unrelated edits across those 9 files for no behavioral gain.
 
-**Status**: implemented and verified locally the same day; not yet committed/pushed or opened as a PR.
+**Status**: implemented and verified locally the same day; **opened as PR #48**
+(`feature/english-default-branding-and-image-uploads`, single commit), **not yet merged** — held for
+explicit user approval per this session's request. `pull_request`-triggered CI (run `31730606592`) caught
+one real issue local checks missed: `frontend/src/views/UsersView.vue`'s `:image-url="editingUser.avatar_url"` binding failed `npm run build`'s `vue-tsc -b` (project-reference/build mode) with `Type 'string | null | undefined' is not assignable to type 'string | null'` — `AuthUser.avatar_url` is deliberately optional (see above), but `ImagePickerField`'s `imageUrl` prop is not, and this session's local `vue-tsc --noEmit` (non-build-mode) run never caught the gap `-b` mode does. Fixed with `editingUser.avatar_url ?? null` at the one call site that needed it (every other consumer is a native `<img :src>` binding, which accepts `undefined` natively and needed no change). Backend job and Frontend's type-check/lint/format/unit-test steps had all already passed on the same run — only the separate `Production build` step failed. Fixed in a follow-up commit on the same PR, confirmed locally via `npm run build` before pushing.
+
 Backend: 2 new migrations, `ClinicSettingService::updateLogo()`/`removeLogo()`,
 `UserService::updateAvatar()`/`removeAvatar()`, 2 new `FormRequest`s, 4 new routes (`POST`/`DELETE
 /clinic-settings/logo`, `POST`/`DELETE /users/{user}/avatar`), `ClinicSettingResource`/`UserResource` gained
