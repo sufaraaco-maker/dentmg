@@ -15,12 +15,22 @@ export const DEMO_USERS = {
 } as const
 
 /**
- * Forces English before the first navigation so selectors can rely on stable English copy — the
- * app's real default locale is Arabic (RTL), which the dedicated `rtl-ltr.spec.ts` suite tests
- * on its own terms instead.
+ * Forces English before the first navigation so selectors can rely on stable English copy — a
+ * no-op in effect now that English is the app's own real default (2026-08-13), but every spec
+ * using it still calls it explicitly rather than relying on the default, so a future default
+ * change can't silently break every other suite the way it broke `rtl-ltr.spec.ts` this time.
  */
 export async function forceEnglishLocale(page: Page) {
   await page.addInitScript(() => localStorage.setItem('dentalsuite.locale', 'en'))
+}
+
+/**
+ * Forces Arabic before the first navigation — the counterpart `rtl-ltr.spec.ts` needs to
+ * exercise Arabic/RTL rendering now that it is no longer the default locale a plain `login()`
+ * lands on.
+ */
+export async function forceArabicLocale(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('dentalsuite.locale', 'ar'))
 }
 
 /**
@@ -28,10 +38,7 @@ export async function forceEnglishLocale(page: Page) {
  * lifecycle event Playwright's `waitForURL`/`waitForNavigation` default to — polling the DOM
  * location via `waitForFunction` is the reliable way to detect a post-login SPA redirect.
  */
-export async function login(
-  page: Page,
-  { email, password }: { email: string; password: string },
-) {
+export async function login(page: Page, { email, password }: { email: string; password: string }) {
   await page.goto('/login')
   await page.waitForSelector('#email')
   await page.fill('#email', email)
