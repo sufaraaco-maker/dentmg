@@ -99,6 +99,24 @@ async function findDentistId(page: Page): Promise<string> {
 }
 
 /**
+ * Working hours are never seeded by DatabaseSeeder (see `appointments.spec.ts`'s own
+ * `ensureWorkingHours` — this is the identical fix applied to this file's `findAvailableSlot`, for
+ * the identical reason): `DemoDataSeeder::seedWorkingHours` only covers Sunday-Thursday, so
+ * "tomorrow" had zero available slots (and this whole spec failed) whenever CI happened to run on
+ * a Wednesday or Thursday. Rather than special-case the weekday, unconditionally create a wide
+ * (08:00-20:00) shift for whatever `dayOfWeek` the target date actually falls on — multiple rows
+ * per `day_of_week` are explicitly valid (`StoreDentistWorkingHourRequest`'s own comment: "no
+ * uniqueness rule here... lunch-break split shifts"), so calling this once per test in the file is
+ * safe and needs no existence check first.
+ */
+async function ensureWorkingHoursCoverDay(page: Page, dentistId: string, dayOfWeek: number): Promise<void> {
+  await apiRequest(page, `/dentists/${dentistId}/working-hours`, {
+    method: 'POST',
+    body: { day_of_week: dayOfWeek, start_time: '08:00', end_time: '20:00' },
+  })
+}
+
+/**
  * Picks a real, backend-confirmed free slot for the dentist tomorrow, instead of computing one by
  * hand — the identical fix `appointments.spec.ts`'s `pickFirstAvailableSlot` already applies to
  * the identical bug class (see its own comment there for the full story). This file used to hand
@@ -113,15 +131,16 @@ async function findDentistId(page: Page): Promise<string> {
  * the backend what's actually free right now, so this class of self-collision can't happen: any
  * appointment a prior attempt already created is already reflected in the response.
  */
-async function findAvailableSlot(
-  page: Page,
-  dentistId: string,
-  durationMinutes = 30,
-): Promise<string> {
+async function findAvailableSlot(page: Page, dentistId: string, durationMinutes = 30): Promise<string> {
   const date = new Date()
   date.setDate(date.getDate() + 1)
   const pad = (value: number) => String(value).padStart(2, '0')
   const dateParam = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+
+  // Guarantees a slot exists for tomorrow regardless of which weekday it happens to be — see
+  // `ensureWorkingHoursCoverDay`'s own comment. Every caller here is already logged in as admin
+  // (the only role `DentistWorkingHourPolicy::create` permits), so this never 403s.
+  await ensureWorkingHoursCoverDay(page, dentistId, date.getDay())
 
   const { slots } = await apiRequest<{ slots: string[] }>(
     page,
@@ -129,8 +148,9 @@ async function findAvailableSlot(
   )
   if (slots.length === 0) {
     throw new Error(
-      `No available slots for dentist ${dentistId} on ${dateParam} (working hours only cover ` +
-        `Sunday-Thursday — check DemoDataSeeder::seedWorkingHours if this date is a Friday/Saturday)`,
+      `No available slots for dentist ${dentistId} on ${dateParam} even after ensuring working ` +
+        `hours cover day-of-week ${date.getDay()} — investigate AppointmentService::availableSlots ` +
+        `directly, this is no longer a working-hours seeding gap.`,
     )
   }
   // Different tests in this file call this back-to-back against the same live endpoint, so each
@@ -428,9 +448,7 @@ test.describe('Notification Center', () => {
    * /appointments` would 409 with `dentist_conflict` instead of resolving to a 2xx id landing on a
    * different `start_at`.
    */
-  test('booking a slot excludes it from the next call, so a retry can never re-book it', async ({
-    page,
-  }) => {
+  test('booking a slot excludes it from the next call, so a retry can never re-book it', async ({ page }) => {
     await loginAsEnglish(page, 'admin')
     const dentistId = await findDentistId(page)
 
