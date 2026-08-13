@@ -52,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/financial-summary', [DashboardController::class, 'financialSummary']);
 
     Route::apiResource('users', UserController::class);
+    Route::post('users/{user}/avatar', [UserController::class, 'uploadAvatar']);
+    Route::delete('users/{user}/avatar', [UserController::class, 'destroyAvatar']);
 
     // Phase 4 (Advanced Permissions & Audit) design doc §1.5 — admin-only (`manage-permissions`
     // Gate), never routed through the matrix these endpoints themselves manage.
@@ -240,6 +242,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('clinic-settings', [ClinicSettingController::class, 'show']);
     Route::put('clinic-settings', [ClinicSettingController::class, 'update']);
+    Route::post('clinic-settings/logo', [ClinicSettingController::class, 'uploadLogo']);
+    Route::delete('clinic-settings/logo', [ClinicSettingController::class, 'destroyLogo']);
 
     Route::get('billing-settings', [BillingSettingController::class, 'show']);
     Route::put('billing-settings', [BillingSettingController::class, 'update']);

@@ -8,7 +8,13 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Message from 'primevue/message'
 import Button from 'primevue/button'
-import { getClinicSettings, updateClinicSettings } from '@/services/settings'
+import ImagePickerField from '@/components/common/ImagePickerField.vue'
+import {
+  getClinicSettings,
+  removeClinicLogo,
+  updateClinicSettings,
+  uploadClinicLogo,
+} from '@/services/settings'
 import type { ClinicSetting } from '@/types/settings'
 
 /**
@@ -23,6 +29,10 @@ const loading = ref(true)
 const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
 
+const logoUrl = ref<string | null>(null)
+const logoUploading = ref(false)
+const logoError = ref<string | null>(null)
+
 const form = reactive({ name: '', phone: '', address: '', email: '' })
 
 function applySettings(settings: ClinicSetting) {
@@ -30,6 +40,32 @@ function applySettings(settings: ClinicSetting) {
   form.phone = settings.phone ?? ''
   form.address = settings.address ?? ''
   form.email = settings.email ?? ''
+  logoUrl.value = settings.logo_url
+}
+
+async function onLogoSelect(file: File) {
+  logoUploading.value = true
+  logoError.value = null
+  try {
+    applySettings(await uploadClinicLogo(file))
+    toast.add({ severity: 'success', summary: t('settings.practice.logoSaved'), life: 3000 })
+  } catch {
+    logoError.value = t('settings.practice.logoSaveError')
+  } finally {
+    logoUploading.value = false
+  }
+}
+
+async function onLogoRemove() {
+  logoUploading.value = true
+  logoError.value = null
+  try {
+    applySettings(await removeClinicLogo())
+  } catch {
+    logoError.value = t('settings.practice.logoSaveError')
+  } finally {
+    logoUploading.value = false
+  }
 }
 
 async function load() {
@@ -84,6 +120,20 @@ async function submit() {
     <Card v-else class="max-w-2xl">
       <template #content>
         <form class="flex flex-col gap-4" @submit.prevent="submit">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm text-surface-700 dark:text-surface-200">
+              {{ t('settings.practice.logo') }}
+            </label>
+            <ImagePickerField
+              :image-url="logoUrl"
+              :label="t('settings.practice.logo')"
+              :uploading="logoUploading"
+              :error="logoError"
+              @select="onLogoSelect"
+              @remove="onLogoRemove"
+            />
+          </div>
+
           <div class="flex flex-col gap-2">
             <label for="practice-name" class="text-sm text-surface-700 dark:text-surface-200">
               {{ t('settings.practice.name') }}

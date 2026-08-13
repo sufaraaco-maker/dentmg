@@ -110,7 +110,13 @@
     "noNotifications": "No notifications yet",
     "account": "Account",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "imagePicker": {
+      "upload": "Upload image",
+      "remove": "Remove",
+      "invalidType": "Only JPG, PNG, or WebP images are allowed",
+      "tooLarge": "Image must be smaller than 2 MB"
+    }
   },
   "errors": {
     "forbidden": {
@@ -138,6 +144,9 @@
     "new": "New User",
     "search": "Search by name or email",
     "empty": "No users found",
+    "avatar": "Photo",
+    "avatarAfterCreate": "Save the new user first, then you can add a profile photo.",
+    "avatarSaveError": "Failed to save the profile photo",
     "name": "Name",
     "email": "Email",
     "role": "Role",
@@ -1774,6 +1783,9 @@
     },
     "practice": {
       "title": "Practice Settings",
+      "logo": "Clinic Logo",
+      "logoSaved": "Clinic logo saved successfully",
+      "logoSaveError": "Failed to save clinic logo",
       "name": "Clinic Name",
       "phone": "Phone",
       "email": "Email",

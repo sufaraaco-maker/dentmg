@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClinicSetting\UpdateClinicSettingRequest;
+use App\Http\Requests\ClinicSetting\UploadClinicLogoRequest;
 use App\Http\Resources\ClinicSettingResource;
 use App\Models\ClinicSetting;
 use App\Services\ClinicSettingService;
@@ -31,6 +32,22 @@ class ClinicSettingController extends Controller
     public function update(UpdateClinicSettingRequest $request)
     {
         $settings = $this->clinicSettingService->update($request->validated());
+
+        return (new ClinicSettingResource($settings))->response()->setStatusCode(200);
+    }
+
+    public function uploadLogo(UploadClinicLogoRequest $request)
+    {
+        $settings = $this->clinicSettingService->updateLogo($request->file('logo'));
+
+        return (new ClinicSettingResource($settings))->response()->setStatusCode(200);
+    }
+
+    public function destroyLogo()
+    {
+        $this->authorize('update', ClinicSetting::class);
+
+        $settings = $this->clinicSettingService->removeLogo();
 
         return (new ClinicSettingResource($settings))->response()->setStatusCode(200);
     }

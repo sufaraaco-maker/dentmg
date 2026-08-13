@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -52,5 +55,39 @@ class UserService
     public function delete(User $user): void
     {
         $user->delete();
+    }
+
+    /**
+     * Always the `public` disk — same reasoning as ClinicSettingService::updateLogo(): a profile
+     * picture renders as a plain <img> (Users list, header avatar) with no authenticated round
+     * trip, so it can never live on the auth-gated `local` disk patient images/documents use.
+     */
+    public function updateAvatar(User $user, UploadedFile $file): User
+    {
+        $this->deleteAvatarFile($user);
+
+        $extension = strtolower($file->extension() ?: $file->guessExtension() ?: 'jpg');
+        $path = "avatars/{$user->id}-".Str::uuid().'.'.$extension;
+
+        Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
+
+        $user->update(['avatar_disk' => 'public', 'avatar_path' => $path]);
+
+        return $user;
+    }
+
+    public function removeAvatar(User $user): User
+    {
+        $this->deleteAvatarFile($user);
+        $user->update(['avatar_disk' => null, 'avatar_path' => null]);
+
+        return $user;
+    }
+
+    private function deleteAvatarFile(User $user): void
+    {
+        if ($user->avatar_disk && $user->avatar_path) {
+            Storage::disk($user->avatar_disk)->delete($user->avatar_path);
+        }
     }
 }

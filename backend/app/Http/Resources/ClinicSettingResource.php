@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\ClinicSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin ClinicSetting */
 class ClinicSettingResource extends JsonResource
@@ -20,6 +21,9 @@ class ClinicSettingResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'email' => $this->email,
+            'logo_url' => $this->logo_path
+                ? Storage::disk($this->logo_disk)->url($this->logo_path)
+                : null,
             'ai_assistant_enabled' => $this->ai_assistant_enabled,
             'ai_assistant_phi_features_acknowledged' => $this->ai_assistant_phi_features_acknowledged,
             // The raw key is never returned (ai-assistant-settings-api-key-design.md §5/§8) — only

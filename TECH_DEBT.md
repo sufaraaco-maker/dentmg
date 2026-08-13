@@ -1089,6 +1089,13 @@ itself still defaults to `local`, which doesn't survive/replicate across multipl
 **Revisit**: switch `API`-style env config (`FILESYSTEM_DISK`/`AWS_*`) to `s3` before any production
 deployment that runs more than one app server instance.
 
+**Extended 2026-08-13**: clinic logo/user avatar uploads (`docs/decisions.md`'s 2026-08-13 entry) are the
+same limitation on the `public` disk instead of `local` — always hardcoded to `'public'` in
+`ClinicSettingService`/`UserService` (deliberately, unlike Imaging's disk-agnostic `config('filesystems.default')`
+read, since a logo/avatar can never legitimately live on the auth-gated `local` disk), so the same `s3`
+migration applies here too, plus `docker/nginx/default.prod.conf`'s new `location /storage` block would need
+to become an `s3` redirect/proxy instead of a local `try_files`.
+
 ## Open (new from Reports module, 2026-07-28)
 
 ### Local `phpstan analyse` container issue recurred again, same root cause as Inventory's/Laboratory's — confirmed pre-existing, not a Reports regression

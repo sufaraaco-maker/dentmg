@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import AppLogo from '@/components/layout/AppLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
@@ -38,29 +39,36 @@ async function onSubmit() {
 
 <template>
   <div class="flex min-h-screen items-center justify-center bg-surface-50 p-4 dark:bg-surface-900">
-    <Card class="w-full max-w-sm">
-      <template #title>{{ t('auth.title') }}</template>
-      <template #content>
-        <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
-          <Message v-if="error" severity="error">{{ error }}</Message>
+    <div class="flex w-full max-w-sm flex-col gap-6">
+      <div class="flex flex-col items-center gap-2">
+        <AppLogo :size="48" />
+        <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">{{ t('app.name') }}</span>
+      </div>
 
-          <div class="flex flex-col gap-2">
-            <label for="email" class="text-sm text-surface-700 dark:text-surface-200">
-              {{ t('auth.email') }}
-            </label>
-            <InputText id="email" v-model="email" type="email" required autofocus />
-          </div>
+      <Card class="w-full">
+        <template #title>{{ t('auth.title') }}</template>
+        <template #content>
+          <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
+            <Message v-if="error" severity="error">{{ error }}</Message>
 
-          <div class="flex flex-col gap-2">
-            <label for="password" class="text-sm text-surface-700 dark:text-surface-200">
-              {{ t('auth.password') }}
-            </label>
-            <Password id="password" v-model="password" :feedback="false" toggle-mask fluid required />
-          </div>
+            <div class="flex flex-col gap-2">
+              <label for="email" class="text-sm text-surface-700 dark:text-surface-200">
+                {{ t('auth.email') }}
+              </label>
+              <InputText id="email" v-model="email" type="email" required autofocus />
+            </div>
 
-          <Button type="submit" :label="t('auth.submit')" :loading="loading" class="w-full" />
-        </form>
-      </template>
-    </Card>
+            <div class="flex flex-col gap-2">
+              <label for="password" class="text-sm text-surface-700 dark:text-surface-200">
+                {{ t('auth.password') }}
+              </label>
+              <Password id="password" v-model="password" :feedback="false" toggle-mask fluid required />
+            </div>
+
+            <Button type="submit" :label="t('auth.submit')" :loading="loading" class="w-full" />
+          </form>
+        </template>
+      </Card>
+    </div>
   </div>
 </template>

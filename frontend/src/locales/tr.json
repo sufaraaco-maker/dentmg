@@ -110,7 +110,13 @@
     "noNotifications": "Henüz bildirim yok",
     "account": "Hesap",
     "yes": "Evet",
-    "no": "Hayır"
+    "no": "Hayır",
+    "imagePicker": {
+      "upload": "Görsel yükle",
+      "remove": "Kaldır",
+      "invalidType": "Yalnızca JPG, PNG veya WebP görsellerine izin verilir",
+      "tooLarge": "Görsel 2 MB'den küçük olmalıdır"
+    }
   },
   "errors": {
     "forbidden": {
@@ -138,6 +144,9 @@
     "new": "Yeni Kullanıcı",
     "search": "Ada veya e-postaya göre ara",
     "empty": "Kullanıcı bulunamadı",
+    "avatar": "Fotoğraf",
+    "avatarAfterCreate": "Önce yeni kullanıcıyı kaydedin, ardından profil fotoğrafı ekleyebilirsiniz.",
+    "avatarSaveError": "Profil fotoğrafı kaydedilemedi",
     "name": "Ad",
     "email": "E-posta",
     "role": "Rol",
@@ -1774,6 +1783,9 @@
     },
     "practice": {
       "title": "Klinik Ayarları",
+      "logo": "Klinik Logosu",
+      "logoSaved": "Klinik logosu başarıyla kaydedildi",
+      "logoSaveError": "Klinik logosu kaydedilemedi",
       "name": "Klinik Adı",
       "phone": "Telefon",
       "email": "E-posta",

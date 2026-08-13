@@ -572,3 +572,81 @@ of this decision, not an unrelated finding.
 **Status**: `Africa/Cairo` confirmed by the user 2026-08-12; implemented same day on Phase 5C
 (`docs/modules/notifications-phase-c-d-design.md` §16a/§19). `schedule:list` confirmed the three new
 Phase 5C Commands now report correct clinic-local next-run times.
+
+## 2026-08-13 — Clinic logo / user avatar upload: reverses `settings-design.md`'s V1 deferral; stands up the app's first public file storage
+
+The user asked directly for three things: (1) English as the default UI language instead of Arabic, (2) the
+app's existing brand mark (`frontend/public/favicon.svg` — already the browser-tab icon, never before shown
+inside the app itself) surfaced as a real login-screen/sidebar/header logo alongside the "DentalSuite" name,
+and (3) a clinic-logo upload in Practice Settings plus a profile-photo upload on the Users (add/edit user)
+screen. Per this repo's standing rule, `docs/PROJECT_STATUS.md` and recent PR/CI state were re-verified
+current before starting (nothing stale found — see `docs/PROJECT_STATUS.md`'s 2026-08-13 entry).
+
+**(1) and (2) were self-contained frontend changes** — `detectInitialLocale()`'s fallback flipped from `'ar'`
+to `'en'` (`frontend/src/locales/index.ts`), `AVAILABLE_LOCALES` reordered English-first, `index.html`'s
+static `lang`/`dir`/font-preload order updated to match (avoids an RTL flash on first paint for the new
+default), and a new `AppLogo.vue` (`<img src="/favicon.svg">`, not a re-inlined SVG — the file carries several
+blur filters cheaper left as one cached static asset than duplicated per mount) wired into `LoginView.vue`,
+the expanded sidebar header, and the mobile header. No new logo asset was designed; the existing one had
+simply never been surfaced past the browser tab.
+
+**(3) directly reopens `docs/modules/settings-design.md`'s §2/§8-decision-4/§9 "no clinic logo upload in
+V1"** — that deferral was conditional ("revisit once a real document... would actually display it"), not
+permanent, and the condition is now met on both sides:
+- **Clinic logo**: the Practice Settings page itself is the real consumer (a live upload/preview/remove
+  loop), independent of the still-outstanding Lab Case printable-slip consumer §8-decision-5 named — this
+  decision does not retroactively resolve that one.
+- **User avatar**: never discussed in the original design doc at all (only self-service name/email/password
+  existed under My Account) — new territory, not a reversal, gated by the same `users.manage` policy as
+  every other user-management action, added to the Users (add/edit) dialog only, not self-service `/profile`.
+
+**New infrastructure, not a small extension of the existing upload pattern**: Imaging/Documents
+(`PatientImageService`/`PatientDocumentService`) store to the `local` disk and serve through
+authenticated, policy-checked streaming routes (`docs/modules/imaging-design.md`: "never serve images from a
+public/static URL") — deliberately wrong for a logo/avatar, which must render as a plain `<img>` pre-login
+and in the header with no auth round trip. This is the first feature to use the `public` disk that
+`config/filesystems.php` already defined but nothing had ever activated: `storage:link` added to
+`docker/php/entrypoint.sh`/`entrypoint.prod.sh`, guarded into the same single-owner (`RUN_MIGRATIONS`)
+branch that already exists to stop the `app`/`queue`/`scheduler` containers racing `migrate --force` — the
+identical hazard applies to `storage:link` (it errors if the target already exists). Production's
+`docker/nginx/default.prod.conf` needed a new `location /storage` block: its SPA-fallback `location /` would
+otherwise swallow every `/storage/...` request and return `index.html` instead of the file — a real gap this
+change surfaced, not a pre-existing one (nothing served from `/storage` before).
+
+**Data model**: `clinic_settings` gained `logo_disk`/`logo_path` (2026_08_13_000001), `users` gained
+`avatar_disk`/`avatar_path` (2026_08_13_000002) — additive nullable columns, the same precedent
+`ai_assistant_*`/`audit_logs`/`notifications` already established. Always `'public'`, never
+`config('filesystems.default')` (unlike `PatientImageService`, which is disk-agnostic on purpose) — a
+logo/avatar can never legitimately end up on the auth-gated `local` disk. Uploads reject `svg`
+(`mimes:jpg,jpeg,png,webp`, `image` rule) even though the app's own favicon is an SVG — a user-uploaded SVG
+can embed a `<script>` and this file is later rendered directly with no sanitization step, unlike the
+hand-authored `public/favicon.svg`.
+
+**Frontend**: one shared presentation-only `ImagePickerField.vue` (`components/common/`) backs both Practice
+Settings and the Users edit dialog — same hidden-`<input type="file">` + triggering Button pattern
+`AttachmentUpload.vue`/`UploadImagesDialog.vue` already established (no PrimeVue `FileUpload` anywhere in
+this codebase), reduced to a single persistent-preview image instead of a one-shot dialog. Avatar upload is
+edit-only, not available on the "New User" create dialog (no `id` exists yet to attach a file to) — the
+dialog shows an explanatory hint instead; this was a scope call, not a limitation worth extra plumbing to
+avoid, matching common precedent (GitHub/Slack also require account creation before avatar upload).
+
+**A ripple effect deliberately not chased further**: `AuthUser.avatar_url` was added `?`-optional rather than
+required, even though the API always sends it — 9 existing test files construct `AuthUser` literals that
+predate avatars and have nothing to do with them (role/permission tests); every real consumer already treats
+a missing value the same as `null` (`v-if="user?.avatar_url"`), so making it required would only have forced
+unrelated edits across those 9 files for no behavioral gain.
+
+**Status**: implemented and verified locally the same day; not yet committed/pushed or opened as a PR.
+Backend: 2 new migrations, `ClinicSettingService::updateLogo()`/`removeLogo()`,
+`UserService::updateAvatar()`/`removeAvatar()`, 2 new `FormRequest`s, 4 new routes (`POST`/`DELETE
+/clinic-settings/logo`, `POST`/`DELETE /users/{user}/avatar`), `ClinicSettingResource`/`UserResource` gained
+`logo_url`/`avatar_url`, 10 new Feature tests (`ClinicSettingTest`/`UserTest`) covering
+upload/replace-deletes-old-file/remove/non-admin-403/non-image-422 — full local suite re-run **1224/1224
+green** (1214 baseline + 10 new, zero regressions), Pint clean (571 files). Frontend: `vue-tsc`/ESLint/Prettier clean
+on every touched file (the repo-wide 300+-file `prettier --check` "failure" outside `src/` scope and on
+untouched files is a pre-existing Windows CRLF/`git core.autocrlf` artifact — confirmed via a byte-identical
+`prettier --write` diff on an untouched file, matching the class of local-only false positive
+`TECH_DEBT.md`/[[environment_local_phpstan_false_positives]] already documents; CI runs on Linux and is
+unaffected), 11 new/updated Vitest tests (`UsersView.test.ts`, `locales/index.test.ts`,
+`PracticeSettingsView.test.ts`'s fixture completed with `logo_url`), i18n parity re-verified at 1510/1510/1510
+across en/ar/tr.

@@ -7,6 +7,7 @@ import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import { ChevronRight, LogOut, Menu as MenuIcon, Moon, Search, Sun, User } from 'lucide-vue-next'
 import NotificationBell from '@/components/notifications/NotificationBell.vue'
+import AppLogo from '@/components/layout/AppLogo.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useCommandPaletteStore } from '@/stores/commandPalette'
@@ -63,7 +64,10 @@ function toggleUserMenu(event: Event) {
           <MenuIcon :size="20" :class="iconClass" />
         </template>
       </Button>
-      <span class="text-lg font-semibold text-surface-900 dark:text-surface-0 lg:hidden">
+      <span
+        class="flex items-center gap-2 text-lg font-semibold text-surface-900 dark:text-surface-0 lg:hidden"
+      >
+        <AppLogo :size="22" />
         {{ t('app.name') }}
       </span>
 
@@ -128,7 +132,14 @@ function toggleUserMenu(event: Event) {
       </Button>
 
       <Button text rounded class="gap-2 px-2" :aria-label="t('common.account')" @click="toggleUserMenu">
+        <img
+          v-if="auth.user?.avatar_url"
+          :src="auth.user.avatar_url"
+          :alt="auth.user.name"
+          class="h-10 w-10 shrink-0 rounded-full object-cover"
+        />
         <span
+          v-else
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary dark:bg-primary-400/10 dark:text-primary-300"
         >
           {{ initials }}

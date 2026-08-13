@@ -79,9 +79,12 @@ This module closes exactly these three gaps: **Practice Settings**, **Billing Se
   `TECH_DEBT.md`'s existing "Multi-branch" item is explicit: "documented, not implemented... do not build
   speculatively." `ClinicSetting`/`BillingSetting` stay clinic-scoped-*ready* singletons, not real
   multi-row location infrastructure (§3).
-- Clinic logo upload — no current consumer would render it (no PDF/letterhead exists yet); adding an
+- ~~Clinic logo upload — no current consumer would render it (no PDF/letterhead exists yet); adding an
   unused upload field is settings for their own sake. Revisit once a real document (an Invoice PDF, a
-  branded Lab Case slip) would actually display it.
+  branded Lab Case slip) would actually display it.~~ **Reversed 2026-08-13** — the Practice Settings page
+  itself is a real consumer (live upload/preview/remove); see `docs/decisions.md`'s 2026-08-13 "Clinic
+  logo / user avatar upload" entry for the full reasoning. The Lab Case printable-slip consumer named
+  below (§8 decision 5) remains a separate, still-open item.
 - Notification/reminder channel settings (email/SMS templates, reminder lead time) — no notification
   infrastructure exists anywhere in this codebase (`AppointmentReminder` is a dormant, unused table/model;
   confirmed via Reports' own design doc research). Nothing to configure yet.
@@ -229,8 +232,9 @@ today — confirmed at implementation time) rather than ever needing a `store`.
 3. **`next_invoice_sequence` shown read-only, never editable** — recommend **approve as proposed**; editing
    it bypasses `InvoiceService`'s own lock-and-increment invariant and risks duplicate/skipped invoice
    numbers.
-4. **No clinic logo upload in V1** — recommend **defer until a real consumer exists** (an Invoice PDF or a
-   branded printable document) rather than build an unused upload field now.
+4. ~~**No clinic logo upload in V1** — recommend **defer until a real consumer exists** (an Invoice PDF or a
+   branded printable document) rather than build an unused upload field now.~~ **Reversed 2026-08-13** —
+   see `docs/decisions.md`.
 5. **Wire Practice Settings into the existing Lab Case printable slip as this module's first real
    consumer** — recommend **approve as proposed**; a small, additive touch to `LabCaseDetailView.vue`
    (adding a clinic-identity header block to the existing `@media print` stylesheet), not a new
@@ -243,7 +247,7 @@ today — confirmed at implementation time) rather than ever needing a `store`.
 ## 9. Explicitly Out of Scope for V1 (summary — see §2/§8 for full reasoning)
 
 - Multi-branch/multi-location settings (real per-location override infrastructure).
-- Clinic logo upload (no current consumer).
+- ~~Clinic logo upload (no current consumer).~~ **Reversed 2026-08-13** — see `docs/decisions.md`.
 - Notification/reminder channel settings (no notification infrastructure exists).
 - Appearance/theme and personal locale settings (already per-user, in the header, elsewhere).
 - Any general-purpose feature-flag/preferences catalog beyond the three named gaps in §1.

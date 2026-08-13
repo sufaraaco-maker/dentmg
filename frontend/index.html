@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -7,19 +7,21 @@
     <title>DentalSuite</title>
     <!--
       Self-hosted (frontend/src/assets/fonts/, see docs/design-system.md §1) — no external font CDN
-      request. Preloading only the two faces the default locale (ar/RTL) needs for first paint;
+      request. Preloading only the two faces the default locale (en/LTR) needs for first paint;
       inter-latin-ext-var (Turkish-only glyphs) isn't preloaded since it's never needed immediately.
+      Arabic is still preloaded second since a stored `ar` locale preference (localStorage) is a
+      same-priority first-paint need for a returning user, just not the cold-start default.
     -->
     <link
       rel="preload"
-      href="/src/assets/fonts/alexandria-arabic-var.woff2"
+      href="/src/assets/fonts/inter-latin-var.woff2"
       as="font"
       type="font/woff2"
       crossorigin
     />
     <link
       rel="preload"
-      href="/src/assets/fonts/inter-latin-var.woff2"
+      href="/src/assets/fonts/alexandria-arabic-var.woff2"
       as="font"
       type="font/woff2"
       crossorigin
