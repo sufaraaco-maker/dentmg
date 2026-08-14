@@ -40,7 +40,7 @@ async function mountView(role: UserRole, path = '/patients') {
   })
 
   const wrapper = mount(PatientsView, {
-    global: { plugins: [router], stubs: { AiQuestionBox: true } },
+    global: { plugins: [router] },
   })
   await flushPromises()
   return { wrapper, router }

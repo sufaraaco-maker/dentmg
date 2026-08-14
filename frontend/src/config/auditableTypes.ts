@@ -1,6 +1,6 @@
 /**
  * `auditable_type` is the raw FQCN Laravel stores on the polymorphic column (e.g.
- * `App\Models\Patient`) — this maps every value that can actually appear (the 21 `Auditable`
+ * `App\Models\Patient`) — this maps every value that can actually appear (the 20 `Auditable`
  * models per Phase 4 Step 3's audit, plus `RolePermission`, which is audited via
  * `AuditLogService::recordEvent()` rather than the trait) to a stable i18n key, so the Audit Log
  * viewer's resource-type filter/column never renders a raw PHP class name to the user.
@@ -14,7 +14,6 @@ export const AUDITABLE_TYPES: { value: string; labelKey: string }[] = [
   { value: 'App\\Models\\PatientMedicalCondition', labelKey: 'patientMedicalCondition' },
   { value: 'App\\Models\\PatientAllergy', labelKey: 'patientAllergy' },
   { value: 'App\\Models\\ClinicSetting', labelKey: 'clinicSetting' },
-  { value: 'App\\Models\\AiInteractionLog', labelKey: 'aiInteractionLog' },
   { value: 'App\\Models\\PatientImage', labelKey: 'patientImage' },
   { value: 'App\\Models\\PurchaseOrder', labelKey: 'purchaseOrder' },
   { value: 'App\\Models\\ClinicalNoteAddendum', labelKey: 'clinicalNoteAddendum' },

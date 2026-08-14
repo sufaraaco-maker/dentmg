@@ -8,8 +8,9 @@ _`main` is at `v1.0.0-appointments` (release tag not yet bumped). Every module o
 roadmap is merged to `main` (Dental Chart 2026-07-22; Treatment Plans/Billing/Payments 2026-07-25 via PR #1,
 plus a same-day concurrency fix via PR #2; Clinical Notes 2026-07-26 via PR #3; Inventory 2026-07-27 via
 PR #4; Laboratory 2026-07-27 via PR #5; Imaging 2026-07-28 via PR #6; **Reports 2026-07-28 via PR #7**;
-**Settings 2026-07-30 via PR #8**; AI Assistant 2026-07-31 via PR #9) but `main` is not yet re-tagged.
-Clinical Notes, Inventory, Laboratory, Imaging, Reports, Settings, and AI Assistant each shipped their own
+**Settings 2026-07-30 via PR #8**; AI Assistant 2026-07-31 via PR #9, removed 2026-08-14 — see "Removed —
+AI Assistant module" below) but `main` is not yet re-tagged.
+Clinical Notes, Inventory, Laboratory, Imaging, Reports, and Settings each shipped their own
 permanent E2E suite and are confirmed Production Ready.
 Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
 Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
@@ -79,6 +80,47 @@ flakes** (run `31618315687`), confirming the failure was transient CI-runner fla
 See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
+
+### Removed — AI Assistant module (`remove/ai-assistant`, 2026-08-14)
+
+Complete removal of the AI Assistant feature (Dashboard Insights, Smart Search, Writing Reports,
+Clinical Notes draft-assist, Treatment Suggestions, and the Settings-managed Anthropic API key),
+per explicit user request following a read-only discovery audit. No replacement AI capability was
+added — this is a full teardown, not a migration.
+
+- **Backend**: deleted `AiAssistantService`, `AiAssistantController`, `AiInteractionLog` model +
+  factory, `AiInteractionLogPolicy`, `AiInteractionFeature` enum, all `AiAssistant/*` Form Requests
+  and Exceptions, and all AI-specific tests. Removed the `anthropic-ai/sdk` Composer dependency.
+  Surgically edited `ClinicSetting` (dropped 3 AI fillable/cast entries), `ClinicSettingService`,
+  `ClinicSettingResource`, `UpdateClinicSettingRequest`, `AuditLogService::EXCLUDED_KEYS`,
+  `config/services.php`, `PermissionSeeder` (dropped 2 `ai_interaction_log.*` catalog rows — the
+  permission catalog is now 66 entries, not 68), and `DemoDataSeeder`. Two new migrations drop the
+  `ai_interaction_logs` table and the 3 `ai_assistant_*` columns on `clinic_settings` — the original
+  3 AI migrations are left untouched, per this repo's own migrations-are-never-edited-in-place rule.
+- **Frontend**: deleted the `aiAssistant` component directory, service, Pinia store, types, the
+  `AiAssistantSettingsView.vue` settings page, and `e2e/ai-assistant.spec.ts`. Surgically edited the
+  router, `DashboardView.vue`, `PatientsView.vue`, all 6 report views, `SettingsHomeView.vue`,
+  `types/settings.ts`, `useBreadcrumbs.ts`, and `config/auditableTypes.ts`. Removed every
+  `aiAssistant.*`/`settings.aiAssistant.*` i18n key from `en`/`ar`/`tr` (3-way parity re-verified:
+  1465/1465/1465, zero drift).
+- **`ClinicalNoteDetailView.vue`**: the most delicate edit — 6 lines of AI decision-recording were
+  interleaved directly inside the shared, non-AI `saveDraft()` function. Removed only those lines;
+  the rest of the note-save/sign/addendum path is untouched and re-verified working.
+- **Docs**: deleted `docs/modules/ai-assistant-design.md` and
+  `docs/modules/ai-assistant-settings-api-key-design.md`; removed `docs/PROJECT_STATUS.md` §7 and
+  every other AI Assistant reference there; removed the resolved "AI Assistant module" section from
+  `TECH_DEBT.md`; removed the `AI Assistant` row from `docs/roadmap.md`'s module status table.
+  Deliberately **not** touched: the "Future AI Integration Points" sections in 9 unrelated module
+  design docs, which describe a separate, never-built future vision, not this shipped-then-removed
+  feature.
+- **Verification**: full backend suite green — **1186/1186 passed** (31 AI-specific tests removed
+  across 4 dedicated files, 8 more removed from `ClinicSettingTest.php`'s otherwise-shared file, 2
+  permission-count assertions corrected from 68→66 now that the `ai_interaction_log.*` catalog rows
+  are gone), Pint clean, PHPStan clean (matching this environment's own already-documented local
+  false-positive baseline — confirmed none of the reported errors touch any file this removal
+  touched); full frontend suite, `vue-tsc`, ESLint, and Prettier all clean on every touched file,
+  production build succeeds; real `workflow_dispatch` CI run on the branch before opening the PR —
+  see that run's result in the PR description.
 
 ### Fixed — pre-existing Friday-slot bug in `notifications.spec.ts` (`fix/e2e-notifications-friday-slot-bug`, PR #50, 2026-08-13)
 
@@ -930,14 +972,6 @@ entry for the fine-grained-permissions-over-hierarchy decision.
 - **Docs**: adds `docs/PROJECT_STATUS.md` (living status book, single source of truth for project status
   going forward) and `CLAUDE.md` (auto-loaded operational playbook enforcing it every session).
 
-### Added — AI Assistant Settings-managed Anthropic API key (`feature/ai-assistant-api-key`, PR #11, 2026-08-02)
-- Admins can set/replace/remove the Anthropic API key from **Settings → AI Assistant** instead of only via
-  `backend/.env` (which remains a working fallback). Key is `encrypted` at rest on `ClinicSetting`; the API
-  only ever returns a `configured` boolean + last-4 characters, never the key itself; explicitly excluded
-  from the audit trail (`AuditLogService::EXCLUDED_KEYS`). `AiAssistantService::client()` prefers the
-  Settings-stored key when present. 926/926 backend + 749/749 frontend tests green at merge; see
-  `docs/modules/ai-assistant-settings-api-key-design.md`.
-
 ### Added — Treatment Plans clinic-wide list (`feature/treatment-plans-clinic-index`, PR #12, 2026-08-02)
 - Fixes a real gap: the Treatment Plans sidebar entry had been stuck on a stale `comingSoon` flag despite
   the module being fully production-ready since PR #1 — there was no clinic-wide list route to point it at,
@@ -957,9 +991,9 @@ entry for the fine-grained-permissions-over-hierarchy decision.
   backend + 755/755 frontend tests green at merge; see `docs/modules/frontend-visual-redesign-design.md`.
 
 ### Added — Frontend UX & Navigation Redesign, Phase 1: Navigation Shell (`feature/frontend-nav-shell`, 2026-07-31)
-- **Context**: with every module on the original roadmap Production Ready ✅ (including Settings and AI
-  Assistant, both since merged to `main`), this is the first phase of a cross-cutting, frontend-only
-  quality initiative benchmarked against Linear/Notion/Stripe/Vercel — see
+- **Context**: with every module on the original roadmap Production Ready ✅ (including Settings, merged
+  to `main` the same day), this is the first phase of a cross-cutting, frontend-only quality initiative
+  benchmarked against Linear/Notion/Stripe/Vercel — see
   `docs/modules/frontend-ux-redesign.md` for the full design doc and phase breakdown.
 - **Sidebar**: collapsible section grouping (Clinical/Operations/Insights/Admin), Favorites (star
   toggle, `localStorage`-only), Recent Items (last 5 visited record pages, upgraded from a generic

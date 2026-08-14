@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AppointmentTypeController;
 use App\Http\Controllers\Api\AuditLogController;
@@ -251,12 +250,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::put('profile', [ProfileController::class, 'update']);
     Route::put('profile/password', [ProfileController::class, 'updatePassword']);
-
-    Route::post('ai-assistant/dashboard-insight', [AiAssistantController::class, 'dashboardInsight']);
-    Route::post('ai-assistant/smart-search', [AiAssistantController::class, 'smartSearch']);
-    Route::post('ai-assistant/report-narrative', [AiAssistantController::class, 'reportNarrative']);
-    Route::post('clinical-notes/{clinical_note}/ai-draft', [AiAssistantController::class, 'draftClinicalNote']);
-    Route::post('treatment-plans/{treatment_plan}/ai-suggestions', [AiAssistantController::class, 'suggestTreatmentItems']);
-    Route::post('ai-assistant/interactions/{ai_interaction_log}/decision', [AiAssistantController::class, 'recordDecision']);
-    Route::get('ai-assistant/interactions', [AiAssistantController::class, 'index']);
 });

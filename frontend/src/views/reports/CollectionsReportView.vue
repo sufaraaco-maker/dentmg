@@ -7,7 +7,6 @@ import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue'
-import AiReportNarrativeButton from '@/components/aiAssistant/AiReportNarrativeButton.vue'
 import { downloadReportCsv, getCollectionsReport } from '@/services/reports'
 import { toLocalDateString } from '@/lib/date'
 import type { PaymentMethod } from '@/types/payment'
@@ -105,11 +104,6 @@ onMounted(fetchReport)
         </div>
       </template>
     </ReportDateRangeFilter>
-
-    <AiReportNarrativeButton
-      report-type="collections"
-      :params="{ date_from: dateFrom, date_to: dateTo, method }"
-    />
 
     <Message v-if="error" severity="error">{{ t('reports.loadError') }}</Message>
 

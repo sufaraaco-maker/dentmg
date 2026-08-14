@@ -90,8 +90,8 @@ class UserPermissionTest extends TestCase
         $this->assertTrue($dentist->hasPermission('users.manage'));
     }
 
-    public function test_permission_catalog_matches_the_27_policy_derived_count(): void
+    public function test_permission_catalog_matches_the_26_policy_derived_count(): void
     {
-        $this->assertSame(68, Permission::count());
+        $this->assertSame(66, Permission::count());
     }
 }

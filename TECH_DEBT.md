@@ -1200,46 +1200,6 @@ PWA wrapper, not an actually-installable app today. **Revisit**: whenever the ap
 built (a separate, cross-cutting piece of work, not any one module's screens), not as a side effect of
 Settings.
 
-## Open (new from AI Assistant module, 2026-07-31)
-
-### Local `phpstan analyse` container issue recurred a fifth time, same root cause as Inventory's/Laboratory's/Reports'/Settings' — confirmed pre-existing, not an AI Assistant regression
-Same symptom, isolated the same way as the four entries above: a full local `phpstan analyse` reported
-mass "undefined property" errors on models using `casts(): array`, including on files this module never
-touched. Isolated conclusively this time via `git stash` — with every AI Assistant change stashed back
-to pristine `main`, the same errors reproduced identically on `TreatmentPlanService.php`, a file with no
-relation to this module. **Revisit**: same as the four prior entries — CI's own `phpstan analyse` step
-(Ubuntu runner) is the authoritative check, not this dev container.
-
-**RESOLVED 2026-07-31**: confirmed clean via `workflow_dispatch` run `30605056813` — CI's real,
-Ubuntu-based `phpstan analyse` step passed with zero errors.
-
-### Real issue found and fixed via CI: `LengthAwarePaginator` contract doesn't expose `getCollection()`
-First `workflow_dispatch` run on `feature/ai-assistant` caught a real PHPStan error, not noise:
-`AiAssistantService::executeSearchTool()`'s `search_patients` case called
-`$this->patientService->paginate(...)->getCollection()`, but the method's return type is typed against
-the `Illuminate\Contracts\Pagination\LengthAwarePaginator` *interface*, which only declares `items()` —
-`getCollection()` is a concrete-class-only method. Fixed by switching to
-`collect($this->patientService->paginate(...)->items())`. The same run also caught two Prettier
-formatting misses in newly added test files. Both fixed in commit `3b36b0b`.
-
-### Three rounds of E2E-spec-only fixes — real bugs in the new test, never in the application
-`frontend/e2e/ai-assistant.spec.ts` took three iterations to go green, each a genuine, different bug in
-the spec itself, confirmed each time by the other 33-34 pre-existing E2E tests passing unaffected: (1)
-an unscoped `getByRole('switch')` matched two elements once the PHI toggle appeared, and the settings
-row wasn't reset at test *start* (only at the end), so a failed run left the shared `clinic_settings`
-row enabled and broke the next attempt — fixed by scoping the query to `main` and adding a
-`resetAiAssistantSettings()` helper called both at start and end; (2) `page.goto()` triggers a full SPA
-reload that resets the Pinia store, and the default 5s assertion timeout was too tight for the AI
-widget's own settings fetch to resolve under CI's first-paint latency — widened to 15s; (3) the test
-navigated to `/dashboard`, which doesn't exist — the real dashboard route is the bare root path (`''`
-under the `/` parent, named `dashboard`) — fixed by navigating to `/` instead. Diagnosed via the
-Playwright report artifact's failure screenshot (`gh run download -n playwright-report`), which showed
-the app's own branded 404 page for the `/dashboard` case rather than an ambiguous timeout.
-
-**RESOLVED 2026-07-31**: confirmed via the GitHub Actions API across five `workflow_dispatch` runs on
-`feature/ai-assistant` — final run (`30605056813`) is fully green: **Backend 905/905, Frontend
-694/694, E2E 34/34 — zero failures.**
-
 ## Open (new from Frontend UX & Navigation Redesign, Phase 1 — Navigation Shell, 2026-07-31)
 
 ### `AppSidebarItem.vue`'s one-level nesting limit — RESOLVED as part of this phase's own scope

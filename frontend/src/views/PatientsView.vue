@@ -14,10 +14,8 @@ import Tag from 'primevue/tag'
 import { Pencil, Plus, Trash2, Users } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { usePatientsStore } from '@/stores/patients'
-import { askSmartSearch } from '@/services/aiAssistant/aiAssistantApi'
 import type { Patient } from '@/types/patient'
 import PatientFormDialog from '@/components/patients/PatientFormDialog.vue'
-import AiQuestionBox from '@/components/aiAssistant/AiQuestionBox.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
 const { t } = useI18n()
@@ -122,12 +120,6 @@ onMounted(() => {
       <InputIcon class="pi pi-search" />
       <InputText v-model="search" :placeholder="t('patients.search')" class="w-full" />
     </IconField>
-
-    <AiQuestionBox
-      :title="t('aiAssistant.smartSearch.title')"
-      :placeholder="t('aiAssistant.smartSearch.placeholder')"
-      :ask-fn="askSmartSearch"
-    />
 
     <DataTable
       :value="patientsStore.listItems"

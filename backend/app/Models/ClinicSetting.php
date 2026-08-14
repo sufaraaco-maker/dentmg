@@ -24,21 +24,7 @@ class ClinicSetting extends Model
         'phone',
         'address',
         'email',
-        'ai_assistant_enabled',
-        'ai_assistant_phi_features_acknowledged',
-        'ai_assistant_api_key',
         'logo_disk',
         'logo_path',
-    ];
-
-    protected $casts = [
-        'ai_assistant_enabled' => 'boolean',
-        'ai_assistant_phi_features_acknowledged' => 'boolean',
-        // Laravel's built-in AES-256-CBC cast (APP_KEY-derived) — encrypts on write, decrypts on
-        // read automatically. Never returned by `ClinicSettingResource` (only a `configured`
-        // boolean + last-4 derived from the decrypted value) and excluded from the audit trail
-        // (`AuditLogService::EXCLUDED_KEYS`) — see
-        // docs/modules/ai-assistant-settings-api-key-design.md §4/§8 for why both matter.
-        'ai_assistant_api_key' => 'encrypted',
     ];
 }

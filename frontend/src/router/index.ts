@@ -188,12 +188,6 @@ export const router = createRouter({
           meta: { roles: ['admin'] },
         },
         {
-          path: 'settings/ai-assistant',
-          name: 'settings-ai-assistant',
-          component: () => import('@/views/settings/AiAssistantSettingsView.vue'),
-          meta: { roles: ['admin'] },
-        },
-        {
           // Notification System (Phase 5A) — the full history view behind the header bell's panel.
           // No `meta.roles`: every role has their own notifications and the API is self-scoped
           // (design doc §8.1 / Decision D6), so there is nothing role-specific to gate.

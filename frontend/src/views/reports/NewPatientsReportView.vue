@@ -6,7 +6,6 @@ import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue'
-import AiReportNarrativeButton from '@/components/aiAssistant/AiReportNarrativeButton.vue'
 import { downloadReportCsv, getNewPatientsReport } from '@/services/reports'
 import { toLocalDateString } from '@/lib/date'
 import type { NewPatientsReport } from '@/types/reports'
@@ -66,8 +65,6 @@ onMounted(fetchReport)
       :loading="loading"
       @apply="fetchReport"
     />
-
-    <AiReportNarrativeButton report-type="new_patients" :params="{ date_from: dateFrom, date_to: dateTo }" />
 
     <Message v-if="error" severity="error">{{ t('reports.loadError') }}</Message>
 
