@@ -80,6 +80,40 @@ See
 `docs/PROJECT_STATUS.md` for the living, continuously-updated status book this file's own per-PR history
 now feeds into._
 
+### Fixed — pre-existing Friday-slot bug in `notifications.spec.ts` (`fix/e2e-notifications-friday-slot-bug`, PR #50, 2026-08-13)
+
+Last of the 3 post-merge CI regression classes PR #48 exposed (see PR #49's entry below for the other two).
+`findAvailableSlot()` always books an appointment "tomorrow," but `DemoDataSeeder` only seeds working hours
+for Sunday–Thursday — whenever CI happened to run on a Wednesday or Thursday (tomorrow = Friday/Saturday),
+`GET /available-slots` returned zero slots and 6 `notifications.spec.ts` tests threw. Pre-existing, unrelated
+to PR #48's locale switch; 2026-08-14 (a Friday) is what made it visible in this session's runs. Fixed the
+same way `appointments.spec.ts`'s `ensureWorkingHours` already handles this exact problem: unconditionally
+`POST` a wide (08:00–20:00) working-hours shift for whatever day-of-week the target date actually falls on
+before querying availability (`StoreDentistWorkingHourRequest` allows multiple rows per `day_of_week`, so no
+existence check is needed). No production/application code touched — a test-fixture gap, not an app bug.
+Verified directly against the running backend (before: `GET /available-slots` on an unseeded day →
+`{"slots":[]}`; after issuing the fix's `POST /dentists/{id}/working-hours` call → a full day of slots) since
+local Playwright was unreliable under this session's host-level Docker latency. **Merged via PR #50**
+(`eabd267`, 2026-08-13); post-merge CI on `main` **fully green — Backend, Frontend, and E2E all `success`,
+62/62 E2E passed, 0 failures** (run `31748627267`), closing out the last of the 3 regression classes from
+PR #48's post-merge CI run — see PR #48's own entry below for the fix's full context and the RTL/LTR
+regression PR #49 fixed the same day.
+
+### Fixed — `rtl-ltr.spec.ts` still assumed Arabic was the default locale (`fix/e2e-rtl-ltr-english-default`, PR #49, 2026-08-13)
+
+One of 3 post-merge CI regression classes PR #48 exposed when it switched the app's default UI language from
+Arabic to English: `e2e/rtl-ltr.spec.ts` still hardcoded the old "Arabic is the actual default" assumption in
+two tests, so a plain `login()` no longer landed on the RTL/Arabic state either test expected, and both
+failed. Fixed by rewriting the spec for the new default — `"English (the real default locale) renders the
+page left-to-right"` now expects LTR from a plain login; a new `forceArabicLocale()` fixture helper (mirrors
+the existing `forceEnglishLocale()`) keeps Arabic/RTL rendering covered via `"a stored Arabic preference
+renders the page right-to-left"` and `"switching the language selector to Arabic flips the page
+right-to-left"` (the inverse of the old English-switch test). Scoped to `e2e/fixtures.ts` and
+`e2e/rtl-ltr.spec.ts` only — no application code changed. **Merged via PR #49** (`f4fa203`, 2026-08-13);
+post-merge CI on `main` confirmed the RTL/LTR regression resolved (**6 remaining failures, all in
+`notifications.spec.ts`** — the separate pre-existing Friday-slot bug PR #50's entry above fixes; the
+`role-permissions.spec.ts` flake PR #48's own post-merge run also showed did not recur), run `31738895281`.
+
 ### Added — English default UI language, app branding on the login screen, clinic logo + user avatar uploads (2026-08-13)
 
 User-requested, cross-cutting change spanning i18n defaults, branding, and a new upload capability in two
@@ -102,10 +136,16 @@ Settings-area screens — not tied to the 8-phase roadmap's next phase.
   `ImagePickerField.vue` backs both screens. Backend: 10 new Feature tests (`ClinicSettingTest`/`UserTest`),
   full suite re-run 1224/1224 green (1214 baseline, zero regressions), Pint clean.
   Frontend: `vue-tsc`/ESLint/Prettier clean on every touched file, 11 new/updated Vitest tests, i18n parity
-  re-verified at 1510/1510/1510 across en/ar/tr. **PR #48 opened, awaiting CI + user approval before
-  merge** — pre-merge CI caught one real `vue-tsc -b` build-mode type error (`UsersView.vue`'s
-  `ImagePickerField` binding didn't account for `AuthUser.avatar_url`'s deliberate optionality), fixed in a
-  follow-up commit on the same PR; see `docs/decisions.md`'s 2026-08-13 entry for detail.
+  re-verified at 1510/1510/1510 across en/ar/tr. Pre-merge CI caught one real `vue-tsc -b` build-mode type
+  error (`UsersView.vue`'s `ImagePickerField` binding didn't account for `AuthUser.avatar_url`'s deliberate
+  optionality), fixed in a follow-up commit on the same PR; see `docs/decisions.md`'s 2026-08-13 entry for
+  detail. **Merged via PR #48** (`b0a0b6c`, 2026-08-13) after explicit user approval. Post-merge CI on
+  `main` then went red — **9 E2E failures across 3 unrelated classes**: `rtl-ltr.spec.ts` (2 tests still
+  assumed Arabic was the default locale — fixed via **PR #49**, entry above), `notifications.spec.ts` (6
+  tests hit a pre-existing, date-dependent Friday/Saturday working-hours gap, unrelated to this locale
+  change — fixed via **PR #50**, entry above), and 1 already-documented `role-permissions.spec.ts`
+  CI-runner flake that did not recur on the next run. All 3 classes closed the same day; post-merge CI on
+  `main` after PR #50 **fully green — 62/62 E2E passed, 0 failures** (run `31748627267`).
 
 ### Fixed — `notifications.spec.ts` self-colliding on CI retry (`fix/e2e-notifications-slot-retry-fragility`, PR #46, 2026-08-12)
 
