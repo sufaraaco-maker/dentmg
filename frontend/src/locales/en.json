@@ -383,7 +383,6 @@
       "patientMedicalCondition": "Medical Condition",
       "patientAllergy": "Allergy",
       "clinicSetting": "Clinic Setting",
-      "aiInteractionLog": "AI Interaction Log Entry",
       "patientImage": "Patient Image",
       "purchaseOrder": "Purchase Order",
       "clinicalNoteAddendum": "Clinical Note Addendum",
@@ -1773,13 +1772,11 @@
     "title": "Settings",
     "nav": {
       "practice": "Practice Settings",
-      "billing": "Billing Settings",
-      "aiAssistant": "AI Assistant"
+      "billing": "Billing Settings"
     },
     "home": {
       "practiceDescription": "Clinic name, contact info, and address",
-      "billingDescription": "Currency, tax rate, and invoice numbering",
-      "aiAssistantDescription": "Enable AI features and confirm the BAA prerequisite"
+      "billingDescription": "Currency, tax rate, and invoice numbering"
     },
     "practice": {
       "title": "Practice Settings",
@@ -1804,30 +1801,6 @@
       "saved": "Billing settings saved successfully",
       "saveError": "Failed to save billing settings",
       "loadError": "Failed to load billing settings"
-    },
-    "aiAssistant": {
-      "title": "AI Assistant Settings",
-      "enableLabel": "Enable AI Assistant",
-      "enableHint": "Turns on Dashboard Insights, Smart Search, and report narratives (Claude API).",
-      "phiWarning": "Enabling Clinical Notes draft-assist or Treatment Suggestions sends patient clinical data to Anthropic's Claude API. Confirm your organization has a Business Associate Agreement (BAA) with Anthropic covering this use before enabling.",
-      "phiAckLabel": "I confirm a signed BAA with Anthropic is in place",
-      "phiAckHint": "Required before Clinical Notes draft-assist or Treatment Suggestions become available to any user.",
-      "saved": "AI Assistant settings saved successfully",
-      "saveError": "Failed to save AI Assistant settings",
-      "loadError": "Failed to load AI Assistant settings",
-      "apiKeyLabel": "Anthropic API Key",
-      "apiKeyPlaceholder": "sk-ant-...",
-      "apiKeyHint": "Falls back to the server's configured key if none is set here.",
-      "apiKeyConfigured": "API key configured, ending in •••{last4}",
-      "apiKeyReplace": "Replace",
-      "apiKeyRemove": "Remove",
-      "apiKeySave": "Save Key",
-      "apiKeySaved": "API key saved successfully",
-      "apiKeySaveError": "Failed to save the API key",
-      "apiKeyRemoved": "API key removed",
-      "apiKeyRemoveError": "Failed to remove the API key",
-      "apiKeyRemoveConfirmHeader": "Remove API Key",
-      "apiKeyRemoveConfirmMessage": "AI Assistant features will fall back to the server's configured key, if any, or become unavailable. Continue?"
     }
   },
   "account": {
@@ -1845,38 +1818,6 @@
     "passwordSaved": "Password changed successfully",
     "passwordSaveError": "Failed to change password",
     "loadError": "Failed to load account"
-  },
-  "aiAssistant": {
-    "ask": "Ask",
-    "unreviewedLabel": "AI-suggested, unreviewed",
-    "unavailableError": "AI Assistant is enabled but not configured on this server. Contact your administrator.",
-    "genericError": "AI Assistant could not answer that. Please try again.",
-    "dashboardInsight": {
-      "title": "Ask a question about your data",
-      "placeholder": "e.g. What was our collections rate last month?"
-    },
-    "smartSearch": {
-      "title": "Smart Search",
-      "placeholder": "e.g. Patients overdue on payment who haven't been seen in 6 months"
-    },
-    "reportNarrative": {
-      "explain": "Explain this report"
-    },
-    "clinicalNoteDraft": {
-      "action": "Draft with AI",
-      "dialogTitle": "Draft with AI",
-      "dialogHint": "Type your shorthand notes and AI will expand them into SOAP-structured prose. Review and edit before saving — nothing is saved until you click Save Draft.",
-      "shorthandPlaceholder": "e.g. pt c/o sensitivity #14, cold test +, recommend composite restoration",
-      "generate": "Generate Draft",
-      "discard": "Discard AI Draft"
-    },
-    "treatmentSuggestion": {
-      "action": "Suggest Items (AI)",
-      "dialogTitle": "AI Treatment Suggestions",
-      "empty": "No suggestions available for this patient's current chart findings.",
-      "add": "Add",
-      "added": "Added"
-    }
   },
   "notifications": {
     "title": "Notifications",

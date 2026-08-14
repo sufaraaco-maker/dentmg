@@ -29,12 +29,6 @@ const SETTINGS_CARDS: SettingsCard[] = [
     descriptionKey: 'settings.home.billingDescription',
     icon: 'pi pi-wallet',
   },
-  {
-    routeName: 'settings-ai-assistant',
-    titleKey: 'settings.nav.aiAssistant',
-    descriptionKey: 'settings.home.aiAssistantDescription',
-    icon: 'pi pi-sparkles',
-  },
 ]
 
 const { t } = useI18n()

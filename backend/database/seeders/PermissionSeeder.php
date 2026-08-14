@@ -78,10 +78,6 @@ class PermissionSeeder extends Seeder
         $receptionist = self::RECEPTIONIST;
 
         return [
-            // AiInteractionLogPolicy.php
-            ['key' => 'ai_interaction_log.view', 'group' => 'ai_interaction_log', 'description' => 'List AI interaction log entries (own, or all if paired with .view_others)', 'roles' => [$admin, $dentist, $receptionist]],
-            ['key' => 'ai_interaction_log.view_others', 'group' => 'ai_interaction_log', 'description' => "View another user's AI interaction log entries", 'roles' => [$admin]],
-
             // AppointmentPolicy.php
             ['key' => 'appointments.view', 'group' => 'appointments', 'description' => 'View appointments', 'roles' => [$admin, $dentist, $receptionist]],
             ['key' => 'appointments.manage', 'group' => 'appointments', 'description' => 'Create/update/cancel/confirm/check-in appointments (a treating dentist may still start/complete their own regardless)', 'roles' => [$admin, $receptionist]],

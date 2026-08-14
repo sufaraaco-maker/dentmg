@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\AiInteractionFeature;
 use App\Enums\AppointmentStatus;
 use App\Enums\BloodType;
 use App\Enums\ClinicalNoteType;
@@ -16,7 +15,6 @@ use App\Enums\PaymentMethod;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockMovementReason;
 use App\Enums\UserRole;
-use App\Models\AiInteractionLog;
 use App\Models\AppointmentType;
 use App\Models\DentalChartEntry;
 use App\Models\DentalCondition;
@@ -62,8 +60,8 @@ use Illuminate\Support\Str;
  * Every state-machine-backed record is driven through its module's own Service — never a raw
  * `::create()` with a hardcoded status — mirroring `TreatmentPlanSeeder`'s established
  * "production-safe" convention: seeded data can never represent a state the app itself considers
- * invalid. The two exceptions (`PatientImage`, `AiInteractionLog`) have no state machine to
- * protect — both are documented inline at their seeding method.
+ * invalid. The one exception (`PatientImage`) has no state machine to protect — documented inline
+ * at its seeding method.
  */
 class DemoDataSeeder extends Seeder
 {
@@ -125,7 +123,6 @@ class DemoDataSeeder extends Seeder
         // Remaining ~20 patients (index 90-109): freshly registered, no extra data — a realistic
         // baseline, since not every real patient has a full treatment history yet.
 
-        $this->seedAiInteractionLogs($patients, $admin);
         $this->seedInventory($admin);
     }
 
@@ -658,47 +655,6 @@ class DemoDataSeeder extends Seeder
         imagedestroy($image);
 
         return $contents ?: '';
-    }
-
-    /**
-     * `AiInteractionLog` is a flat, append-only audit table with no state machine to protect
-     * (unlike every other module seeded above) — `AiAssistantService` itself is not something a
-     * seeder should call (it makes a real Claude API request and requires `ANTHROPIC_API_KEY`), so
-     * creating a handful of plausible-looking rows directly is the only practical option.
-     *
-     * @param  Collection<int, Patient>  $patients
-     */
-    private function seedAiInteractionLogs(Collection $patients, User $admin): void
-    {
-        $zeroPhi = [
-            [AiInteractionFeature::DashboardInsight, 'How did collections trend this month?', 'Collections rose 12% compared to last month.'],
-            [AiInteractionFeature::SmartSearch, 'overdue patients', 'Found 4 patients with overdue balances.'],
-            [AiInteractionFeature::ReportNarrative, 'production report summary', 'Production was steady across all dentists this quarter.'],
-        ];
-
-        foreach ($zeroPhi as [$feature, $prompt, $response]) {
-            AiInteractionLog::create([
-                'user_id' => $admin->id,
-                'feature' => $feature,
-                'patient_id' => null,
-                'prompt_summary' => $prompt,
-                'response_summary' => $response,
-                'accepted' => null,
-                'model' => 'claude-sonnet-5',
-            ]);
-        }
-
-        foreach ($patients->slice(0, 5) as $index => $patient) {
-            AiInteractionLog::create([
-                'user_id' => $admin->id,
-                'feature' => $index % 2 === 0 ? AiInteractionFeature::ClinicalNoteDraft : AiInteractionFeature::TreatmentSuggestion,
-                'patient_id' => $patient->id,
-                'prompt_summary' => 'pt c/o pain, upper right',
-                'response_summary' => 'Draft generated for review.',
-                'accepted' => $index % 2 === 0,
-                'model' => 'claude-sonnet-5',
-            ]);
-        }
     }
 
     private function seedInventory(User $admin): void

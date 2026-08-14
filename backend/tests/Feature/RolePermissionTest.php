@@ -41,7 +41,7 @@ class RolePermissionTest extends TestCase
         $response = $this->actingAs($actor)->getJson('/api/permissions');
 
         $response->assertOk();
-        $this->assertCount(68, $response->json());
+        $this->assertCount(66, $response->json());
         $response->assertJsonFragment(['key' => 'users.manage', 'group' => 'users']);
     }
 
@@ -63,7 +63,7 @@ class RolePermissionTest extends TestCase
         $response->assertOk();
         $matrix = $response->json();
 
-        $this->assertCount(68, $matrix['admin']);
+        $this->assertCount(66, $matrix['admin']);
         $this->assertContains('users.manage', $matrix['admin']);
         $this->assertNotContains('users.manage', $matrix['dentist']);
         $this->assertNotContains('users.manage', $matrix['receptionist']);

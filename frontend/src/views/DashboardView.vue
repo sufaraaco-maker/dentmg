@@ -12,10 +12,8 @@ import LowStockWidget from '@/components/inventory/LowStockWidget.vue'
 import DueLabCasesWidget from '@/components/laboratory/DueLabCasesWidget.vue'
 import FinancialSnapshotWidget from '@/components/dashboard/FinancialSnapshotWidget.vue'
 import UnscheduledTreatmentWidget from '@/components/dashboard/UnscheduledTreatmentWidget.vue'
-import AiQuestionBox from '@/components/aiAssistant/AiQuestionBox.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
-import { askDashboardInsight } from '@/services/aiAssistant/aiAssistantApi'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -119,12 +117,6 @@ onMounted(() => {
       <LowStockWidget />
       <DueLabCasesWidget />
     </div>
-
-    <AiQuestionBox
-      :title="t('aiAssistant.dashboardInsight.title')"
-      :placeholder="t('aiAssistant.dashboardInsight.placeholder')"
-      :ask-fn="askDashboardInsight"
-    />
 
     <AppointmentDialog v-model:visible="newAppointmentDialogVisible" />
   </div>

@@ -14,14 +14,9 @@ class AuditLogService
     /**
      * Fields that should never be persisted into the audit trail, regardless of model — applied
      * to `changes`, `old_values`, and `context` alike (Phase 4 Step 3 design doc §2.1/§5).
-     *
-     * `ai_assistant_api_key` (`ClinicSetting`, docs/modules/ai-assistant-settings-api-key-design.md
-     * §4/§8): without this, the `encrypted` cast's decrypted value would be written straight into
-     * `audit_logs.changes` on every save via `getChanges()`, defeating encryption-at-rest for
-     * anyone with audit-log read access.
      */
     private const EXCLUDED_KEYS = [
-        'password', 'remember_token', 'created_at', 'updated_at', 'deleted_at', 'ai_assistant_api_key',
+        'password', 'remember_token', 'created_at', 'updated_at', 'deleted_at',
     ];
 
     /**

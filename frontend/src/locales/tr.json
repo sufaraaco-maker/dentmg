@@ -383,7 +383,6 @@
       "patientMedicalCondition": "Tıbbi Durum",
       "patientAllergy": "Alerji",
       "clinicSetting": "Klinik Ayarı",
-      "aiInteractionLog": "Yapay Zeka Etkileşim Kaydı",
       "patientImage": "Hasta Görüntüsü",
       "purchaseOrder": "Satın Alma Siparişi",
       "clinicalNoteAddendum": "Klinik Not Eki",
@@ -1773,13 +1772,11 @@
     "title": "Ayarlar",
     "nav": {
       "practice": "Klinik Ayarları",
-      "billing": "Faturalama Ayarları",
-      "aiAssistant": "Yapay Zeka Asistanı"
+      "billing": "Faturalama Ayarları"
     },
     "home": {
       "practiceDescription": "Klinik adı, iletişim bilgileri ve adres",
-      "billingDescription": "Para birimi, vergi oranı ve fatura numaralandırma",
-      "aiAssistantDescription": "Yapay zeka özelliklerini etkinleştirin ve BAA ön koşulunu onaylayın"
+      "billingDescription": "Para birimi, vergi oranı ve fatura numaralandırma"
     },
     "practice": {
       "title": "Klinik Ayarları",
@@ -1804,30 +1801,6 @@
       "saved": "Faturalama ayarları başarıyla kaydedildi",
       "saveError": "Faturalama ayarları kaydedilemedi",
       "loadError": "Faturalama ayarları yüklenemedi"
-    },
-    "aiAssistant": {
-      "title": "Yapay Zeka Asistanı Ayarları",
-      "enableLabel": "Yapay Zeka Asistanını Etkinleştir",
-      "enableHint": "Kontrol Paneli İçgörülerini, Akıllı Aramayı ve rapor özetlerini açar (Claude API).",
-      "phiWarning": "Klinik Not taslak yardımını veya Tedavi Önerilerini etkinleştirmek, hasta klinik verilerini Anthropic'in Claude API'sine gönderir. Etkinleştirmeden önce kuruluşunuzun bu kullanımı kapsayan Anthropic ile imzalı bir İş Ortağı Sözleşmesi (BAA) olduğunu onaylayın.",
-      "phiAckLabel": "Anthropic ile imzalı bir BAA olduğunu onaylıyorum",
-      "phiAckHint": "Klinik Not taslak yardımı veya Tedavi Önerileri herhangi bir kullanıcıya sunulmadan önce gereklidir.",
-      "saved": "Yapay Zeka Asistanı ayarları başarıyla kaydedildi",
-      "saveError": "Yapay Zeka Asistanı ayarları kaydedilemedi",
-      "loadError": "Yapay Zeka Asistanı ayarları yüklenemedi",
-      "apiKeyLabel": "Anthropic API Anahtarı",
-      "apiKeyPlaceholder": "sk-ant-...",
-      "apiKeyHint": "Burada bir anahtar girilmezse sunucuda yapılandırılmış anahtar kullanılır.",
-      "apiKeyConfigured": "API anahtarı yapılandırıldı, •••{last4} ile bitiyor",
-      "apiKeyReplace": "Değiştir",
-      "apiKeyRemove": "Kaldır",
-      "apiKeySave": "Anahtarı Kaydet",
-      "apiKeySaved": "API anahtarı başarıyla kaydedildi",
-      "apiKeySaveError": "API anahtarı kaydedilemedi",
-      "apiKeyRemoved": "API anahtarı kaldırıldı",
-      "apiKeyRemoveError": "API anahtarı kaldırılamadı",
-      "apiKeyRemoveConfirmHeader": "API Anahtarını Kaldır",
-      "apiKeyRemoveConfirmMessage": "Yapay Zeka Asistanı özellikleri, varsa sunucuda yapılandırılmış anahtara geri döner veya kullanılamaz hale gelir. Devam edilsin mi?"
     }
   },
   "account": {
@@ -1845,38 +1818,6 @@
     "passwordSaved": "Şifre başarıyla değiştirildi",
     "passwordSaveError": "Şifre değiştirilemedi",
     "loadError": "Hesap bilgileri yüklenemedi"
-  },
-  "aiAssistant": {
-    "ask": "Sor",
-    "unreviewedLabel": "Yapay zeka önerisi, incelenmedi",
-    "unavailableError": "Yapay Zeka Asistanı etkin ancak bu sunucuda yapılandırılmamış. Yöneticinizle iletişime geçin.",
-    "genericError": "Yapay Zeka Asistanı bunu yanıtlayamadı. Lütfen tekrar deneyin.",
-    "dashboardInsight": {
-      "title": "Verileriniz hakkında bir soru sorun",
-      "placeholder": "örn. Geçen ay tahsilat oranımız neydi?"
-    },
-    "smartSearch": {
-      "title": "Akıllı Arama",
-      "placeholder": "örn. 6 aydır görülmeyen ve ödemesi geciken hastalar"
-    },
-    "reportNarrative": {
-      "explain": "Bu raporu açıkla"
-    },
-    "clinicalNoteDraft": {
-      "action": "Yapay Zeka ile Taslak Oluştur",
-      "dialogTitle": "Yapay Zeka ile Taslak Oluştur",
-      "dialogHint": "Kısa notlarınızı yazın, yapay zeka bunları SOAP formatında düzyazıya dönüştürsün. Kaydetmeden önce inceleyip düzenleyin — Taslağı Kaydet'e tıklayana kadar hiçbir şey kaydedilmez.",
-      "shorthandPlaceholder": "örn. hasta 14 numaralı dişte hassasiyetten şikayetçi, soğuk testi pozitif, kompozit dolgu öneriliyor",
-      "generate": "Taslak Oluştur",
-      "discard": "Yapay Zeka Taslağını Sil"
-    },
-    "treatmentSuggestion": {
-      "action": "Öğe Öner (Yapay Zeka)",
-      "dialogTitle": "Yapay Zeka Tedavi Önerileri",
-      "empty": "Bu hastanın mevcut diş tablosu bulgularına göre öneri yok.",
-      "add": "Ekle",
-      "added": "Eklendi"
-    }
   },
   "notifications": {
     "title": "Bildirimler",

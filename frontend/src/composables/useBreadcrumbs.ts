@@ -10,13 +10,12 @@ export interface BreadcrumbEntry {
 
 /** Routes with neither a sidebar entry nor a dynamic `:id` param (so `DETAIL_ROUTES` doesn't fit)
  *  — My Account, the Notification Center's full page (reached from the header bell, deliberately
- *  not a sidebar entry), and the three Settings sub-pages, each pointing at its existing title key. */
+ *  not a sidebar entry), and the two Settings sub-pages, each pointing at its existing title key. */
 const STANDALONE_ROUTES: Record<string, { labelKey: string; parentRouteName?: string }> = {
   account: { labelKey: 'nav.myAccount' },
   notifications: { labelKey: 'notifications.title' },
   'settings-practice': { labelKey: 'settings.nav.practice', parentRouteName: 'settings' },
   'settings-billing': { labelKey: 'settings.nav.billing', parentRouteName: 'settings' },
-  'settings-ai-assistant': { labelKey: 'settings.nav.aiAssistant', parentRouteName: 'settings' },
 }
 
 /**
