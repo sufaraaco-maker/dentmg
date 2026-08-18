@@ -196,15 +196,22 @@ async function addItem(page: Page, procedureName: string, toothLabel: string) {
   await expect(dialog).toBeHidden({ timeout: 10_000 })
 }
 
+/**
+ * `.last()`, not a bare `getByText` -- every action in this suite shares the identical toast text
+ * ("Treatment plan updated"), and PrimeVue's toast stacks rather than replaces: two calls in quick
+ * succession (e.g. Present then Accept) can both still be mounted when the second assertion runs,
+ * which a strict-mode `getByText` fails on ("resolved to 2 elements") instead of picking one. The
+ * most-recently-added toast is always the one this call itself triggered.
+ */
 async function runPlanAction(page: Page, label: string) {
   await page.getByRole('button', { name: label, exact: true }).click()
-  await expect(page.getByText('Treatment plan updated')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('Treatment plan updated').last()).toBeVisible({ timeout: 10_000 })
 }
 
 async function confirmPlanAction(page: Page, label: string) {
   await page.getByRole('button', { name: label, exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: label, exact: true }).click()
-  await expect(page.getByText('Treatment plan updated')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('Treatment plan updated').last()).toBeVisible({ timeout: 10_000 })
 }
 
 test.describe('treatment plans', () => {
@@ -313,6 +320,14 @@ test.describe('treatment plans', () => {
     await apiRequest(page, `/treatment-plans/${planIdA}/present`, { method: 'POST' })
     await apiRequest(page, `/treatment-plans/${planIdB}/present`, { method: 'POST' })
 
+    // Both plans are already cached client-side as `draft` from their own creation just above
+    // (`treatmentPlansStore`'s cache upsert on create) -- the two raw API `present()` calls just
+    // now bypassed that store entirely, so without a reload `TreatmentPlanDetailView.vue`'s `load()`
+    // would find the (stale) cache already populated and skip its own fetch, rendering plan B as
+    // still `draft` and never showing an "Accept" button at all. `page.reload()` wipes the SPA's
+    // in-memory Pinia state so the detail view fetches fresh.
+    await page.reload()
+    await expect(page.getByRole('tabpanel')).toBeVisible({ timeout: 10_000 })
     await openPlanDetail(page, patient.id, titleB)
     await runPlanAction(page, 'Accept')
 
