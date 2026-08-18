@@ -97,6 +97,14 @@ jobs:
         run: cp .env.example .env && php artisan key:generate
 
       - name: Migrate against real PostgreSQL (catches migration-ordering bugs SQLite hides)
+        # CACHE_STORE must be overridden here too, not just DB_* -- this plain artisan command
+        # never goes through phpunit.xml's own <env> injection (that only applies to the `php
+        # artisan test` step below), so it falls back to .env's CACHE_STORE=redis default with no
+        # Redis service in this job. Found 2026-08-18: a migration that calls Cache::forget()
+        # (the new purge_orphaned_ai_interaction_log_permissions migration) failed CI on main with
+        # RedisException: getaddrinfo for redis failed. This job only needs a real Postgres, not a
+        # real Redis -- array is a real in-memory cache, not a null-op, for anything that reads
+        # its own write back within the same process.
         run: php artisan migrate:fresh --force
         env:
           DB_CONNECTION: pgsql
@@ -105,6 +113,7 @@ jobs:
           DB_DATABASE: dentalsuite_test
           DB_USERNAME: dentalsuite
           DB_PASSWORD: secret
+          CACHE_STORE: array
 
       - name: Run tests against real PostgreSQL
         run: php artisan test
@@ -115,6 +124,7 @@ jobs:
           DB_DATABASE: dentalsuite_test
           DB_USERNAME: dentalsuite
           DB_PASSWORD: secret
+          CACHE_STORE: array
 
   frontend:
     name: Frontend (type-check, lint, tests, build)
