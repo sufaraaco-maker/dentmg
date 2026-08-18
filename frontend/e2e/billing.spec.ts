@@ -121,7 +121,7 @@ test.describe('billing (invoices)', () => {
     await expect(page.getByText('Invoice updated').last()).toBeVisible({ timeout: 10_000 })
     await expect(page.getByRole('button', { name: 'Add Charge' })).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'Add from Treatment Plan' })).not.toBeVisible()
-    await expect(page.getByText('Issued', { exact: true })).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.p-tag-label', { hasText: 'Issued' })).toBeVisible({ timeout: 10_000 })
     // Heading no longer reads "Draft Invoice" -- it now shows the assigned invoice_number.
     await expect(page.getByRole('heading', { name: 'Draft Invoice' })).toHaveCount(0)
 
@@ -139,7 +139,7 @@ test.describe('billing (invoices)', () => {
     await page.getByRole('button', { name: 'Void', exact: true }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Void', exact: true }).click()
     await expect(page.getByText('Invoice updated').last()).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Void', { exact: true })).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.p-tag-label', { hasText: 'Void' })).toBeVisible({ timeout: 10_000 })
     await expect(page.locator('h1[dir="ltr"]')).toHaveText(numberBeforeVoid)
   })
 
@@ -174,7 +174,7 @@ test.describe('billing (invoices)', () => {
     await page.getByRole('button', { name: 'Issue', exact: true }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Issue', exact: true }).click()
     await expect(page.getByText('Invoice updated').last()).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Issued', { exact: true })).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.p-tag-label', { hasText: 'Issued' })).toBeVisible({ timeout: 10_000 })
   })
 
   test('RTL (Arabic) smoke check: totals stay LTR-isolated', async ({ page }) => {
