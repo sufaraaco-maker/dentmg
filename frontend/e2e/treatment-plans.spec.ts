@@ -338,12 +338,12 @@ test.describe('treatment plans', () => {
     await openPlanDetail(page, patient.id, titleB)
     await runPlanAction(page, 'Accept')
 
-    const [planA, planB] = await Promise.all([
+    const [finalPlanA, finalPlanB] = await Promise.all([
       apiRequest<{ status: string }>(page, `/treatment-plans/${planIdA}`),
       apiRequest<{ status: string }>(page, `/treatment-plans/${planIdB}`),
     ])
-    expect(planB.status).toBe('accepted')
-    expect(planA.status).toBe('rejected')
+    expect(finalPlanB.status).toBe('accepted')
+    expect(finalPlanA.status).toBe('rejected')
   })
 
   test('cancelling an accepted plan cascades to cancel its still-planned items', async ({ page }) => {
