@@ -62,6 +62,15 @@ async function apiStatus(page: Page, path: string, method = 'GET', body?: unknow
   )
 }
 
+/** Real logout via the app's own API, mirroring `clinical-notes.spec.ts`/`timeline.spec.ts`'s
+ *  identical helper -- needed to switch actors within a single test without hitting `/login`'s
+ *  `guestOnly` redirect guard while a session cookie is still active (see `fixtures.ts`'s `login()`
+ *  comment: a plain `loginAsEnglish()` while already authenticated redirects away from `/login`
+ *  before the form ever renders, hanging `#email` forever). */
+async function logout(page: Page) {
+  await apiRequest(page, '/logout', { method: 'POST' }).catch(() => undefined)
+}
+
 async function createPatient(page: Page): Promise<{ id: string }> {
   const stamp = Date.now().toString().slice(-6)
   const patient = await apiRequest<{ id: string }>(page, '/patients', {
@@ -133,12 +142,13 @@ test.describe('payments', () => {
     expect(invoice.amount_paid).toBe('200.00')
     expect(invoice.balance_due).toBe('0.00')
 
-    // Partial refund of that same payment.
-    const paymentsBefore = await apiRequest<{ id: string; amount: string }[]>(
+    // Partial refund of that same payment. GET /invoices/{invoice}/payments is paginated
+    // (PaymentController::forInvoice()), so the response is { data: [...] }, not a bare array.
+    const paymentsBefore = await apiRequest<{ data: { id: string; amount: string }[] }>(
       page,
       `/invoices/${invoiceId}/payments`,
     )
-    const originalPayment = paymentsBefore.find((p) => Number(p.amount) > 0)
+    const originalPayment = paymentsBefore.data.find((p) => Number(p.amount) > 0)
     if (!originalPayment) throw new Error('Recorded payment not found on the invoice')
 
     await page.reload()
@@ -152,11 +162,11 @@ test.describe('payments', () => {
 
     // The original payment row is never mutated by the refund (own DB row, own creation) -- only a
     // new negative Payment row is created, and the invoice's balance recalculates from the sum.
-    const paymentsAfter = await apiRequest<{ id: string; amount: string }[]>(
+    const paymentsAfter = await apiRequest<{ data: { id: string; amount: string }[] }>(
       page,
       `/invoices/${invoiceId}/payments`,
     )
-    const unchanged = paymentsAfter.find((p) => p.id === originalPayment.id)
+    const unchanged = paymentsAfter.data.find((p) => p.id === originalPayment.id)
     expect(unchanged?.amount).toBe(originalPayment.amount)
 
     invoice = await apiRequest(page, `/invoices/${invoiceId}`)
@@ -184,7 +194,10 @@ test.describe('payments', () => {
 
     await unappliedRow.getByRole('button', { name: 'Apply to Invoice' }).click()
     const applyDialog = page.locator('.p-dialog')
-    await expect(applyDialog.getByText('Apply to Invoice', { exact: true })).toBeVisible()
+    // The dialog's header and its own submit button share the identical text ("Apply to Invoice")
+    // -- an unscoped getByText match is ambiguous (strict-mode violation); `.p-dialog-title` is
+    // PrimeVue Dialog's own header element class, unique within the dialog.
+    await expect(applyDialog.locator('.p-dialog-title')).toHaveText('Apply to Invoice')
     await applyDialog.getByRole('combobox').click()
     await page.locator('li.p-select-option:visible').first().click()
     await applyDialog.getByRole('button', { name: 'Apply to Invoice', exact: true }).click()
@@ -222,6 +235,7 @@ test.describe('payments', () => {
     const setupPatient = await createPatient(page)
     const invoiceId = await createIssuedInvoice(page, setupPatient.id, 40)
 
+    await logout(page)
     await loginAsEnglish(page, 'dentist')
     await gotoPatientPaymentsSection(page, setupPatient.id)
     await expect(page.getByRole('button', { name: 'Record Payment' })).not.toBeVisible()
@@ -234,6 +248,7 @@ test.describe('payments', () => {
     })
     expect(forbiddenRecord).toBe(403)
 
+    await logout(page)
     await loginAsEnglish(page, 'receptionist')
     await gotoPatientPaymentsSection(page, setupPatient.id)
     await expect(page.getByRole('button', { name: 'Record Payment' })).toBeVisible()
@@ -267,7 +282,11 @@ test.describe('payments', () => {
 
     // BillingSummaryCard.vue's "Total Paid" figure -- reachable with no locale-dependent clicks,
     // unlike the Payments sub-section (behind an Arabic-labeled SelectButton once RTL is forced).
-    const totalPaid = page.locator('p.font-medium[dir="ltr"]', { hasText: '25.00' })
-    await expect(totalPaid).toBeVisible({ timeout: 10_000 })
+    // "Total Invoiced" and "Total Paid" both render "25.00 USD" here (a single, fully-paid
+    // invoice) -- an unscoped match on the figure text alone is ambiguous, so scope to the
+    // specific stat's own preceding label, mirroring the `div:has(> label:text-is(...))` pattern
+    // used throughout this suite (adapted for BillingSummaryCard.vue's plain `<p>` labels).
+    const totalPaid = page.locator('div:has(> p:text-is("Total Paid")) p.font-medium[dir="ltr"]')
+    await expect(totalPaid).toHaveText('25.00 USD', { timeout: 10_000 })
   })
 })
