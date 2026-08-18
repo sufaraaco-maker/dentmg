@@ -181,7 +181,6 @@
     "permissionColumn": "Permission",
     "lockedHint": "Locked permissions are always granted to Admin and cannot be revoked",
     "groups": {
-      "ai_interaction_log": "AI Interaction Log",
       "appointments": "Appointments",
       "appointment_types": "Appointment Types",
       "billing_settings": "Billing Settings",
@@ -211,10 +210,6 @@
       "users": "Users"
     },
     "catalog": {
-      "ai_interaction_log": {
-        "view": "View AI interaction log",
-        "view_others": "View others' AI interaction log"
-      },
       "appointments": {
         "view": "View appointments",
         "manage": "Manage appointments",
