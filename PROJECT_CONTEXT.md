@@ -392,6 +392,13 @@ after the first fix. Final run (`30605056813`) is fully green: **Backend 905/905
 E2E 34/34 — zero failures.** Follows the standard module workflow: Design → Backend → Frontend →
 Tests → CI → Documentation → PR.
 
+**Correction (2026-08-14)**: AI Assistant — described above as "Production Ready ✅" — was **fully removed**
+via PR #52 (merge commit `3fb479e`), per explicit user request following a read-only discovery audit. This
+paragraph (and the "AI Assistant was extended by PR #11" note below) describe a module that no longer
+exists in the codebase; kept as historical record per this file's own established convention rather than
+deleted, mirroring the 2026-07-27 correction above. See `docs/PROJECT_STATUS.md`'s §7 (kept as a placeholder
+"Removed" notice) and `CHANGELOG.md`'s "Removed — AI Assistant module" entry for the full account.
+
 **Status update (2026-08-07)**: Reports (named above by its `feature/reports` branch, CI-confirmed
 2026-07-28) merged to `main` via PR #7 the same day; Settings (`feature/settings`, CI-confirmed 2026-07-30)
 merged via PR #8 the same day — neither paragraph above was updated after those merges, the same
