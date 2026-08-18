@@ -109,10 +109,15 @@ async function gotoInvoiceDetail(page: Page, patientId: string, invoiceId: strin
 /** `?tab=billing` is the same locale-independent deep-link pattern `PatientDetailView.vue` exposes
  *  for every tab (validated against `tabDefinitions`). The Payments sub-section is a `SelectButton`
  *  inside that tab, not a tab of its own. */
+/** Navigates to the Payments sub-section only -- no assertion on "Record Payment" being visible,
+ *  since that button is deliberately absent for a read-only (dentist) session. Callers that need
+ *  the write-access sanity check assert it themselves (see the golden-path/unapplied-credit tests
+ *  below) -- an earlier version asserted it unconditionally inside this helper, which made every
+ *  call for the dentist case (this function's own read-only caller) fail by construction. */
 async function gotoPatientPaymentsSection(page: Page, patientId: string) {
   await page.goto(`/patients/${patientId}?tab=billing`)
   await page.getByRole('button', { name: 'Payments', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Record Payment' })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('tabpanel')).toBeVisible({ timeout: 10_000 })
 }
 
 test.describe('payments', () => {
@@ -265,7 +270,11 @@ test.describe('payments', () => {
   test('RTL (Arabic) smoke check: currency amounts stay LTR-isolated', async ({ page }) => {
     await loginAsEnglish(page, 'admin')
     const patient = await createPatient(page)
-    const invoiceId = await createIssuedInvoice(page, patient.id, 25)
+    // Invoiced (60) deliberately != paid (25): once Arabic is forced below, BillingSummaryCard's
+    // labels ("Total Invoiced"/"Total Paid") render in Arabic too, so a label-scoped selector
+    // can't disambiguate them locale-independently -- keeping the two figures distinct lets a
+    // plain match on the figure text alone stay unambiguous regardless of locale.
+    const invoiceId = await createIssuedInvoice(page, patient.id, 60)
     await apiRequest(page, `/patients/${patient.id}/payments`, {
       method: 'POST',
       body: {
@@ -282,11 +291,7 @@ test.describe('payments', () => {
 
     // BillingSummaryCard.vue's "Total Paid" figure -- reachable with no locale-dependent clicks,
     // unlike the Payments sub-section (behind an Arabic-labeled SelectButton once RTL is forced).
-    // "Total Invoiced" and "Total Paid" both render "25.00 USD" here (a single, fully-paid
-    // invoice) -- an unscoped match on the figure text alone is ambiguous, so scope to the
-    // specific stat's own preceding label, mirroring the `div:has(> label:text-is(...))` pattern
-    // used throughout this suite (adapted for BillingSummaryCard.vue's plain `<p>` labels).
-    const totalPaid = page.locator('div:has(> p:text-is("Total Paid")) p.font-medium[dir="ltr"]')
+    const totalPaid = page.locator('p.font-medium[dir="ltr"]', { hasText: '25.00' })
     await expect(totalPaid).toHaveText('25.00 USD', { timeout: 10_000 })
   })
 })
