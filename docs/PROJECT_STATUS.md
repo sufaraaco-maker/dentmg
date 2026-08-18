@@ -248,8 +248,8 @@ throughout development against real competitors (Open Dental, Dentrix, CareStack
 frontend-only redesign work, against modern SaaS products (Linear, Notion, Stripe, Vercel, Raycast).
 
 **Goal**: give a single dental clinic a complete, self-hosted operational system — scheduling, clinical
-charting/notes, treatment planning, billing/payments, inventory, lab case tracking, imaging, reporting, and
-an optional AI assistant layer — without the bloat of a multi-specialty hospital suite.
+charting/notes, treatment planning, billing/payments, inventory, lab case tracking, imaging, and reporting —
+without the bloat of a multi-specialty hospital suite.
 
 **Technology stack** (confirmed from `backend/composer.json`/`frontend/package.json`, not assumed):
 
@@ -607,7 +607,7 @@ directional, not precise.
 | **Frontend** | Consistent component/store/service layering across every module, full i18n parity discipline, a real (if mid-flight) design system. Bundle-size and remaining icon-migration work are the visible gaps; component-test depth varies by module (some modules only have store/service tests, no per-component tests). | **80%** |
 | **Testing** | Backend and frontend unit/feature suites are extensive and consistently green; CI's E2E job is now fully green too (39/39, as of 2026-08-07). Remaining gap: 3 modules (Billing, Payments, Treatment Plans) still lack any E2E coverage. | **80%** |
 | **Documentation** | Unusually thorough (a design doc + final doc pattern, a dedicated decisions log, a dedicated tech-debt log); the 3 staleness gaps §0 found (2026-08-04) were reconciled 2026-08-07, and this file's §15 protocol + `CLAUDE.md` now exist specifically to keep it from recurring. | **85%** |
-| **Security** | Sanctum SPA auth, rate limiting (login + general API), encrypted-at-rest API key, audit logging on sensitive models, policy-gated authorization checked at API + frontend router layers, AI module fails closed. Gaps: no malware/virus scanning on uploaded images, no S3/offsite backup yet. | **80%** |
+| **Security** | Sanctum SPA auth, rate limiting (login + general API), audit logging on sensitive models, policy-gated authorization checked at API + frontend router layers. Gaps: no malware/virus scanning on uploaded images, no S3/offsite backup yet. | **80%** |
 | **Architecture** | Modular monolith, consistent service-layer discipline, a real (and enforced) datetime-handling standard, explicit SaaS multi-tenant and PWA/mobile-first principles checked at every module's design phase since 2026-07-27. | **90%** |
 | **Maintainability** | PSR-12/Pint/ESLint/Prettier all CI-enforced; `TECH_DEBT.md` and `docs/decisions.md` actively prevent debt from being silently forgotten. Some documentation-sync discipline has slipped recently (§0) — the direct motivation for this file. | **80%** |
 | **Production Readiness** | System-Wide Production Gate closed 2026-07-20 (rate limiting, hardened Docker/nginx/SSL, rehearsed backup/restore, CI/CD). `main`'s CI is fully green again (2026-08-07) and the Dashboard number is fixed. Remaining gaps: no offsite backup, 3 modules below the project's own E2E bar. Not yet ready to onboard a real clinic without addressing those. | **72%** |
