@@ -163,7 +163,7 @@ history. Confirmed unrelated to the Payments module: `router/index.test.ts` impo
 `useAuthStore()`'s initialization ordering in that test directly. Not blocking — the file is correct and
 passes reliably in isolation.
 
-### No permanent E2E suite for Billing or Payments
+### No permanent E2E suite for Billing or Payments — Payments part RESOLVED 2026-08-18
 Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright
 spec. Billing and Payments (`feature/treatment-plans`, both implementation-complete 2026-07-25) shipped
 with backend Unit test coverage — Payments additionally with Feature-test coverage (`PaymentTest`, 22
@@ -176,10 +176,17 @@ payment against an invoice → verify `payment_status` updates → partial refun
 receptionist-write/dentist-read-only check → RTL/dark-mode/currency-formatting smoke check. A Billing E2E
 spec would similarly need: draft → add items (manual + from-plan) → issue → verify frozen snapshot → void →
 receptionist/dentist permission check → RTL/dark-mode smoke check.
-**Revisit**: write and CI-verify `frontend/e2e/billing.spec.ts` and `frontend/e2e/payments.spec.ts` before
-either module is considered to meet the project's usual "Production Ready" bar as closely as
-Appointments/Dental Chart do. Not blocking V1 use — both modules are otherwise fully functional and tested
-at the Unit/Feature/store level.
+**Payments RESOLVED** (production hardening pass, 2026-08-18): `frontend/e2e/payments.spec.ts` added,
+covering every scenario above except a dedicated dark-mode toggle check (no E2E spec in this codebase
+automates dark-mode anywhere, confirmed by a repo-wide search — see the identical note on Treatment Plans'
+own now-resolved E2E entry). Backend permission/failure-case coverage was already comprehensive (26 existing
+tests in `PaymentTest.php`, including refund/apply/delete edge cases and every role's write/read boundary,
+confirmed by reading the file directly) — the one gap closed there was strengthening an existing assertion
+(`test_admin_can_partially_refund_a_payment` now also asserts the original payment's own `amount` is never
+mutated by the refund, not just that the response is a new row), not new coverage.
+**Billing still open — Revisit**: write and CI-verify `frontend/e2e/billing.spec.ts` before that module is
+considered to meet the project's usual "Production Ready" bar as closely as Appointments/Dental Chart do.
+Not blocking V1 use.
 
 ### No permanent E2E suite for Treatment Plans
 Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright

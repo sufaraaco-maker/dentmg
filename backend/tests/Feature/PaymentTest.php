@@ -279,6 +279,10 @@ class PaymentTest extends TestCase
         $response->assertCreated();
         $this->assertSame('-80.00', $response->json('amount'));
         $this->assertSame($payment->id, $response->json('refunded_payment_id'));
+
+        // A refund is always a new, separate Payment row -- the original is never mutated.
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'amount' => 200]);
+        $this->assertNotSame($payment->id, $response->json('id'));
     }
 
     public function test_refund_exceeding_remaining_balance_is_rejected(): void
