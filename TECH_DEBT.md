@@ -163,7 +163,7 @@ history. Confirmed unrelated to the Payments module: `router/index.test.ts` impo
 `useAuthStore()`'s initialization ordering in that test directly. Not blocking — the file is correct and
 passes reliably in isolation.
 
-### No permanent E2E suite for Billing or Payments — Payments part RESOLVED 2026-08-18
+### No permanent E2E suite for Billing or Payments — RESOLVED 2026-08-18
 Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright
 spec. Billing and Payments (`feature/treatment-plans`, both implementation-complete 2026-07-25) shipped
 with backend Unit test coverage — Payments additionally with Feature-test coverage (`PaymentTest`, 22
@@ -176,17 +176,25 @@ payment against an invoice → verify `payment_status` updates → partial refun
 receptionist-write/dentist-read-only check → RTL/dark-mode/currency-formatting smoke check. A Billing E2E
 spec would similarly need: draft → add items (manual + from-plan) → issue → verify frozen snapshot → void →
 receptionist/dentist permission check → RTL/dark-mode smoke check.
-**Payments RESOLVED** (production hardening pass, 2026-08-18): `frontend/e2e/payments.spec.ts` added,
-covering every scenario above except a dedicated dark-mode toggle check (no E2E spec in this codebase
-automates dark-mode anywhere, confirmed by a repo-wide search — see the identical note on Treatment Plans'
-own now-resolved E2E entry). Backend permission/failure-case coverage was already comprehensive (26 existing
-tests in `PaymentTest.php`, including refund/apply/delete edge cases and every role's write/read boundary,
-confirmed by reading the file directly) — the one gap closed there was strengthening an existing assertion
-(`test_admin_can_partially_refund_a_payment` now also asserts the original payment's own `amount` is never
-mutated by the refund, not just that the response is a new row), not new coverage.
-**Billing still open — Revisit**: write and CI-verify `frontend/e2e/billing.spec.ts` before that module is
-considered to meet the project's usual "Production Ready" bar as closely as Appointments/Dental Chart do.
-Not blocking V1 use.
+**RESOLVED** (production hardening pass, 2026-08-18): both `frontend/e2e/payments.spec.ts` and
+`frontend/e2e/billing.spec.ts` added, covering every scenario above except a dark-mode toggle check (no E2E
+spec anywhere in this codebase automates one, confirmed by a repo-wide search) and driving
+`AddFromTreatmentPlanDialog.vue`'s picker through its own UI (covered instead at the HTTP layer by
+`InvoiceItemTest.php`, see below). Payments' backend permission/failure-case coverage was already
+comprehensive (26 existing tests in `PaymentTest.php`, including refund/apply/delete edge cases and every
+role's write/read boundary, confirmed by reading the file directly) — the one gap closed there was
+strengthening an existing assertion (`test_admin_can_partially_refund_a_payment` now also asserts the
+original payment's own `amount` is never mutated by the refund, not just that the response is a new row),
+not new coverage. Billing's real HTTP-layer gap — `InvoiceControllerTest.php` only ever covered listing,
+never the actual lifecycle endpoints — closed with two new Feature test files: `InvoiceTest.php` (28 tests:
+store/update/issue/void/destroy, every role's permission boundary) and `InvoiceItemTest.php` (21 tests: item
+add/update/delete, including the treatment-plan-item snapshot path). Both new backend suites verified
+locally against a real PostgreSQL container. Real CI (`workflow_dispatch`) on both new E2E specs found and
+fixed several genuine test-script bugs before going green — none were application bugs: a
+paginated-response-treated-as-a-bare-array crash, dialog-header/button and status-tag text ambiguities
+(strict-mode violations), a missing `logout()` between role switches within one test (the same `/login`'s
+`guestOnly` redirect-guard hang `clinical-notes.spec.ts`/`timeline.spec.ts` already document and work
+around), and one test needing a larger time budget for its heavier two-plan flow.
 
 ### No UI to link an appointment to a Treatment Plan item, despite the backend fully supporting it
 Found 2026-08-18 writing `frontend/e2e/treatment-plans.spec.ts` (production hardening pass) while trying to
