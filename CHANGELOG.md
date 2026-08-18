@@ -11,11 +11,10 @@ PR #4; Laboratory 2026-07-27 via PR #5; Imaging 2026-07-28 via PR #6; **Reports 
 **Settings 2026-07-30 via PR #8**; AI Assistant 2026-07-31 via PR #9, removed 2026-08-14 — see "Removed —
 AI Assistant module" below) but `main` is not yet re-tagged.
 Clinical Notes, Inventory, Laboratory, Imaging, Reports, and Settings each shipped their own
-permanent E2E suite and are confirmed Production Ready.
-Billing and Payments still lack a permanent E2E suite (Billing also lacks a backend
-Feature-test suite and its final `modules/billing.md` doc) before either meets the same "Production Ready"
-bar as the modules above; Treatment Plans gained a clinic-wide list (PR #12) but is in the same position —
-see `docs/roadmap.md` and `TECH_DEBT.md` for current per-module status.
+permanent E2E suite and are confirmed Production Ready. **Treatment Plans, Billing, and Payments closed
+their remaining gap (permanent E2E suite; Billing also gained the HTTP-layer backend Feature tests and its
+final `modules/billing.md` doc it was missing) via a 2026-08-18 production-hardening pass — see this file's
+own newest entries below — and now meet the same "Production Ready" bar as every other module.**
 
 Post-roadmap: Frontend UX & Navigation Redesign Phase 1 (PR #10) and Premium Visual Redesign Steps 1-3
 (PR #13) are merged; **Phase 1: Stabilization** of the follow-on 8-phase roadmap closed 2026-08-07 via
@@ -121,6 +120,74 @@ added — this is a full teardown, not a migration.
   touched); full frontend suite, `vue-tsc`, ESLint, and Prettier all clean on every touched file,
   production build succeeds; real `workflow_dispatch` CI run on the branch before opening the PR —
   see that run's result in the PR description.
+
+### Added — Production hardening pass: Treatment Plans, Payments, and Billing E2E suites (2026-08-18)
+Closes TECH_DEBT.md's three "no permanent E2E suite" items in one pass, per explicit user request to raise
+these three modules to the same "Production Ready" bar (permanent CI-verified Playwright coverage) every
+other module already meets.
+- **`frontend/e2e/treatment-plans.spec.ts`** (PR #56): golden path (draft → add items → present → accept →
+  start → complete items → complete plan), reject path, multi-plan sibling-auto-reject, cancel-cascade,
+  receptionist read-only (UI-hidden + direct-API-403), RTL/currency-isolation smoke check. Found and logged
+  a new, previously-undocumented gap while writing the golden path: no UI anywhere links an appointment to a
+  treatment plan item, despite full backend support (new `TECH_DEBT.md` entry) — not built, out of this
+  pass's scope; the test links via the same API the backend already exposes.
+- **`frontend/e2e/payments.spec.ts`** (PR #57): record against an invoice → `payment_status` update, partial
+  refund → balance recalculates (+ the original payment row asserted unmutated, strengthening an existing
+  backend test), unapplied credit → apply to a different issued invoice, delete-blocked-once-refunded
+  (UI + direct-API-422), receptionist-write/dentist-read-only (UI + direct-API-403), RTL/currency-isolation
+  smoke check.
+- **`frontend/e2e/billing.spec.ts`** + **`backend/tests/Feature/InvoiceTest.php`**/**`InvoiceItemTest.php`**
+  (PR #58): closed a related gap found while writing the E2E suite — `InvoiceControllerTest.php` only ever
+  covered the index/list endpoints, never the actual lifecycle (store/update/issue/void/destroy/items) at
+  the HTTP layer, despite `InvoiceServiceTest.php` covering every business rule at the Service layer. New
+  Feature tests (49 total) close that gap; new E2E spec covers golden path (draft → add charge → issue →
+  verify the frozen snapshot including a direct-API-422 check → void → invoice number preserved),
+  receptionist/dentist permission matrix, RTL smoke check. New `docs/modules/billing.md` — this module never
+  had a post-implementation doc.
+- All three E2E specs iterated against real `workflow_dispatch` CI (this project's authoritative signal, not
+  local Playwright — documented unreliable in this dev environment) and found several genuine test-script
+  bugs before going green, none application bugs: PrimeVue toast-stacking and dialog-header/button text
+  ambiguities (strict-mode violations), a paginated-response-treated-as-a-bare-array crash, a missing
+  `logout()` between actor switches within one test (the `/login` `guestOnly`-redirect hang
+  `clinical-notes.spec.ts`/`timeline.spec.ts` already document), and one test's own two-plan setup flow
+  refactored to use the API directly after its UI-driven version proved unreliable in this CI environment
+  specifically. Full account in each PR's description.
+
+### Fixed — `AuditLogService`'s fail-open guarantee broke on real PostgreSQL inside a wrapped transaction (PR #54, 2026-08-18)
+Found by the new `backend-postgres` CI job (see next entry) on its very first real run:
+`AuditLogTest`'s own regression test ("a failed audit write does not break the underlying business
+operation") failed with `SQLSTATE[25P02]: current transaction is aborted` — SQLite's laxer transaction
+handling had let this pass on every prior run. `AuditLogService::write()`'s `try`/`catch` stops the
+exception from propagating, but on Postgres a failed statement still leaves the *enclosing* transaction
+aborted, so the next query in that same transaction fails too — silently breaking the documented fail-open
+guarantee for exactly the callers that need it most (`RolePermissionService::updateMatrix()`,
+`TreatmentPlanService::accept()`/`cancel()`, both of which run this write inside their own already-open
+`DB::transaction()`). Fixed by wrapping the `AuditLog::create()` call in its own `DB::transaction()` —
+Laravel issues a real `SAVEPOINT` when already inside a transaction, so a failure now only rolls back to
+that savepoint, leaving the outer transaction usable. Verified locally against real PostgreSQL:
+`AuditLogTest` (6/6), `RolePermissionTest` (12/12), `TreatmentPlanTest` (28/28).
+
+### Added — Backend test suite now also runs against real PostgreSQL 17 in CI (PR #54, 2026-08-18)
+Closes `TECH_DEBT.md`'s open item: `backend/phpunit.xml` forces `DB_CONNECTION=sqlite` for every test run,
+which had already let one real Postgres-only migration bug through once (the 2026-07-26 self-referencing-FK
+ordering bug on `payments`, `SQLite` doesn't enforce Postgres's blueprint-command ordering). New
+`backend-postgres` CI job, parallel to the existing SQLite-backed `backend` job (untouched, still the fast
+feedback loop): a `postgres:17-alpine` service container, `migrate:fresh` against it, then the full test
+suite with `DB_*`/`CACHE_STORE` overridden via the job step's own `env:` block — `phpunit.xml`'s `<env>`
+entries default to `force=false` so they never override an already-set process env var, no edit to that file
+needed. Found and fixed the `AuditLogService` bug above on its first real run — exactly the class of gap
+this job exists to catch.
+
+### Fixed — orphaned `ai_interaction_log` permission-matrix leftovers (PR #55, 2026-08-18)
+Closes `TECH_DEBT.md`'s item found during PR #52's post-merge review: the 6 orphaned
+`permissions.groups`/`catalog.ai_interaction_log` i18n keys (2 per locale × en/ar/tr) removed from all three
+locale files, and a new, deliberately irreversible migration
+(`2026_08_18_000001_purge_orphaned_ai_interaction_log_permissions`) that deletes any `permissions` rows with
+`group = 'ai_interaction_log'` on any environment that ran the pre-PR-#52 seeder — cascading to
+`role_permissions` via its existing FK and flushing the per-role permission cache. The original,
+already-merged migrations are untouched, per this project's own convention. New regression test simulates a
+stale pre-removal environment and asserts the migration purges both tables and the cache. Confirmed via a
+repo-wide search: no functional AI Assistant code remains anywhere in `backend/app` or `frontend/src`.
 
 ### Fixed — pre-existing Friday-slot bug in `notifications.spec.ts` (`fix/e2e-notifications-friday-slot-bug`, PR #50, 2026-08-13)
 
