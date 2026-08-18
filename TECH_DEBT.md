@@ -4,6 +4,30 @@ Postponed work, tracked deliberately rather than forgotten. Each item names the 
 
 ## Open
 
+### Orphaned `ai_interaction_log` permission-matrix i18n keys, and stale seeded permission rows on any non-fresh environment
+Found 2026-08-14 during a dedicated human-review pass on PR #52 (AI Assistant removal), after the removal
+work itself was already merged — deliberately not fixed as part of that review, per explicit instruction to
+report only. Two connected gaps:
+1. **i18n**: `permissions.groups.ai_interaction_log` and `permissions.catalog.ai_interaction_log.{view,view_others}`
+   were never removed from `frontend/src/locales/{en,ar,tr}.json` (still present, ~line 184/214 in each) —
+   an oversight during the removal's own i18n cleanup pass, which caught `aiAssistant.*`/`settings.aiAssistant.*`
+   and the audit-log-type label but missed the Permissions-matrix section entirely.
+2. **DB data**: `PermissionSeeder`'s 2 `ai_interaction_log.*` catalog rows were removed from the seeder
+   *code*, but that only affects a fresh seed — any environment that already ran the pre-removal seeder
+   (confirmed empirically in this session's own dev container: `RolePermissionService::catalog()` still
+   returns 68 entries, not 66, including both `ai_interaction_log.*` rows with full descriptions) retains
+   those rows in its live `permissions`/`role_permissions` tables until a fresh reseed or manual cleanup.
+
+Combined effect: on any such non-fresh environment, an admin opening the Permissions matrix UI currently
+sees a fully-labeled, still-toggleable "AI Interaction Log" permission group — a genuine visible remnant
+of the removed feature, though functionally inert (the `AiInteractionLogPolicy` it once gated is deleted,
+so the permission grants nothing at runtime). CI is unaffected — `ci.yml` runs `migrate:fresh --seed` every
+run (line 150), so this never surfaces there, and every fresh install is fully clean.
+**Revisit**: next time this file's Permissions area is touched — remove the 6 orphaned i18n keys (2 per
+locale × 3 locales) and add a one-time cleanup (new migration or `artisan` command) deleting any
+`permissions`/`role_permissions` rows with `group = 'ai_interaction_log'`, for any environment upgrading
+from a pre-PR-#52 state.
+
 ### `notifications.spec.ts`'s isolation test still has the same latent subject_id ambiguity, deliberately not fixed
 Found and left open 2026-08-12 while fixing the `notificationIdFor()` bug above (see Resolved). The
 isolation test (`"one user can never see or act on another user's notification"`) creates then cancels an
