@@ -45,6 +45,87 @@ jobs:
       - name: Run tests
         run: php artisan test
 
+  backend-postgres:
+    name: Backend (tests against real PostgreSQL 17)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    # The `backend` job above runs the Unit/Feature suite against `backend/phpunit.xml`'s forced
+    # SQLite in-memory DB — fast, but has already let a real Postgres-only migration bug through
+    # once (TECH_DEBT.md: the 2026-07-26 self-referencing-FK ordering bug on the payments table,
+    # which SQLite doesn't enforce). This job re-runs the exact same suite against a real
+    # PostgreSQL 17 service container (matching production) so a Postgres-only regression fails
+    # CI instead of only surfacing whenever someone happens to migrate a real Postgres by hand.
+    # `phpunit.xml`'s <env> entries default to force="false" (PHPUnit only sets a variable if it
+    # isn't already present in the process environment), so the DB_* values in this job's own
+    # `env:` block below override phpunit.xml's SQLite defaults without editing that file at all
+    # — the `backend` job's SQLite run is untouched.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: dentalsuite_test
+          POSTGRES_USER: dentalsuite
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, pdo_pgsql, redis, mbstring, intl, gd, bcmath, zip
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Generate app key
+        run: cp .env.example .env && php artisan key:generate
+
+      - name: Migrate against real PostgreSQL (catches migration-ordering bugs SQLite hides)
+        # CACHE_STORE must be overridden here too, not just DB_* -- this plain artisan command
+        # never goes through phpunit.xml's own <env> injection (that only applies to the `php
+        # artisan test` step below), so it falls back to .env's CACHE_STORE=redis default with no
+        # Redis service in this job. Found 2026-08-18: a migration that calls Cache::forget()
+        # (the new purge_orphaned_ai_interaction_log_permissions migration) failed CI on main with
+        # RedisException: getaddrinfo for redis failed. This job only needs a real Postgres, not a
+        # real Redis -- array is a real in-memory cache, not a null-op, for anything that reads
+        # its own write back within the same process.
+        run: php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: dentalsuite_test
+          DB_USERNAME: dentalsuite
+          DB_PASSWORD: secret
+          CACHE_STORE: array
+
+      - name: Run tests against real PostgreSQL
+        run: php artisan test
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: dentalsuite_test
+          DB_USERNAME: dentalsuite
+          DB_PASSWORD: secret
+          CACHE_STORE: array
+
   frontend:
     name: Frontend (type-check, lint, tests, build)
     runs-on: ubuntu-latest

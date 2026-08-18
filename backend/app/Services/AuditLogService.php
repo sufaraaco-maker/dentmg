@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -87,18 +88,34 @@ class AuditLogService
         // permission-matrix update, or any model save — but the failure itself is logged without
         // the actual (possibly still-unredacted-at-this-point) payload, so a redaction bug can
         // never leak sensitive values into the general application log as a side effect.
+        //
+        // The insert is wrapped in its own DB::transaction() so this actually holds on real
+        // PostgreSQL, not just SQLite: a caller like RolePermissionService::updateMatrix() or
+        // TreatmentPlanService::accept()/cancel() runs this write *inside* its own already-open
+        // DB::transaction(). Catching the Throwable stops it from propagating, but on Postgres a
+        // failed statement still leaves the enclosing transaction itself aborted ("current
+        // transaction is aborted, commands ignored until end of transaction block") — the very
+        // next query in that same transaction fails too, silently breaking the documented
+        // fail-open guarantee for exactly the callers that need it most. Laravel's
+        // DB::transaction() automatically issues a SAVEPOINT when already inside a transaction, so
+        // a failure here only rolls back to that savepoint and the outer transaction stays usable.
+        // Found 2026-08-18 by AuditLogTest's own regression test, which SQLite's laxer transaction
+        // handling had let pass for every prior run (TECH_DEBT.md: the backend suite never used to
+        // run against real Postgres).
         try {
-            AuditLog::create([
-                'user_id' => Auth::id(),
-                'auditable_type' => $auditableType,
-                'auditable_id' => $auditableId,
-                'action' => $action,
-                'changes' => $this->filter($newValues) ?: null,
-                'old_values' => $this->filter($oldValues) ?: null,
-                'context' => $this->filter($context) ?: null,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
+            DB::transaction(function () use ($auditableType, $auditableId, $action, $newValues, $oldValues, $context) {
+                AuditLog::create([
+                    'user_id' => Auth::id(),
+                    'auditable_type' => $auditableType,
+                    'auditable_id' => $auditableId,
+                    'action' => $action,
+                    'changes' => $this->filter($newValues) ?: null,
+                    'old_values' => $this->filter($oldValues) ?: null,
+                    'context' => $this->filter($context) ?: null,
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+            });
         } catch (Throwable $e) {
             Log::error('Audit log write failed', [
                 'action' => $action,
