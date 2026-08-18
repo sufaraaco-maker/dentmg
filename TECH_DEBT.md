@@ -181,7 +181,26 @@ either module is considered to meet the project's usual "Production Ready" bar a
 Appointments/Dental Chart do. Not blocking V1 use — both modules are otherwise fully functional and tested
 at the Unit/Feature/store level.
 
-### No permanent E2E suite for Treatment Plans
+### No UI to link an appointment to a Treatment Plan item, despite the backend fully supporting it
+Found 2026-08-18 writing `frontend/e2e/treatment-plans.spec.ts` (production hardening pass) while trying to
+implement the design doc's own §19 golden-path step ("link an appointment to one item"). Ground-truth check:
+`treatment_plan_items.appointment_id` exists (migration, `TreatmentPlanItem` model), `PUT
+/treatment-plan-items/{id}` accepts `appointment_id` and never locks it (`UpdateTreatmentPlanItemRequest`,
+`TreatmentPlanService::updateItem()`'s `OFFER_FIELDS` list deliberately excludes it), and
+`TreatmentPlanItemsTable.vue`'s "Linked" column already renders the linked appointment's date + status chip
+when present — but neither `TreatmentPlanItemDialog.vue` nor any Appointment-side component (`AppointmentDialog.vue`,
+etc.) exposes any control to actually set it. Confirmed by reading every file, not assumed: `grep` for
+`appointment_id`/`linkAppointment` across `frontend/src/components/treatmentPlans` and
+`frontend/src/components/appointments` matches only `.test.ts` fixtures, no `.vue` template/script. The
+dialog's own docblock says appointment linkage was "explicitly out of scope" for the step that shipped it
+(Step 9) but no later step ever added it either. The new E2E suite's golden-path test links the appointment
+via a direct API call (matching how the design doc itself already treats this as a real, currently-shipped
+capability) rather than building UI for it here — out of this pass's production-hardening-only scope.
+**Revisit**: add a "Link Appointment" control to `TreatmentPlanItemDialog.vue` (or a dedicated action on
+`TreatmentPlanItemsTable.vue`'s row, mirroring the Lab Case module's own `treatment_plan_item_id` picker
+pattern) the next time this module's UI is substantively touched. Small, additive, no backend change needed.
+
+### No permanent E2E suite for Treatment Plans — RESOLVED 2026-08-18
 Every other production-ready module (Appointments, Dental Chart) has a CI-verified, permanent Playwright
 spec (`frontend/e2e/appointments.spec.ts`, `dental-chart.spec.ts`). Treatment Plans (`feature/treatment-plans`,
 commit `0677128`) shipped with full backend (505/505) and frontend (541/541) unit/feature test coverage but
@@ -189,9 +208,15 @@ no `frontend/e2e/treatment-plans.spec.ts` — confirmed absent directly, not ass
 (`docs/modules/treatment-plans-design.md` §19) specified one: golden path (create → add items → present →
 accept → link appointment → complete items → complete plan), reject path, multi-plan sibling-auto-reject
 scenario, cancel-cascade scenario, receptionist read-only verification, RTL/dark-mode smoke check.
-**Revisit**: write and CI-verify `frontend/e2e/treatment-plans.spec.ts` covering the scenarios above,
-mirroring `dental-chart.spec.ts`'s structure, before this module is considered to meet the project's usual
-"Production Ready" bar as closely as Appointments/Dental Chart do. Not blocking V1 use.
+**RESOLVED**: `frontend/e2e/treatment-plans.spec.ts` added (production hardening pass, 2026-08-18) covering
+every scenario above except the literal "link appointment via UI" sub-step (see the new entry directly above
+for why, and how the golden-path test still exercises the real linking behavior via direct API call) and a
+dedicated dark-mode toggle check (no E2E spec in this codebase automates dark-mode anywhere — confirmed by a
+repo-wide search — so this pass didn't invent a new pattern for one module alone; the RTL/currency-isolation
+smoke check is included). Backend permission/failure-case coverage was already comprehensive (88 existing
+tests across `TreatmentPlanControllerTest`/`TreatmentPlanTest`/`TreatmentPlanItemTest`/
+`TreatmentPlanServiceTest`, including explicit receptionist-forbidden cases for every write action) — no
+backend gaps found, so none added.
 
 ### `dental_conditions` reused as the Treatment Plans pricing catalog (V1 only)
 Treatment Plans' design review (2026-07-22, Decision 5) approved reusing the existing `dental_conditions`
