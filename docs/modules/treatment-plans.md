@@ -1,7 +1,8 @@
 # Treatment Plans Module
 
 **Status: Production Ready ✅ — implementation complete on `feature/treatment-plans` (commit `0677128`,
-2026-07-23). Not yet merged to `main`/tagged — see Completion section.**
+2026-07-23), merged to `main` shortly after. Permanent E2E suite added 2026-08-18 (production hardening
+pass) — see Completion section.**
 
 This is the final module doc, produced at Final Review per the two-phase workflow, superseding
 [`treatment-plans-design.md`](treatment-plans-design.md) (the approved design document) as the canonical
@@ -204,20 +205,22 @@ no tenant/clinic concept to scope against (see SaaS Readiness below).
   component (render states, role-based UI gating — receptionist sees no action buttons, i18n key presence).
 - Manual real-browser verification performed per the two-phase workflow's mandatory UI-verification step at
   each implementation checkpoint.
-- **No permanent Playwright E2E suite exists yet for this module** — confirmed directly (no
-  `frontend/e2e/treatment-plans.spec.ts` or equivalent, unlike `appointments.spec.ts`/`dental-chart.spec.ts`).
-  The design doc's §19 specified one (golden path create→present→accept→link-appointment→complete, reject
-  path, multi-plan sibling-auto-reject scenario, cancel-cascade scenario, receptionist read-only check,
-  RTL/dark-mode smoke check) — not yet implemented. See Known Limitations.
+- **Permanent Playwright E2E suite added 2026-08-18** (production hardening pass) —
+  `frontend/e2e/treatment-plans.spec.ts` covers the design doc's §19 scenarios: golden path (draft → add
+  items → present → accept → start → complete items → complete plan, linking an appointment to an item via
+  direct API call — see Known Limitations for why), reject path, multi-plan sibling-auto-reject scenario,
+  cancel-cascade scenario, receptionist read-only check (UI-hidden + direct-API-403), and an
+  RTL/currency-isolation smoke check.
 
 ## Known Limitations / Deferred (non-blocking)
 
 Full detail and revisit conditions live in `TECH_DEBT.md`; summarized here for this module:
 
-- **No permanent E2E suite yet** (new item, logged in `TECH_DEBT.md` as part of this documentation pass) —
-  every other production-ready module (Appointments, Dental Chart) has a CI-verified Playwright spec; this
-  one currently relies on backend/frontend unit+feature tests and ad hoc manual verification only. Does not
-  block V1 use, but is a real gap relative to this project's own established bar for "Production Ready."
+- **No UI to link an appointment to a treatment plan item** (found 2026-08-18 writing the E2E suite, logged
+  in `TECH_DEBT.md`) — the backend fully supports it end-to-end (`treatment_plan_items.appointment_id`,
+  `PUT /treatment-plan-items/{id}` accepts it, `TreatmentPlanItemsTable.vue` already renders it when
+  present), but neither `TreatmentPlanItemDialog.vue` nor any Appointment-side component exposes a control
+  to actually set it. Small, additive fix whenever this module's UI is next substantively touched.
 - **`dental_conditions` reused as the pricing catalog (V1 only)** — see Key Architectural Decisions; a
   dedicated procedure-pricing catalog is needed once multi-tenant/insurance/regional pricing is a real
   requirement.
@@ -251,11 +254,12 @@ path (`docs/modules/dental-chart.md`'s SaaS Readiness section) — no new mechan
 ## Completion
 
 Migration, Model, Validation, Service, Policy, API, Vue Pages, Tests, Documentation — all present.
-505/505 backend tests, 541/541 frontend tests. **Verdict: Production Ready**, with one open item relative to
-this project's established bar: no permanent E2E suite yet (see Known Limitations/Testing above).
+505/505 backend tests, 541/541 frontend tests at initial implementation; backend permission/failure-case
+coverage re-confirmed comprehensive (88 tests) during the 2026-08-18 production-hardening pass, which also
+added the permanent E2E suite. **Verdict: Production Ready**, with only the small, non-blocking appointment-
+linkage UI gap above left open (not a Production Ready blocker — the backend and the read-side rendering are
+both already correct).
 
-**Not yet merged to `main` or tagged** — per the project's standing git workflow (`feature/<module>` →
-CI-verified merge to `main` → `v<version>-<module-name>` tag once Final Review closes), this module currently
-lives only on `feature/treatment-plans` (commit `0677128`). Merging and tagging are separate, explicit steps
-this doc does not perform on its own — flagged for a deliberate decision alongside or after this
-documentation pass, not assumed.
+Merged to `main` shortly after initial implementation (`feature/treatment-plans`, commit `0677128`,
+2026-07-23) — the production-hardening work itself (E2E suite, this doc's updates) lands via its own
+`test/treatment-plans-e2e` branch/PR.
