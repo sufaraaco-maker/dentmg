@@ -181,7 +181,6 @@
     "permissionColumn": "الصلاحية",
     "lockedHint": "الصلاحيات المقفلة ممنوحة دائمًا للمدير ولا يمكن سحبها",
     "groups": {
-      "ai_interaction_log": "سجل تفاعل الذكاء الاصطناعي",
       "appointments": "المواعيد",
       "appointment_types": "أنواع المواعيد",
       "billing_settings": "إعدادات الفوترة",
@@ -211,10 +210,6 @@
       "users": "المستخدمون"
     },
     "catalog": {
-      "ai_interaction_log": {
-        "view": "عرض سجل تفاعل الذكاء الاصطناعي",
-        "view_others": "عرض سجل تفاعل الذكاء الاصطناعي للآخرين"
-      },
       "appointments": {
         "view": "عرض المواعيد",
         "manage": "إدارة المواعيد",

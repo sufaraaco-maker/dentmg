@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\RolePermission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -181,5 +184,42 @@ class RolePermissionTest extends TestCase
         ])->assertUnprocessable();
 
         $this->assertDatabaseMissing('audit_logs', ['action' => 'role_permissions_updated']);
+    }
+
+    /**
+     * Regression coverage for the 2026_08_18 cleanup migration
+     * (`purge_orphaned_ai_interaction_log_permissions`): any environment that ran the
+     * pre-PR-#52 seeder still has `ai_interaction_log.*` rows live in `permissions`/
+     * `role_permissions` (TECH_DEBT.md's "Orphaned ai_interaction_log..." entry) even though a
+     * fresh seed never creates them (see the 66-count assertions above). Simulates that stale
+     * state directly, then re-runs the migration's own `up()` to prove it purges both tables via
+     * `role_permissions.permission_key`'s `cascadeOnDelete()` FK and clears the cached matrix.
+     */
+    public function test_stale_ai_interaction_log_permissions_are_purged_by_the_cleanup_migration(): void
+    {
+        DB::table('permissions')->insert([
+            'id' => (string) Str::uuid(),
+            'key' => 'ai_interaction_log.view',
+            'group' => 'ai_interaction_log',
+            'description' => 'View AI interaction log',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('role_permissions')->insert([
+            'id' => (string) Str::uuid(),
+            'role' => 'admin',
+            'permission_key' => 'ai_interaction_log.view',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->assertDatabaseHas('permissions', ['group' => 'ai_interaction_log']);
+        $this->assertDatabaseHas('role_permissions', ['permission_key' => 'ai_interaction_log.view']);
+
+        (require database_path('migrations/2026_08_18_000001_purge_orphaned_ai_interaction_log_permissions.php'))->up();
+
+        $this->assertDatabaseMissing('permissions', ['group' => 'ai_interaction_log']);
+        $this->assertDatabaseMissing('role_permissions', ['permission_key' => 'ai_interaction_log.view']);
+        $this->assertNotContains('ai_interaction_log.view', RolePermission::permissionKeysForRole(UserRole::Admin));
     }
 }

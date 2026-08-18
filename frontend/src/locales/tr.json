@@ -181,7 +181,6 @@
     "permissionColumn": "Yetki",
     "lockedHint": "Kilitli yetkiler her zaman Yöneticiye verilir ve geri alınamaz",
     "groups": {
-      "ai_interaction_log": "Yapay Zeka Etkileşim Günlüğü",
       "appointments": "Randevular",
       "appointment_types": "Randevu Türleri",
       "billing_settings": "Faturalama Ayarları",
@@ -211,10 +210,6 @@
       "users": "Kullanıcılar"
     },
     "catalog": {
-      "ai_interaction_log": {
-        "view": "Yapay zeka etkileşim günlüğünü görüntüle",
-        "view_others": "Diğer kullanıcıların yapay zeka etkileşim günlüğünü görüntüle"
-      },
       "appointments": {
         "view": "Randevuları görüntüle",
         "manage": "Randevuları yönet",
