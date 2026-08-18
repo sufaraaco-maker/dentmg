@@ -307,6 +307,13 @@ test.describe('treatment plans', () => {
   })
 
   test('accepting one presented plan auto-rejects the patient\'s other presented plan', async ({ page }) => {
+    // This is the only test in the suite that drives two full createPlan() flows (each its own
+    // dialog + dentist fetch + save) plus an extra page.reload() -- real CI run 32174966295 showed
+    // it consistently the tightest against the shared 45s per-test default, timing out waiting for
+    // the second dialog's dentist list to populate with no budget left, not a logic bug (the exact
+    // same createPlan() call succeeds in every other test in this file).
+    test.setTimeout(90_000)
+
     await loginAsEnglish(page, 'admin')
     const patient = await createPatient(page)
     const titleA = `Option A ${Date.now()}`
